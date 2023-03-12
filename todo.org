@@ -1,0 +1,48 @@
+* Steps towards Beta version
+** TODO choose domain
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO choose study period
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** DONE build WRF
+:PROPERTIES:
+:ORDERED:  t
+:END:
+- State "DONE"       from "TODO"       [2023-03-13 Mon 05:59] \\
+  Stayed with WRFV4.3 from https://github.com/coecms/WRF already
+  compiled on gadi
+** TODO generate CMAQ inputs
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO build CMAQ
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO generate inventory
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO customize py4dvar
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO process TROPOMI obs
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO run inversion
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO generate alarms
+:PROPERTIES:
+:ORDERED:  t
+:END:
+** TODO generate posterior fluxes
+:PROPERTIES:
+:ORDERED:  t
+:END:
