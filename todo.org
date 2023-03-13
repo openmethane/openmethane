@@ -30,6 +30,8 @@
 :PROPERTIES:
 :ORDERED:  t
 :END:
+*** TODO Write ObsOp
+**** TODO Read ATBD
 ** TODO process TROPOMI obs
 :PROPERTIES:
 :ORDERED:  t
