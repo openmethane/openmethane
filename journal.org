@@ -4,3 +4,8 @@
 *** 2023-03-14 Tuesday
 note that tropomi reoslution changed to  5.5km along track on 6 august
 2019 though this was not noted yet in resolution flag [[file:~/work/openmethane-beta/tropomi/tropomi-performance.pdf]]
+Mainland Australia and Tasmania extend approximately from latitude –10.6 deg N (Cape
+York, Queensland) to –43.6 deg N (South-east Cape, Tasmania), and longitude 113.2 deg E
+(Steep Point, Western Australia) to 153.6 deg E (Cape Byron, NSW).
+tropomi methane at http://doi.org/10.5270/S5P-3lcdqiv
+ESA data hub https://scihub.copernicus.eu/
