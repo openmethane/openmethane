@@ -1,0 +1,6 @@
+
+* 2023
+** 2023-03 March
+*** 2023-03-14 Tuesday
+note that tropomi reoslution changed to  5.5km along track on 6 august
+2019 though this was not noted yet in resolution flag [[file:~/work/openmethane-beta/tropomi/tropomi-performance.pdf]]
