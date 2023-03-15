@@ -23,39 +23,36 @@ def uncondition( unknown ):
     """
     PhysicalData.assert_params()
     p = PhysicalData
-    emis_len = p.nstep * p.nlays_emis * p.nrows * p.ncols
-    if inc_icon is True:
-        icon_len = p.nlays_icon * p.nrows * p.ncols
-        total_len = len( p.spcs ) * ( icon_len + emis_len )
-    else:
-        total_len = len( p.spcs ) * emis_len
+    emis_shape = ( p.nstep_emis, p.nlays_emis, p.nrows, p.ncols, )
+    emis_len = p.nstep_emis * p.nlays_emis * p.nrows * p.ncols
+    bcon_shape = ( p.nstep_bcon, p.bcon_region, )
+    bcon_len = np.prod( bcon_shape )
     del p
     
     vals = unknown.get_vector()
     if inc_icon is True:
         icon_dict = {}
     emis_dict = {}
+    bcon_dict = {}
     i = 0
     for spc in PhysicalData.spcs:
         if inc_icon is True:
-            icon = vals[ i:i+icon_len ]
-            i += icon_len
-        emis = vals[ i:i+emis_len ]
-        i += emis_len
+            icon = vals[ i ]
+            i += 1
+            icon_dict[ spc ] = icon * PhysicalData.icon_unc[ spc ]
         
-        p = PhysicalData
-        if inc_icon is True:
-            icon = icon.reshape(( p.nlays_icon, p.nrows, p.ncols, ))
-            icon = icon * p.icon_unc[ spc ]
-            icon_dict[ spc ] = icon
-        emis = emis.reshape(( p.nstep, p.nlays_emis, p.nrows, p.ncols, ))
-        emis = emis * p.emis_unc[ spc ]
-        emis_dict[ spc ] = emis
-        del p
+        emis = vals[ i:i+emis_len ]
+        emis = emis.reshape( emis_shape )
+        emis_dict[ spc ] = emis * PhysicalData.emis_unc[ spc ]
+        i += emis_len
+
+        bcon = vals[ i:i+bcon_len ]
+        bcon = bcon.reshape( bcon_shape )
+        bcon_dict[ spc ] = bcon * PhysicalData.bcon_unc[ spc ]
+        i += bcon_len
     
-    assert i == total_len, 'Some physical data left unassigned!'
+    assert i == len(vals), 'Some physical data left unassigned!'
     
     if inc_icon is False:
         icon_dict = None
-    return PhysicalData( icon_dict, emis_dict )
-
+    return PhysicalData( icon_dict, emis_dict, bcon_dict )

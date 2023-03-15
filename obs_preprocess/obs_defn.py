@@ -39,7 +39,7 @@ class ObsGeneral( object ):
                 raise AttributeError('obs No. {} is missing {}'.format(self.id,attr))
         for attr,val in self.default.items():
             if attr not in keys:
-                print '{:} not defined, setting to {:}'.format(attr,val)
+                print ('{:} not defined, setting to {:}'.format(attr,val))
                 self.out_dict[ attr ] = val
         return deepcopy( self.out_dict )
     
@@ -53,10 +53,12 @@ class ObsSimple( ObsGeneral ):
     Instant point measurement
     Provided with co-ordinate already mapped into model grid."""
     @classmethod
-    def create( cls, cell, value, uncertainty ):
+    def create( cls, cell, value, uncertainty,weight_grid ):
+    ##def create( cls, cell, value, uncertainty ):
         newobs = cls( obstype='Simple' )
         newobs.out_dict['value'] = float( value )
         newobs.out_dict['uncertainty'] = float( uncertainty )
+        newobs.out_dict['weight_grid'] = { tuple(cell): 1.0 } ###this is added by NS for surface measurements 
         newobs.cell = cell
         return newobs
     
@@ -69,7 +71,7 @@ class ObsSimple( ObsGeneral ):
             self.valid = False
             self.ready = True
         return None
-    
+ 
     def coord_fail( self, fail_reason='unknown' ):
         self.valid = False
         self.ready = True
@@ -123,8 +125,8 @@ class ObsStationary( ObsSimple ):
         """Map self.time into dictionary where
         key   = model_space time co-ordinate,
         value = proportion of observation."""
-        #assume self.time = [ start_time, end_time ]
-        #assume time recorded as [ int(YYYYMMDD), int(HHMMSS) ]
+        ##assume self.time = [ start_time, end_time ]
+        ##assume time recorded as [ int(YYYYMMDD), int(HHMMSS) ]
         if self.time[1][0] < self.time[0][0]:
             self.coord_fail( 'invalid time interval' )
             return None

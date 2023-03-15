@@ -44,6 +44,11 @@ def get_datelist():
         raise ValueError( 'Need to define start_date and end_date.' )
     days = (end_date - start_date).days + 1
     datelist = [ add_days( start_date, i ) for i in range(days) ]
+    print("bye")
+    print(days)
+    print("hello")#Sougol
+    print(len(datelist))#Sougol
+    print(datelist[0],datelist[1])
     return datelist
 
 def replace_date( src, date ):

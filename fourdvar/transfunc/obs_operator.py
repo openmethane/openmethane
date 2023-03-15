@@ -22,15 +22,20 @@ def obs_operator( model_output ):
     
     ObservationData.assert_params()
     
-    val_list = [ o for o in ObservationData.offset_term ]
+    val_list = [0] * ObservationData.length
     for ymd, ilist in ObservationData.ind_by_date.items():
         conc_file = model_output.file_data['conc.'+ymd]['actual']
         var_dict = ncf.get_variable( conc_file, ObservationData.spcs )
         for i in ilist:
+            denom = 0. 
             for coord, weight in ObservationData.weight_grid[i].items():
                 if str( coord[0] ) == ymd:
                     step,lay,row,col,spc = coord[1:]
                     conc = var_dict[spc][step,lay,row,col]
-                    val_list[i] += (weight * conc)
+               #     val_list[i] += (weight * conc * ObservationData.ref_profile[i][lay]) #dot product
+                    val_list[i] += weight * conc
+               #     denom += weight*(ObservationData.ref_profile[i][lay])**2
+            #val_list[i] /= denom
+   # val_list = [ v/ObservationData.alpha_scale[i] for i,v in enumerate(val_list) ]
     
     return ObservationData( val_list )

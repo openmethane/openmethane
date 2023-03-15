@@ -17,10 +17,10 @@ import fourdvar.datadef as d
 from fourdvar._transform import transform
 
 # If true restart_script uses last iteration in archive
-restart_from_last = True
+restart_from_last = False
 
 # If restart_from_last = False provide restart number (integer)
-restart_number = None
+restart_number = 0
 
 # Must match filename used by user_driver.callback_func!
 iter_fname = 'iter{:04}.ncf'

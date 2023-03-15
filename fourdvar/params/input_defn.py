@@ -19,4 +19,4 @@ prior_file = os.path.join( store_path, 'input/prior.nc' )
 obs_file = os.path.join( store_path, 'input/test_obs.pic.gz' )
 
 #include model initial conditions in solution
-inc_icon = True
+inc_icon = False

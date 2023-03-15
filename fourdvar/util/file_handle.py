@@ -12,8 +12,7 @@ import os
 import sys
 import gzip
 import numpy as np
-import cPickle as pickle
-
+import pickle
 import setup_logging
 
 logger = setup_logging.get_logger( __file__ )
@@ -86,11 +85,11 @@ def load_list( filepath ):
     fpath = os.path.realpath( filepath )
     obj_list = []
     eof = False
-    
+    print(fpath)
     with gzip.GzipFile( fpath, 'rb' ) as f:
         while eof is False:
             try:
-                element = pickle.load( f )
+                element = pickle.load( f,encoding="latin1")#Sougol
                 obj_list.append( element )
             except EOFError:
                 eof = True

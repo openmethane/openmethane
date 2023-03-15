@@ -1,5 +1,6 @@
 _make_hidden.py
-
+*.pyc
+*~
 *.pyc
 __pycache__
 *.py~

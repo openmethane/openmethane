@@ -81,6 +81,8 @@ class ModelInputData( FourDVarData ):
         #arg name matches the record key
         #arg value is a dictionary, keys are variable in file, values are numpy arrays
         fdata = get_filedict( cls.__name__ )
+        #print(fdata.items()) #Sougol
+        #print(kwargs.items()) #Sougol
         msg = 'input args incompatible with file list'
         assert set( fdata.keys() ) == set( kwargs.keys() ), msg
         for label, data in kwargs.items():

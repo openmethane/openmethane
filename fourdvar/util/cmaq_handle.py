@@ -20,7 +20,7 @@ import fourdvar.util.file_handle as fh
 
 
 import setup_logging as logging
-logger = logging.get_logger( __file__ )
+logger= logging.get_logger( __file__ )
 
 def parse_env_dict( env_dict, date ):
     """
@@ -51,6 +51,9 @@ def load_env( env_dict ):
         if logging.verbose_logfile is True:
             logger.debug( 'setenv {} = {}'.format( name, value ) )
         os.environ[ name ] = value
+    # now remove empty strings from environment which are killing CMAQ multiprocessing
+    for name, value in os.environ.items():
+        if value == '': del( os.environ[name])
     return None
 
 def clean_env( env_dict ):
@@ -60,7 +63,10 @@ def clean_env( env_dict ):
     output: None
     """
     for name in env_dict.keys():
-        del os.environ[ name ]
+        try:
+            del os.environ[ name ]
+        except KeyError:
+            logger.warning('environment variable {name} not found')
     return None
 
 def setup_run():
@@ -118,6 +124,7 @@ def setup_run():
     env_dict['ADJ_CHEM_CHK'] = cfg.chem_chk + ' -v'
     env_dict['ADJ_VDIFF_CHK'] = cfg.vdiff_chk + ' -v'
     env_dict['ADJ_AERO_CHK'] = cfg.aero_chk + ' -v'
+    env_dict['ADJ_CPL_CHK'] = cfg.cpl_chk + ' -v'
     env_dict['ADJ_HA_RHOJ_CHK'] = cfg.ha_rhoj_chk + ' -v'
     env_dict['ADJ_VA_RHOJ_CHK'] = cfg.va_rhoj_chk + ' -v'
     env_dict['ADJ_HADV_CHK'] = cfg.hadv_chk + ' -v'
@@ -127,7 +134,7 @@ def setup_run():
     env_dict['GRIDDESC'] = cfg.griddesc
     env_dict['GRID_NAME'] = cfg.gridname
     env_dict['DEPV_TRAC_1'] = cfg.depv_trac
-    env_dict['OCEAN_1'] = cfg.ocean_file
+    #env_dict['OCEAN_1'] = cfg.ocean_file
     env_dict['EMIS_1'] = cfg.emis_file
     env_dict['BNDY_GASC_1'] = cfg.bcon_file
     env_dict['BNDY_AERO_1'] = cfg.bcon_file
@@ -199,11 +206,16 @@ def run_fwd_single( date, is_first ):
     load_env( env_dict )
     
     run_cmd = cfg.cmd_preamble
+    #print("hello")
+    #print(run_cmd)
     if int(cfg.npcol) != 1 or int(cfg.nprow) != 1:
         #use mpi
         run_cmd += 'mpirun -np {:} '.format( int( cfg.npcol ) * int( cfg.nprow ) )
+    #print(run_cmd)
     run_cmd += cfg.fwd_prog
+    #print(run_cmd)
     stdout_fname = dt.replace_date( cfg.fwd_stdout_log, date )
+    print(stdout_fname)
     fh.ensure_path( stdout_fname, inc_file=True )
     with open( stdout_fname, 'w' ) as stdout_file:
         msg = 'calling external process:\n{:}> {:}'.format( cfg.cmd_shell, run_cmd )

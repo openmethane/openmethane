@@ -15,16 +15,18 @@ from fourdvar.params.root_path_defn import store_path
 #Settings for archive processes
 
 #location of archive directory
-archive_path = os.path.join( store_path, 'archive' )
-
+#archive_path = os.path.join( store_path, 'archive' )
+archive_path = os.path.join( store_path, 'archive_Pert' )#archive_Pert
 #archive model output of each successful iteration
-iter_model_output = False
+iter_model_output = True
 
 #archive observation-lite of each successful iteration
 iter_obs_lite = True
 
 #experiment name & name of directory to save results in
-experiment = 'example_experiment'
+#experiment = 'pert_pert_test'##'example_experiment'
+#experiment = 'real_test'
+experiment = 'pert_pert_test'#Pert
 
 #description is copied into a txt file in the experiment directory
 description = """This is a test of the fourdvar system.

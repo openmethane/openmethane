@@ -12,7 +12,7 @@ import numpy as np
 import sys
 import os
 import shutil
-import cPickle as pickle
+import pickle as pickle
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import fourdvar.datadef as d
@@ -30,7 +30,7 @@ observed = None
 background = None
 iter_num = 0
 
-allow_neg_values = True
+allow_neg_values = True 
 
 def setup():
     """
@@ -136,6 +136,6 @@ def post_process( out_physical, metadata ):
     output: None
     """
     out_physical.archive( 'final_solution.ncf' )
-    with open( os.path.join( archive.get_archive_path(), 'ans_details.pickle' ), 'w' ) as f:
+    with open( os.path.join( archive.get_archive_path(), 'ans_details.pickle' ), 'wb' ) as f:
         pickle.dump( metadata, f )
     return None

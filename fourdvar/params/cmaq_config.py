@@ -10,7 +10,7 @@ See the License for the specific language governing permissions and limitations 
 
 import os
 
-from fourdvar.params.root_path_defn import store_path, share_path
+from fourdvar.params.root_path_defn import store_path
 
 #notes: the patterns <YYYYMMDD>, <YYYYDDD> & <YYYY-MM-DD> will be replaced
 #with the year, month and day of the current model run
@@ -19,10 +19,10 @@ use_jobfs = False
 
 #No. of processors per column
 npcol = 1
-#npcol = 4
+#npcol = 3 #pert
 #No. of processors per row
 nprow = 1
-#nprow = 4
+#nprow = 3 #pert
 #note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 #extra ioapi write logging
@@ -30,7 +30,7 @@ ioapi_logging = False
 
 #max & min No. seconds per sync (science) step
 maxsync = 600
-minsync = 600
+minsync = 300
 
 #use PT3DEMIS (option not supported)
 #DO NOT MODIFY
@@ -60,8 +60,10 @@ promptflag = False
 
 #output species
 #'template' means value calculated from template files
-conc_spcs = 'template'
-avg_conc_spcs = 'template'
+#conc_spcs = 'template'
+conc_spcs = 'CH4'
+#avg_conc_spcs = 'template'
+avg_conc_spcs = 'CH4'
 
 #output layers
 #'template' means value calculated from template files
@@ -77,11 +79,11 @@ pertspcs = '2'
 pertdelt = '1.00'
 
 #application name
-fwd_appl = 'fwd_CO2only.<YYYYMMDD>'
-bwd_appl = 'bwd_CO2only.<YYYYMMDD>'
+fwd_appl = 'ADJOINT_FWD'
+bwd_appl = 'ADJOINT_BWD'
 
 #emis_date, use unknown
-emisdate = '<YYYYMMDD>'
+emisdate = '<YYYYMMDD>'#?????
 
 #output sensitivity on each sync (science) step
 #WARNING: this option must match the sensitivity template files
@@ -95,6 +97,7 @@ tstep = [1,0,0] #output timestep [hours, minutes, seconds]
 
 cmaq_base = os.path.join( store_path, 'CMAQ' )
 output_path = os.path.join( cmaq_base, 'output' )
+wrf_path = "/scratch/q90/sa6589/test_Sougol/mcip"#Sougol
 if use_jobfs is True:
     chk_path = os.environ.get('PBS_JOBFS',None)
     if chk_path is None:
@@ -102,26 +105,28 @@ if use_jobfs is True:
         raise ValueError(msg)
 else:
     chk_path = os.path.join( cmaq_base, 'chkpnt' )
-mcip_path = os.path.join( share_path, 'mcip' )
-grid_path = os.path.join( share_path, 'grid' )
-jproc_path = os.path.join( share_path, 'jproc' )
-bcon_path = os.path.join( cmaq_base, 'bcon' )
-icon_path = os.path.join( cmaq_base, 'icon' )
-emis_path = os.path.join( cmaq_base, 'emis' )
-
+mcip_path = os.path.join( wrf_path, '<YYYY-MM-DD>','d04' )
+grid_path = os.path.join(  wrf_path, '<YYYY-MM-DD>','d04' )
+jproc_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq' )#Sougol
+bcon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
+icon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
+emis_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
 #horizontal grid definition file
 griddesc = os.path.join( grid_path, 'GRIDDESC' )
-gridname = 'CMAQ-BENCHMARK'
+gridname = 't' #Sougol
+#gridname = 'W'
 
 #logfile
-fwd_logfile = os.path.join( output_path, 'fwd_CO2only.<YYYYMMDD>.log' )
-bwd_logfile = os.path.join( output_path, 'bwd_CO2only.<YYYYMMDD>.log' )
+fwd_logfile = os.path.join( output_path, 'fwd_CH4_only.<YYYYMMDD>.log' )
+bwd_logfile = os.path.join( output_path, 'bwd_CH4_only.<YYYYMMDD>.log' )
 
 #floor file
 floor_file = os.path.join( output_path, 'FLOOR_bnmk' )
 
 #checkpoint files
 chem_chk = os.path.join( chk_path, 'CHEM_CHK.<YYYYMMDD>.nc' )
+print("sougol")
+print(chem_chk)
 vdiff_chk = os.path.join( chk_path, 'VDIFF_CHK.<YYYYMMDD>.nc' )
 aero_chk = os.path.join( chk_path, 'AERO_CHK.<YYYYMMDD>.nc' )
 ha_rhoj_chk = os.path.join( chk_path, 'HA_RHOJ_CHK.<YYYYMMDD>.nc' )
@@ -130,24 +135,24 @@ hadv_chk = os.path.join( chk_path, 'HADV_CHK.<YYYYMMDD>.nc' )
 vadv_chk = os.path.join( chk_path, 'VADV_CHK.<YYYYMMDD>.nc' )
 emis_chk = os.path.join( chk_path, 'EMIS_CHK.<YYYYMMDD>.nc' )
 emist_chk = os.path.join( chk_path, 'EMIST_CHK.<YYYYMMDD>.nc' )
+cpl_chk = os.path.join( chk_path, 'CPL_CHK.<YYYYMMDD>.nc' )
 
 #xfirst file
 fwd_xfirst_file = os.path.join( output_path, 'XFIRST.<YYYYMMDD>' )
 bwd_xfirst_file = os.path.join( output_path, 'XFIRST.bwd.<YYYYMMDD>' )
 
 #input files
-icon_file = os.path.join( icon_path, 'icon_CO2only.nc' )
-bcon_file = os.path.join( bcon_path, 'bcon_CO2only.<YYYYMMDD>.nc' )
-emis_file = os.path.join( emis_path, 'emis_CO2only.<YYYYMMDD>.nc' )
-force_file = os.path.join( output_path, 'ADJ_FORCE.<YYYYMMDD>.nc' )
-#required met data, use unknown
-ocean_file = os.path.join( grid_path, 'surf_BENCHMARK.nc' )
-grid_dot_2d = os.path.join( grid_path, 'GRIDDOT2D.nc' )
-grid_cro_2d = os.path.join( grid_path, 'GRIDCRO2D.nc' )
-met_cro_2d = os.path.join( mcip_path, 'METCRO2D_<YYYYMMDD>.nc' )
-met_cro_3d = os.path.join( mcip_path, 'METCRO3D_<YYYYMMDD>.nc' )
-met_dot_3d = os.path.join( mcip_path, 'METDOT3D_<YYYYMMDD>.nc' )
-met_bdy_3d = os.path.join( mcip_path, 'METBDY3D_<YYYYMMDD>.nc' )
+icon_file = os.path.join( icon_path, 'ICON.d04.t.CH4only.nc' )#Sougol
+bcon_file = os.path.join( bcon_path, 'BCON.d04.t.CH4only.nc' )#Sougol
+emis_file = os.path.join( emis_path, 'Allmerged_emis_<YYYY-MM-DD>_d04.nc' )#Shak
+force_file = os.path.join( cmaq_base,  'force', 'ADJ_FORCE.<YYYYMMDD>.nc' )
+#required met data, use unknown #?????
+grid_dot_2d = os.path.join( grid_path, 'GRIDDOT2D_8' )#Sougol
+grid_cro_2d = os.path.join( grid_path, 'GRIDCRO2D_8' )#Sougol
+met_cro_2d = os.path.join( mcip_path, 'METCRO2D_8' )#Sougol
+met_cro_3d = os.path.join( mcip_path, 'METCRO3D_8' )#Sougol
+met_dot_3d = os.path.join( mcip_path, 'METDOT3D_8' )#Sougol
+met_bdy_3d = os.path.join( mcip_path, 'METBDY3D_8' )#Sougol
 layerfile = met_cro_3d
 depv_trac = met_cro_2d
 xj_data = os.path.join( jproc_path, 'JTABLE_<YYYYDDD>' )
@@ -170,9 +175,9 @@ irr2_file = os.path.join( output_path, 'IRR_2.<YYYYMMDD>.nc' )
 irr3_file = os.path.join( output_path, 'IRR_3.<YYYYMMDD>.nc' )
 rj1_file = os.path.join( output_path, 'RJ_1.<YYYYMMDD>.nc' )
 rj2_file = os.path.join( output_path, 'RJ_2.<YYYYMMDD>.nc' )
-conc_sense_file = os.path.join( output_path, 'LGRID.bwd_CO2only.<YYYYMMDD>.nc' )
-emis_sense_file = os.path.join( output_path, 'EM.LGRID.bwd_CO2only.<YYYYMMDD>.nc' )
-emis_scale_sense_file = os.path.join( output_path, 'EM_SF.LGRID.bwd_CO2only.<YYYYMMDD>.nc' )
+conc_sense_file = os.path.join( output_path, 'LGRID.bwd_COonly.<YYYYMMDD>.nc' )
+emis_sense_file = os.path.join( output_path, 'EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc' )
+emis_scale_sense_file = os.path.join( output_path, 'EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc' )
 
 curdir = os.path.realpath( os.curdir )
 
@@ -188,7 +193,7 @@ cwd_logs = [ os.path.join( curdir, 'CTM_LOG_*' ),
 #list of all files above created by CMAQ (fwd & bwd) to be delete by wipeout()
 wipeout_fwd_list = [ fwd_logfile, floor_file, chem_chk, vdiff_chk, aero_chk,
                      ha_rhoj_chk, va_rhoj_chk, hadv_chk, vadv_chk, emis_chk,
-                     emist_chk, fwd_xfirst_file, conc_file, avg_conc_file,
+                     emist_chk, cpl_chk, fwd_xfirst_file, conc_file, avg_conc_file,
                      last_grid_file, drydep_file, wetdep1_file, wetdep2_file,
                      ssemis_file, aerovis_file, aerodiam_file, ipr1_file,
                      ipr2_file, ipr3_file, irr1_file, irr2_file, irr3_file,
@@ -197,8 +202,8 @@ wipeout_bwd_list = [ bwd_logfile, bwd_xfirst_file, conc_sense_file,
                      emis_sense_file, emis_scale_sense_file, bwd_stdout_log ]
 
 #drivers
-fwd_prog = os.path.join( share_path, 'BLD_fwd_CO2only', 'ADJOINT_FWD' )
-bwd_prog = os.path.join( share_path, 'BLD_bwd_CO2only', 'ADJOINT_BWD' )
+fwd_prog = os.path.join('/home/563/ns0890/programs/cmaq_adj/BLD_fwd_CH4only/', 'ADJOINT_FWD' )
+bwd_prog = os.path.join('/home/563/ns0890/programs/cmaq_adj/BLD_bwd_CH4only/', 'ADJOINT_BWD' )
 
 #shell used to call drivers
 cmd_shell = '/bin/csh'

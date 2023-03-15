@@ -162,6 +162,7 @@ def set_date( fileobj, start_date ):
     notes: changes are made to file in place.
     """
     def _set_ncfobj_date( ncf_file, sdate ):
+        print('ncf_file is ', ncf_file)
         yj = lambda date: np.int32( dt.replace_date('<YYYYDDD>', date) )
         tflag = ncf_file.variables[ 'TFLAG' ][:]
         tflag_date = tflag[ :, :, 0 ]
