@@ -95,9 +95,9 @@ sttime = [0,0,0] #start time of single run [hours, minutes, seconds]
 runlen = [24,0,0] #duration of single run [hours, minutes, seconds] #DO NOT MODIFY
 tstep = [1,0,0] #output timestep [hours, minutes, seconds]
 
-cmaq_base = os.path.join( store_path, 'CMAQ' )
+cmaq_base = os.path.join( store_path, 'run-cmaq' )
 output_path = os.path.join( cmaq_base, 'output' )
-wrf_path = "/scratch/q90/sa6589/test_Sougol/mcip"#Sougol
+wrf_path = os.path.join( store_path, 'mcip' )
 if use_jobfs is True:
     chk_path = os.environ.get('PBS_JOBFS',None)
     if chk_path is None:
@@ -110,7 +110,7 @@ grid_path = os.path.join(  wrf_path, '<YYYY-MM-DD>','d04' )
 jproc_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq' )#Sougol
 bcon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
 icon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
-emis_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
+emis_path = os.path.join(cmaq_base, 'emissions' )
 #horizontal grid definition file
 griddesc = os.path.join( grid_path, 'GRIDDESC' )
 gridname = 't' #Sougol
@@ -144,7 +144,7 @@ bwd_xfirst_file = os.path.join( output_path, 'XFIRST.bwd.<YYYYMMDD>' )
 #input files
 icon_file = os.path.join( icon_path, 'ICON.d04.t.CH4only.nc' )#Sougol
 bcon_file = os.path.join( bcon_path, 'BCON.d04.t.CH4only.nc' )#Sougol
-emis_file = os.path.join( emis_path, 'Allmerged_emis_<YYYY-MM-DD>_d04.nc' )#Shak
+emis_file = os.path.join( emis_path, 'emis.<YYYY-MM-DD>.nc' )#Shak
 force_file = os.path.join( cmaq_base,  'force', 'ADJ_FORCE.<YYYYMMDD>.nc' )
 #required met data, use unknown #?????
 grid_dot_2d = os.path.join( grid_path, 'GRIDDOT2D_8' )#Sougol
