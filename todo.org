@@ -18,10 +18,12 @@
 :PROPERTIES:
 :ORDERED:  t
 :END:
-** TODO build CMAQ
+** DONE build CMAQ
 :PROPERTIES:
 :ORDERED:  t
 :END:
+- State "DONE"       from "TODO"       [2023-03-23 Thu 10:57] \\
+  running on gadi
 ** TODO generate inventory
 :PROPERTIES:
 :ORDERED:  t
@@ -30,6 +32,8 @@
 :PROPERTIES:
 :ORDERED:  t
 :END:
+*** DONE replicate Sougol setup
+- State "DONE"       from "TODO"       [2023-03-29 Wed 10:10]
 *** TODO Write ObsOp
 **** TODO Read ATBD
 ** TODO process TROPOMI obs

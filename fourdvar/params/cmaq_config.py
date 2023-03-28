@@ -125,8 +125,6 @@ floor_file = os.path.join( output_path, 'FLOOR_bnmk' )
 
 #checkpoint files
 chem_chk = os.path.join( chk_path, 'CHEM_CHK.<YYYYMMDD>.nc' )
-print("sougol")
-print(chem_chk)
 vdiff_chk = os.path.join( chk_path, 'VDIFF_CHK.<YYYYMMDD>.nc' )
 aero_chk = os.path.join( chk_path, 'AERO_CHK.<YYYYMMDD>.nc' )
 ha_rhoj_chk = os.path.join( chk_path, 'HA_RHOJ_CHK.<YYYYMMDD>.nc' )

@@ -94,7 +94,6 @@ def prepare_model( physical_data ):
             phys_arr = physical_data.emis[spcs_name][estep,...].reshape((1,1,nrow,ncol))
             #emis_arr[:,:nlay,:,:] *= phys_arr
             emis_arr *= np.repeat(phys_arr, nlay, axis=1) 
-            print(physical_data.spcs[0])#Sougol 
             spcs_dict[physical_data.spcs[0]] = emis_arr #Sougol
         
         #add bcon values to emissons
