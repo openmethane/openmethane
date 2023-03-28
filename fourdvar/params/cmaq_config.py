@@ -18,11 +18,11 @@ from fourdvar.params.root_path_defn import store_path
 use_jobfs = False
 
 #No. of processors per column
-npcol = 1
-#npcol = 3 #pert
+#npcol = 1
+npcol = 4 #pert
 #No. of processors per row
-nprow = 1
-#nprow = 3 #pert
+#nprow = 1
+nprow = 4 #pert
 #note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 #extra ioapi write logging
