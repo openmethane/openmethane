@@ -6,3 +6,7 @@ __pycache__
 *.py~
 *.log
 .hidden
+baseline_data/baseline-methane.tif
+baseline_data/landuse-sector-map.csv
+baseline_data/methane-inventory-by-sector.csv
+baseline_data/NLUM_ALUMV8_250m_2015_16_alb.tif
