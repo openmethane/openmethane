@@ -1,4 +1,9 @@
-# Requires the following input files to work
+# Baseline methane emissions map
+This folder contains scripts to generate a baseline methane emissions map. 
+
+The method will distribute methane inventories by sector based on land-use data. Over time we will re-visit this process to improve the estimation.
+
+### Input data
 Paths to these files should be updated in the *constants* section at the top of the `baseline.py` file.
 
 * NLUM_ALUMV8_250m_2015_16_alb.tif: map of land use data taken from the *Land use of Australia 2010–11 to 2015–16, 250m* data package, found here: https://www.agriculture.gov.au/sites/default/files/documents/nlum_alumv8_250m_2015_16_alb.zip

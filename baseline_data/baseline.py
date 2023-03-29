@@ -32,14 +32,14 @@ with open(SECTORAL_EMISSIONS_MAP_PATH, 'r', newline='') as f:
             yearLabel, agLabel, miningLabel, manufacturingLabel, energyLabel, constructionLabel, commercialLabel, transportLabel, residentialLabel = [year, ag, mining, manufacturing, energy, construction, commercial, transport, residential]
             seenHeaders = True
         if year == "2020":
-            methaneInventoryBySector[agLabel] = float(ag)
-            methaneInventoryBySector[miningLabel] = float(mining)
-            methaneInventoryBySector[manufacturingLabel] = float(manufacturing)
-            methaneInventoryBySector[energyLabel] = float(energy)
-            methaneInventoryBySector[constructionLabel] = float(construction)
-            methaneInventoryBySector[commercialLabel] = float(commercial)
-            methaneInventoryBySector[transportLabel] = float(transport)
-            methaneInventoryBySector[residentialLabel] = float(residential)
+            methaneInventoryBySector[agLabel] = float(ag) * 1000000
+            methaneInventoryBySector[miningLabel] = float(mining) * 1000000
+            methaneInventoryBySector[manufacturingLabel] = float(manufacturing) * 1000000
+            methaneInventoryBySector[energyLabel] = float(energy) * 1000000
+            methaneInventoryBySector[constructionLabel] = float(construction) * 1000000
+            methaneInventoryBySector[commercialLabel] = float(commercial) * 1000000
+            methaneInventoryBySector[transportLabel] = float(transport) * 1000000
+            methaneInventoryBySector[residentialLabel] = float(residential) * 1000000
 
 ## Create a dict to count all of the instances of each sector in the land use data
 sectorCounts = dict.fromkeys(methaneInventoryBySector, 0)
@@ -67,7 +67,7 @@ for sector, numGridSquares in sectorCounts.items():
 for landUseType, _ in usageCounts.items():
     sector = landuseSectorMap[landUseType]
     emission = sectorEmissionsPerGridSquare[sector] if sector else 0
-    dataBand[dataBand == landUseType] = emission * 1000000 # convert to tonnes
+    dataBand[dataBand == landUseType] = emission
 
 ## Write the data band to a new output image
 with rasterio.open(OUTPUT_PATH, 'w', **meta, compress = 'lzw') as dst:
