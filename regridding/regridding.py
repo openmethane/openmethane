@@ -27,8 +27,8 @@ deflon=0
 deflat=0
 ## set up the inputs for this function
 months=['May']
-domains=['d01','d02','d03','d04']
-#domains=['d04']
+#domains=['d01','d02','d03','d04']
+domains=['d04']
 for imonth, month in enumerate(months): 
     startDate = datetime.datetime(2019,5,1, 0, 0) ## this is the START of the first day
     endDate = datetime.datetime(2019,5,2, 0, 0) ## this is the START of the last day
@@ -127,8 +127,10 @@ for idate, date in enumerate(dates):
                         #if(emi_grdcell[i,j]>0):
                             #print(emi_grdcell[i,j])
                         month='May'
-                        emisfolder ='/scratch/q90/sa6589/test_Sougol/run_cmaq/{}/{}'.format(yyyymmdd_dashed,domain)
-                        grdem = Dataset('{}/Allmerged_emis_{}_{}.nc'.format(emisfolder,yyyymmdd_dashed,domain), 'w', format='NETCDF4_CLASSIC')    
+                        emisfolder ='/scratch/q90/pjr563/openmethane-beta/run_cmaq/{}/{}'.format(yyyymmdd_dashed,domain)
+                        dt = date.timetuple()
+                        emisfile = f'emis_record_{dt.tm_year:4d}{dt.tm_mon:02d}{dt.tm_mday:02d}.nc'
+                        grdem = Dataset(emisfile, 'w', format='NETCDF4_CLASSIC', clobber=True)    
                         lens = dict()
                         outdims = dict()
                         domShape = nc2['LAT'][...].squeeze().shape
@@ -150,7 +152,7 @@ for idate, date in enumerate(dates):
                         nz=1
                         lens['VAR'] = nvar
                         lens['LAY'] = nz
-                        lens['TSTEP'] = 1
+                        lens['TSTEP'] = 25
                         lens['DATE-TIME'] = 2
 
                         for k in lens.keys():
@@ -164,14 +166,14 @@ for idate, date in enumerate(dates):
                         #print(emisyear)
                         emisday=date.timetuple().tm_yday #Peter
                         outvars['TFLAG'].setncattr('long_name',"{:<16}".format('TFLAG'))
-                        tflag[0,:,0] = 1000*emisyear+emisday #Peter
-                        tflag[0,:,1] = 0 #means first minute of day #Peter
-                        #print(emisday)
-                        for iyyy in range(tflag.shape[1]):
-
-                            #print(tflag)
-                            outvars['TFLAG'][0,iyyy,0] = 1000*emisyear+emisday
-                            outvars['TFLAG'][0,iyyy,1] = 0
+                        tflag[:,0,0] = 1000*emisyear+emisday #Peter
+# need to set next day which requires care if it's Dec 31
+                        nextDate = date + datetime.timedelta(1) # add one day
+                        nextyear = date.timetuple().tm_year #Peter
+                        nextday=date.timetuple().tm_yday #Peter
+                        tflag[0,-1,0] = 1000*nextyear+nextday # setting date of last time-slice
+                        tflag[:,0,1] = (np.arange(lens['TSTEP'])%(lens['TSTEP']-1))*100 # hourly timestep including last timeslice to 0 I hope
+                        outvars['TFLAG'][...] = tflag
                         ## one chunk per layer per time
                         outvars[cmaqspec] = grdem.createVariable(cmaqspec, 'f4', ('TSTEP', 'LAY', 'ROW', 'COL'), zlib = True, shuffle = False, chunksizes = np.array([1,1,domShape[0], domShape[1]]) )
                         outvars[cmaqspec].setncattr('long_name',"{:<16}".format(cmaqspec))
@@ -217,6 +219,7 @@ for idate, date in enumerate(dates):
                         #grdem.setncattr('SDATE',np.int32(-635))
                         #grdem.setncattr('TSTEP',numpy.int32(100))
                         grdem.close()
+
 
 
 
