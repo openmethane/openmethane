@@ -48,7 +48,7 @@ def get_unit_convert_bcon():
     for date in dt.get_datelist():
         met_file = dt.replace_date( met_cro_3d, date )
         rhoj = ncf.get_variable( met_file, 'DENSA_J' )[:, :len(lay_thick ), ... ]
-        unit_array = (rhoj[0,...]*lay_thick*area) / (kg_scale*ppm_scale*mwair)
+        unit_array = (rhoj*lay_thick*area) / (kg_scale*ppm_scale*mwair)
         day_label = dt.replace_date( unit_key, date )
         unit_dict[ day_label ] = unit_array.copy()
     return unit_dict
@@ -93,7 +93,7 @@ def prepare_model( physical_data ):
             emis_arr = ncf.get_variable( emis_fname, spcs_name )
             phys_arr = physical_data.emis[spcs_name][estep,...].reshape((1,1,nrow,ncol))
             #emis_arr[:,:nlay,:,:] *= phys_arr
-            emis_arr *= np.repeat(phys_arr, nlay, axis=1) 
+            emis_arr *= phys_arr # note implicit broadcasting to all levels and timesteps
             spcs_dict[physical_data.spcs[0]] = emis_arr #Sougol
         
         #add bcon values to emissons
