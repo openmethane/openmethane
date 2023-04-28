@@ -153,14 +153,8 @@ def map_sense( sensitivity ):
         emis_unit = unit_convert_emis[ dt.replace_date( unit_key, date ) ]
         bcon_unit = unit_convert_bcon[ dt.replace_date( unit_key, date ) ]
         for spc in PhysicalAdjointData.spcs:
-            sense_arr_emis = (sense_data_dict[ spc ] * emis_unit)[:-1,:nlay,:,:]
-           # model_arr_emis = sense_arr_emis.reshape((model_step-1,-1,nlay,nrow,ncol,)).sum(axis=1)#Sougol
-            model_arr_emis = sense_arr_emis.reshape((1,-1,nlay,nrow,ncol,)).sum(axis=1)
-            #emis_val_arr = emis_vars[spc][:-1,0,:,:] * (1.0/cell_area)
-            #sougol
-            #emis_val_arr = emis_vars[spc][0,0,:,:] * (1.0/cell_area)
-            emis_val_arr = emis_vars[spc][0,0,:,:] 
-            emis_dict[spc][pstep,:,:,:] += (model_arr_emis.sum(axis=1) * emis_val_arr).sum(axis=0)
+            sense_arr_emis = (sense_data_dict[ spc ] * emis_unit) # really a unit conversion 
+            emis_dict[spc][pstep,:,:,:] += (sense_arr_emis * emis_vars[spc]).sum(axis=(0,1)) # reverses splattering over timesteps and layers in prepare-model
 
             #sense_arr_bcon = (sense_data_dict[ spc ][:] * bcon_unit)[:-1,:,:,:]
             
