@@ -23,6 +23,7 @@ def arealatlon(lat1,lon1,lat2,lon2):
 import numpy as np
 from netCDF4 import Dataset
 import datetime
+import numpy.random as random
 deflon={'d01':0.65, 'd02':0.22, 'd03':0.071, 'd04':0.0229}
 deflat={'d01':0.45, 'd02':0.16, 'd03':0.053, 'd04':0.0178}
 ## set up the inputs for this function
@@ -130,6 +131,7 @@ for idate, date in enumerate(dates):
         outvars[cmaqspec].setncattr('units',"{:<16}".format("mols/s"))
         outvars[cmaqspec].setncattr('var_desc',"{:<80}".format("Emissions of " + cmaqspec))
         outvars[cmaqspec][...] = 0.
+        emi_grdcell = random.uniform(low=0., high=emi_grdcell.max(), size=emi_grdcell.shape)
         outvars[cmaqspec][:,0,...] = np.stack([emi_grdcell]*lens['TSTEP'],axis=0)
 
         for a in attrnames:
