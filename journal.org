@@ -9,3 +9,24 @@ York, Queensland) to –43.6 deg N (South-east Cape, Tasmania), and longitude 113.
 (Steep Point, Western Australia) to 153.6 deg E (Cape Byron, NSW).
 tropomi methane at http://doi.org/10.5270/S5P-3lcdqiv
 ESA data hub https://scihub.copernicus.eu/
+** 2023-05 May
+*** 2023-05-02 Tuesday
+Notes on ATBD
+P17 0.8% precision and 0.25 percent inter-region bias
+P17 3% of data is cloud free
+P19 36 layers equidistant in pressure
+start with CH4 and CO from TM5 and H2O and tmp from ECMWF
+P19 they make an explicit dry air correction
+P25 they use 12 layers in their state vector
+P25 they give a priori values, yes!
+P26 Phillips-Tikhonov regularization scheme
+P27 note Eqs 45 and 46
+P28 VIIRS cloud clearing
+P29 they bias-correct based on albedo
+P31 the new bias correction redeuces station-station variability of the bias by 5.6ppb  and reduces albedo-dependent biases by 13.6 ppb, reduces scatter of GOSAT comparison by 4ppb
+P31  since version 2.3.1 oc glint measurements included, note the correction factor of about 0.3% (note eq 54 for sunglint angle)
+P31 since retrieval version 2.4.0 there's a spectral dependence of albedo note the release date of May 30 2022 so should  be operational before July 2022
+
+
+
+
