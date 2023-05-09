@@ -26,7 +26,83 @@ P29 they bias-correct based on albedo
 P31 the new bias correction redeuces station-station variability of the bias by 5.6ppb  and reduces albedo-dependent biases by 13.6 ppb, reduces scatter of GOSAT comparison by 4ppb
 P31  since version 2.3.1 oc glint measurements included, note the correction factor of about 0.3% (note eq 54 for sunglint angle)
 P31 since retrieval version 2.4.0 there's a spectral dependence of albedo note the release date of May 30 2022 so should  be operational before July 2022
+d['CLAT'][...].min()
+Out[5]: -46.955074
 
+In [6]: d['CLAT'][...].max()
+Out[6]: -6.7685623
 
+In [7]: d['CLONG'][...].max()
+Out[7]: 161.51807
 
+In [8]: d['CLONG'][...].min()
+Out[8]: 105.08594
+
+In [9]:
+*** 2023-05-03 Wednesday
+Mark Lunt seminar
+He notes that in the safeguard bill big emitters now need to report by
+gas
+He works for IMEO as well, previously at U. Edinburgh
+Background on HFC inversions
+I missed Ann's introduction
+transdimensional inversion borrowed from seismology
+unconvinced about this, aggregations of high-res give you the same
+info if you treat posterior covar properly
+lunt 2016 paper
+UK methane emissions  similar results to alistair Manning but smaller
+uncertainty
+did sectoral propagation by mapping trends onto priors
+did spatial trends from GOSAT showing anomalies from global growth
+big blob central africa
+regional inversion for east africa  2020-21 emissions
+correlated with GRACE and it's strong!
+James France from Royal Holloway Bolivia wetland also showing strong
+wetland emissions, more than wetland models
+MethaneSat launches late 23
+synthesis paper i in Science
+partnering with google streetview for mobile monitoring
+International Methane Emissions Observatory IMEO part of UNEP
+fossil largest abatement opportunity
+IMEO funds science studies, wonder if we could have used that from UoM
+not doing science themselves
+transparency is a major theme for companies, companies can commit to
+making measurement-based estimates AGMP2.0 I think is the name
+facility-specific emission factors.
+whole site methods too like aircraft
+Australian companies behind on joining this, you surprise me!
+IMEO developing alert system
+super-emitter releases reported directly to company.
+5 key pillars of funding
+1) led by research institutes
+2) multiple methodologies
+3) independent oversight
+4) public data
+5)
+there's a coal and an oil&gas project done in Australia
+Knoledge Gaps:
+does liquefaction leak?
+ten liquefaction plants around the country
+use flight campaigns, led by ARA
+other study is coal-mines, especially Bowen  Basin
+will move into agriculture
+political imperative to get total emissions better
+Pep advertises national budgets
+Aust' gov't exploring remote sensing data sets
+Langenfelds notices East Australian anomaly in 2021, fires, flooding?
+Ashok asks about what tools, NAME for UK, GEOSS-CHEM nested down to
+0.25 degree where they're not using the adjoint
+d['XLAT_C'][...].min()
+Out[22]: -47.06114
+
+In [23]: d['XLAT_C'][...].max()
+Out[23]: -6.647835
+
+In [24]: d['XLONG_C'][...].max()
+Out[24]: 161.70013
+
+In [25]: d['XLONG_C'][...].min()
+Out[25]: 104.90387
+so domain edges for data should probably be:
+(-47., 104.) (-6., 162.)
 
