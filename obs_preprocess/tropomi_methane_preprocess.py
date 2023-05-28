@@ -13,9 +13,9 @@ import glob
 import numpy as np
 import datetime as dt
 
-from . import context
+import context
 from obsESA_defn import ObsSRON
-from .model_space import ModelSpace
+from model_space import ModelSpace
 from netCDF4 import Dataset
 import fourdvar.util.file_handle as fh
 from fourdvar.util.date_handle import start_date, end_date
@@ -33,7 +33,7 @@ import pdb
 source_type = 'filelist'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = glob.glob( 'path to ESA files/S5P_OFFL_L2__CO_____201905*.nc' ) 
+source = ['/home/unimelb.edu.au/prayner/work/openmethane-beta/py4dvar/sat_data/data/20220701-00-00-00_20220702-23-59-59_104.0_-47.0_162.0_-6.0/S5P_OFFL_L2__CH4____20220702T040957_20220702T055126_24442_02_020301_20220703T200603.SUB.nc4']
 
 output_file = input_defn.obs_file
 
@@ -61,10 +61,10 @@ for fname in filelist:
     var_dict = {}
     with Dataset( fname, 'r' ) as f:
         instrument = f.groups['PRODUCT']
-        meteo = f.groups['PRODUCT']['SUPPORT_DATA']['DETAILED_RESULTS']
-        product = f.groups['PRODUCT']
-        diag = f.groups['PRODUCT']
-        geo = f.groups['PRODUCT']['SUPPORT_DATA']['GEOLOCATIONS']
+        meteo = f['/PRODUCT/SUPPORT_DATA/INPUT_DATA']
+        product = f['/PRODUCT']
+        diag = f['/PRODUCT']
+        geo = f['/PRODUCT/SUPPORT_DATA/GEOLOCATIONS']
         
         latitude = instrument.variables['latitude'][:]
         latitude_center = latitude.reshape((latitude.size,))
@@ -85,21 +85,21 @@ for fname in filelist:
         solar_azimuth_angle = solar_azimuth_deg.reshape((solar_azimuth_deg.size,))
         viewing_azimuth_deg = geo.variables['viewing_azimuth_angle'][:]
         viewing_azimuth_angle = viewing_azimuth_deg.reshape((viewing_azimuth_deg.size,))
-        pressure = meteo.variables['pressure_levels'][:,:]
-        pressure_levels = pressure.reshape((latitude.size,50))
-        co = product.variables['carbonmonoxide_total_column'][:]
-        co_column = co.reshape((co.size,))
-        co_precision = product.variables['carbonmonoxide_total_column_precision'][:]
-        co_column_precision = co_precision.reshape((co_precision.size,))
-        co_averaging_kernel = meteo.variables['column_averaging_kernel'][:,:] ##unit is m
-        averaging_kernel = co_averaging_kernel.reshape((latitude.size,50))
-        #co_column_apriori = product.variables['co_column_apriori'][:]
-        #co_profile_apriori = product.variables['co_profile_apriori'][:,:]
+        pressure_interval = meteo.variables['pressure_interval'][:,:]
+#        pressure_levels = pressure.reshape((latitude.size,50))
+        ch4 = product.variables['methane_mixing_ratio_bias_corrected'][...]
+        ch4_column = ch4.reshape((ch4.size,))
+        ch4_precision = product.variables['methane_mixing_ratio_precision'][:]
+        ch4_column_precision = ch4_precision.reshape((ch4_precision.size,))
+        ch4_averaging_kernel = product['SUPPORT_DATA/DETAILED_RESULTS/column_averaging_kernel'][...]
+        averaging_kernel = np.reshape( ch4_averaging_kernel, (-1,ch4_averaging_kernel.shape[-1]))
+        #ch4_column_apriori = product.variables['ch4_column_apriori'][:]
+        #ch4_profile_apriori = product.variables['ch4_profile_apriori'][:,:]
         qa = diag.variables['qa_value'][:]
         qa_value = qa.reshape((qa.size,))
 
 
-    mask_arr = np.ma.getmaskarray( co_column )
+    mask_arr = np.ma.getmaskarray( ch4_column )
 
     #quick filter out: mask, lat, lon and quality
     lat_filter = np.logical_and( latitude_center>=model_grid.lat_bounds[0],
@@ -131,8 +131,8 @@ for fname in filelist:
               #print 'read {}'.format( f )
               with Dataset( f, 'r' ) as f:
                 if (f.dimensions['nobs'].size==size):
-                  co_profile_apriori = f.variables['CO_profile_apriori'][:] 
-                  co_column_apriori = f.variables['CO_column_apriori'][:] 
+                  ch4_profile_apriori = f.variables['CH4_profile_apriori'][:] 
+                  ch4_column_apriori = f.variables['CH4_column_apriori'][:] 
                   lat_check = f.variables['LAT'][:] 
                   lon_check = f.variables['LON'][:] 
                   
@@ -151,16 +151,16 @@ for fname in filelist:
             for j in range(1,51):
              press_levels[j]= pressure_levels[i,j-1]
             var_dict['pressure_levels'] = press_levels
-            var_dict['co_column'] = co_column[i]
-            var_dict['co_column_precision'] = co_column_precision[i]
+            var_dict['ch4_column'] = ch4_column[i]
+            var_dict['ch4_column_precision'] = ch4_column_precision[i]
             var_dict['obs_kernel'] = averaging_kernel [i,:]
             var_dict['qa_value'] = qa_value[i]
             
-            ###find the proper index for co_profile_apriori:
+            ###find the proper index for ch4_profile_apriori:
             for j in range(size): 
               if (lat_check[j]==latitude_center[i]) and (lon_check[j]==longitude_center[i]):            
-                var_dict['co_profile_apriori'] = co_profile_apriori[j,:]
-                var_dict['co_column_apriori'] = co_column_apriori[j]
+                var_dict['ch4_profile_apriori'] = ch4_profile_apriori[j,:]
+                var_dict['ch4_column_apriori'] = ch4_column_apriori[j]
 
             obs = ObsSRON.create( **var_dict )           
             obs.interp_time = False
