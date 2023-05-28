@@ -21,11 +21,32 @@ P25 they use 12 layers in their state vector
 P25 they give a priori values, yes!
 P26 Phillips-Tikhonov regularization scheme
 P27 note Eqs 45 and 46
+eq.45 x_n+1 = g^prime y^prime +A^prime x_n^prime +(I
+-A^prime)x_apr^prime
+a prime is averaging kernel
+g prime contribution function matrix a prime = g prime k prime
+g prime = (k prime^T k prime + gamma I)^-1 K prime^T
+y prime is not defined
+prev line
+x prime = w x and y prime = s y ^-1/2 (y pf x_n)
+y prime = s_y^{-1/2] * (y -f(x_n))
+K prime = S_y^{-1/2} K W^{-1}
+eq. 46  x_retr = A x_true +(I -1) x_a + G e_y + G e_f
+product manual
+(1) x(ch4_ref)^avg = v ch4_ref^avg /v(air_dry^ref)
+(2) v^ch4_ref^avg) = v(ch4_apr) +sum_i=1^n a_i *(delta v_ch4^ref_i
+a_i is column averaging kernel for layer i delta v ch4_ref is partial
+column of ref profile in retrieval i
+(3) delta v ch4 ref _i = x ch4 ref i * delta v a_dry,ref
+-delta v ch4_apr_i
 P28 VIIRS cloud clearing
 P29 they bias-correct based on albedo
 P31 the new bias correction redeuces station-station variability of the bias by 5.6ppb  and reduces albedo-dependent biases by 13.6 ppb, reduces scatter of GOSAT comparison by 4ppb
 P31  since version 2.3.1 oc glint measurements included, note the correction factor of about 0.3% (note eq 54 for sunglint angle)
-P31 since retrieval version 2.4.0 there's a spectral dependence of albedo note the release date of May 30 2022 so should  be operational before July 2022
+P31 since retrieval version 2.4.0 there's a spectral dependence of
+albedo note the release date of May 30 2022 so should  be operational
+before July 2022
+**** finding centres of grids etc
 d['CLAT'][...].min()
 Out[5]: -46.955074
 
@@ -92,6 +113,7 @@ Aust' gov't exploring remote sensing data sets
 Langenfelds notices East Australian anomaly in 2021, fires, flooding?
 Ashok asks about what tools, NAME for UK, GEOSS-CHEM nested down to
 0.25 degree where they're not using the adjoint
+**** finding domain edges etc
 d['XLAT_C'][...].min()
 Out[22]: -47.06114
 
@@ -105,4 +127,11 @@ In [25]: d['XLONG_C'][...].min()
 Out[25]: 104.90387
 so domain edges for data should probably be:
 (-47., 104.) (-6., 162.)
-
+*** 2023-05-18 Thursday
+remember when running setup scripts for wrf and CMAQ that whenever you
+regenerate geo_em you need to regenerate *everything* including met_em
+files, and that, afaik, the num_land_cat needs to be consistent
+between the met_em the geo_em and the namelist ... great way of
+wasting a day that!
+*** 2023-05-22 Monday
+methane wetland emissions from https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1915
