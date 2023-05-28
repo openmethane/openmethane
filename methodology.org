@@ -1,0 +1,38 @@
+#+TITLE: Methodology Notes
+#+AUTHOR: Peter Rayner
+* Document Structure
+  - will start with an overview as a schematic then perhaps a series
+    of descriptions for the components
+- Will describe each key point in the process with some suggestions on how we might illustrate it
+* Overview of Process
+- I imagine a cartoon/schematic for this which I'll try to describe
+  - box called Initial estimate, perhaps including a thumbnail map
+  - Arrow leads to box called atmospheric pollution model, we might represent it by a weather map with wind arros drawn on it
+  - Arrow leads to some kind of concentration map
+  - Satellite measures a concentration map with the same structure but different values (colours?)
+  - We take the difference between those maps to produce a third map. Hot-spots in this difference map drive the alerts
+  - Arrow leads from this difference map to the atmospheric model again, this time with the wind arrows reversed
+  - Arrow leads back to improved emissions
+- Users could perhaps click on any of those boxes to get more information on the steps
+  - 
+* Initial Emissions Estimates
+- Show overall emissions with some grid superimposed, emissions should not vary within each grid cell to emphasise the importance of resolution. Should perhaps have a large point source in it too.
+- Could list a few categories (mines, agriculture, termites ...) and show the layers being built up
+- Optionally could talk about uncertainty
+* Expected Atmospheric Concentrations
+- Show some image of pollutant concentration, best with a plume starting from the point source in the previous figure. Even better if it can be kind of 3d figure.
+- Needs weather model for wind direction etc (could show image of winds
+* Satellite observations
+- Picture of satellite
+- Satellite schematic like the old slide deck
+- Some way of showing satellite grid over Earth, perhaps parallel lines with arrows for direction and grid lines across them for along-track sampling
+- Impact of clouds etc, adds a cloud mask over previous figure so many grid cells are blanked out
+- Perhaps show weaker link to emissions than surface observations but I'm not sure it helps, showing what the measurement *isn't* might just complicate things
+- 
+* Alerts
+- Apply satellite sampling to pollutant concentration field from model
+- Compare with actual satellite obs (so cloud-masked figure from last step)
+- Show differences, especially noting hot-spots for alerts
+* Emissions Correction
+- Show difference plot from alerts step and wind map with arrows reversed
+- Arrows leading backwards from high differences to show increased emissions
