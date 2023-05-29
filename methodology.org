@@ -18,16 +18,19 @@
 * Initial Emissions Estimates
 - Show overall emissions with some grid superimposed, emissions should not vary within each grid cell to emphasise the importance of resolution. Should perhaps have a large point source in it too.
 - Could list a few categories (mines, agriculture, termites ...) and show the layers being built up
+- There are cases where we only have totals not maps and need to use a
+  proxy, perhaps show that
 - Optionally could talk about uncertainty
 * Expected Atmospheric Concentrations
+- dataflow starts from global weather observations
+- make a detailed forecast guided by global obs, (can we show inset picture)
+- Generates wind vectors that move pollutants around in atmosphere 
 - Show some image of pollutant concentration, best with a plume starting from the point source in the previous figure. Even better if it can be kind of 3d figure.
-- Needs weather model for wind direction etc (could show image of winds
 * Satellite observations
 - Picture of satellite
-- Satellite schematic like the old slide deck
+- Satellite schematic. A bit  like the old slide deck but we'd like to show there's an atmosphere in there and  that we're measuring all through it. For bonus points we could show some kind of plume at the surface caused by an emission and show that we also see all this pollutant higher in the  atmosphere which obscures it
 - Some way of showing satellite grid over Earth, perhaps parallel lines with arrows for direction and grid lines across them for along-track sampling
 - Impact of clouds etc, adds a cloud mask over previous figure so many grid cells are blanked out
-- Perhaps show weaker link to emissions than surface observations but I'm not sure it helps, showing what the measurement *isn't* might just complicate things
 - 
 * Alerts
 - Apply satellite sampling to pollutant concentration field from model
