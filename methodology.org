@@ -6,13 +6,27 @@
 - Will describe each key point in the process with some suggestions on how we might illustrate it
 * Overview of Process
 - I imagine a cartoon/schematic for this which I'll try to describe
-  - box called Initial estimate, perhaps including a thumbnail map
-  - Arrow leads to box called atmospheric pollution model, we might represent it by a weather map with wind arros drawn on it
-  - Arrow leads to some kind of concentration map
-  - Satellite measures a concentration map with the same structure but different values (colours?)
-  - We take the difference between those maps to produce a third map. Hot-spots in this difference map drive the alerts
-  - Arrow leads from this difference map to the atmospheric model again, this time with the wind arrows reversed
-  - Arrow leads back to improved emissions
+  - box called Initial estimate, perhaps including a thumbnail map;
+    caption: The National Methane Inventory combined with Land Use
+    data and other information allows us to produce a map of estimated methane emissions.
+  - Arrow leads to box called atmospheric pollution model, we might
+    represent it by a weather map with wind arros drawn on it;
+    caption: A detailed weather forecast model (WRF) predicts winds which transport methane gas in the
+    atmosphere. 
+  - Arrow leads to some kind of concentration map; caption: Combining the estimated emissions and an atmospheric pollution model (CMAQ), we generate a
+    map of expected atmospheric concentrations of methane - amount of methane in a cubic metre
+    of air.
+  - Satellite measures a concentration map with the same structure but
+    different values (colours?); caption: Satellites can measure the average concentration of methane through the atmosphere.
+  - We take the difference between those maps to produce a third map.
+    Hot-spots in this difference map drive the alerts; caption: We compare the atmospheric concentrations measured by the satellite with the expected
+    atmospheric concentrations produced from the model. These differences will inform corrections
+    to the initial emissions estimates. Where these differences are significant, we raise an alert.
+  - Arrow leads from this difference map to the atmospheric model
+    again, this time with the wind arrows reversed; caption: We can run the atmospheric pollution model backwards to locate the emissions corresponding
+    to the concentration differences.
+  - Arrow leads back to improved emissions; caption: Corrections produce an improved estimate compared to our initial estimated methane
+    emissions.
 - Users could perhaps click on any of those boxes to get more information on the steps
   - 
 * Initial Emissions Estimates
@@ -21,6 +35,8 @@
 - There are cases where we only have totals not maps and need to use a
   proxy, perhaps show that
 - Optionally could talk about uncertainty
+* Atmospheric Pollution Model
+
 * Expected Atmospheric Concentrations
 - dataflow starts from global weather observations
 - make a detailed forecast guided by global obs, (can we show inset picture)
@@ -31,7 +47,6 @@
 - Satellite schematic. A bit  like the old slide deck but we'd like to show there's an atmosphere in there and  that we're measuring all through it. For bonus points we could show some kind of plume at the surface caused by an emission and show that we also see all this pollutant higher in the  atmosphere which obscures it
 - Some way of showing satellite grid over Earth, perhaps parallel lines with arrows for direction and grid lines across them for along-track sampling
 - Impact of clouds etc, adds a cloud mask over previous figure so many grid cells are blanked out
-- 
 * Alerts
 - Apply satellite sampling to pollutant concentration field from model
 - Compare with actual satellite obs (so cloud-masked figure from last step)
