@@ -14,4 +14,4 @@ import os
 root_path = '/home/unimelb.edu.au/prayner/work/openmethane-beta/py4dvar'
 
 #full path to the branch-specific data
-store_path = '/home/unimelb.edu.au/prayner/work/openmethane-beta/run'
+store_path = '/home/unimelb.edu.au/prayner/Dropbox/openmethane-beta/'
