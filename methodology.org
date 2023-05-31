@@ -30,9 +30,31 @@
 - Users could perhaps click on any of those boxes to get more information on the steps
   - 
 * Initial Emissions Estimates
-- Show overall emissions with some grid superimposed, emissions should not vary within each grid cell to emphasise the importance of resolution. Should perhaps have a large point source in it too.
-- Could list a few categories (mines, agriculture, termites ...) and show the layers being built up
-- There are cases where we only have totals not maps and need to use a
+- Show overall emissions with some grid superimposed, emissions should
+  not vary within each grid cell to emphasise the importance of
+  resolution. Should perhaps have a large point source in it too.
+  Caption: We divide Australia into grid squares and calculate the
+  average emission in each. The more grid squares we have the more
+  detailed our emission maps but the fewer measurements we have to
+  estimate each one.
+- How do we estimate emissions? Methane comes from many activities
+  and noone surveys each grid square to calculate how much comes from
+  each activity in each grid square. Instead they accumulate information on how much the
+  activity generates in a region (say Australia or a state) then that
+  emission is distributed among grid squares. The national estimate for
+  each  activity is, itself, indirect. Instead we estimate or count
+  the amount of an activity taking place and multiply by how much
+  methane is emitted by each unit of activity. This is described by
+  the equation $E = fA$ where $E$ is the emission, $A$ the amount of
+  the activity and $f$ a factor relating activities and emissions. $f$
+  is called an emission factor. Emission factors must be estimated or
+  measured at one place and time then applied elsewhere. Incorrect
+  emission factors will lead to incorrect emission estimates. This is
+  a major source of uncertainty in methane emissions calculated this way. 
+- Sometimes we don't have spatial data for the activity we want but
+  can measure a good surrogate. For example the amount of fossil fuel
+  burnt in a region is calculated by how much is sold to end-users,
+  but where they burn it is 
   proxy, perhaps show that
 - Optionally could talk about uncertainty
 * Atmospheric Pollution Model
