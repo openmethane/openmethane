@@ -53,10 +53,29 @@
   a major source of uncertainty in methane emissions calculated this way. 
 - Sometimes we don't have spatial data for the activity we want but
   can measure a good surrogate. For example the amount of fossil fuel
-  burnt in a region is calculated by how much is sold to end-users,
-  but where they burn it is 
-  proxy, perhaps show that
-- Optionally could talk about uncertainty
+  burnt in a region is calculated by how much is sold to end-users.
+  This can be established by sales statistics and is often well known
+  but where people use the fossil fuel is not. Previous research _link
+  to papers_ has shown fossil fuel use is predicted well by the
+  intensity of nighttime lights _link to image_ which are observed by
+  satellites. We can spatialize fossil fuel sources from different
+  sectors according to the intensity of nighttime lights.
+- we need to calculate the level of confidence we have in the
+  emissions inventory. This informs the emissions update process (we
+  will be more likely to make corrections where we least trust the
+  inventory) but also helps us use the data to answer questions like
+  the significance of detected trends. Uncertainties in emissions
+  come from uncertainties in activity data, emission factors, regional
+  totals, the data we use to spatialize them and the assumption that
+  our spatial surrogate is accurate for the emissions sector.
+  Uncertainties in numbers like emission factors are particularly
+  serious since they may bias emissions in  a region rather than a
+  single point. We usually express our confidence in an uncertainty,
+  expressed as a standard deviation $\sigma$. We calculate the
+  uncertainty for each point in the inventory by adding the
+  uncertainties from each sector. For mathematical reasons we add the
+  squares \[\sigma = \sum_{i=1}^N \sigma_i^2\] where $\sigma_i$ is the
+  uncertainty for each sector.
 * Atmospheric Pollution Model
 
 * Expected Atmospheric Concentrations
