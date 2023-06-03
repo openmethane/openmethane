@@ -107,7 +107,7 @@
   potentially misleading_ 
 
 * Expected Atmospheric Concentrations
-- Show some image of pollutant concentration, best with a plume starting from the point source in the previous figure. Even better if it can be kind of 3d figure.
+- By combining the emissions inventory Show some image of pollutant concentration, best with a plume starting from the point source in the previous figure. Even better if it can be kind of 3d figure.
 * Satellite observations
 - Picture of satellite
 - Satellite schematic. A bit  like the old slide deck but we'd like to show there's an atmosphere in there and  that we're measuring all through it. For bonus points we could show some kind of plume at the surface caused by an emission and show that we also see all this pollutant higher in the  atmosphere which obscures it
