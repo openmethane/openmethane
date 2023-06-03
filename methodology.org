@@ -77,11 +77,36 @@
   squares \[\sigma = \sum_{i=1}^N \sigma_i^2\] where $\sigma_i$ is the
   uncertainty for each sector.
 * Atmospheric Pollution Model
+- dataflow starts from global weather observations. Most large weather
+  agencies generate short-term weather forecasts which they correct
+  with satellite and surface observations. This combination of
+  forecast and observation produces the best picture of wind,
+  temperature and pressure in the atmosphere we have. The agencies run
+  these forecasts globally on a mesh or grid. The weather data is
+  pixelated at the resolution of the mesh so the finer the mesh the
+  better our data. Computational
+  restrictions limit these global forecasts to about a 100km mesh which is
+  not fine enough for our need. So we run a finer mesh weather model
+  called the Weather Research and forecast Model (WRF) in our region
+  of interest. We need to know what weather behaviour is coming from
+  the outside so we use the global weather models to feed information
+  to the edges of our region. _might be good here to show a large mesh
+  with a finer mesh inset. Could even show a pressure pattern
+  pixelated at the two resolutions._
+- The model produces a snapshot of pressure, wind, temperature and
+  moisture every few minutes. It is these wind patterns which move
+  gasses like methane around in the atmosphere.
+- Calculating a complete picture of the weather every few minutes is
+  extremely expensive. Moving gasses around in the atmosphere is
+  simpler. We don't need to calculate rainfall or thunderstorms for
+  example. So we take the weather data from WRF and use it in an air-pollution
+  model, the Community Multi-Scale Air Quality Model (CMAQ). CMAQ can
+  also calculate how pollutants are formed and destroyed by chemical
+  processes in the atmosphere though for our purposes these processes
+  are not very important. _we should discuss that, it's true but
+  potentially misleading_ 
 
 * Expected Atmospheric Concentrations
-- dataflow starts from global weather observations
-- make a detailed forecast guided by global obs, (can we show inset picture)
-- Generates wind vectors that move pollutants around in atmosphere 
 - Show some image of pollutant concentration, best with a plume starting from the point source in the previous figure. Even better if it can be kind of 3d figure.
 * Satellite observations
 - Picture of satellite
