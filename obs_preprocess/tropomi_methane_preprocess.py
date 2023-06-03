@@ -125,17 +125,6 @@ for fname in filelist:
             time1 = (edate-epoch).total_seconds() + 24*60*60
             if tsec < time0 or tsec > time1:
                 continue
-            ###reading reference profile 
-            Ref_file=   glob.glob('Path to ref profile output directory/Ref_profile{}*.nc'.format(time[i][0:10])) 
-            for f in Ref_file:
-              #print 'read {}'.format( f )
-              with Dataset( f, 'r' ) as f:
-                if (f.dimensions['nobs'].size==size):
-                  ch4_profile_apriori = f.variables['CH4_profile_apriori'][:] 
-                  ch4_column_apriori = f.variables['CH4_column_apriori'][:] 
-                  lat_check = f.variables['LAT'][:] 
-                  lon_check = f.variables['LON'][:] 
-                  
             var_dict = {}
             #var_dict['time'] = dt.datetime( *time[0,i] )
             var_dict['time'] = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
@@ -157,11 +146,6 @@ for fname in filelist:
             var_dict['qa_value'] = qa_value[i]
             
             ###find the proper index for ch4_profile_apriori:
-            for j in range(size): 
-              if (lat_check[j]==latitude_center[i]) and (lon_check[j]==longitude_center[i]):            
-                var_dict['ch4_profile_apriori'] = ch4_profile_apriori[j,:]
-                var_dict['ch4_column_apriori'] = ch4_column_apriori[j]
-
             obs = ObsSRON.create( **var_dict )           
             obs.interp_time = False
             obs.model_process( model_grid )           
