@@ -10,7 +10,7 @@ See the License for the specific language governing permissions and limitations 
 
 
 # start date in int(YYYYMMDD) format
-start_date = 20190701
+start_date = 20220701
 
 # end date in int(YYYYMMDD) format
-end_date = 20190701
+end_date = 20220701
