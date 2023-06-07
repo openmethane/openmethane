@@ -56,9 +56,9 @@
   can measure a good surrogate. For example the amount of fossil fuel
   burnt in a region is calculated by how much is sold to end-users.
   This can be established by sales statistics and is often well known
-  but where people use the fossil fuel is not. Previous research _link
-  to papers_ has shown fossil fuel use is predicted well by the
-  intensity of nighttime lights _link to image_ which are observed by
+  but where people use the fossil fuel is not. Previous research link
+  to papers* has shown fossil fuel use is predicted well by the
+  intensity of nighttime lights *link to image* which are observed by
   satellites. We can spatialize fossil fuel sources from different
   sectors according to the intensity of nighttime lights.
 - we need to calculate the level of confidence we have in the
@@ -91,9 +91,9 @@
   called the Weather Research and forecast Model (WRF) in our region
   of interest. We need to know what weather behaviour is coming from
   the outside so we use the global weather models to feed information
-  to the edges of our region. _might be good here to show a large mesh
+  to the edges of our region. *might be good here to show a large mesh
   with a finer mesh inset. Could even show a pressure pattern
-  pixelated at the two resolutions._
+  pixelated at the two resolutions.*
 - The model produces a snapshot of pressure, wind, temperature and
   moisture every few minutes. It is these wind patterns which move
   gasses like methane around in the atmosphere.
@@ -104,8 +104,8 @@
   model, the Community Multi-Scale Air Quality Model (CMAQ). CMAQ can
   also calculate how pollutants are formed and destroyed by chemical
   processes in the atmosphere though for our purposes these processes
-  are not very important. _we should discuss that, it's true but
-  potentially misleading_ 
+  are not very important. *we should discuss that, it's true but
+  potentially misleading* 
 
 * Expected Atmospheric Concentrations
 - By integrating our Initial Estimate with atmospheric condition models, we create a map indicating expected atmospheric concentrations of methane.
@@ -144,11 +144,20 @@
   - So the measurement works best in places with little cloud, not too
     close to the poles and without lots of dust pollution. Australia
     fits these criteria well.
-- Some way of showing satellite grid over Earth, perhaps parallel
+- *Some way of showing satellite grid over Earth, perhaps parallel
   lines with arrows for direction and grid lines across them for
-  along-track sampling.  Text: The detector on many satellites is like
+  along-track sampling.*  The detector on many satellites is like
   the detector on a digital camera. One difference is that instead of
-  capturing an image like a camera, the satellite captures a single line.
+  capturing an image like a camera, the satellite captures a single
+  line, usually at right angles to the direction the satellite is travelling. Also like a digital camera the satellite takes time to capture
+  enough light to produce useful data. All this time the satellite is
+  travelling over the Earth's surface. Currently the satellite travels
+  5.6km across the surface of the Earth as it takes each measurement.
+  Along the line of measurements (perpendicular to the satellite's
+  path) the satellite designers must decide how much to zoom or pan
+  the instrument. A zoomed in image has smaller pixels so more
+  detailed measurements but with a smaller area, leaving parts of the
+  Earth that may never be measured. 
 - Impact of clouds etc, adds a cloud mask over previous figure so many grid cells are blanked out
 * Alerts
 - Apply satellite sampling to pollutant concentration field from model
