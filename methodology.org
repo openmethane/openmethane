@@ -111,7 +111,40 @@
 * Satellite observations
 - Picture of satellite
 - Satellite schematic. A bit  like the old slide deck but we'd like to show there's an atmosphere in there and  that we're measuring all through it. For bonus points we could show some kind of plume at the surface caused by an emission and show that we also see all this pollutant higher in the  atmosphere which obscures it
-- Some way of showing satellite grid over Earth, perhaps parallel lines with arrows for direction and grid lines across them for along-track sampling
+- Satellites measure light or infrared radiation (heat). When they
+  look at the Earth they see radiation that has passed through the
+  atmosphere and may have bounced off the surface. Different gases in
+  the atmosphere absorb different wavelengths (colours) of light. So
+  if we know or can measure the amount of light at different
+  wavelengths entering the atmosphere from the Sun, and can measure
+  how much makes it back out of the atmosphere towards the satellite
+  we can calculate how much of various gases occur in the atmosphere.
+  This is a complicated measurement for a number of reasons:
+  - The light may not make it all the way to the surface. If it
+    bounces off a cloud we may only measure the gas in part of the
+    atmosphere. We usually don't know how high the cloud is so we
+    don't know how much of the atmosphere we're measuring and cannot
+    use these measurements
+  - The light may pass through dust and smoke in the atmosphere. These
+    also affect the way light travels. While we can correct for small
+    amounts of these, if there is too much dust or smoke we cannot
+    calculate the gas amount.
+  - The ground may also absorb different wavelengths differently. We
+    can correct for this provided we know enough about the surface but
+    this is not always true
+  - The use of sunlight means we can only measure during the day and
+    can't measure too close to the poles in winter
+  - If the Sun or the satellite are too low in the sky when viewed
+    from the place the light strikes the ground then the light is
+    weaker and more likely to encounter clouds or dust.
+  - So the measurement works best in places with little cloud, not too
+    close to the poles and without lots of dust pollution. Australia
+    fits these criteria well.
+- Some way of showing satellite grid over Earth, perhaps parallel
+  lines with arrows for direction and grid lines across them for
+  along-track sampling.  Text: The detector on many satellites is like
+  the detector on a digital camera. One difference is that instead of
+  capturing an image like a camera, the satellite captures a single line.
 - Impact of clouds etc, adds a cloud mask over previous figure so many grid cells are blanked out
 * Alerts
 - Apply satellite sampling to pollutant concentration field from model
