@@ -1,3 +1,4 @@
+#+OPTIONS: tex:t
 #+TITLE: Methodology Notes
 #+AUTHOR: Peter Rayner
 * Document Structure
@@ -45,8 +46,8 @@
   each  activity is, itself, indirect. Instead we estimate or count
   the amount of an activity taking place and multiply by how much
   methane is emitted by each unit of activity. This is described by
-  the equation $E = fA$ where $E$ is the emission, $A$ the amount of
-  the activity and $f$ a factor relating activities and emissions. $f$
+  the equation \(E = fA\) where \(E\) is the emission, \(A\) the amount of
+  the activity and \(f\) a factor relating activities and emissions. \(f\)
   is called an emission factor. Emission factors must be estimated or
   measured at one place and time then applied elsewhere. Incorrect
   emission factors will lead to incorrect emission estimates. This is
@@ -71,10 +72,10 @@
   Uncertainties in numbers like emission factors are particularly
   serious since they may bias emissions in  a region rather than a
   single point. We usually express our confidence in an uncertainty,
-  expressed as a standard deviation $\sigma$. We calculate the
+  expressed as a standard deviation \(\sigma\). We calculate the
   uncertainty for each point in the inventory by adding the
   uncertainties from each sector. For mathematical reasons we add the
-  squares \[\sigma = \sum_{i=1}^N \sigma_i^2\] where $\sigma_i$ is the
+  squares \[\sigma = \sum_{i=1}^N \sigma_i^2\] where \(\sigma_i\) is the
   uncertainty for each sector.
 * Atmospheric Pollution Model
 - dataflow starts from global weather observations. Most large weather
