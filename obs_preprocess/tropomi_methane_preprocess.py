@@ -1,7 +1,8 @@
 """
-ESA_co_preprocess.py
+Tropomi_methane_preprocess.py
 
 Copyright 2016 University of Melbourne.
+Copyright 2023 the Superpower Institute
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +66,8 @@ for fname in filelist:
         product = f['/PRODUCT']
         diag = f['/PRODUCT']
         geo = f['/PRODUCT/SUPPORT_DATA/GEOLOCATIONS']
-        
+        n_layers = product.dimensions['layer'].size
+        n_levels = product.dimensions['level'].size
         latitude = instrument.variables['latitude'][:]
         latitude_center = latitude.reshape((latitude.size,))
         longitude = instrument.variables['longitude'][:]
@@ -86,7 +88,8 @@ for fname in filelist:
         viewing_azimuth_deg = geo.variables['viewing_azimuth_angle'][:]
         viewing_azimuth_angle = viewing_azimuth_deg.reshape((viewing_azimuth_deg.size,))
         pressure_interval = meteo.variables['pressure_interval'][:,:]
-#        pressure_levels = pressure.reshape((latitude.size,50))
+        pressure_interval = pressure_interval.reshape( pressure_interval.size)
+        surface_pressure = meteo.variables['surface_pressure'][:,:]
         ch4 = product.variables['methane_mixing_ratio_bias_corrected'][...]
         ch4_column = ch4.reshape((ch4.size,))
         ch4_precision = product.variables['methane_mixing_ratio_precision'][:]
@@ -136,9 +139,7 @@ for fname in filelist:
             var_dict['viewing_zenith_angle'] = viewing_zenith_angle[i]
             var_dict['solar_azimuth_angle'] = solar_azimuth_angle[i]
             var_dict['viewing_azimuth_angle'] = viewing_azimuth_angle[i]
-            press_levels=np.zeros([51]) ##we need to put pressure=0 at the first leveli
-            for j in range(1,51):
-             press_levels[j]= pressure_levels[i,j-1]
+            press_levels=np.arange(n_levels)* pressure_interval[i] ##we need to put pressure=0 at the first leveli
             var_dict['pressure_levels'] = press_levels
             var_dict['ch4_column'] = ch4_column[i]
             var_dict['ch4_column_precision'] = ch4_column_precision[i]
