@@ -168,6 +168,7 @@ the dark side it cannot. The length of the orbit means there are about
 16 orbits each day but these deliberately do not repeat *better
 confirm that*  
 
+
 *Some way of showing satellite grid over Earth, perhaps parallel
 lines with arrows for direction and grid lines across them for
 along-track sampling.*  The detector on many satellites is like
@@ -185,7 +186,21 @@ Earth that may never be measured. The choice of resolution and orbit
 mean that TROPOMI potentially sees every point on the globe once per day.
 
 *Impact of clouds etc, adds a cloud mask over previous figure so many
- grid cells are blanked out* 
+grid cells are blanked out* Earth is, on average, about 50% covered in
+cloud. TROPOMI cannot make a methane measurement OpenMethane can use
+in cloudy locations. Fortunately clouds move from day to day but some
+regions (such as the tropics in the wet season) can stay cloudy for
+long periods. Clouds are also usually not continuous so TROPOMI can
+often make patchy measurements through breaks in cloud. One trae-off
+of the orbit and optical design is that TROPOMI often looks well off
+to the side of its orbital track to make a measurement. These
+measurements are at high light angles so the chance of being
+intercepted by a cloud is increased. TROPOMI also cannot make a
+measurement when there is too much smoke or dust in the atmosphere. It
+also cannot make many measurements over water For these reasons only a
+few percent of the total TROPOMI measurements are available but this
+still leaves *fill in this number* measurements available over
+Australia each day.
 * Alerts
 
 Apply satellite sampling to pollutant concentration field from model
