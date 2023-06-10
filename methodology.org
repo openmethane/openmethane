@@ -162,7 +162,11 @@ poles. The orbit is structured so that the satellite stays fixed
 relative to the Sun and the Earth rotates beneath it. This is called a
 sun-synchronous orbit. It means S5P crosses the equator at the same
 local time in every orbit, about 1:30pm travelling from south to north
-and 1:30am when travelling from north to south.
+and 1:30am when travelling from north to south. For half of each orbit
+S5P is on the sunny side of the Earth and can take measurements, on
+the dark side it cannot. The length of the orbit means there are about
+16 orbits each day but these deliberately do not repeat *better
+confirm that*  
 
 *Some way of showing satellite grid over Earth, perhaps parallel
 lines with arrows for direction and grid lines across them for
@@ -177,9 +181,11 @@ Along the line of measurements (perpendicular to the satellite's
 path) the satellite designers must decide how much to zoom or pan
 the instrument. A zoomed in image has smaller pixels so more
 detailed measurements but with a smaller area, leaving parts of the
-Earth that may never be measured. 
+Earth that may never be measured. The choice of resolution and orbit
+mean that TROPOMI potentially sees every point on the globe once per day.
 
-Impact of clouds etc, adds a cloud mask over previous figure so many grid cells are blanked out
+*Impact of clouds etc, adds a cloud mask over previous figure so many
+ grid cells are blanked out* 
 * Alerts
 
 Apply satellite sampling to pollutant concentration field from model
