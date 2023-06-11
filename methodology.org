@@ -197,10 +197,20 @@ to the side of its orbital track to make a measurement. These
 measurements are at high light angles so the chance of being
 intercepted by a cloud is increased. TROPOMI also cannot make a
 measurement when there is too much smoke or dust in the atmosphere. It
-also cannot make many measurements over water For these reasons only a
+also cannot make many measurements over water. For these reasons only a
 few percent of the total TROPOMI measurements are available but this
 still leaves *fill in this number* measurements available over
 Australia each day.
+
+When a pollutant like methane enters the atmosphere it usually spreads
+horizontally and vertically in a characteristic plume. *perhaps show
+figure* It will gradually mix with plumes from other sources and the
+background of methane already in the atmosphere. Thus we would like to
+identify each plume at its most concentrated and distinct. Satellite
+instruments are good at this because they observe so many locations
+but they do suffer from measuring methane through the whole atmosphere. Thus even when
+measuring near the source of the plume it is diluted by the background
+of methane already present. 
 * Alerts
 
 Apply satellite sampling to pollutant concentration field from model
