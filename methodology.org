@@ -210,7 +210,22 @@ identify each plume at its most concentrated and distinct. Satellite
 instruments are good at this because they observe so many locations
 but they do suffer from measuring methane through the whole atmosphere. Thus even when
 measuring near the source of the plume it is diluted by the background
-of methane already present. 
+of methane already present.
+
+Every measurement is uncertain. This is particularly clear with
+satellites where what they measure (radiation arriving at their
+detectors) is not what they wish to infer (e.g. methane concentration
+in the atmosphere several hundred kms beneath them). There is an
+algorithm which links the two. This algorithm is based on
+well-understood physics but, as already mentioned, other aspects of
+the atmosphere and surface can affect the satellite measurements. the
+algorithm that calculates methane concentration also calculates an
+uncertainty on that measurement. We check both the measurements and
+uncertainties by comparing satellite measurements with a network of
+ground stations which can themselves be checked against absolute
+standards. this traceability of measurements to absolute standards is
+critical for confidence in detection and for being able to use
+multiple different instruments.
 * Alerts
 
 Apply satellite sampling to pollutant concentration field from model
