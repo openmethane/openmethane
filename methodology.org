@@ -227,7 +227,15 @@ standards. this traceability of measurements to absolute standards is
 critical for confidence in detection and for being able to use
 multiple different instruments.
 * Alerts
-
+OpenMethane publishes notifications when measured methane
+concentration are significantly different from what is expected. We
+calculate the expected value by combining our emissions inventory with
+the air pollution model. This creates a forecast of the expected
+methane concentration for every hour of every day. By carefully
+sampling the model forecast in exactly the same way as the satellite
+samples the atmosphere we can compare our expected value with what we
+measure. 
+concentrations are significantly different from what is expected.
 Apply satellite sampling to pollutant concentration field from model
 
 Compare with actual satellite obs (so cloud-masked figure from last step)
