@@ -234,13 +234,28 @@ the air pollution model. This creates a forecast of the expected
 methane concentration for every hour of every day. By carefully
 sampling the model forecast in exactly the same way as the satellite
 samples the atmosphere we can compare our expected value with what we
-measure. 
-concentrations are significantly different from what is expected.
-Apply satellite sampling to pollutant concentration field from model
+measure. We can only do this where the satellite makes an observation
+so much of Australia will be unavailable on a single day. It is
+important to remember that absence of data does not imply support for
+the emissions inventory, simply that we cannot observe it.
 
-Compare with actual satellite obs (so cloud-masked figure from last step)
-
-Show differences, especially noting hot-spots for alerts
+Care is also needed when deciding what is a significant difference
+between expected and measured values. Concentrations vary naturally as
+winds move methane from different sources around in the atmosphere. In
+principle we can predict all these variations with CMAQ but no model
+is perfect so we will certainly fail to capture some variations. These
+variations will be larger near strong sources of methane. Similarly
+there is an uncertainty in the satellite measurements. So we apply a
+significance threshold for events:
+\[\|\mbox{expected} -\mbox{observed}\| > 2\sigma\].
+\(\sigma\), our total uncertainty comprises the natural variation and
+satellite uncertainty:
+\[\sigma = [\sigma_v^2 +\sigma_s^2]^{0.5}\] where \(\sigma_v\) is the
+uncertainty due to natural variation and \(\sigma_s\) is the
+uncertainty due to satellite measurements. this threshold will be
+refined with experience.
+We also cross-check significant uncertainties for potential problems
+with the satellite data such as incorrect environmental factors.
 * Emissions Correction
 
 Show difference plot from alerts step and wind map with arrows reversed
