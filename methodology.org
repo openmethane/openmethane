@@ -256,6 +256,20 @@ uncertainty due to satellite measurements. this threshold will be
 refined with experience.
 We also cross-check significant uncertainties for potential problems
 with the satellite data such as incorrect environmental factors.
+
+There is a difference between the resolution of the concentration  map
+produced by CMAQ (25\(\times\)25 km) and the satellite observations (5.6\(\times\)7.2
+km). This means we may see concentration events occurring at
+a particular part of a model pixel due to the location of an emission
+within the pixel. This is both useful and problematic. It is useful
+because it can give guidance on where to look for the source of an
+event. It is problematic because CMAQ can only relate average
+emissions in pixels to average concentrations in pixels. If we measure
+an uneven distribution of satellite pixels within a CMAQ pixel we
+could bias this average. This is a serious problem with networks of
+fixed stations but we also need to account for it in satellite data.
+We include this as an extra uncertainty in how well we expect our
+model concentrations to match the satellite data. 
 * Emissions Correction
 
 Show difference plot from alerts step and wind map with arrows reversed
