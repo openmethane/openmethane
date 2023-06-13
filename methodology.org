@@ -199,7 +199,7 @@ intercepted by a cloud is increased. TROPOMI also cannot make a
 measurement when there is too much smoke or dust in the atmosphere. It
 also cannot make many measurements over water. For these reasons only a
 few percent of the total TROPOMI measurements are available but this
-still leaves *fill in this number* measurements available over
+still leaves *around 50,000* measurements available over
 Australia each day.
 
 When a pollutant like methane enters the atmosphere it usually spreads
