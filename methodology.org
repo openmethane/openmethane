@@ -271,8 +271,40 @@ fixed stations but we also need to account for it in satellite data.
 We include this as an extra uncertainty in how well we expect our
 model concentrations to match the satellite data. 
 * Emissions Correction
+Once we have accounted for possible uncertainties in the satellite
+data and the capability of our models, we assume that other mismatches
+between expected and observed concentrations are caused by errors in
+our emissions inventory. Our task is to work backwards from the
+concentration mismatches to work out where and how much to correct the
+emissions. We do this by effectively running the atmospheric pollution
+model backwards. remember that the satellite measures through the
+whole atmosphere and that the wind distributes methane from an
+emission in three dimensions. Thus we need to backtrack concentration
+differences through the atmosphere, not just at the surface. *Show difference plot
+from alerts step and wind map with arrows reversed* Applying these
+corrections from all the concentration mismatches together and
+accounting for all the changes in wind direction over a month we can
+produce a corrected map of the emissions inventory. *Arrows leading backwards from high differences to show increased emissions*
 
-Show difference plot from alerts step and wind map with arrows reversed
+*not sure about this last para*
+One incorrect emission will hopefully generate several concentration
+mismatches so that we have multiple cross-checks on the location and
+size of any error. However the problems with clouds and dust we noted
+earlier may also mean that some emissions are incorrect but don't have
+satellite observations to point out the error. As with the events
+discussed earlier, the absence of correction to an emission could mean
+either that the satellite observations confirm the emissions inventory
+or that we lack observations to check it. We can check this with a
+series of "what if" experiments. We vary the emissions randomly and
+calculate the expected concentrations that the satellite would
+observe. If significant differences in concentration are observable in
+this counter-factual world we can be confident that we would observe
+real differences. On the other hand, if emission differences do not
+yield changes in model concentrations (usually because of cloud) then
+we cannot be confident in our update to the emissions inventory in
+that region.
 
 
-Arrows leading backwards from high differences to show increased emissions
+
+
+
