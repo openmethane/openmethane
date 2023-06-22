@@ -9,11 +9,20 @@ Peter Rayner
 \
 How do we estimate methane emissions?\
 \
-**Methane comes from many activities, and there is no single survey
-which allows us to calculate how much comes from each activity in a
-particular grid area, or grid cell. Instead, we accumulate information
-on how much an activity generates in a region (say Australia, or a
-state), then that emission is distributed among grid cells.\
+**Methane comes from many activities, and there is no single data source
+which  reports how much comes from each activity in a
+particular grid area, or grid cell. We need to calculate this by
+adding up emissions from all the activities that occur in the grid
+cell. There are two ways we can get this information. Sometimes,
+especially for large emitters, they must report emissions. These are
+captured in the National Greenhouse and Energy Report (NGER). These
+are usually reported by each business. If the business has several
+facilities we need some method to allocate the proportion of the
+business's emissions coming from each facility and their locations.
+Then we can add the emissions to the grid cell containing the
+facility.  For other classes of emission we only have national totals.
+We distribute the national total among grid cells according to how
+much of the activity generating the emissions occurs there.\
 \
 The national estimate \[Australia's National Inventory of greenhouse gas
 emissions is published on the Department of Climate Change
@@ -66,13 +75,11 @@ Uncertainties in numbers like emission factors are particularly serious,
 since they may bias emissions in a region rather than a single point.\
 \
 We usually express our confidence in an uncertainty, expressed as a
-standard deviation ![](./ObjectReplacements/Object 2){width="0.252cm"
-height="0.467cm"}. We calculate the uncertainty for each point in the
+standard deviation $\sigma$. We calculate the uncertainty for each point in the
 inventory by adding the uncertainties from each sector. For mathematical
 reasons we add the squares
-![](./ObjectReplacements/Object 4){width="1.547cm" height="1.139cm"}
-where ![](./ObjectReplacements/Object 6){width="0.33cm"
-height="0.531cm"} is the uncertainty for each sector.
+$\sigma = \sum_{i=1}^N \sigma_i^2$ where \$sigma_i$ is the
+uncertainty for each sector.
 
 \
 
@@ -91,7 +98,7 @@ mesh, which is not fine enough for our needs. Because of this, we run a
 finer mesh weather model called the Weather Research and Forecast model
 (WRF) in our region of interest.\
 \
-We need to know what either behaviour is coming from outside the area of
+We need to know  about weather systems coming from outside the area of
 our focus, so we use global weather models to feed information to the
 edges of our region.\
 \
@@ -111,11 +118,11 @@ air-pollution model, the Community Multi-Scale Air Quality Model
 \
 CMAQ can also calculate how pollutants are formed and destroyed by
 chemical processes in the atmosphere, though for our purposes these
-processes are not very important. (Potentially misleading???)\
+processes are not very important.
 
 **Expected Atmospheric Concentrations\
 \
-**By integrating our Initial Estimate with atmospheric condition models,
+**By integrating our Initial Estimate with atmospheric pollution models,
 we create a map indicating expected concentrations of methane.\
 \
 IMAGE\
@@ -143,12 +150,12 @@ the Earth, they see radiation that has passed through the atmosphere and
 may have bounced off the surface.
 
 Different gases in the atmosphere absorb different wavelengths (colours)
-of light. So if we know or can measure the amount of light at different
+of light. So if we can measure the amount of light at different
 wavelengths entering the atmosphere from the Sun, and can measure how
 much makes it back out of the atmosphere towards the satellite, we can
 calculate how much of the various gases occur in that atmosphere.
 
-This is a complicated measurement of a number of reasons:
+This is a complicated measurement for a number of reasons:
 
 - Firstly, the light may not make it all the way to the surface. If it
 bounces off a cloud, we may only measure the gas in part of the
@@ -170,7 +177,7 @@ measure too close to the poles in the winter.\
 \
 - If the Sun or the satellite are too low in the sky when viewed from
 the place the light strikes the ground, then the light is weaker and
-more likely to encounter clouds or dust. Measurements from SP5 work best
+more likely to encounter clouds or dust. Measurements from S5P work best
 in places with little cloud cover, not too close to the poles, and
 without lots of dust pollution. Australia fits these criteria well.
 
@@ -181,7 +188,7 @@ Open Methane uses measurements from the Tropospheric Monitoring
 Instrument (TROPOMI) on board the Sentinel 5 Precursor (S5P) satellite.
 The troposphere is the lowest 80% of the atmosphere.\
 \
-S5P orbits the Earth approximately every 90 minutes at a height of 824
+S5P orbits the Earth approximately every 100 minutes at a height of 824
 kilometres. Its orbit is orientated almost North-South, and as such
 passes near both poles. Its orbit is structured so that the satellite
 stays fixed relative to the Sun, and the Earth rotates beneath it. This
@@ -191,8 +198,9 @@ South to North, and 1:30AM when travelling from north to south.\
 \
 For half of each orbit, S5P is on the sunny side of the Earth and can
 take measurements, while on the dark side it cannot. The length of the
-orbit means there are about 16 orbits each day, but these deliberately
-do not repeat.
+orbit means there are about 14 orbits each day, but these deliberately
+do not repeat but are interlaced. The orbits repeat in a 16-day cycle
+with 227 distinct tracks. **there's probably an image for this**
 
 \
 IMAGE: A satellite grid over Earth, perhaps parallel lines with arrows
@@ -212,8 +220,14 @@ as it takes each measurement. Along the line of measurements
 decide how much to zoom or pan the instrument. A zoomed-in image will
 have smaller pixels – and thus more detailed measurements – but with a
 smaller area, leaving parts of the Earth that may never be measured.
+If the satellite pans to a wider view it looks at lower angles to the
+Earth's surface. this distorts the image with pixels at the edge being
+larger than those near the centre. This is why the orbit does not
+repeat every day. If it did, certain parts of the Earth would only
+be seen in lower resolution. 
 TROPOMI’s particular resolution and orbit mean that it potentially sees
-every point on the globe once per day.\
+every point on the globe once per day but the resolution will change
+from day to day. \
 \
 
 IMAGE: PREVIOUS IMAGE BUT WITH CLOUD MASK, WITH MANY GRID CELLS BLANKED
@@ -239,7 +253,7 @@ smoke or dust in the atmosphere.\
 \
 TROPOMI also cannot make many measurements over water. For these reasons
 only a few percent of the total TROPOMI measurements are available, but
-this still leaves **XXXX** measurements available over Australia each
+this still leaves about 50,000 measurements available over Australia each
 day.\
 
 **Detecting Plumes\
@@ -297,23 +311,19 @@ Care is also needed when deciding what is a significant difference
 between expected and measured values. Concentrations vary naturally as
 winds move methane from different sources around in the atmosphere. In
 principle, we can predict all these variations with CMAQ, but no model
-is perfect, so we will certainly fail to capture some variations.
-
-  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  These variations will be larger near strong sources of methane. Similarly, there is an uncertainty in the satellite measurements, so we apply a significance threshold for events:\
-  \
-  ** **![](./ObjectReplacements/Object 8){width="4.583cm" height="0.467cm"}**. **\
-  \
-  ![](./ObjectReplacements/Object 10){width="0.252cm" height="0.467cm"}, our total uncertainty comprises the natural variation and satellite uncertainty: ![](./ObjectReplacements/Object 12){width="2.263cm" height="0.591cm"} where ![](./ObjectReplacements/Object 14){width="0.388cm" height="0.531cm"} is the uncertainty due to natural variation and ![](./ObjectReplacements/Object 16){width="0.365cm" height="0.531cm"} is the uncertainty due to satellite measurements.
-  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-This threshold will be refined with experience. We also cross-check
+is perfect, so we will certainly fail to capture some variations.  These variations will be larger near strong sources of methane. Similarly, there is an uncertainty in the satellite measurements, so we apply a significance threshold for events:\
+\[\|\mbox{expected} -\mbox{observed}\| > 2\sigma\].
+\(\sigma\), our total uncertainty comprises the natural variation and
+satellite uncertainty:
+\[\sigma = [\sigma_v^2 +\sigma_s^2]^{0.5}\] where \(\sigma_v\) is the
+uncertainty due to natural variation and \(\sigma_s\) is the
+uncertainty due to satellite measurements. This threshold will be refined with experience. We also cross-check
 significant uncertainties for potential problems with the satellite data
 such as incorrect environmental factors.
 
 There is a difference between the resolution of the concentration map
 produced by CMAQ (25 x 25km) and the satellite observations (5.6 x
-7.2km). This means we may see concentration events occurring at a
+7.2km at best). This means we may see concentration events occurring at a
 particular part of a model pixel due to the location of an emission
 within the pixel. This is both useful and problematic. It is useful
 because it can give guidance on where to look for the source of an
