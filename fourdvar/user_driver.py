@@ -112,7 +112,7 @@ def minim( cost_func, grad_func, init_guess ):
     output: list (1st element is numpy.ndarray of solution, the rest are user-defined)
     """
     #turn on skipping of unneeded fwd calls
-    data_access.allow_fwd_skip = True
+    data_access.allow_fwd_skip = False
     
     start_cost = cost_func( init_guess )
     start_grad = grad_func( init_guess )
