@@ -31,10 +31,10 @@ import pdb
 #'filelist': source = list of OCO2-Lite files
 #'directory': source = directory, use all files in source
 #'pattern': source = file_pattern_string, use all files that match pattern
-source_type = 'filelist'
+source_type = 'pattern'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = ['/home/unimelb.edu.au/prayner/work/openmethane-beta/py4dvar/sat_data/data/20220701-00-00-00_20220702-23-59-59_104.0_-47.0_162.0_-6.0/S5P_OFFL_L2__CH4____20220702T040957_20220702T055126_24442_02_020301_20220703T200603.SUB.nc4']
+source = '/home/unimelb.edu.au/prayner/work/openmethane-beta/py4dvar/sat_data/data/20220701-00-00-00_20220702-23-59-59_104.0_-47.0_162.0_-6.0/S5P_*SUB.nc4'
 
 output_file = input_defn.obs_file
 
@@ -47,7 +47,7 @@ model_grid = ModelSpace.create_from_fourdvar()
 if source_type.lower() == 'filelist':
     filelist = [ os.path.realpath( f ) for f in source ]
 elif source_type.lower() == 'pattern':
-    filelist = [ os.path.realpath( f ) for f in glob.glob( source ) ]
+    filelist = [ os.path.realpath( f ) for f in sorted(glob.glob( source )) ]
 elif source_type.lower() == 'directory':
     dirname = os.path.realpath( source )
     filelist = [ os.path.join( dirname, f )
