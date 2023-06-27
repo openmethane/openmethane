@@ -105,11 +105,11 @@ if use_jobfs is True:
         raise ValueError(msg)
 else:
     chk_path = os.path.join( cmaq_base, 'chkpnt' )
-mcip_path = os.path.join( wrf_path, '<YYYY-MM-DD>','d04' )
-grid_path = os.path.join(  wrf_path, '<YYYY-MM-DD>','d04' )
+mcip_path = os.path.join( wrf_path, '<YYYY-MM-DD>','d01' )
+grid_path = os.path.join(  wrf_path, '<YYYY-MM-DD>','d01' )
 jproc_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq' )#Sougol
-bcon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
-icon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d04/')#Sougol
+bcon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d01/')#Sougol
+icon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d01/')#Sougol
 emis_path = os.path.join(cmaq_base, 'emissions' )
 #horizontal grid definition file
 griddesc = os.path.join( grid_path, 'GRIDDESC' )
@@ -140,15 +140,15 @@ fwd_xfirst_file = os.path.join( output_path, 'XFIRST.<YYYYMMDD>' )
 bwd_xfirst_file = os.path.join( output_path, 'XFIRST.bwd.<YYYYMMDD>' )
 
 #input files
-icon_file = os.path.join( icon_path, 'ICON.d04.t.CH4only.nc' )#Sougol
-bcon_file = os.path.join( bcon_path, 'BCON.d04.t.CH4only.nc' )#Sougol
+icon_file = os.path.join( icon_path, 'ICON.d01.t.CH4only.nc' )#Sougol
+bcon_file = os.path.join( bcon_path, 'BCON.d01.t.CH4only.nc' )#Sougol
 emis_file = os.path.join( emis_path, 'emis.<YYYY-MM-DD>.nc' )#Shak
 force_file = os.path.join( cmaq_base,  'force', 'ADJ_FORCE.<YYYYMMDD>.nc' )
 #required met data, use unknown #?????
 grid_dot_2d = os.path.join( grid_path, 'GRIDDOT2D_8' )#Sougol
 grid_cro_2d = os.path.join( grid_path, 'GRIDCRO2D_8' )#Sougol
-met_cro_2d = os.path.join( mcip_path, 'METCRO2D_8' )#Sougol
-met_cro_3d = os.path.join( mcip_path, 'METCRO3D_8' )#Sougol
+met_cro_2d = os.path.join( mcip_path, 'METCRO2D_1' )
+met_cro_3d = os.path.join( mcip_path, 'METCRO3D_1')
 met_dot_3d = os.path.join( mcip_path, 'METDOT3D_8' )#Sougol
 met_bdy_3d = os.path.join( mcip_path, 'METBDY3D_8' )#Sougol
 layerfile = met_cro_3d

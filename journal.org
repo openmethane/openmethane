@@ -9,3 +9,129 @@ York, Queensland) to –43.6 deg N (South-east Cape, Tasmania), and longitude 113.
 (Steep Point, Western Australia) to 153.6 deg E (Cape Byron, NSW).
 tropomi methane at http://doi.org/10.5270/S5P-3lcdqiv
 ESA data hub https://scihub.copernicus.eu/
+** 2023-05 May
+*** 2023-05-02 Tuesday
+Notes on ATBD
+P17 0.8% precision and 0.25 percent inter-region bias
+P17 3% of data is cloud free
+P19 36 layers equidistant in pressure
+start with CH4 and CO from TM5 and H2O and tmp from ECMWF
+P19 they make an explicit dry air correction
+P25 they use 12 layers in their state vector
+P25 they give a priori values, yes!
+P26 Phillips-Tikhonov regularization scheme
+P27 note Eqs 45 and 46
+eq.45 x_n+1 = g^prime y^prime +A^prime x_n^prime +(I
+-A^prime)x_apr^prime
+a prime is averaging kernel
+g prime contribution function matrix a prime = g prime k prime
+g prime = (k prime^T k prime + gamma I)^-1 K prime^T
+y prime is not defined
+prev line
+x prime = w x and y prime = s y ^-1/2 (y pf x_n)
+y prime = s_y^{-1/2] * (y -f(x_n))
+K prime = S_y^{-1/2} K W^{-1}
+eq. 46  x_retr = A x_true +(I -1) x_a + G e_y + G e_f
+product manual
+(1) x(ch4_ref)^avg = v ch4_ref^avg /v(air_dry^ref)
+(2) v^ch4_ref^avg) = v(ch4_apr) +sum_i=1^n a_i *(delta v_ch4^ref_i
+a_i is column averaging kernel for layer i delta v ch4_ref is partial
+column of ref profile in retrieval i
+(3) delta v ch4 ref _i = x ch4 ref i * delta v a_dry,ref
+-delta v ch4_apr_i
+P28 VIIRS cloud clearing
+P29 they bias-correct based on albedo
+P31 the new bias correction redeuces station-station variability of the bias by 5.6ppb  and reduces albedo-dependent biases by 13.6 ppb, reduces scatter of GOSAT comparison by 4ppb
+P31  since version 2.3.1 oc glint measurements included, note the correction factor of about 0.3% (note eq 54 for sunglint angle)
+P31 since retrieval version 2.4.0 there's a spectral dependence of
+albedo note the release date of May 30 2022 so should  be operational
+before July 2022
+**** finding centres of grids etc
+d['CLAT'][...].min()
+Out[5]: -46.955074
+
+In [6]: d['CLAT'][...].max()
+Out[6]: -6.7685623
+
+In [7]: d['CLONG'][...].max()
+Out[7]: 161.51807
+
+In [8]: d['CLONG'][...].min()
+Out[8]: 105.08594
+
+In [9]:
+*** 2023-05-03 Wednesday
+Mark Lunt seminar
+He notes that in the safeguard bill big emitters now need to report by
+gas
+He works for IMEO as well, previously at U. Edinburgh
+Background on HFC inversions
+I missed Ann's introduction
+transdimensional inversion borrowed from seismology
+unconvinced about this, aggregations of high-res give you the same
+info if you treat posterior covar properly
+lunt 2016 paper
+UK methane emissions  similar results to alistair Manning but smaller
+uncertainty
+did sectoral propagation by mapping trends onto priors
+did spatial trends from GOSAT showing anomalies from global growth
+big blob central africa
+regional inversion for east africa  2020-21 emissions
+correlated with GRACE and it's strong!
+James France from Royal Holloway Bolivia wetland also showing strong
+wetland emissions, more than wetland models
+MethaneSat launches late 23
+synthesis paper i in Science
+partnering with google streetview for mobile monitoring
+International Methane Emissions Observatory IMEO part of UNEP
+fossil largest abatement opportunity
+IMEO funds science studies, wonder if we could have used that from UoM
+not doing science themselves
+transparency is a major theme for companies, companies can commit to
+making measurement-based estimates AGMP2.0 I think is the name
+facility-specific emission factors.
+whole site methods too like aircraft
+Australian companies behind on joining this, you surprise me!
+IMEO developing alert system
+super-emitter releases reported directly to company.
+5 key pillars of funding
+1) led by research institutes
+2) multiple methodologies
+3) independent oversight
+4) public data
+5)
+there's a coal and an oil&gas project done in Australia
+Knoledge Gaps:
+does liquefaction leak?
+ten liquefaction plants around the country
+use flight campaigns, led by ARA
+other study is coal-mines, especially Bowen  Basin
+will move into agriculture
+political imperative to get total emissions better
+Pep advertises national budgets
+Aust' gov't exploring remote sensing data sets
+Langenfelds notices East Australian anomaly in 2021, fires, flooding?
+Ashok asks about what tools, NAME for UK, GEOSS-CHEM nested down to
+0.25 degree where they're not using the adjoint
+**** finding domain edges etc
+d['XLAT_C'][...].min()
+Out[22]: -47.06114
+
+In [23]: d['XLAT_C'][...].max()
+Out[23]: -6.647835
+
+In [24]: d['XLONG_C'][...].max()
+Out[24]: 161.70013
+
+In [25]: d['XLONG_C'][...].min()
+Out[25]: 104.90387
+so domain edges for data should probably be:
+(-47., 104.) (-6., 162.)
+*** 2023-05-18 Thursday
+remember when running setup scripts for wrf and CMAQ that whenever you
+regenerate geo_em you need to regenerate *everything* including met_em
+files, and that, afaik, the num_land_cat needs to be consistent
+between the met_em the geo_em and the namelist ... great way of
+wasting a day that!
+*** 2023-05-22 Monday
+methane wetland emissions from https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1915
