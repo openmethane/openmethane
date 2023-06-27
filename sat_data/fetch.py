@@ -123,13 +123,13 @@ for item in docs:
 print('\nHTTP_services output:')
 
 # make directory to store outputs if it doesn't already exist
-if not os.path.exists("data"):
-    os.mkdir("data")
+if not os.path.exists(config["data"]):
+    os.mkdir(config["data"])
 
 start = datetime.fromisoformat(config['start']).strftime("%Y%m%d-%H-%M-%S")
 end = datetime.fromisoformat(config['end']).strftime("%Y%m%d-%H-%M-%S")
 boxString = "_".join(str(x) for x in config['box'])
-outDirName = f"data/{start}_{end}_{boxString}"
+outDirName = f'{config["data"]}/{start}_{end}_{boxString}'
 isExist = os.path.exists(outDirName)
 
 if not isExist:
