@@ -57,6 +57,7 @@ else:
     raise TypeError( "source_type '{}' not supported".format(source_type) )
 
 obslist = []
+nObs =[0,0]
 for fname in filelist:
     print('read {}'.format( fname ))
     var_dict = {}
@@ -96,8 +97,9 @@ for fname in filelist:
         ch4_column_precision = ch4_precision.reshape((ch4_precision.size,))
         ch4_averaging_kernel = product['SUPPORT_DATA/DETAILED_RESULTS/column_averaging_kernel'][...]
         averaging_kernel = np.reshape( ch4_averaging_kernel, (-1,ch4_averaging_kernel.shape[-1]))
-        #ch4_column_apriori = product.variables['ch4_column_apriori'][:]
-        #ch4_profile_apriori = product.variables['ch4_profile_apriori'][:,:]
+#        ch4_column_apriori = product.variables['ch4_column_apriori'][:]
+        temp = meteo.variables['methane_profile_apriori'][...]
+        ch4_profile_apriori = temp.reshape(temp.size,-1)
         qa = diag.variables['qa_value'][:]
         qa_value = qa.reshape((qa.size,))
 
@@ -117,7 +119,8 @@ for fname in filelist:
     sdate = dt.datetime( start_date.year, start_date.month, start_date.day )
     edate = dt.datetime( end_date.year, end_date.month, end_date.day )
     size = include_filter.sum()
-    print('found {} soundings'.format( size ))
+    nObs[0]+=size
+    nObs[1]+=include_filter.size
     for i,iflag in enumerate(include_filter):
         if iflag:
             #scanning time is slow, do it after other filters.
@@ -145,14 +148,15 @@ for fname in filelist:
             var_dict['ch4_column_precision'] = ch4_column_precision[i]
             var_dict['obs_kernel'] = averaging_kernel [i,:]
             var_dict['qa_value'] = qa_value[i]
+            var_dict['ch4_profile_apriori'] = ch4_profile_apriori[i,:]
             
-            ###find the proper index for ch4_profile_apriori:
             obs = ObsSRON.create( **var_dict )           
             obs.interp_time = False
             obs.model_process( model_grid )           
             if obs.valid is True:
                 obslist.append( obs.get_obsdict() )
                 ##pdb.set_trace() ##NS added
+print(f'found {nObs[0]:d} valid soundings from {nObs[1]:d} possible')
 if len( obslist ) > 0:
     domain = model_grid.get_domain()
     domain['is_lite'] = False
