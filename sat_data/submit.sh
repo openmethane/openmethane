@@ -13,7 +13,9 @@
 #PBS -q copyq
 #PBS -N tropomi_download
 #PBS -l walltime=10:00:00,mem=32GB
+#PBS -l storage=gdata/sx70+gdata/hh5+gdata/ua8+gdata/ub4
 #PBS -l ncpus=1
 #PBS -l wd
+module use /g/data3/hh5/public/modules
 module load conda/analysis3
 python3 fetch.py
