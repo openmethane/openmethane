@@ -88,7 +88,7 @@ class Grid( object ):
             if ray_par_list[-1] == 1: ray_par_list.pop[-1]
             point_list = [ ray.get_point( par ) for par in ray_par_list ]
             ray_collision.append( point_list )
-        assert len(zip(*ray_collision)) == self.shape[zdim]
+        assert len(list(zip(*ray_collision))) == self.shape[zdim]
         
         #utility function, returns True if point inside polygon/footprint
         def in_poly( pnt, poly_list ):
@@ -162,11 +162,12 @@ class Grid( object ):
                 coord_dict[ coord ].append( pnt )
             
             #strip out any empty coords
+            delete_keys = [k for k in coord_dict.keys() if coord_dict[k] == []]
+            for k in delete_keys: del( coord_dict[k])
             #sort poly points into counter-clockwise order, use first pnt as origin
             for coord, pnt_list in coord_dict.items():
                 if pnt_list == []:
-                    coord_dict.pop(coord)
-                    continue
+                    raise ValueError(' should not have empty dictionaries') 
                 assert len(pnt_list) >= 3, 'cannot form polygon'
                 ccw_list = []
                 ox,oy,_ = pnt_list[0]

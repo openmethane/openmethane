@@ -135,3 +135,7 @@ between the met_em the geo_em and the namelist ... great way of
 wasting a day that!
 *** 2023-05-22 Monday
 methane wetland emissions from https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1915
+** 2023-06 June
+*** 2023-06-27 Tuesday
+I've accidentally merged master into testobs which isn't what I wanted
+but proably had to happen eventually. Wonder what I'e broken on the way
