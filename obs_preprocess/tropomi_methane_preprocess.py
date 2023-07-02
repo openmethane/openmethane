@@ -121,6 +121,8 @@ for fname in filelist:
     size = include_filter.sum()
     nObs[0]+=size
     nObs[1]+=include_filter.size
+    nTest = 100 # included for testing
+    iTest = 0
     for i,iflag in enumerate(include_filter):
         if iflag:
             #scanning time is slow, do it after other filters.
@@ -131,6 +133,8 @@ for fname in filelist:
             time1 = (edate-epoch).total_seconds() + 24*60*60
             if tsec < time0 or tsec > time1:
                 continue
+            iTest += 1
+            if iTest > nTest: break 
             var_dict = {}
             #var_dict['time'] = dt.datetime( *time[0,i] )
             var_dict['time'] = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
