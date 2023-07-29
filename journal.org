@@ -28,7 +28,7 @@ g prime contribution function matrix a prime = g prime k prime
 g prime = (k prime^T k prime + gamma I)^-1 K prime^T
 y prime is not defined
 prev line
-x prime = w x and y prime = s y ^-1/2 (y pf x_n)
+x prime = w x and y prime = s y ^-1/2 (y -f( x_n))
 y prime = s_y^{-1/2] * (y -f(x_n))
 K prime = S_y^{-1/2} K W^{-1}
 eq. 46  x_retr = A x_true +(I -1) x_a + G e_y + G e_f
@@ -139,3 +139,6 @@ methane wetland emissions from https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=1
 *** 2023-06-27 Tuesday
 I've accidentally merged master into testobs which isn't what I wanted
 but proably had to happen eventually. Wonder what I'e broken on the way
+** 2023-07 July
+*** 2023-07-03 Monday
+added time and location to observations list
