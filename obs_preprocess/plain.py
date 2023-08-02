@@ -9,6 +9,7 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import numpy as np
+import itertools
 class Plain( object):
     """ plains are defined by a unit normal vector and an anchoring point """
     def __init__( self, normal, anchor):
@@ -19,18 +20,60 @@ class Plain( object):
         assert self.anchor.ndim == 1, 'anchor must be one-dimensional'
         assert self.anchor.shape == self.normal.shape, 'anchor and normal must be same dimension'
         return None
-    def from_points( self, pointsList):
+    @classmethod
+    def from_points( cls, pointsList):
         """ create a plain in R^3 from a list of 3 points """
         vectors = np.array( pointsList).squeeze()
         assert vectors.shape == (3,3), 'only works for 3 points in R^3'
-        self.normal = np.cross((vectors[1] -vectors[0]), (vectors[2] -vectors[0]))
-        self.normal /= np.norm( self.normal)
-        saelf.anchor = vectors[0]
-        return None
+        normal = np.cross((vectors[1] -vectors[0]), (vectors[2] -vectors[0]))
+        normal /= np.linalg.norm( normal)
+        anchor = vectors[0]
+        return cls( normal,anchor)
     
-    def isup(self, point):
+    def isUp(self, point):
         """ determines whether a point is on the "up" side of a plane i.e in the direction of rather than opposed to the defined normal """
         vector = np.array( point).squeeze() # cannonicalise input
         assert vector.shape == self.normal.shape, 'point and plain have incompatible dimensions'
         isUp = np.dot( self.normal, (vector -self.anchor))
         return True if isUp >= 0 else False
+
+class Polyhedron( object):
+    """ defined as a list of plains with no requirement that they form a closed shape, e.g. an open square tube is valid """
+    def __init__( self, faces, nSamplePoints=100):
+        """ each face is a plain """
+        self.faces = list(faces)
+        # for convex poly all points should be "up" from every face, let's see
+        if not np.all( [np.all([ f1.isUp( f2.anchor) for f2 in self.faces]) for f1 in self.faces]):
+            raise ValueError('polyhedron not convex')
+        self.rng = np.random.default_rng() # needed for later montecarlo 
+        self.nSamplePoints = nSamplePoints
+        return None
+    def isInside( self, point):
+        """ check if a point is inside a polyhedron """
+        return np.all([face.isUp( point) for face in self.faces])
+    def contains( self, vertices):
+        """ check if a polyhedron defined by a set ov ertices is completely contained in self """
+        return np.all( [self.isInside( v) for v in vertices])
+
+    def intersectionPrismVolume( self, corners):
+        """  calculate the volume of intersection between self and a prism defined by its corners defined as a tuple of sequences"""
+        vMin = np.array(corners[0]).squeeze()
+        vMax = np.array( corners[1]).squeeze()
+        # first check if the prism is contained in self,
+        # generate vertices (trick from stackexchange)
+        prismVertices = np.array(list(itertools.product(*zip(vMin,vMax))))
+        # now if all prism vertices lie outside any face of self there is no intersection
+        if np.any([np.all( [not f.isUp( v) for v in prismVertices]) for f in self.faces]):
+            return 0.0
+        elif self.contains( prismVertices):
+            return (vMax -vMin).prod() # rectangular volume
+        else:
+            return self.montecarloVolume( corners)
+    def montecarloVolume( self, corners):
+        """ use montecarlo sampling to estimate the volume of intersection between prism (given by corners) and self"""
+        vMin = np.array(corners[0]).squeeze()
+        vMax = np.array( corners[1]).squeeze()
+        points = self.rng.uniform( vMin, vMax, size=(self.nSamplePoints, vMin.size))
+        nInsidePoints = [self.isInside( p) for p in points].count( True)
+        prismVolume = (vMax -vMin).prod()
+        return prismVolume *float( nInsidePoints)/float( self.nSamplePoints)
