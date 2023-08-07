@@ -9,6 +9,8 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import numpy as np
+from plane import Plane, Polyhedron
+import itertools
 
 class Grid( object ):
     def __init__( self, offset, spacing ):
@@ -28,7 +30,7 @@ class Grid( object ):
         edge_arr = self.edges[dim]
         if sign < 0:
             edge_arr = edge_arr[::-1]
-        assert edge_arr[0] <= value <= edge_arr[-1], 'value outside grid'
+        assert edge_arr[0] <= value <= edge_arr[-1], 'value outside grixand'
         result = np.searchsorted( edge_arr, value ) - 1
         result = np.clip( result, 0, self.shape[ dim ] - 1 )
         if sign < 0:
@@ -69,7 +71,51 @@ class Grid( object ):
             result[ co_ord ] = result.get( co_ord, 0 ) + point.dist( prev )
         return result
     
+    def get_beam_intersection_volume( self, beam_corners ):
+        """ calculate volume of intersection between a finite beam defined by four corner rays and each cell in grid. Returns a dictionary of all intersected grid indices and volume"""
+        xdim,ydim,zdim = 0,1,2 # just for later clarity naming indices
+        result = {}
+        # make sure all rays start from the ground 
+        for ray in beam_corners:
+            if ray.start[zdim] > ray.end[zdim]:
+                ray = Ray( ray.end, ray.start )
+                
+        # first find all cells which could potentially intersect beam
+        extreme_coords = []
+        for c in beam_corners:
+            extreme_coords.append( c.start.co_ord)
+            extreme_coords.append( c.end.co_ord)
+        extreme_coords = np.array( extreme_coords)
+        x_min = extreme_coords[:,xdim].min()
+        x_max = extreme_coords[:,xdim].max()
+        y_min = extreme_coords[:,ydim].min()
+        y_max = extreme_coords[:,ydim].max()
+        i_min = self.get_cell_1d( x_min, xdim)
+        i_max = self.get_cell_1d( x_max, xdim)
+        j_min = self.get_cell_1d( y_min, ydim)
+        j_max = self.get_cell_1d( y_max, ydim)
+        k_min = 0
+        k_max = self.shape[zdim]
+        # now construct a kind of parallepiped for the beam
+        beam_vertices=[]
+        for c in beam_corners:
+            beam_vertices.append(c.start.co_ord)
+            beam_vertices.append(c.end.co_ord)
+        beam_vertices = np.array( beam_vertices)
+        # now make polyhedron with the four almost vertical faces, don't bother about top and bottom
+        beam_faces =[Plane.from_points( beam_vertices[l]) for l in [[0,1,2], [2,3,4], [4,5,6], [6,7,0]]]
+        beam_poly = Polyhedron( beam_faces)
+        # now loop over every possibe lpoint and calculate the intersection volume, don't need to nest the loops so use itertools
+        # we need to add 1 to the ranges to include the last cell
+        for i,j,k in itertools.product(range( i_min, i_max+1), range( j_min, j_max+1), range(k_min, k_max)):
+            cell_corners =[(self.edges[ xdim][ i], self.edges[ ydim][ j], self.edges[ zdim][ k]), \
+                           (self.edges[ xdim][ i+1], self.edges[ ydim][ j+1], self.edges[ zdim][ k+1])]
+            volume = beam_poly.intersectionPrismVolume( cell_corners)
+            if volume > 0.: result[(i,j,k)] = volume
+        
+        return result
     def get_ray_cell_area( self, ray_list ):
+        """ calculate area at each level traversed by a beam defined by four rays """
         assert self.ndim == 3, 'Only works for 3 dimensional (x,y,z) grids.'
         xdim, ydim, zdim = 0,1,2
         assert all([r.ndim == self.ndim for r in ray_list]),'dimension mis-match'
@@ -113,13 +159,14 @@ class Grid( object ):
             return (wn != 0)
         
         #construct a dict, key=gridcell-coord, value=points of footprint polygon inside gridcell
-        for zind,p_list in enumerate(zip(*ray_collision)):
+        for zind,p_list in enumerate(zip(*ray_collision)): # p_list is the horizontal coordinates of the corner rays at level zind
             p_list = list(p_list)
+            # find min and max indices for cells containing part of footprint
             xmin = self.get_cell_1d( min([ p[ xdim ] for p in p_list ]), xdim )
             xmax = self.get_cell_1d( max([ p[ xdim ] for p in p_list ]), xdim )
             ymin = self.get_cell_1d( min([ p[ ydim ] for p in p_list ]), ydim )
             ymax = self.get_cell_1d( max([ p[ ydim ] for p in p_list ]), ydim )
-            #dict of all possible footprint coords for this layer
+            #make dict of all possible cells containing footprint
             coord_dict = { (x,y,zind):[] for x in range(xmin,xmax+1)
                            for y in range(ymin,ymax+1) }
             #add each corner inside footprint to its 4 coords

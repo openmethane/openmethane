@@ -94,7 +94,7 @@ class ObsSRON( ObsMultiRay ):
         ref_profile_ppm = self._convert_ppm( ref_profile_mole, obs_pressure_interval )
         model_ref_profile = model_space.pressure_interp( obs_pressure_center,
                                                          ref_profile_ppm, coord )
-        model_unc  = ESA_unc_ppm / ((model_pweight*model_ref_profile)).sum()
+        model_unc  = 20. # arbitrary constant unc in ppb
         self.out_dict['uncertainty']       = model_unc ##this is the parameter that is used for the next process
         self.out_dict['ref_profile'] = model_ref_profile
         self.out_dict['model_pweight'] = model_pweight
@@ -145,8 +145,8 @@ class ObsSRON( ObsMultiRay ):
             rays_out.append( Ray( p1, p2 ) )
 
         try:
-            in_dict = model_space.grid.get_ray_cell_area( rays_in )
-            out_dict = model_space.grid.get_ray_cell_area( rays_out )
+            in_dict = model_space.grid.get_beam_intersection_volume( rays_in )
+            out_dict = model_space.grid.get_beam_intersection_volume( rays_out )
         except AssertionError:
             self.coord_fail( 'outside grid area' )
             return None

@@ -36,8 +36,12 @@ class Plane( object):
         vector = np.array( point).squeeze() # cannonicalise input
         assert vector.shape == self.normal.shape, 'point and plane have incompatible dimensions'
         diff = vector -self.anchor
-        isUp = np.dot( self.normal, diff)/np.linalg.norm(diff)
-        return True if isUp > -self.orthogonalityTolerance else False
+        dist = np.linalg.norm( diff)
+        if dist < self.orthogonalityTolerance: # point and self.anchor are probably the same
+            return True
+        else:
+            isUp = np.dot( self.normal, diff) / dist
+            return True if isUp > -self.orthogonalityTolerance else False
 
 class Polyhedron( object):
     """ defined as a list of planes with no requirement that they form a closed shape, e.g. an open square tube is valid """
