@@ -246,8 +246,8 @@ class ObsInstantRay( ObsSimple ):
         #assume self.time = [ int(YYYYMMDD), int(HHMMSS) ]
         #interpolate time between 2 closest timesteps
         # unless interp_time attr exists and is False
-        start = model_space.get_step( self.time )
-        end = model_space.next_step( start )
+        start = model_space.get_step( self.time[0], self.time[1] )
+        end = model_space.next_step( *start)
         end_val = model_space.get_step_pos( self.time[1] )
         start_val = 1 - end_val
         

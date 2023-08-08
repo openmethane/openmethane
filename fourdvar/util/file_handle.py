@@ -85,7 +85,6 @@ def load_list( filepath ):
     fpath = os.path.realpath( filepath )
     obj_list = []
     eof = False
-    print(fpath)
     with gzip.GzipFile( fpath, 'rb' ) as f:
         while eof is False:
             try:

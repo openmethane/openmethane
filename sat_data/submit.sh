@@ -2,7 +2,7 @@
 # """
 # submit.sh
 #
-# Copyright 2016 University of Melbourne.
+# Copyright 2023 Superpower Institute.
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 # Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -10,13 +10,12 @@
 # """
 #
 #PBS -P q90
-#PBS -q express
-#PBS -N run_pertpert
-#PBS -l walltime=24:00:00,mem=32GB
-#PBS -l ncpus=16
+#PBS -q copyq
+#PBS -N tropomi_download
+#PBS -l walltime=10:00:00,mem=32GB
+#PBS -l storage=gdata/sx70+gdata/hh5+gdata/ua8+gdata/ub4
+#PBS -l ncpus=1
 #PBS -l wd
-source load_p4d_modules.sh
-# replace previous line with whatever you source to run py4dvar
-
-#python3 restart_script.py
-python3 tests/pert_pert_test.py
+module use /g/data3/hh5/public/modules
+module load conda/analysis3
+python3 fetch.py

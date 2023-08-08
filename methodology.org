@@ -303,8 +303,3 @@ real differences. On the other hand, if emission differences do not
 yield changes in model concentrations (usually because of cloud) then
 we cannot be confident in our update to the emissions inventory in
 that region.
-
-
-
-
-
