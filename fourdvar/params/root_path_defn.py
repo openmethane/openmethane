@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and limitations 
 import os
 
 #full path to the top level of the repository
-root_path = '/home/unimelb.edu.au/prayner/work/openmethane-beta/py4dvar'
+root_path = os.environ['HOME']+'/openmethane-beta/py4dvar'
 
 #full path to the branch-specific data
-store_path = '/home/unimelb.edu.au/prayner/Dropbox/openmethane-beta/'
+store_path = os.environ['HOME']+'/scratch/openmethane-beta/run-py4dvar'
