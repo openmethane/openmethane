@@ -34,7 +34,7 @@ import pdb
 source_type = 'pattern'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = '/home/unimelb.edu.au/prayner/work/openmethane-beta/py4dvar/sat_data/data/20220701-00-00-00_20220702-23-59-59_104.0_-47.0_162.0_-6.0/S5P_*SUB.nc4'
+source = '/home/563/pjr563/scratch/openmethane-beta/tropomi/202207/S5P_RPRO_L2__CH4____2022070*.nc4'
 
 output_file = input_defn.obs_file
 
@@ -121,7 +121,8 @@ for fname in filelist:
     size = include_filter.sum()
     nObs[0]+=size
     nObs[1]+=include_filter.size
-    nTest = 100 # included for testing
+    nTest = 0 # included for testing
+    nThin = 1000 # included for testing
     iTest = 0
     for i,iflag in enumerate(include_filter):
         if iflag:
@@ -134,7 +135,8 @@ for fname in filelist:
             if tsec < time0 or tsec > time1:
                 continue
             iTest += 1
-            if iTest > nTest: break 
+            if nTest > 0 and iTest > nTest: break
+            if iTest % nThin != 0: continue
             var_dict = {}
             #var_dict['time'] = dt.datetime( *time[0,i] )
             var_dict['time'] = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
