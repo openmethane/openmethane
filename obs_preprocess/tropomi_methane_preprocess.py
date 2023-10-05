@@ -150,7 +150,7 @@ for fname in filelist:
     nObs[0]+=size
     nObs[1]+=include_filter.size
     nTest = 0 # included for testing
-    nThin = 1000 # included for testing
+    nThin = 1 # included for testing
     iTest = 0
     for i,iflag in enumerate(include_filter):
         if iflag:
