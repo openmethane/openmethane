@@ -53,10 +53,9 @@ class ModelSpace( object ):
         """
         #read netCDF files
         self.gridmeta = {}
-        with Dataset( CONC, 'r' ) as f:
+        with Dataset( METCRO3D, 'r' ) as f:
             for key in self.gridmeta_keys:
                 self.gridmeta[ key ] = f.getncattr( key )
-        with Dataset( METCRO3D, 'r' ) as f:
             zf = f.variables['ZF'][:].mean( axis=(0,2,3) )
             layer_height = np.append( np.zeros(1), zf )
         
@@ -117,7 +116,8 @@ class ModelSpace( object ):
         if not (0 <= lay < self.nlay): return False
         if not (0 <= row < self.nrow): return False
         if not (0 <= col < self.ncol): return False
-        if spc not in self.spcs: return False
+        if spc is not None:
+            if spc not in self.spcs: return False
         return True
     
     def get_step( self, cdate, ctime ):

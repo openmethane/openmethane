@@ -210,9 +210,6 @@ class ObsInstantRay( ObsSimple ):
     def model_process( self, model_space ):
         """Process the observation with the models parameters"""
         
-        if self.spcs not in model_space.spcs:
-            self.coord_fail( 'invalid spcs' )
-            return None
         
         loc_dict = self.map_location( model_space )
         if self.valid is False: return None
@@ -232,7 +229,11 @@ class ObsInstantRay( ObsSimple ):
         #dicts must have identical keys
         assert set( weight_grid ) == set( proportion )
         for key in weight_grid.keys():
-            if model_space.valid_coord( key ) is False:
+            # test the key is valid but disable species test by setting the species to NOne, note it's a tuple 
+            keyCopy = list(key)
+            keyCopy[-1] = None # set the species to none
+            keyCopy = tuple(keyCopy)
+            if model_space.valid_coord( keyCopy ) is False:
                 self.coord_fail()
                 return None
         self.out_dict['weight_grid'] = weight_grid
