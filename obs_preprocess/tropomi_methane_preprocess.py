@@ -150,7 +150,7 @@ for fname in filelist:
     nObs[0]+=size
     nObs[1]+=include_filter.size
     nTest = 0 # included for testing
-    nThin = 1 # included for testing
+    nThin = 1000 # included for testing
     iTest = 0
     for i,iflag in enumerate(include_filter):
         if iflag:
@@ -208,7 +208,7 @@ print( f'{nTimedOut} observations timed out after {maxProcessTime} seconds')
 if len( obslist ) > 0:
     domain = model_grid.get_domain()
     domain['is_lite'] = False
-    datalist = [ domain ] + obslist     
+    datalist = [ domain ] + [o.out_dict for o in obslist]     
     fh.save_list( datalist, output_file )
     print('recorded observations to {}'.format( output_file ))
 else:
