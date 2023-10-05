@@ -8,9 +8,11 @@ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-
+import multiprocessing
+import func_timeout
 import os
 import glob
+import time as timing
 import numpy as np
 import datetime as dt
 
@@ -34,13 +36,38 @@ import pdb
 source_type = 'pattern'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = '/home/563/pjr563/scratch/openmethane-beta/tropomi/202207/S5P_RPRO_L2__CH4____2022070*.nc4'
+source = '/home/563/pjr563/scratch/openmethane-beta/tropomi/202207/S5P_RPRO_L2__CH4____20220702*.nc4'
 
 output_file = input_defn.obs_file
 
 # minimum qa_value before observation is discarded
 qa_cutoff = 0.5
 #--------------------------------------------------------------------------
+
+# set up multiprocessing wrappers and pools
+nCPUs = os.environ.get('NCPUS')
+if nCPUs is None:
+    nCPUs = 1
+else:
+    nCPUs = int(nCPUs) # it's read as a string
+maxProcessTime = 5. # maximum time for processing an observation in seconds
+
+def timeWrapper( val):
+    wait, modelGrid, varDict = val
+    args = (modelGrid, varDict)
+    try:
+        return func_timeout.func_timeout( wait, processObs, (args,))
+    except func_timeout.FunctionTimedOut:
+        return None
+
+def processObs( vals):
+    var_dict = vals[0]
+    model_grid = vals[1]
+    obs = ObsSRON.create( **var_dict )           
+    obs.interp_time = False
+    obs.model_process( model_grid )           
+    return obs
+
 
 model_grid = ModelSpace.create_from_fourdvar()
 
@@ -57,6 +84,7 @@ else:
     raise TypeError( "source_type '{}' not supported".format(source_type) )
 
 obslist = []
+varDictList = []
 nObs =[0,0]
 for fname in filelist:
     print('read {}'.format( fname ))
@@ -122,7 +150,7 @@ for fname in filelist:
     nObs[0]+=size
     nObs[1]+=include_filter.size
     nTest = 0 # included for testing
-    nThin = 1000 # included for testing
+    nThin = 1 # included for testing
     iTest = 0
     for i,iflag in enumerate(include_filter):
         if iflag:
@@ -155,14 +183,28 @@ for fname in filelist:
             var_dict['obs_kernel'] = averaging_kernel [i,:]
             var_dict['qa_value'] = qa_value[i]
             var_dict['ch4_profile_apriori'] = ch4_profile_apriori[i,:]
+            varDictList.append( (maxProcessTime, var_dict, model_grid))
+            # obs = ObsSRON.create( **var_dict )           
+            # obs.interp_time = False
+            # obs.model_process( model_grid )           
+            # if obs.valid is True:
+            #     obslist.append( obs.get_obsdict() )
+with multiprocessing.Pool( nCPUs) as pool:
+    processOutput = pool.imap_unordered( timeWrapper, varDictList)
+    nProcessed = 0
+    nTimedOut = 0
+    baseTime = timing.time()
+    for obs in processOutput:
+        if obs is None:
+            nTimedOut += 1
+        else:
             
-            obs = ObsSRON.create( **var_dict )           
-            obs.interp_time = False
-            obs.model_process( model_grid )           
-            if obs.valid is True:
-                obslist.append( obs.get_obsdict() )
-                ##pdb.set_trace() ##NS added
+            if obs.valid: obslist.append( obs)
+        if nProcessed % 100 == 0: print(f'{nProcessed} obs processed in {timing.time() -baseTime:8.1f} seconds')
+        nProcessed += 1
+print(len(varDictList), 'possible observations') 
 print(f'found {nObs[0]:d} valid soundings from {nObs[1]:d} possible')
+print( f'{nTimedOut} observations timed out after {maxProcessTime} seconds')
 if len( obslist ) > 0:
     domain = model_grid.get_domain()
     domain['is_lite'] = False
