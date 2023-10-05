@@ -29,9 +29,19 @@ g prime = (k prime^T k prime + gamma I)^-1 K prime^T
 y prime is not defined
 prev line
 x prime = w x and y prime = s y ^-1/2 (y -f( x_n))
+K^prime s(y)^-1/2 K w^-1
 y prime = s_y^{-1/2] * (y -f(x_n))
 K prime = S_y^{-1/2} K W^{-1}
+
+eq.43 w is the diagonal weighting matrix which sets the side
+constraint dimensionless w_jj = 1/x_ij for the methane column number
+densities
+w_jj = 10^-7/x_jj
+
 eq. 46  x_retr = A x_true +(I -1) x_a + G e_y + G e_f
+gamma tikhunof regularisation using l-curve method
+
+eq.52 something 2018
 product manual
 (1) x(ch4_ref)^avg = v ch4_ref^avg /v(air_dry^ref)
 (2) v^ch4_ref^avg) = v(ch4_apr) +sum_i=1^n a_i *(delta v_ch4^ref_i
@@ -142,3 +152,9 @@ but proably had to happen eventually. Wonder what I'e broken on the way
 ** 2023-07 July
 *** 2023-07-03 Monday
 added time and location to observations list
+** 2023-08 August
+*** 2023-08-23 Wednesday
+note that in the CMAQ gridding system cross points are cell centres
+and dot points are cell corners, exactly the opposite to what I'd expect
+*** 2023-08-25 Friday
+get termite data, uncertain of unit
