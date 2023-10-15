@@ -57,6 +57,10 @@ class ObsSRON( ObsMultiRay ):
         newobs.out_dict['uncertainty'] = kwargs['ch4_column_precision']
         newobs.out_dict['time'] = kwargs['time']
         newobs.out_dict['qa_value'] = kwargs['qa_value']
+        newobs.out_dict['latitude_corners'] = kwargs['latitude_corners']
+        newobs.out_dict['longitude_corners'] = kwargs['longitude_corners']
+        newobs.out_dict['latitude_center'] = kwargs['latitude_center']
+        newobs.out_dict['longitude_center'] = kwargs['longitude_center']
         newobs.spcs = 'CH4'
         newobs.src_data = kwargs.copy()
         return newobs
