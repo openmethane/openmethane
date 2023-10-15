@@ -36,7 +36,7 @@ import pdb
 source_type = 'pattern'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = '/home/563/pjr563/scratch/openmethane-beta/tropomi/202207/S5P_RPRO_L2__CH4____20220702*.nc4'
+source = '/home/563/pjr563/scratch/openmethane-beta/tropomi/202207/S5P_RPRO_L2__CH4____202207*.nc4'
 
 output_file = input_defn.obs_file
 
