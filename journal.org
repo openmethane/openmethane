@@ -158,3 +158,6 @@ note that in the CMAQ gridding system cross points are cell centres
 and dot points are cell corners, exactly the opposite to what I'd expect
 *** 2023-08-25 Friday
 get termite data, uncertain of unit
+** 2023-10 October
+*** 2023-10-15 Sunday
+Needed 117 cpu hours to preprocess 1 month's observations
