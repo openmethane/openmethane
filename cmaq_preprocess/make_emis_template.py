@@ -106,3 +106,5 @@ for i, date in enumerate(dates):
 
 
         output.setncattr('HISTORY',"")
+        # copy other attributes accross
+        for k,v in attrDict.items(): output.setncattr( k, v)

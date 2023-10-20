@@ -17,6 +17,7 @@ import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.params.cmaq_config as cmaq_config
 import fourdvar.params.input_defn as input_defn
+import fourdvar.params.template_defn as template_defn
 from fourdvar.params.root_path_defn import store_path
 from cmaq_preprocess.uncertainty import convert_unc
 
@@ -77,7 +78,7 @@ bcon_unc = {'CH4':1e-9} #ppm/s
 
 
 # convert spc_list into valid list
-efile = dt.replace_date( cmaq_config.emis_file, dt.start_date )
+efile = dt.replace_date( template_defn.emis, dt.start_date )
 var_list = ncf.get_attr( efile, 'VAR-LIST' ).split()
 if input_defn.inc_icon is True:
     ifile = dt.replace_date( cmaq_config.icon_file, dt.start_date )
@@ -102,7 +103,7 @@ if input_defn.inc_icon is True:
     assert len(spc_list)==len(icon_unc), 'Invalid icon_unc size'
 
 # convert emis_nlay into valid number
-efile = dt.replace_date( cmaq_config.emis_file, dt.start_date )
+efile = dt.replace_date( template_defn.emis, dt.start_date )
 enlay = int( ncf.get_attr( efile, 'NLAYS' ) )
 if str(emis_nlay).lower() == 'all':
     emis_nlay = enlay
@@ -133,7 +134,7 @@ assert tot_nday % tday == 0, 'tday must cleanly divide No. days in model run'
 # convert bcon_tsec into valid time-step length
 daysec = 24*60*60
 if str( bcon_tsec ).lower() == 'emis':
-    efile = dt.replace_date( cmaq_config.emis_file, dt.start_date )
+    efile = dt.replace_date( template_defn.emis, dt.start_date )
     hms = int( ncf.get_attr( efile, 'TSTEP' ) )
     bcon_tsec = 3600*(hms//10000) + 60*((hms//100)%100) + (hms%100)
 elif str( bcon_tsec ).lower() == 'single':
@@ -148,7 +149,7 @@ else:
         assert daysec % bcon_tsec == 0, 'invalid bcon_tsec'
 
 # emis-file timestep must fit into PhysicalData tstep
-efile = dt.replace_date( cmaq_config.emis_file, dt.start_date )
+efile = dt.replace_date( template_defn.emis, dt.start_date )
 estep = int( ncf.get_attr( efile, 'TSTEP' ) )
 print("estep:",estep)
 esec = bcon_tsec
