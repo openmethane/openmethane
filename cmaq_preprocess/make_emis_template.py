@@ -19,6 +19,8 @@ import numpy as np
 import netCDF4 as nc
 import datetime
 openMethanePrior = '../../out-om-domain-info.nc'
+kg2g = 1000. # conversion from kg to g
+molarMass = 16. # molar mass of CH4
 #attributes that CMAQ is expecting(1)
 attrnames = ['IOAPI_VERSION', 'EXEC_ID', 'FTYPE', 'CDATE', 'CTIME', 'WDATE', 'WTIME',
              'SDATE', 'STIME', 'TSTEP', 'NTHIK', 'NCOLS', 'NROWS', 'NLAYS', 'NVARS',
@@ -99,10 +101,8 @@ for i, date in enumerate(dates):
         outvars[cmaqspec].setncattr('long_name',"{:<16}".format(cmaqspec))
         outvars[cmaqspec].setncattr('units',"{:<16}".format("mols/s"))
         outvars[cmaqspec].setncattr('var_desc',"{:<80}".format("Emissions of " + cmaqspec))
-        outvars[cmaqspec][...] = 0.
-        outvars[cmaqspec][:,0,...] = np.stack([emissions[i,...]]*lens['TSTEP'],axis=0)
+        convFac = attrDict['XCELL'] * attrDict['YCELL'] * kg2g/molarMass # from kg/m^2/s to moles/gridcell/s
+        outvars[cmaqspec][:,0,...] = np.stack([convFac*emissions[i,...]]*lens['TSTEP'],axis=0)
 
 
         output.setncattr('HISTORY',"")
-        #output.setncattr('SDATE',np.int32(-635))
-        #output.setncattr('TSTEP',numpy.int32(100))
