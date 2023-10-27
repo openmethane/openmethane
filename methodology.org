@@ -303,3 +303,14 @@ real differences. On the other hand, if emission differences do not
 yield changes in model concentrations (usually because of cloud) then
 we cannot be confident in our update to the emissions inventory in
 that region.
+
+* Costings
+| Task                  | Requirement (1 month) | Comments                                    |
+|-----------------------+-----------------------+---------------------------------------------|
+| preprocessing S5P     | 120 cpu hr            |                                             |
+| preprocessing Met     | 100 CPU hours 50GB    | estimated from other cases                  |
+| S5P data ingest       | approx 1GB            |                                             |
+| FNL data ingest       | 10GB                  | estimate from other cases                   |
+| 30 iterations py4dvar | 1000 CPU hours & 50GB | estimated from 3 days, = 1 node for one day |
+| temporary storage     | 500GB                 |                                             |
+| Data export           | 2GB                   |                                             |
