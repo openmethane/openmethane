@@ -10,7 +10,7 @@
 # """
 #
 #PBS -P q90
-#PBS -q express
+#PBS -q normal
 #PBS -N obs_preproc
 #PBS -l walltime=24:00:00,mem=128GB
 #PBS -l ncpus=48
