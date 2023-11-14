@@ -9,6 +9,7 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import os
+import sys
 import numpy as np
 
 import context
@@ -22,14 +23,9 @@ import fourdvar.util.cmaq_handle as cmaq
 import setup_logging
 logger = setup_logging.get_logger( __file__ )
 
-# replace archive directory name and desciption file
-archive_defn.experiment = 'pert_pert_test'
-archive_defn.description = """This is a pert-pert test.
-A "true" prior is assumed and a "true" set of observations calculated from it.
-A normally distributed perturbation is applied to both the true-prior and the true-obs based of their respected uncertainties.
-The perterbed prior and perturbed observations are then run through the minimizer to test its ability to converge to the expected cost value of n/2 (where n is the number of observations.
-"""
-
+# replace archive directory name and description file
+archive_defn.experiment = 'emis_sens'
+archive_defn.description = """testing emission sensitivities"""
 #create the true and perturbed input data
 prior_true_archive = 'prior_true.nc'
 prior_pert_archive = 'prior_pert.nc'
@@ -42,19 +38,19 @@ model_input = transform( phys_true, d.ModelInputData )
 model_output = transform( model_input, d.ModelOutputData )
 obs_true = transform( model_output, d.ObservationData )
 
-o_val = obs_true.get_vector()
-o_unc = np.array( d.ObservationData.uncertainty )
-obs_pert = d.ObservationData( np.random.normal( o_val, o_unc ) )
-
 unk = transform( phys_true, d.UnknownData )
 unk_pert = d.UnknownData( np.random.normal( unk.get_vector(), 1.0 ) )
 phys_pert = transform( unk_pert, d.PhysicalData )
+model_pert = transform( phys_pert, d.ModelInputData)
+
+conc_pert = transform(model_pert, d.ModelOutputData)
+obs_pert = transform( conc_pert, d.ObservationData)
 
 phys_true.archive( prior_true_archive )
 phys_pert.archive( prior_pert_archive )
 obs_true.archive( obs_true_archive )
 obs_pert.archive( obs_pert_archive )
-
+sys.exit
 cmaq.wipeout_fwd()
 
 # Output the target cost value for this test
