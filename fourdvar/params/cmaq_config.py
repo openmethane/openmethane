@@ -19,10 +19,10 @@ use_jobfs = False
 
 #No. of processors per column
 #npcol = 1
-npcol = 4 #pert
+npcol = 6 #pert
 #No. of processors per row
 #nprow = 1
-nprow = 4 #pert
+nprow = 8 #pert
 #note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 #extra ioapi write logging
@@ -108,12 +108,12 @@ else:
 mcip_path = os.path.join( wrf_path, '<YYYY-MM-DD>','d01' )
 grid_path = os.path.join(  wrf_path, '<YYYY-MM-DD>','d01' )
 jproc_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq' )#Sougol
-bcon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d01/')#Sougol
-icon_path = os.path.join('/scratch/q90/sa6589/test_Sougol/run_cmaq/<YYYY-MM-DD>/d01/')#Sougol
+bcon_path = os.path.join( store_path, 'input/')
+icon_path = os.path.join( store_path, 'input/')
 emis_path = os.path.join(cmaq_base, 'emissions' )
 #horizontal grid definition file
 griddesc = os.path.join( grid_path, 'GRIDDESC' )
-gridname = 't' #Sougol
+gridname = 'o'
 #gridname = 'W'
 
 #logfile
@@ -140,17 +140,17 @@ fwd_xfirst_file = os.path.join( output_path, 'XFIRST.<YYYYMMDD>' )
 bwd_xfirst_file = os.path.join( output_path, 'XFIRST.bwd.<YYYYMMDD>' )
 
 #input files
-icon_file = os.path.join( icon_path, 'ICON.d01.t.CH4only.nc' )#Sougol
-bcon_file = os.path.join( bcon_path, 'BCON.d01.t.CH4only.nc' )#Sougol
+icon_file = os.path.join( icon_path, 'ICON.d01.o.CH4only.nc' )
+bcon_file = os.path.join( bcon_path, 'BCON.d01.o.CH4only.nc')
 emis_file = os.path.join( emis_path, 'emis.<YYYY-MM-DD>.nc' )#Shak
 force_file = os.path.join( cmaq_base,  'force', 'ADJ_FORCE.<YYYYMMDD>.nc' )
 #required met data, use unknown #?????
-grid_dot_2d = os.path.join( grid_path, 'GRIDDOT2D_8' )#Sougol
-grid_cro_2d = os.path.join( grid_path, 'GRIDCRO2D_8' )#Sougol
+grid_dot_2d = os.path.join( grid_path, 'GRIDDOT2D_1' )#Sougol
+grid_cro_2d = os.path.join( grid_path, 'GRIDCRO2D_1' )
 met_cro_2d = os.path.join( mcip_path, 'METCRO2D_1' )
 met_cro_3d = os.path.join( mcip_path, 'METCRO3D_1')
-met_dot_3d = os.path.join( mcip_path, 'METDOT3D_8' )#Sougol
-met_bdy_3d = os.path.join( mcip_path, 'METBDY3D_8' )#Sougol
+met_dot_3d = os.path.join( mcip_path, 'METDOT3D_1' )
+met_bdy_3d = os.path.join( mcip_path, 'METBDY3D_1' )#Sougol
 layerfile = met_cro_3d
 depv_trac = met_cro_2d
 xj_data = os.path.join( jproc_path, 'JTABLE_<YYYYDDD>' )
@@ -200,8 +200,8 @@ wipeout_bwd_list = [ bwd_logfile, bwd_xfirst_file, conc_sense_file,
                      emis_sense_file, emis_scale_sense_file, bwd_stdout_log ]
 
 #drivers
-fwd_prog = os.path.join('/home/563/ns0890/programs/cmaq_adj/BLD_fwd_CH4only/', 'ADJOINT_FWD' )
-bwd_prog = os.path.join('/home/563/ns0890/programs/cmaq_adj/BLD_bwd_CH4only/', 'ADJOINT_BWD' )
+fwd_prog = os.path.join('/home/563/sa6589/cmaq_adj/BLD_fwd_CH4only/', 'ADJOINT_FWD' )
+bwd_prog = os.path.join('/home/563/sa6589/cmaq_adj/BLD_bwd_CH4only/', 'ADJOINT_BWD' )
 
 #shell used to call drivers
 cmd_shell = '/bin/csh'
