@@ -11,12 +11,12 @@
 #
 #PBS -P q90
 #PBS -q express
-#PBS -N run_pertpert
-#PBS -l walltime=24:00:00,mem=32GB
-#PBS -l ncpus=16
+#PBS -N run_test
+#PBS -l walltime=24:00:00,mem=128GB
+#PBS -l ncpus=48
 #PBS -l wd
 source load_p4d_modules.sh
 # replace previous line with whatever you source to run py4dvar
 
 #python3 restart_script.py
-python3 tests/pert_pert_test.py
+python3 runscript.py
