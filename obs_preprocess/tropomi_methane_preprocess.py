@@ -36,7 +36,7 @@ import pdb
 source_type = 'pattern'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = '/home/563/pjr563/scratch/openmethane-beta/tropomi/202207/S5P_RPRO_L2__CH4____202207*.nc4'
+source = '/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____202207*.nc4'
 
 output_file = input_defn.obs_file
 
@@ -90,6 +90,12 @@ for fname in filelist:
     print('read {}'.format( fname ))
     var_dict = {}
     with Dataset( fname, 'r' ) as f:
+        try: # checking if there's an error code by getting the error attribute, we hope this fails
+            errorString = f.getncattr('errors')
+            print('error ',  fname, errorString)
+            continue # no further processing on this file, context manager should close f
+        except:
+            pass # all ok, just continue
         instrument = f.groups['PRODUCT']
         meteo = f['/PRODUCT/SUPPORT_DATA/INPUT_DATA']
         product = f['/PRODUCT']
@@ -200,7 +206,7 @@ with multiprocessing.Pool( nCPUs) as pool:
         else:
             
             if obs.valid: obslist.append( obs)
-        if nProcessed % 100 == 0: print(f'{nProcessed} obs processed in {timing.time() -baseTime:8.1f} seconds')
+        if nProcessed % 1000 == 0: print(f'{nProcessed} obs processed in {timing.time() -baseTime:8.1f} seconds')
         nProcessed += 1
 print(len(varDictList), 'possible observations') 
 print(f'found {nObs[0]:d} valid soundings from {nObs[1]:d} possible')
