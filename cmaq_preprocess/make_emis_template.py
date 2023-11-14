@@ -27,9 +27,9 @@ attrnames = ['IOAPI_VERSION', 'EXEC_ID', 'FTYPE', 'CDATE', 'CTIME', 'WDATE', 'WT
              'GDTYP', 'P_ALP', 'P_BET', 'P_GAM', 'XCENT', 'YCENT', 'XORIG', 'YORIG',
              'XCELL', 'YCELL', 'VGTYP', 'VGTOP', 'VGLVLS', 'GDNAM', 'UPNAM', 'VAR-LIST', 'FILEDESC']
 unicodeType = type(u'foo')
-nlay = 1
+nlay = 32
 nvar = 1
-nz=1 # just surface for the moment
+nz=32 # just surface for the moment
 with nc.Dataset(openMethanePrior, mode='r') as input:
     dates = nc.num2date( input['date'][:], input['date'].getncattr('units'), only_use_cftime_datetimes=False)
     emissions = input['OCH4_TOTAL'][...]
@@ -91,8 +91,8 @@ for i, date in enumerate(dates):
         tflag[:,0,0] = 1000*emisyear+emisday #Peter
         # need to set next day which requires care if it's Dec 31
         nextDate = date + datetime.timedelta(1) # add one day
-        nextyear = date.timetuple().tm_year #Peter
-        nextday=date.timetuple().tm_yday #Peter
+        nextyear = nextDate.timetuple().tm_year #Peter
+        nextday=nextDate.timetuple().tm_yday #Peter
         tflag[-1,:,0] = 1000*nextyear+nextday # setting date of last time-slice
         tflag[:,0,1] = (np.arange(lens['TSTEP'])%(lens['TSTEP']-1))*100 # hourly timestep including last timeslice to 0 I hope
         outvars['TFLAG'][...] = tflag
@@ -102,6 +102,7 @@ for i, date in enumerate(dates):
         outvars[cmaqspec].setncattr('units',"{:<16}".format("mols/s"))
         outvars[cmaqspec].setncattr('var_desc',"{:<80}".format("Emissions of " + cmaqspec))
         convFac = attrDict['XCELL'] * attrDict['YCELL'] * kg2g/molarMass # from kg/m^2/s to moles/gridcell/s
+        outvars[cmaqspec][...] = 0.
         outvars[cmaqspec][:,0,...] = np.stack([convFac*emissions[i,...]]*lens['TSTEP'],axis=0)
 
 
