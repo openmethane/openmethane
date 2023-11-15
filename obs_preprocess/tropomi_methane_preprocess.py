@@ -27,6 +27,9 @@ import fourdvar.params.input_defn as input_defn
 import math
 ##NS added:
 import pdb
+import setup_logging
+logger = setup_logging.get_logger( __file__ )
+import traceback
 
 #-CONFIG-SETTINGS---------------------------------------------------------
 
@@ -36,8 +39,9 @@ import pdb
 source_type = 'pattern'
      
 #source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
+source = '/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____20220721T063513_20220721T081643_24713_03_020400_20230201T030600.SUB.nc4'
+source = '/scratch/q90/pjr563/tmp/202207/S5P_OFFL_L2__CH4____20220730T070626_20220730T084755_24841_03_020400_20220801T012853.SUB.nc4'
 source = '/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____202207*.nc4'
-
 output_file = input_defn.obs_file
 
 # minimum qa_value before observation is discarded
@@ -84,11 +88,16 @@ else:
     raise TypeError( "source_type '{}' not supported".format(source_type) )
 
 obslist = []
-varDictList = []
 nObs =[0,0]
+nThin = 1 # included for testing
+nTest = 0 # included for testing
+iTest = 0
+
 for fname in filelist:
-    print('read {}'.format( fname ))
-    var_dict = {}
+    print(f'processing {fname}')
+    varDictList = []
+    nTimedOut = 0
+
     with Dataset( fname, 'r' ) as f:
         try: # checking if there's an error code by getting the error attribute, we hope this fails
             errorString = f.getncattr('errors')
@@ -96,6 +105,8 @@ for fname in filelist:
             continue # no further processing on this file, context manager should close f
         except:
             pass # all ok, just continue
+        if f.processing_status != 'Nominal':
+            print(f'file {fname} processing_status = {f.processing_status}, skipping')
         instrument = f.groups['PRODUCT']
         meteo = f['/PRODUCT/SUPPORT_DATA/INPUT_DATA']
         product = f['/PRODUCT']
@@ -138,76 +149,79 @@ for fname in filelist:
         qa_value = qa.reshape((qa.size,))
 
 
-    mask_arr = np.ma.getmaskarray( ch4_column )
+        mask_arr = np.ma.getmaskarray( ch4_column )
 
-    #quick filter out: mask, lat, lon and quality
-    lat_filter = np.logical_and( latitude_center>=model_grid.lat_bounds[0],
-                                 latitude_center<=model_grid.lat_bounds[1] )                          
-    lon_filter = np.logical_and( longitude_center>=model_grid.lon_bounds[0],
-                                 longitude_center<=model_grid.lon_bounds[1] )                               
-    mask_filter = np.logical_not( mask_arr )
-    qa_filter = ( qa_value > qa_cutoff )
-    include_filter = np.logical_and.reduce((lat_filter,lon_filter,mask_filter,qa_filter))
+        #quick filter out: mask, lat, lon and quality
+        lat_filter = np.logical_and( latitude_center>=model_grid.lat_bounds[0],
+                                     latitude_center<=model_grid.lat_bounds[1] )                          
+        lon_filter = np.logical_and( longitude_center>=model_grid.lon_bounds[0],
+                                     longitude_center<=model_grid.lon_bounds[1] )                               
+        mask_filter = np.logical_not( mask_arr )
+        qa_filter = ( qa_value > qa_cutoff )
+        include_filter = np.logical_and.reduce((lat_filter,lon_filter,mask_filter,qa_filter))
 
-    epoch = dt.datetime.utcfromtimestamp(0)
-    sdate = dt.datetime( start_date.year, start_date.month, start_date.day )
-    edate = dt.datetime( end_date.year, end_date.month, end_date.day )
-    size = include_filter.sum()
-    nObs[0]+=size
-    nObs[1]+=include_filter.size
-    nTest = 0 # included for testing
-    nThin = 1 # included for testing
-    iTest = 0
-    for i,iflag in enumerate(include_filter):
-        if iflag:
-            #scanning time is slow, do it after other filters.
-            #tsec = (dt.datetime(*time[i,:])-epoch).total_seconds()
-            dt_time = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
-            tsec = (dt_time-epoch).total_seconds()
-            time0 = (sdate-epoch).total_seconds()
-            time1 = (edate-epoch).total_seconds() + 24*60*60
-            if tsec < time0 or tsec > time1:
-                continue
-            iTest += 1
-            if nTest > 0 and iTest > nTest: break
-            if iTest % nThin != 0: continue
-            var_dict = {}
-            #var_dict['time'] = dt.datetime( *time[0,i] )
-            var_dict['time'] = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
-            var_dict['latitude_center'] = latitude_center[i]
-            var_dict['longitude_center'] = longitude_center[i]
-            var_dict['latitude_corners'] = latitude_corners[i,:]
-            var_dict['longitude_corners'] = longitude_corners[i,:]
-            var_dict['solar_zenith_angle'] = solar_zenith_angle[i]
-            var_dict['viewing_zenith_angle'] = viewing_zenith_angle[i]
-            var_dict['solar_azimuth_angle'] = solar_azimuth_angle[i]
-            var_dict['viewing_azimuth_angle'] = viewing_azimuth_angle[i]
-            press_levels=np.arange(n_levels)* pressure_interval[i] ##we need to put pressure=0 at the first leveli
-            var_dict['pressure_levels'] = press_levels
-            var_dict['ch4_column'] = ch4_column[i]
-            var_dict['ch4_column_precision'] = ch4_column_precision[i]
-            var_dict['obs_kernel'] = averaging_kernel [i,:]
-            var_dict['qa_value'] = qa_value[i]
-            var_dict['ch4_profile_apriori'] = ch4_profile_apriori[i,:]
-            varDictList.append( (maxProcessTime, var_dict, model_grid))
-            # obs = ObsSRON.create( **var_dict )           
-            # obs.interp_time = False
-            # obs.model_process( model_grid )           
-            # if obs.valid is True:
-            #     obslist.append( obs.get_obsdict() )
-with multiprocessing.Pool( nCPUs) as pool:
-    processOutput = pool.imap_unordered( timeWrapper, varDictList)
-    nProcessed = 0
-    nTimedOut = 0
-    baseTime = timing.time()
-    for obs in processOutput:
-        if obs is None:
-            nTimedOut += 1
-        else:
-            
-            if obs.valid: obslist.append( obs)
-        if nProcessed % 1000 == 0: print(f'{nProcessed} obs processed in {timing.time() -baseTime:8.1f} seconds')
-        nProcessed += 1
+        epoch = dt.datetime.utcfromtimestamp(0)
+        sdate = dt.datetime( start_date.year, start_date.month, start_date.day )
+        edate = dt.datetime( end_date.year, end_date.month, end_date.day )
+        size = include_filter.sum()
+        nObs[0]+=size
+        nObs[1]+=include_filter.size
+        for i,iflag in enumerate(include_filter):
+            if iflag:
+                #scanning time is slow, do it after other filters.
+                #tsec = (dt.datetime(*time[i,:])-epoch).total_seconds()
+                dt_time = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
+                tsec = (dt_time-epoch).total_seconds()
+                time0 = (sdate-epoch).total_seconds()
+                time1 = (edate-epoch).total_seconds() + 24*60*60
+                if tsec < time0 or tsec > time1:
+                    continue
+                iTest += 1
+                if nTest > 0 and iTest > nTest: break
+                if iTest % nThin != 0: continue
+                var_dict = {}
+                #var_dict['time'] = dt.datetime( *time[0,i] )
+                var_dict['time'] = dt.datetime.strptime( time[i][0:19], '%Y-%m-%dT%H:%M:%S' )
+                var_dict['latitude_center'] = latitude_center[i]
+                var_dict['longitude_center'] = longitude_center[i]
+                var_dict['latitude_corners'] = latitude_corners[i,:]
+                var_dict['longitude_corners'] = longitude_corners[i,:]
+                var_dict['solar_zenith_angle'] = solar_zenith_angle[i]
+                var_dict['viewing_zenith_angle'] = viewing_zenith_angle[i]
+                var_dict['solar_azimuth_angle'] = solar_azimuth_angle[i]
+                var_dict['viewing_azimuth_angle'] = viewing_azimuth_angle[i]
+                press_levels=np.arange(n_levels)* pressure_interval[i] ##we need to put pressure=0 at the first leveli
+                var_dict['pressure_levels'] = press_levels
+                var_dict['ch4_column'] = ch4_column[i]
+                var_dict['ch4_column_precision'] = ch4_column_precision[i]
+                var_dict['obs_kernel'] = averaging_kernel [i,:]
+                var_dict['qa_value'] = qa_value[i]
+                var_dict['ch4_profile_apriori'] = ch4_profile_apriori[i,:]
+                varDictList.append( (maxProcessTime, var_dict, model_grid))
+                # obs = ObsSRON.create( **var_dict )           
+                # obs.interp_time = False
+                # obs.model_process( model_grid )           
+                # if obs.valid is True:
+                #     obslist.append( obs.get_obsdict() )
+        with multiprocessing.Pool( nCPUs) as pool:
+            try:
+                processOutput = pool.imap_unordered( timeWrapper, varDictList)
+                nProcessed = 0
+                baseTime = timing.time()
+                for obs in processOutput:
+                    if obs is None:
+                        nTimedOut += 1
+                    else:
+
+                        if obs.valid: obslist.append( obs)
+                    if nProcessed % 1000 == 0: print(f'{nProcessed} obs processed in {timing.time() -baseTime:8.1f} seconds')
+                    nProcessed += 1
+            except Exception as ex:
+                message = f'an exception of type {type(ex).__name__} has occurred\nskipping file {fname}'
+                print(message)
+                print(traceback.format_exc())
+                logger.warn( message)
+                
 print(len(varDictList), 'possible observations') 
 print(f'found {nObs[0]:d} valid soundings from {nObs[1]:d} possible')
 print( f'{nTimedOut} observations timed out after {maxProcessTime} seconds')
