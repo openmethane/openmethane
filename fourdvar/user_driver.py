@@ -112,7 +112,7 @@ def minim( cost_func, grad_func, init_guess ):
     output: list (1st element is numpy.ndarray of solution, the rest are user-defined)
     """
     #turn on skipping of unneeded fwd calls
-    data_access.allow_fwd_skip = False
+    data_access.allow_fwd_skip = True
     
     start_cost = cost_func( init_guess )
     start_grad = grad_func( init_guess )
@@ -124,7 +124,7 @@ def minim( cost_func, grad_func, init_guess ):
         bounds = len(init_guess) * [ (0,None) ]
     
     answer = minimize( cost_func, init_guess, bounds=bounds,
-                       fprime=grad_func, callback=callback_func )
+                       fprime=grad_func, callback=callback_func, maxiter=20 )
     #check answer warnflag, etc for success
     answer = list( answer ) + [ start_dict ]
     return answer
