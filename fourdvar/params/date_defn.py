@@ -13,4 +13,4 @@ See the License for the specific language governing permissions and limitations 
 start_date = 20220701
 
 # end date in int(YYYYMMDD) format
-end_date = 20220930
+end_date = 20220730
