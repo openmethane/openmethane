@@ -15,7 +15,7 @@ from fourdvar.params.input_defn import  obs_file
 from fourdvar.util import file_handle as fh
 
 import matplotlib.pyplot as plt
-obsList = fh.load_list( obs_file)
+obsList = fh.load_list( obs_file )
 domain = obsList.pop(0)
 obsCount = np.zeros((domain['NROWS'], domain['NCOLS']))
 obsMean = np.zeros_like( obsCount)
@@ -24,13 +24,5 @@ for ob in  obsList:
     obsMean[ ob['lite_coord'][3:5]] += ob['value']
 hasObs = ( obsCount > 0.5) # at least one observation
 obsMean[ hasObs] /=  obsCount[ hasObs] # avoiding 0/0 error
-
-# plt.plot(obs_series, label = 'Observations')
-# plt.plot(sim2956, label = 'Simulated Observations')
-# plt.legend()
-# plt.xticks(np.arange(len(sim2956)), np.arange(1, len(sim2956)+1))
-# plt.title('Batemans Bay Simulated and True Observations December 2019')
-# plt.xlabel('Day')
-# plt.ylabel('Concentration (ppm)')
-# plt.savefig('batemans_dec_sim_obs.png')
-# plt.show()
+obsCount.dump('obsCount.pic')
+obsMean.dump('obsMean.pic')
