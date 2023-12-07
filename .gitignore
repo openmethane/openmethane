@@ -11,3 +11,5 @@ baseline_data/landuse-sector-map.csv
 baseline_data/methane-inventory-by-sector.csv
 baseline_data/NLUM_ALUMV8_250m_2015_16_alb.tif
 load_p4d_modules.sh
+*.o[0-9]*
+*.e[0-9]*
