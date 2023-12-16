@@ -54,9 +54,9 @@ print('completed in {}s'.format( int(time.time() - st) ))
 initCost = main.cost_func( prior_vector)
 initGrad = main.gradient_func( prior_vector)
 
-epsilon = 1e-6
+epsilon = 1e-4
 dx =  epsilon*np.random.normal( 0.0, 1.0, prior_vector.shape )
 pertCost = main.cost_func( prior_vector + dx)
 print(('finite difference', pertCost -initCost))
-print(('grad calc', dx*initGrad))
+print(('grad calc', np.dot(dx, initGrad)))
 print('FINISHED!')
