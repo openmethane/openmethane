@@ -127,6 +127,17 @@ class ModelInputData( FourDVarData ):
             ncf.copy_compress( source, dest )
         return cls()
     
+    def get_vector( self):
+        """ concatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
+        file_data = get_filedict( self.__class__.__name__ )
+        result = []
+        for label, record in file_data.items():
+            varList = ncf.get_attr( record['actual'], 'VAR-LIST')
+            vars = varList.split()
+            for v in vars:
+                result.append( ncf.get_variable( record['actual'], v))
+        return np.array( result).flatten()
+    def sum_squares( self): return (self.get_vector()**2).sum()/2.0
     def cleanup( self ):
         """
         application: called when model input is no longer required
