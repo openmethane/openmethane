@@ -173,7 +173,7 @@ irr2_file = os.path.join( output_path, 'IRR_2.<YYYYMMDD>.nc' )
 irr3_file = os.path.join( output_path, 'IRR_3.<YYYYMMDD>.nc' )
 rj1_file = os.path.join( output_path, 'RJ_1.<YYYYMMDD>.nc' )
 rj2_file = os.path.join( output_path, 'RJ_2.<YYYYMMDD>.nc' )
-conc_sense_file = os.path.join( output_path, 'LGRID.bwd_COonly.<YYYYMMDD>.nc' )
+conc_sense_file = os.path.join( output_path, 'LGRID.bwd_CH4only.<YYYYMMDD>.nc' )
 emis_sense_file = os.path.join( output_path, 'EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc' )
 emis_scale_sense_file = os.path.join( output_path, 'EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc' )
 
