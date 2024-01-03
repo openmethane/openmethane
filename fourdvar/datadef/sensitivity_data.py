@@ -10,7 +10,7 @@ See the License for the specific language governing permissions and limitations 
 
 import numpy as np
 import os
-
+import fourdvar.datadef as d
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 
 import fourdvar.util.netcdf_handle as ncf
@@ -93,6 +93,30 @@ class SensitivityData( FourDVarData ):
             ncf.copy_compress( source, dest )
         return cls()
 
+    @classmethod
+    def create_from_ModelInputData( cls ):
+        """
+        application: create an instance of SensitivityData where sensitivities are ModelInputData emissions.
+        Used for sum-of-squares cost function gradient.
+        input: None
+        output: SensitivityData
+        """
+        destDict = get_filedict( cls.__name__ )
+        srcDict =get_filedict( d.ModelInputData.__name__ )
+        concKeys = set(destDict.keys()) -set( srcDict.keys())
+        for k in concKeys:
+            ncf.create_from_template( destDict[k][ 'template' ],
+                                      destDict[k][ 'actual' ],
+                                      date=destDict[k][ 'date' ],
+                                      overwrite=True )
+            
+        for k in srcDict.keys():
+            ncf.create_from_template( destDict[k][ 'template' ],
+                                      destDict[k][ 'actual' ],
+                                      var_change=ncf.get_variable( srcDict[k]['actual'], ['CH4']),
+                                      date=destDict[k][ 'date' ],
+                                      overwrite=True )
+        return cls()
     @classmethod
     def load_from_template( cls ):
         """
