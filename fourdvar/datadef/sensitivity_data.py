@@ -133,14 +133,37 @@ class SensitivityData( FourDVarData ):
         return cls()
     def get_vector( self):
         """ concatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
-        file_data = get_filedict( self.__class__.__name__ )
+        filedict = get_filedict( self.__class__.__name__ )
+        emisKeys = [d for d in filedict if d.startswith('emis')]
+        emisKeys.sort()
         result = []
-        for label, record in file_data.items():
-            varList = ncf.get_attr( record['actual'], 'VAR-LIST')
+        for  record in emisKeys:
+            varList = ncf.get_attr( filedict[record]['actual'], 'VAR-LIST')
             vars = varList.split()
             for v in vars:
-                result.append( ncf.get_variable( record['actual'], v))
+                result.append( ncf.get_variable( filedict[record]['actual'], v).astype('float64'))
         return np.array( result).flatten()
+
+    @classmethod
+    def load_from_vector_template ( cls, vector):
+        """ create a record from a templateconcatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
+        filedict = get_filedict( cls.__name__ )
+        emisKeys = [d for d in filedict.keys() if d.startswith('emis')]
+        emisKeys.sort()
+
+        # first set up dimensions for reshaping vector
+        record = filedict[emisKeys[0]]['template']
+        varList = ncf.get_attr( record, 'VAR-LIST')
+        vars = varList.split()
+        if len( vars) > 1: raise ValueError('only works for one variable')
+        var_shape =  ncf.get_variable( record, vars[0]).shape
+        vector_shape = (len(emisKeys),)+var_shape
+        vector_reshape = vector.reshape( vector_shape)
+        for i,record in enumerate(emisKeys):
+            for var in vars:
+                ncf.create_from_template( filedict[record]['template'], filedict[record]['actual'],
+                                          var_change={var:vector_reshape[i,...]}, date=filedict[record]['date'] )
+        return cls()
     def sum_squares( self): return (self.get_vector()**2).sum()/2.0
 
     def cleanup( self ):
