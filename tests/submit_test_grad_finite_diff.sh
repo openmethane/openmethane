@@ -15,6 +15,7 @@
 #PBS -l walltime=24:00:00,mem=128GB
 #PBS -l ncpus=48
 #PBS -l wd
+####PBS -L storage=scratch/q90
 source ../load_p4d_modules.sh
 # replace previous line with whatever you source to run py4dvar
 

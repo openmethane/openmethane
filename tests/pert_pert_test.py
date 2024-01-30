@@ -47,14 +47,17 @@ o_unc = np.array( d.ObservationData.uncertainty )
 obs_pert = d.ObservationData( np.random.normal( o_val, o_unc ) )
 
 unk = transform( phys_true, d.UnknownData )
-unk_pert = d.UnknownData( np.random.normal( unk.get_vector(), 1.0 ) )
+unk_pert = d.UnknownData( np.random.normal( unk.get_vector(), 1.0 )*0.0 )
 phys_pert = transform( unk_pert, d.PhysicalData )
+model_input_pert = transform( phys_pert, d.ModelInputData )
+model_output_pert = transform( model_input_pert, d.ModelOutputData )
+simul_pert = transform( model_output_pert, d.ObservationData )
 
 phys_true.archive( prior_true_archive )
 phys_pert.archive( prior_pert_archive )
 obs_true.archive( obs_true_archive )
-obs_pert.archive( obs_pert_archive )
-
+simul_pert.archive( obs_pert_archive )
+exit()
 cmaq.wipeout_fwd()
 
 # Output the target cost value for this test
