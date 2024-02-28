@@ -13,16 +13,21 @@ import os
 import sys
 from fourdvar.params.input_defn import  obs_file
 from fourdvar.util import file_handle as fh
-
-import matplotlib.pyplot as plt
-obsList = fh.load_list( obs_file )
-domain = obsList.pop(0)
-obsCount = np.zeros((domain['NROWS'], domain['NCOLS']))
-obsMean = np.zeros_like( obsCount)
-for ob in  obsList:
-    obsCount[ ob['lite_coord'][3:5]] +=1
-    obsMean[ ob['lite_coord'][3:5]] += ob['value']
-hasObs = ( obsCount > 0.5) # at least one observation
-obsMean[ hasObs] /=  obsCount[ hasObs] # avoiding 0/0 error
-obsCount.dump('obsCount.pic')
-obsMean.dump('obsMean.pic')
+def mapObs( obsFileName):
+    """ extracts position and value for py4dvar observations, returns number of obs per gridcell and their mean.
+    Input: file name for py4dvar obs structure.
+    outputs: obsCount: numpy int array of number of obs per py4dvar gridcell
+    obsMean: mean of obs in each py4dvar gridcell. Returns 0 if no obs """
+    obsList = fh.load_list( obsFileName )
+    domain = obsList.pop(0)
+    obsCount = np.zeros((domain['NROWS'], domain['NCOLS']))
+    obsMean = np.zeros_like( obsCount)
+    obsMeanSq = np.zeros_like( obsCount)
+    for ob in  obsList:
+        obsCount[ ob['lite_coord'][3:5]] +=1
+        obsMean[ ob['lite_coord'][3:5]] += ob['value']
+        obsMeanSq[ ob['lite_coord'][3:5]] += ob['value']**2
+    hasObs = ( obsCount > 0.5) # at least one observation
+    obsMean[ hasObs] /=  obsCount[ hasObs] # avoiding 0/0 error
+    obsMeanSq[ hasObs] /=  obsCount[ hasObs] # avoiding 0/0 error
+    return obsCount, obsMean, obsMeanSq
