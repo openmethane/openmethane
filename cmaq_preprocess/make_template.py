@@ -67,13 +67,13 @@ ncf.create_from_template( conc_file, force_file, force_data )
 cmaq_handle.run_bwd_single( dt.start_date, is_first=True )
 
 # create record for icon & emis files
-fh.ensure_path( os.path.dirname( template.icon ) )
-ncf.copy_compress( icon_file, template.icon )
-for date in dt.get_datelist():
-    emis_src = dt.replace_date( cmaq_config.emis_file, date )
-    emis_dst = dt.replace_date( template.emis, date )
-    fh.ensure_path( os.path.dirname( emis_dst ) )
-    ncf.copy_compress( emis_src, emis_dst )
+# fh.ensure_path( os.path.dirname( template.icon ) )
+# ncf.copy_compress( icon_file, template.icon )
+# for date in dt.get_datelist():
+#     emis_src = dt.replace_date( cmaq_config.emis_file, date )
+#     emis_dst = dt.replace_date( template.emis, date )
+#     fh.ensure_path( os.path.dirname( emis_dst ) )
+#     ncf.copy_compress( emis_src, emis_dst )
 
 # create template for conc, force & sense files
 fh.ensure_path( os.path.dirname( template.conc ) )
