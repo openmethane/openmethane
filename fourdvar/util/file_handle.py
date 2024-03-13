@@ -93,3 +93,20 @@ def load_list( filepath ):
             except EOFError:
                 eof = True
     return obj_list
+
+# modified from code in stack exchange
+def iterPickle(filepath):
+    """ create iterator for gzip'd pickle file.
+    lazy alternative to load_list
+    usage:
+    iterator = iterPickle( filepath)
+    for i in iterator: ..."""
+    fpath = os.path.realpath( filepath )
+
+    with gzip.GzipFile( fpath) as f:
+        while True:
+            try:
+                yield pickle.load(f)
+            except EOFError:
+                break
+            
