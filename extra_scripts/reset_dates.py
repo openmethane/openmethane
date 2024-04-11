@@ -29,7 +29,7 @@ save_list( outObs, obs_file.replace('.gz','_reset.gz'))
 SDATE = 1000*sdate.timetuple().tm_year + sdate.timetuple().tm_yday
 EDATE = 1000*edate.timetuple().tm_year + edate.timetuple().tm_yday
 
-command = f'ncatted -O -a SDATE,global,m,l,{SDATE} -a EDATE,global,m,l,{EDATE} {prior_file} {prior_file}.reset'
+command = f'ncatted -O -a TDAY,emis,m,l,{EDATE-SDATE+1} -a SDATE,global,m,l,{SDATE} -a EDATE,global,m,l,{EDATE} {prior_file} {prior_file}.reset'
 print('\t\t\t'+command)
 commandList = command.split(' ')        
 ##
