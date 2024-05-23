@@ -4,8 +4,8 @@
 *** 2023-03-14 Tuesday
 note that tropomi reoslution changed to  5.5km along track on 6 august
 2019 though this was not noted yet in resolution flag [[file:~/work/openmethane-beta/tropomi/tropomi-performance.pdf]]
-Mainland Australia and Tasmania extend approximately from latitude –10.6 deg N (Cape
-York, Queensland) to –43.6 deg N (South-east Cape, Tasmania), and longitude 113.2 deg E
+Mainland Australia and Tasmania extend approximately from latitude Â–10.6 deg N (Cape
+York, Queensland) to Â–43.6 deg N (South-east Cape, Tasmania), and longitude 113.2 deg E
 (Steep Point, Western Australia) to 153.6 deg E (Cape Byron, NSW).
 tropomi methane at http://doi.org/10.5270/S5P-3lcdqiv
 ESA data hub https://scihub.copernicus.eu/
@@ -161,3 +161,21 @@ get termite data, uncertain of unit
 ** 2023-10 October
 *** 2023-10-15 Sunday
 Needed 117 cpu hours to preprocess 1 month's observations
+* 2024
+** 2024-04 April
+*** 2024-04-24 Wednesday
+for JL:
+after editing config.json
+qsub submit_setup_for_wrf.sh
+*** 2024-04-26 Friday
+next commands for JL
+ cd ~/scratch/openmethane-beta/wrf/aust*10km
+gadi qsub main.sh
+** 2024-05 May
+*** 2024-05-20 Monday
+state-based emission factors , note how much higher NSW is?
+For the year 2021-22, these were 0.023 and 0.061 tonnes COâ‚‚-e per tonne of coal, for Queensland and New
+South Wales, respectively. In 2023, the Queensland Method 1 emission factor was revised to 0.031 tonnes CO2-e
+per tonne of coal.
+taken from
+[[file:~/work/openmethane-beta/amemc/roadmap/cca-nger-review23.pdf]] P73
