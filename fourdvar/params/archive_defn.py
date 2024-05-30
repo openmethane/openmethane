@@ -26,7 +26,7 @@ iter_obs_lite = True
 #experiment name & name of directory to save results in
 #experiment = 'pert_pert_test'##'example_experiment'
 #experiment = 'real_test'
-experiment = 'pert_pert_test'#Pert
+experiment = '202207_test'#Pert
 
 #description is copied into a txt file in the experiment directory
 description = """This is a test of the fourdvar system.
@@ -37,7 +37,7 @@ desc_name = 'description.txt'
 
 #if True, delete any existing archive with the same name.
 #if False, create a new archive name to save results into.
-overwrite = True
+overwrite = False
 
 #pattern used to create new archive name if overwrite is False
 #<E> is replaced with the experiment name
