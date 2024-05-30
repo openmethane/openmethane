@@ -179,3 +179,5 @@ South Wales, respectively. In 2023, the Queensland Method 1 emission factor was 
 per tonne of coal.
 taken from
 [[file:~/work/openmethane-beta/amemc/roadmap/cca-nger-review23.pdf]] P73
+*** 2024-05-28 Tuesday
+run python3 interpolateFromCAMS.py which leaves things in the wrong place
