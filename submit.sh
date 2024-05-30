@@ -10,9 +10,9 @@
 # """
 #
 #PBS -P q90
-#PBS -q express
-#PBS -N run_test
-#PBS -l walltime=24:00:00,mem=128GB
+#PBS -q hugemem
+#PBS -N py4dvar
+#PBS -l walltime=48:00:00,mem=1200GB
 #PBS -l ncpus=48
 #PBS -l wd
 source load_p4d_modules.sh
