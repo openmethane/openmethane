@@ -9,17 +9,18 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import os
-import sys
-import numpy as np
 
-import fourdvar as d
-from fourdvar._transform import transform
-import fourdvar as user
-import fourdvar as main
-import fourdvar as archive
-import fourdvar as archive_defn
-import fourdvar as cmaq
+import numpy as np
 import setup_logging
+
+import fourdvar._main_driver as main
+import fourdvar.datadef as d
+import fourdvar.user_driver as user
+import fourdvar.util.archive_handle as archive
+import fourdvar.util.cmaq_handle as cmaq
+from fourdvar._transform import transform
+from fourdvar.params import archive_defn
+
 logger = setup_logging.get_logger( __file__ )
 
 # replace archive directory name and description file
@@ -49,7 +50,6 @@ phys_true.archive( prior_true_archive )
 phys_pert.archive( prior_pert_archive )
 obs_true.archive( obs_true_archive )
 obs_pert.archive( obs_pert_archive )
-sys.exit
 cmaq.wipeout_fwd()
 
 # Output the target cost value for this test

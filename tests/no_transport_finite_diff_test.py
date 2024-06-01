@@ -10,18 +10,19 @@ See the License for the specific language governing permissions and limitations 
 # Run a simple no transport dot-test to check adjoint math.
 # This test is only valid for 1-hour resolution output & sensitivities.
 
-import numpy as np
 import os
 
-import fourdvar as d
+import numpy as np
+
+import fourdvar.datadef as d
+import fourdvar.params.cmaq_config as cmaq
+import fourdvar.params.template_defn as template
+import fourdvar.user_driver as user
+import fourdvar.util.archive_handle as archive
+import fourdvar.util.date_handle as dt
+import fourdvar.util.netcdf_handle as ncf
 from fourdvar._transform import transform
-import fourdvar as user
-import fourdvar as template
-import fourdvar as cmaq
-import fourdvar as dt
-import fourdvar as ncf
-import fourdvar as archive_defn
-import fourdvar as archive
+from fourdvar.params import archive_defn
 
 spcs_list = ['CO2'] # species to perturb within CMAQ.
 tsec = 3600. #seconds per timestep, DO NOT MODIFY
@@ -183,7 +184,7 @@ def finite_diff( scale ):
         force = ncf.get_variable( dt.replace_date(force_file,date), spcs_list )
         c_diff = { s: pconc[s] - iconc[s] for s in spcs_list }
         force_score += sum([ (c_diff[s] * force[s]).sum() for s in spcs_list ])
-    
+
     return sense_score, force_score
 
 if __name__ == "__main__":

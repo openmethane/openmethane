@@ -8,16 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import os
-import time
-import numpy as np
 import pickle as pickle
+import time
 
-import fourdvar.user_driver as user
+import numpy as np
+
 import fourdvar.datadef as d
-from fourdvar._transform import transform
+import fourdvar.user_driver as user
 import fourdvar.util.archive_handle as archive
-import fourdvar.params.archive_defn as archive_defn
 import fourdvar.util.cmaq_handle as cmaq
+from fourdvar._transform import transform
+from fourdvar.params import archive_defn
 
 archive_defn.experiment = 'tmp_grad_verbose'
 archive_defn.desc_name = ''

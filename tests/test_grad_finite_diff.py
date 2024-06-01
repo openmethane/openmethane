@@ -8,14 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import time
+
 import numpy as np
 
-import fourdvar.user_driver as user
 import fourdvar._main_driver as main
 import fourdvar.datadef as d
-from fourdvar._transform import transform
+import fourdvar.user_driver as user
 import fourdvar.util.archive_handle as archive
-import fourdvar.params.archive_defn as archive_defn
+from fourdvar._transform import transform
+from fourdvar.params import archive_defn
 
 archive_defn.experiment = 'tmp_grad_finite_diff'
 archive_defn.desc_name = ''
