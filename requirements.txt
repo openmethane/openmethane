@@ -1,5 +1,0 @@
-func_timeout
-scipy
-netCDF4
-requests
-python-dotenv
