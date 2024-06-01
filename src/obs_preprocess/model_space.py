@@ -1,24 +1,29 @@
-"""
-model_space.py
+#
+# Copyright 2016 University of Melbourne.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
-Copyright 2016 University of Melbourne.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-"""
-
-import numpy as np
 import datetime as dt
-import pyproj
-from netCDF4 import Dataset
 from copy import deepcopy
 
-from ray_trace import Grid
+import numpy as np
+import pyproj
+from netCDF4 import Dataset
 
-import fourdvar.params.cmaq_config as cmaq_config
-import fourdvar.params.template_defn as template_defn
-import fourdvar.util.date_handle as date_handle
+from fourdvar.params import cmaq_config, template_defn
+from fourdvar.util import date_handle
+from obs_preprocess.ray_trace import Grid
 
 #convert HHMMSS into sec
 tosec = lambda t: 3600*(int(t)//10000) + 60*( (int(t)//100) % 100 ) + (int(t)%100)

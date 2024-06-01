@@ -1,16 +1,22 @@
-"""
-plane.py: Some routines for handling planes
-
-Copyright 2023 Superpower Institute.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-"""
+#
+# Copyright 2016 University of Melbourne.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Routines for handling planes."""
 
 import numpy as np
 import itertools
-
 
 class Plane:
     """ planes are defined by a unit normal vector and an anchoring point """
@@ -44,7 +50,7 @@ class Plane:
             isUp = np.dot( self.normal, diff) / dist
             return True if isUp > -self.orthogonalityTolerance else False
 
-class Polyhedron( object):
+class Polyhedron:
     """ defined as a list of planes with no requirement that they form a closed shape, e.g. an open square tube is valid """
     def __init__( self, faces, nSamplePoints=100):
         """ each face is a plane """

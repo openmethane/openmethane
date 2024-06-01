@@ -1,33 +1,38 @@
-"""
-user_driver.py
-
-Copyright 2016 University of Melbourne.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-"""
+#
+# Copyright 2016 University of Melbourne.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 import os
-import pickle as pickle
+import pickle
+
+import setup_logging
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import fourdvar.datadef as d
 import fourdvar.util.archive_handle as archive
 import fourdvar.util.cmaq_handle as cmaq
-import fourdvar.params.input_defn as input_defn
-import fourdvar.params.data_access as data_access
-import fourdvar.params.archive_defn as archive_defn
 from fourdvar._transform import transform
+from fourdvar.params import archive_defn, data_access, input_defn
 
-import setup_logging
 logger = setup_logging.get_logger( __file__ )
 
 observed = None
 background = None
 iter_num = 0
 
-allow_neg_values = True 
+allow_neg_values = True
 
 def setup():
     """
@@ -42,7 +47,6 @@ def setup():
     obs = get_observed()
     bg.archive( 'prior.ncf' )
     obs.archive( 'observed.pickle' )
-    return None
 
 def cleanup():
     """
@@ -99,8 +103,6 @@ def callback_func( current_vector ):
                              force_lite=True )
     
     logger.info( 'iter_num = {}'.format( iter_num ) )
-    
-    return None
 
 def minim( cost_func, grad_func, init_guess ):
     """
@@ -135,4 +137,3 @@ def post_process( out_physical, metadata ):
     out_physical.archive( 'final_solution.ncf' )
     with open( os.path.join( archive.get_archive_path(), 'ans_details.pickle' ), 'wb' ) as f:
         pickle.dump( metadata, f )
-    return None

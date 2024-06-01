@@ -1,23 +1,28 @@
-"""
-model_input_data.py
+#
+# Copyright 2016 University of Melbourne.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Input class for the fwd model, generated from PhysicalData."""
 
-Copyright 2016 University of Melbourne.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-"""
-# input class for the fwd model, generated from PhysicalData
-
-import numpy as np
 import os
 
-from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
-
 import fourdvar.util.netcdf_handle as ncf
-from fourdvar.util.cmaq_io_files import get_filedict
+from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
+from fourdvar.util.cmaq_io_files import get_filedict
 from fourdvar.util.file_handle import ensure_path
+
 
 class ModelInputData( FourDVarData ):
     """application
@@ -38,8 +43,7 @@ class ModelInputData( FourDVarData ):
         for record in self.file_data.values():
             exists = os.path.isfile( record[ 'actual' ] )
             assert exists, 'missing file {}'.format( record[ 'actual' ] )
-        return None
-    
+
     def get_variable( self, file_label, varname ):
         """
         extension: return an array of a single variable
@@ -68,8 +72,7 @@ class ModelInputData( FourDVarData ):
             source = record['actual']
             dest = os.path.join( save_path, record['archive'] )
             ncf.copy_compress( source, dest )
-        return None
-    
+
     @classmethod
     def create_new( cls, **kwargs ):
         """
@@ -112,7 +115,7 @@ class ModelInputData( FourDVarData ):
             dest = record['actual']
             ncf.copy_compress( source, dest )
         return cls()
-    
+
     @classmethod
     def load_from_template( cls ):
         """
@@ -140,4 +143,3 @@ class ModelInputData( FourDVarData ):
         """
         for record in self.file_data.values():
             os.remove( record['actual'] )
-        return None
