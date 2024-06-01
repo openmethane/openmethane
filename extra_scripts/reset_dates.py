@@ -10,13 +10,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 
-
-import context
 from fourdvar.params.input_defn import prior_file, obs_file
 from fourdvar.util.file_handle import load_list, save_list
 import subprocess
 import datetime
 from fourdvar.params.date_defn import start_date, end_date
+
+
 sdate =  datetime.date( start_date // 10000, (start_date // 100) % 100, start_date % 100)
 edate =  datetime.date( end_date // 10000, (end_date // 100) % 100, end_date % 100)
 inObs = load_list( obs_file)

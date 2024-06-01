@@ -16,20 +16,16 @@ import time as timing
 import numpy as np
 import datetime as dt
 
-import context
 from obsESA_defn import ObsSRON
 from model_space import ModelSpace
 from netCDF4 import Dataset
 import fourdvar.util.file_handle as fh
 from fourdvar.util.date_handle import start_date, end_date
-from fourdvar.params.root_path_defn import store_path
 import fourdvar.params.input_defn as input_defn
-import math
-##NS added:
-import pdb
 import setup_logging
-logger = setup_logging.get_logger( __file__ )
 import traceback
+
+logger = setup_logging.get_logger( __file__ )
 
 #-CONFIG-SETTINGS---------------------------------------------------------
 

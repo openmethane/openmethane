@@ -8,10 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 
-import numpy as np
-import sys
 import os
-import shutil
 import pickle as pickle
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
@@ -65,7 +62,7 @@ def get_background():
     global background
     
     if background is None:
-        background = d.PhysicalData.from_file( input_defn.prior_file )
+        background = d.PhysicalData.from_file(input_defn.prior_file)
     return background
 
 def get_observed():
@@ -77,7 +74,7 @@ def get_observed():
     global observed
     
     if observed is None:
-        observed = d.ObservationData.from_file( input_defn.obs_file )
+        observed = d.ObservationData.from_file(input_defn.obs_file)
         observed.assert_params()
     return observed
 

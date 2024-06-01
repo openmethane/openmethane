@@ -71,31 +71,31 @@ def build_filedict():
         
         ymd = dt.replace_date( '<YYYYMMDD>', date )
         model_input_files['emis.'+ymd] = {
-            'actual': dt.replace_date( cmaq_config.emis_file, date ),
+            'actual': dt.replace_date(cmaq_config.emis_file, date),
             'template': dt.replace_date( template.emis, date ),
             'archive': dt.replace_date( archive.emis_file, date ),
             'date': date
             }
         model_output_files['conc.'+ymd] = {
-            'actual': dt.replace_date( cmaq_config.conc_file, date ),
+            'actual': dt.replace_date(cmaq_config.conc_file, date),
             'template': template.conc,
             'archive': dt.replace_date( archive.conc_file, date ),
             'date': date
             }
         adjoint_forcing_files['force.'+ymd] = {
-            'actual': dt.replace_date( cmaq_config.force_file, date ),
+            'actual': dt.replace_date(cmaq_config.force_file, date),
             'template': template.force,
             'archive': dt.replace_date( archive.force_file, date ),
             'date': date
             }
         sensitivity_files['emis.'+ymd] = {
-            'actual': dt.replace_date( cmaq_config.emis_sense_file, date ),
+            'actual': dt.replace_date(cmaq_config.emis_sense_file, date),
             'template': template.sense_emis,
             'archive': dt.replace_date( archive.sens_emis_file, date ),
             'date': date
             }
         sensitivity_files['conc.'+ymd] = {
-            'actual': dt.replace_date( cmaq_config.conc_sense_file, date ),
+            'actual': dt.replace_date(cmaq_config.conc_sense_file, date),
             'template': template.sense_conc,
             'archive': dt.replace_date( archive.sens_conc_file, date ),
             'date': date

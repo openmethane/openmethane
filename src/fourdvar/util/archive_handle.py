@@ -53,7 +53,7 @@ def setup():
         else:
             logger.warn( 'deleted old archive.' )
     archive_path = path
-    file_handle.empty_dir( archive_path )
+    file_handle.empty_dir(archive_path)
     if defn.desc_name != '':
         #add description to archive as text file.
         with open( os.path.join( archive_path, defn.desc_name ), 'w' ) as desc_file:

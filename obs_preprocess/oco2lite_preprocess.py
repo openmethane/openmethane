@@ -11,7 +11,6 @@ See the License for the specific language governing permissions and limitations 
 import os
 import glob
 
-import context
 from obsOCO2_defn import ObsOCO2
 from model_space import ModelSpace
 from netCDF4 import Dataset

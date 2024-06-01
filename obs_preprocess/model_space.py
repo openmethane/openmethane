@@ -38,7 +38,7 @@ class ModelSpace( object ):
     def create_from_fourdvar( cls ):
         sdate = date_handle.start_date
         edate = date_handle.end_date
-        METCRO3D = date_handle.replace_date( cmaq_config.met_cro_3d, sdate )
+        METCRO3D = date_handle.replace_date(cmaq_config.met_cro_3d, sdate)
         METCRO2D = cmaq_config.met_cro_2d
         CONC = template_defn.conc
         date_range = [ sdate, edate ]
@@ -150,7 +150,7 @@ class ModelSpace( object ):
     def update_psurf( self, date_int ):
         #replace the psurf array with the new file
         new_date = dt.datetime.strptime(str(date_int),'%Y%m%d')
-        new_file = date_handle.replace_date( self.psurf_file, new_date )
+        new_file = date_handle.replace_date(self.psurf_file, new_date)
         with Dataset( new_file, 'r' ) as f:
             self.psurf_arr = f.variables['PRSFC'][:,0,:,:]
         self.psurf_date = date_int

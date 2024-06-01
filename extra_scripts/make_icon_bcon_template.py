@@ -1,4 +1,5 @@
-tmake_icon_bcon_template.py
+"""
+make_icon_bcon_template.py
 
 Copyright 2023 The Superpower Institute Ltd
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.

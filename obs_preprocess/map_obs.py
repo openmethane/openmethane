@@ -8,13 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import numpy as np
-import context
-import os
-import sys
 from fourdvar.params.input_defn import  obs_file
 from fourdvar.util import file_handle as fh
 
-import matplotlib.pyplot as plt
 obsList = fh.load_list( obs_file )
 domain = obsList.pop(0)
 obsCount = np.zeros((domain['NROWS'], domain['NCOLS']))

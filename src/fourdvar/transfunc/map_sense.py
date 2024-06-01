@@ -10,7 +10,7 @@ See the License for the specific language governing permissions and limitations 
 
 import numpy as np
 
-from fourdvar.datadef import SensitivityData, PhysicalAdjointData
+from fourdvar.datadef import PhysicalAdjointData
 import fourdvar.util.date_handle as dt
 import fourdvar.params.template_defn as template
 import fourdvar.util.netcdf_handle as ncf
@@ -51,7 +51,7 @@ def get_unit_convert_emis():
     lay_thick = np.array(lay_thick).reshape(( 1, len(lay_thick), 1, 1 ))
     
     for date in dt.get_datelist():
-        met_file = dt.replace_date( cmaq_config.met_cro_3d, date )
+        met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
         #slice off any extra layers above area of interest
         rhoj = ncf.get_variable( met_file, 'DENSA_J' )[ :, :len( lay_thick ), ... ]
         #assert timesteps are compatible

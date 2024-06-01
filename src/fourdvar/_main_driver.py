@@ -9,7 +9,6 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import numpy as np
-from scipy.optimize import fmin_l_bfgs_b as minimize
 import time
 
 from fourdvar import datadef as d
@@ -38,7 +37,7 @@ def cost_func( vector ):
     
     has_skipped = False
     if ( data_access.allow_fwd_skip is True and
-         np.array_equal( vector, data_access.prev_vector ) ):
+         np.array_equal(vector, data_access.prev_vector)):
         try:
             model_out = d.ModelOutputData()
             logger.debug( 'Skipping repeated fwd run.' )
@@ -71,7 +70,7 @@ def cost_func( vector ):
         #don't cleanup CMAQ files if we want to reuse them
         model_in.cleanup()
         if ( archive_defn.iter_model_output is False
-             and archive_defn.iter_obs_lite is False ):
+             and archive_defn.iter_obs_lite is False):
             model_out.cleanup()
     simulated.cleanup()
     residual.cleanup()
@@ -99,7 +98,7 @@ def gradient_func( vector ):
 
     has_skipped = False
     if ( data_access.allow_fwd_skip is True and
-         np.array_equal( vector, data_access.prev_vector ) ):
+         np.array_equal(vector, data_access.prev_vector)):
         try:
             model_out = d.ModelOutputData()
             logger.debug( 'Skipping repeated fwd run.' )
@@ -132,7 +131,7 @@ def gradient_func( vector ):
         #don't cleanup CMAQ files if we want to reuse them
         model_in.cleanup()
         if ( archive_defn.iter_model_output is False
-             and archive_defn.iter_obs_lite is False ):
+             and archive_defn.iter_obs_lite is False):
             model_out.cleanup()
     simulated.cleanup()
     residual.cleanup()
@@ -159,11 +158,11 @@ def get_answer():
     
     user_driver.setup()
     start_vector = bg_unknown.get_vector()
-    min_output = user_driver.minim( cost_func, gradient_func, start_vector )
+    min_output = user_driver.minim(cost_func, gradient_func, start_vector)
     out_vector = min_output[0]
     out_unknown = d.UnknownData( out_vector )
     out_physical = transform( out_unknown, d.PhysicalData )
-    user_driver.post_process( out_physical, min_output[1:] )
+    user_driver.post_process(out_physical, min_output[1:])
     out_unknown.cleanup()
     out_physical.cleanup()
     user_driver.cleanup()

@@ -8,12 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 
-import os
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 
-import context
 import fourdvar.user_driver as user
 import fourdvar.util.date_handle as dt
 

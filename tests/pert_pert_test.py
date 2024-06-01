@@ -12,14 +12,13 @@ import os
 import sys
 import numpy as np
 
-import context
-import fourdvar.datadef as d
+import fourdvar as d
 from fourdvar._transform import transform
-import fourdvar.user_driver as user
-import fourdvar._main_driver as main
-import fourdvar.util.archive_handle as archive
-import fourdvar.params.archive_defn as archive_defn
-import fourdvar.util.cmaq_handle as cmaq
+import fourdvar as user
+import fourdvar as main
+import fourdvar as archive
+import fourdvar as archive_defn
+import fourdvar as cmaq
 import setup_logging
 logger = setup_logging.get_logger( __file__ )
 

@@ -10,7 +10,6 @@ See the License for the specific language governing permissions and limitations 
 
 import os
 
-import context
 from obs_preprocess.obs_defn import ObsSimple
 from obs_preprocess.model_space import ModelSpace
 from ray_trace import Point
@@ -18,7 +17,6 @@ import fourdvar.util.file_handle as fh
 import fourdvar.params.input_defn as input_defn
 import pandas as pd
 import numpy as np
-import pdb
 
 # save new obs file as fourdvar input file
 save_file = input_defn.obs_file

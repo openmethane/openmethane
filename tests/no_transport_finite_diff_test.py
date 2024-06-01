@@ -13,16 +13,15 @@ See the License for the specific language governing permissions and limitations 
 import numpy as np
 import os
 
-import context
-import fourdvar.datadef as d
+import fourdvar as d
 from fourdvar._transform import transform
-import fourdvar.user_driver as user
-import fourdvar.params.template_defn as template
-import fourdvar.params.cmaq_config as cmaq
-import fourdvar.util.date_handle as dt
-import fourdvar.util.netcdf_handle as ncf
-import fourdvar.params.archive_defn as archive_defn
-import fourdvar.util.archive_handle as archive
+import fourdvar as user
+import fourdvar as template
+import fourdvar as cmaq
+import fourdvar as dt
+import fourdvar as ncf
+import fourdvar as archive_defn
+import fourdvar as archive
 
 spcs_list = ['CO2'] # species to perturb within CMAQ.
 tsec = 3600. #seconds per timestep, DO NOT MODIFY
@@ -175,9 +174,9 @@ def finite_diff( scale ):
     sense_score = .5*( (pert_diff*init_gradient).sum() + (pert_diff*pert_gradient).sum() )
 
     force_score = 0.
-    iconc_file = os.path.join( archive_path, 'init_conc', archive_defn.conc_file )
-    pconc_file = os.path.join( archive_path, 'pert_conc', archive_defn.conc_file )
-    force_file = os.path.join( archive_path, 'force', archive_defn.force_file )
+    iconc_file = os.path.join(archive_path, 'init_conc', archive_defn.conc_file)
+    pconc_file = os.path.join(archive_path, 'pert_conc', archive_defn.conc_file)
+    force_file = os.path.join(archive_path, 'force', archive_defn.force_file)
     for date in dt.get_datelist():
         iconc = ncf.get_variable( dt.replace_date(iconc_file,date), spcs_list )
         pconc = ncf.get_variable( dt.replace_date(pconc_file,date), spcs_list )

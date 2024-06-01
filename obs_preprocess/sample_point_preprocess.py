@@ -10,7 +10,6 @@ See the License for the specific language governing permissions and limitations 
 
 import os
 
-import context
 from obs_preprocess.obs_defn import ObsSimple
 from obs_preprocess.model_space import ModelSpace
 import fourdvar.util.file_handle as fh
@@ -40,4 +39,4 @@ for coord, val, unc in zip( obs_coord, obs_val, obs_unc ):
     obs.model_process( model_grid )
     obslist.append( obs.get_obsdict() )
 fh.save_list( obslist, save_file )
-print 'observations saved to {:}'.format( save_file )
+print ('observations saved to {:}'.format( save_file ))

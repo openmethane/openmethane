@@ -12,7 +12,6 @@ import time
 import numpy as np
 import pickle as pickle
 
-from . import context
 import fourdvar.user_driver as user
 import fourdvar.datadef as d
 from fourdvar._transform import transform

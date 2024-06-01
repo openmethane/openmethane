@@ -10,14 +10,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 
-
-import context
 from fourdvar.util.date_handle import replace_date
 from fourdvar.params.template_defn import emis
 from fourdvar.params.cmaq_config import met_cro_3d
 import numpy as np
 import netCDF4 as nc
 import datetime
+
 openMethanePrior = '../../out-om-domain-info.nc'
 kg2g = 1000. # conversion from kg to g
 molarMass = 16. # molar mass of CH4
