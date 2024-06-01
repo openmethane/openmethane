@@ -14,18 +14,17 @@
 # limitations under the License.
 #
 
-import numpy as np
 
-from fourdvar.datadef import ModelInputData, ModelOutputData
-import fourdvar.util.cmaq_handle as cmaq
 import setup_logging
+
+import fourdvar.util.cmaq_handle as cmaq
+from fourdvar.datadef import ModelInputData, ModelOutputData
 
 logger = setup_logging.get_logger(__file__)
 
 
 def run_model(model_input):
-    """
-    application: run the forward model, save result to ModelOutputData
+    """application: run the forward model, save result to ModelOutputData
     input: ModelInputData
     output: ModelOutputData
     """

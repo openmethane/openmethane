@@ -14,15 +14,15 @@
 # limitations under the License.
 #
 
-import numpy as np
 import os
 
-from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
+import numpy as np
 
-import fourdvar.util.netcdf_handle as ncf
 import fourdvar.params.template_defn as template
-from fourdvar.util.cmaq_io_files import get_filedict
+import fourdvar.util.netcdf_handle as ncf
+from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
+from fourdvar.util.cmaq_io_files import get_filedict
 from fourdvar.util.file_handle import ensure_path
 
 
@@ -30,8 +30,7 @@ class AdjointForcingData(FourDVarData):
     """application"""
 
     def __init__(self):
-        """
-        application: create an instance of AdjointForcingData
+        """application: create an instance of AdjointForcingData
         input: None
         output: None
 
@@ -43,21 +42,18 @@ class AdjointForcingData(FourDVarData):
         for record in self.file_data.values():
             exists = os.path.isfile(record["actual"])
             assert exists, "missing file {}".format(record["actual"])
-        return None
 
     def get_variable(self, file_label, varname):
-        """
-        extension: return an array of a single variable
+        """extension: return an array of a single variable
         input: string, string
         output: numpy.ndarray
         """
-        err_msg = "file_label {} not in file_details".format(file_label)
+        err_msg = f"file_label {file_label} not in file_details"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
     def archive(self, dirname=None):
-        """
-        extension: save copy of files to archive/experiment directory
+        """extension: save copy of files to archive/experiment directory
         input: string or None
         output: None
 
@@ -73,12 +69,10 @@ class AdjointForcingData(FourDVarData):
             source = record["actual"]
             dest = os.path.join(save_path, record["archive"])
             ncf.copy_compress(source, dest)
-        return None
 
     @classmethod
     def get_kwargs_dict(cls):
-        """
-        extension: get a dict that will work as kwarg input
+        """extension: get a dict that will work as kwarg input
         input: None
         output: { file_label : { spcs : np.ndarray(<zeros>) } }
         """
@@ -93,8 +87,7 @@ class AdjointForcingData(FourDVarData):
 
     @classmethod
     def create_new(cls, **kwargs):
-        """
-        application: create an instance of AdjointForcingData from template with new data
+        """application: create an instance of AdjointForcingData from template with new data
         input: user-defined
         output: AdjointForcingData
 
@@ -107,7 +100,7 @@ class AdjointForcingData(FourDVarData):
         msg = "input args incompatible with file list"
         assert set(fdata.keys()) == set(kwargs.keys()), msg
         for label, data in kwargs.items():
-            err_msg = "{} data doesn't match template.".format(label)
+            err_msg = f"{label} data doesn't match template."
             assert ncf.validate(fdata[label]["template"], data), err_msg
 
         for label, record in fdata.items():
@@ -122,8 +115,7 @@ class AdjointForcingData(FourDVarData):
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """
-        extension: create an AdjointForcingData from previous archived files.
+        """extension: create an AdjointForcingData from previous archived files.
         input: string (path/to/file)
         output: AdjointForcingData
 
@@ -139,8 +131,7 @@ class AdjointForcingData(FourDVarData):
         return cls()
 
     def cleanup(self):
-        """
-        application: called when forcing is no longer required
+        """application: called when forcing is no longer required
         input: None
         output: None
 

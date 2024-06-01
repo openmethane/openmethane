@@ -14,17 +14,17 @@
 # limitations under the License.
 #
 
-import os
 import gzip
+import os
 import pickle
+
 import setup_logging
 
 logger = setup_logging.get_logger(__file__)
 
 
 def ensure_path(path, inc_file=False):
-    """
-    extension: ensures that the input path exists, creating directories as needed
+    """extension: ensures that the input path exists, creating directories as needed
     input: string (path/to/file), Boolean (see notes)
     output: None
 
@@ -42,16 +42,13 @@ def ensure_path(path, inc_file=False):
     if inc_file is False:
         if not os.path.isdir(curpath):
             os.mkdir(curpath)
-    else:
-        if not os.path.isfile(curpath):
-            with open(curpath, "a"):
-                pass
-    return None
+    elif not os.path.isfile(curpath):
+        with open(curpath, "a"):
+            pass
 
 
 def empty_dir(path):
-    """
-    extension: delete every file and subdirectory in path
+    """extension: delete every file and subdirectory in path
     input: string (path to directory to empty)
     output: None
 
@@ -66,12 +63,10 @@ def empty_dir(path):
             all_dirs.append(os.path.join(root, d))
     for d in all_dirs:
         os.rmdir(d)
-    return None
 
 
 def save_list(obj_list, filepath):
-    """
-    extension: save a list of python objects to a zipped pickle file
+    """extension: save a list of python objects to a zipped pickle file
     input: list, string (path/to/file.pickle)
     output: None
     """
@@ -81,12 +76,10 @@ def save_list(obj_list, filepath):
     with gzip.GzipFile(fpath, "wb") as f:
         for element in obj_list:
             pickle.dump(element, f)
-    return None
 
 
 def load_list(filepath):
-    """
-    extension: load a list of python objects from a zipped pickle file
+    """extension: load a list of python objects from a zipped pickle file
     input: string (path/to/file.pickle)
     output: list
     """

@@ -1,6 +1,7 @@
-import rasterio
 import csv
+
 import numpy as np
+import rasterio
 
 ## Constants
 LAND_USE_MAP_PATH = "NLUM_ALUMV8_250m_2015_16_alb.tif"
@@ -14,7 +15,7 @@ meta = landuseData.meta
 
 ## Import a map of land use type numbers to emissions sectors
 landuseSectorMap = {}
-with open(SECTOR_MAP_PATH, "r", newline="") as f:
+with open(SECTOR_MAP_PATH, newline="") as f:
     reader = csv.reader(f)
     next(reader)  # toss headers
 
@@ -24,7 +25,7 @@ with open(SECTOR_MAP_PATH, "r", newline="") as f:
 ## Import a map of emissions per sector, store it to hash table
 methaneInventoryBySector = {}
 seenHeaders = False
-with open(SECTORAL_EMISSIONS_MAP_PATH, "r", newline="") as f:
+with open(SECTORAL_EMISSIONS_MAP_PATH, newline="") as f:
     reader = csv.reader(f)
 
     for (

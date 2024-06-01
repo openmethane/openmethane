@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-from fourdvar import transfunc as t
 from fourdvar import datadef as d
+from fourdvar import transfunc as t
 
 # map of input/output classes to functions used
 transmap = {
@@ -32,8 +32,7 @@ transmap = {
 
 
 def transform(input_instance, output_class):
-    """
-    framework: mapping of every transform to its input & output class
+    """framework: mapping of every transform to its input & output class
     input: instance of transform input, class of transform output
     output: result of mapped transformation (instance of output_class)
 
@@ -41,7 +40,6 @@ def transform(input_instance, output_class):
     from datadef._transform import transform
     model_output = transform( model_input, datadef.ModelOutputData )
     """
-
     key = (input_instance.__class__, output_class)
     function = transmap[key]
     return function(input_instance)

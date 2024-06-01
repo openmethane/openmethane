@@ -17,9 +17,8 @@ import os
 
 import fourdvar.datadef as d
 from fourdvar._transform import transform
+from fourdvar.params.input_defn import obs_file, prior_file
 from fourdvar.params.root_path_defn import store_path
-from fourdvar.params.input_defn import prior_file, obs_file
-
 
 physical = d.PhysicalData.from_file(prior_file)
 modelInput = transform(physical, d.ModelInputData)

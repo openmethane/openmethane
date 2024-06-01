@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 #
 # Copyright 2023 The Superpower Institute Ltd
 #
@@ -15,17 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-
-from fourdvar.util.date_handle import replace_date
-from fourdvar.params.template_defn import emis
-from fourdvar.params.cmaq_config import met_cro_3d
-import numpy as np
-import netCDF4 as nc
 import datetime
-
+import os
 from pathlib import Path
 
+import netCDF4 as nc
+import numpy as np
+
+from fourdvar.params.cmaq_config import met_cro_3d
+from fourdvar.params.template_defn import emis
+from fourdvar.util.date_handle import replace_date
 
 if "PRIOR_REPO_PATH" not in os.environ:
     openMethanePrior = "../../out-om-domain-info.nc"
@@ -69,7 +67,7 @@ attrnames = [
     "VAR-LIST",
     "FILEDESC",
 ]
-unicodeType = type("foo")
+unicodeType = str
 nlay = 32
 nvar = 1
 nz = 32  # just surface for the moment
@@ -96,7 +94,7 @@ for i, date in enumerate(dates):
             elif a == "TSTEP":
                 attrDict[a] = np.int32(100)
             elif a == "VAR-LIST":
-                VarString = "".join(["{:<16}".format(k) for k in cmaqSpecList])
+                VarString = "".join([f"{k:<16}" for k in cmaqSpecList])
                 attrDict[a] = VarString
             elif a == "GDNAM":
                 attrDict[a] = "{:<16}".format("Aus")
@@ -160,7 +158,7 @@ for i, date in enumerate(dates):
             shuffle=False,
             chunksizes=np.array([1, 1, domShape[0], domShape[1]]),
         )
-        outvars[cmaqspec].setncattr("long_name", "{:<16}".format(cmaqspec))
+        outvars[cmaqspec].setncattr("long_name", f"{cmaqspec:<16}")
         outvars[cmaqspec].setncattr("units", "{:<16}".format("mols/s"))
         outvars[cmaqspec].setncattr("var_desc", "{:<80}".format("Emissions of " + cmaqspec))
         convFac = (

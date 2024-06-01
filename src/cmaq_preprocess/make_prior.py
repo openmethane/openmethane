@@ -15,16 +15,14 @@
 #
 
 import os
+
 import numpy as np
 
-import fourdvar.util.netcdf_handle as ncf
 import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
-import fourdvar.params.cmaq_config as cmaq_config
-import fourdvar.params.input_defn as input_defn
-import fourdvar.params.template_defn as template_defn
-
+import fourdvar.util.netcdf_handle as ncf
 from cmaq_preprocess.uncertainty import convert_unc
+from fourdvar.params import cmaq_config, input_defn, template_defn
 
 # parameters
 
@@ -120,7 +118,7 @@ else:
         print("invalid emis_nlay")
         raise
     if emis_nlay > enlay:
-        raise AssertionError("emis_nlay must be <= {:}".format(enlay))
+        raise AssertionError(f"emis_nlay must be <= {enlay}")
 
 # convert tday into valid number of days
 if str(tday).lower() == "single":
@@ -199,7 +197,7 @@ root_attr = {
     "SDATE": np.int32(dt.replace_date("<YYYYDDD>", dt.start_date)),
     "EDATE": np.int32(dt.replace_date("<YYYYDDD>", dt.end_date)),
     #'TSTEP': [ np.int32( tstep[0] ), np.int32( tstep[1] ) ],
-    "VAR-LIST": "".join(["{:<16}".format(s) for s in spc_list]),
+    "VAR-LIST": "".join([f"{s:<16}" for s in spc_list]),
 }
 
 root = ncf.create(path=save_path, attr=root_attr, dim=root_dim, is_root=True)
@@ -237,4 +235,4 @@ bcon_var = {
 ncf.create(parent=root, name="bcon", dim=bcon_dim, attr=bcon_attr, var=bcon_var, is_root=False)
 
 root.close()
-print("Prior created and save to:\n  {:}".format(save_path))
+print(f"Prior created and save to:\n  {save_path}")

@@ -16,11 +16,11 @@
 
 import numpy as np
 
-from fourdvar.datadef import PhysicalData, ModelInputData
-import fourdvar.util.date_handle as dt
 import fourdvar.params.template_defn as template
-import fourdvar.util.netcdf_handle as ncf
 import fourdvar.util.cmaq_handle as cmaq
+import fourdvar.util.date_handle as dt
+import fourdvar.util.netcdf_handle as ncf
+from fourdvar.datadef import ModelInputData
 from fourdvar.params.cmaq_config import met_cro_3d
 from fourdvar.params.input_defn import inc_icon
 
@@ -29,8 +29,7 @@ unit_convert_bcon = None
 
 
 def get_unit_convert_bcon():
-    """
-    PhysicalData.bcon units = ppm/day
+    """PhysicalData.bcon units = ppm/day
     ModelInputData.emis units = mol/s
     """
     global unit_key
@@ -62,8 +61,7 @@ def get_unit_convert_bcon():
 
 
 def prepare_model(physical_data):
-    """
-    application: change resolution/formatting of physical data for input in forward model
+    """application: change resolution/formatting of physical data for input in forward model
     input: PhysicalData
     output: ModelInputData
     """

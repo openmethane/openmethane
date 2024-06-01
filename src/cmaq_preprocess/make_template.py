@@ -15,14 +15,15 @@
 #
 
 import os
+
 import numpy as np
 
-import fourdvar.util.date_handle as dt
-import fourdvar.util.netcdf_handle as ncf
-import fourdvar.util.cmaq_handle as cmaq_handle
-import fourdvar.util.file_handle as fh
-import fourdvar.params.cmaq_config as cmaq_config
 import fourdvar.params.template_defn as template
+import fourdvar.util.date_handle as dt
+import fourdvar.util.file_handle as fh
+import fourdvar.util.netcdf_handle as ncf
+from fourdvar.params import cmaq_config
+from fourdvar.util import cmaq_handle
 
 # define cmaq filenames for first day of model run.
 emis_file = dt.replace_date(cmaq_config.emis_file, dt.start_date)
@@ -39,11 +40,11 @@ if str(cmaq_config.emis_lays).lower() == "template":
 
 if str(cmaq_config.conc_out_lays).lower() == "template":
     conc_lay = int(ncf.get_attr(icon_file, "NLAYS"))
-    cmaq_config.conc_out_lays = "1 {:}".format(conc_lay)
+    cmaq_config.conc_out_lays = f"1 {conc_lay}"
 
 if str(cmaq_config.avg_conc_out_lays).lower() == "template":
     conc_lay = int(ncf.get_attr(icon_file, "NLAYS"))
-    cmaq_config.avg_conc_out_lays = "1 {:}".format(conc_lay)
+    cmaq_config.avg_conc_out_lays = f"1 {conc_lay}"
 
 if str(cmaq_config.conc_spcs).lower() == "template":
     conc_spcs = ncf.get_attr(icon_file, "VAR-LIST").split()

@@ -16,11 +16,10 @@
 
 import os
 
-from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
-
 import fourdvar.util.netcdf_handle as ncf
-from fourdvar.util.cmaq_io_files import get_filedict
+from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
+from fourdvar.util.cmaq_io_files import get_filedict
 from fourdvar.util.file_handle import ensure_path
 
 
@@ -52,8 +51,7 @@ class ModelOutputData(FourDVarData):
     ]
 
     def __init__(self):
-        """
-        application: create an instance of ModelOutputData
+        """application: create an instance of ModelOutputData
         input: user-defined
         output: None
 
@@ -64,25 +62,22 @@ class ModelOutputData(FourDVarData):
         for record in self.file_data.values():
             actual = record["actual"]
             template = record["template"]
-            msg = "missing {}".format(actual)
+            msg = f"missing {actual}"
             assert os.path.isfile(actual), msg
-            msg = "{} is incompatible with template {}.".format(actual, template)
+            msg = f"{actual} is incompatible with template {template}."
             assert ncf.match_attr(actual, template, self.checklist) is True, msg
-        return None
 
     def get_variable(self, file_label, varname):
-        """
-        extension: return an array of a single variable
+        """extension: return an array of a single variable
         input: string, string
         output: numpy.ndarray
         """
-        err_msg = "file_label {} not in file_details".format(file_label)
+        err_msg = f"file_label {file_label} not in file_details"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
     def archive(self, dirname=None):
-        """
-        extension: save copy of files to archive/experiment directory
+        """extension: save copy of files to archive/experiment directory
         input: string or None
         output: None
 
@@ -98,12 +93,10 @@ class ModelOutputData(FourDVarData):
             source = record["actual"]
             dest = os.path.join(save_path, record["archive"])
             ncf.copy_compress(source, dest)
-        return None
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """
-        extension: create a ModelOutputData from previous archived files
+        """extension: create a ModelOutputData from previous archived files
         input: string (path/to/file)
         output: ModelOutputData
 
@@ -120,8 +113,7 @@ class ModelOutputData(FourDVarData):
 
     @classmethod
     def load_from_template(cls):
-        """
-        application: return a valid example with values from template.
+        """application: return a valid example with values from template.
         input: None
         output: ModelOutputData
 
@@ -137,8 +129,7 @@ class ModelOutputData(FourDVarData):
         return cls()
 
     def cleanup(self):
-        """
-        application: called when model output is no longer required
+        """application: called when model output is no longer required
         input: None
         output: None
 
@@ -148,4 +139,3 @@ class ModelOutputData(FourDVarData):
         """
         for record in self.file_data.values():
             os.remove(record["actual"])
-        return None

@@ -16,11 +16,11 @@
 
 import numpy as np
 
-from fourdvar.datadef import PhysicalAdjointData
-import fourdvar.util.date_handle as dt
 import fourdvar.params.template_defn as template
+import fourdvar.util.date_handle as dt
 import fourdvar.util.netcdf_handle as ncf
-import fourdvar.params.cmaq_config as cmaq_config
+from fourdvar.datadef import PhysicalAdjointData
+from fourdvar.params import cmaq_config
 from fourdvar.params.input_defn import inc_icon
 
 unit_key = "units.<YYYYMMDD>"
@@ -29,8 +29,7 @@ unit_convert_bcon = None
 
 
 def get_unit_convert_emis():
-    """
-    extension: get unit conversion dictionary for sensitivity to each days emissions
+    """extension: get unit conversion dictionary for sensitivity to each days emissions
     input: None
     output: dict ('units.<YYYYMMDD>': np.ndarray( shape_of( template.sense_emis ) )
 
@@ -79,8 +78,7 @@ def get_unit_convert_emis():
 
 
 def get_unit_convert_bcon():
-    """
-    SensitivityData.emis units = CF/(ppm/s)
+    """SensitivityData.emis units = CF/(ppm/s)
     PhysicalAdjointData.bcon units = CF/(ppm/s)
     """
     unit_dict = {dt.replace_date(unit_key, date): 1.0 for date in dt.get_datelist()}
@@ -88,8 +86,7 @@ def get_unit_convert_bcon():
 
 
 def map_sense(sensitivity):
-    """
-    application: map adjoint sensitivities to physical grid of unknowns.
+    """application: map adjoint sensitivities to physical grid of unknowns.
     input: SensitivityData
     output: PhysicalAdjointData
     """

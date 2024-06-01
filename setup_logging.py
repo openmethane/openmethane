@@ -64,8 +64,7 @@ base_logger.debug("Logging setup finished.")
 
 
 def get_logger(filepath):
-    """
-    framework: return a modules logger
+    """framework: return a modules logger
     input: string (always submodules __file__ keyword)
     output: logging.Logger object (for writing)
     """
@@ -76,10 +75,8 @@ def get_logger(filepath):
     for s in suffix_list:
         if modpath.endswith(s):
             suffix = s
-    assert suffix != "", "{} not a python file".format(modpath)
-    assert modpath.startswith(root_path), "{} not a submodule of project {}".format(
-        modpath, root_path
-    )
+    assert suffix != "", f"{modpath} not a python file"
+    assert modpath.startswith(root_path), f"{modpath} not a submodule of project {root_path}"
     namelist = []
     path_slice = modpath[len(root_path) : -len(suffix)]
     while True:

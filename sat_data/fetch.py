@@ -1,12 +1,13 @@
-import sys
 import json
-import urllib3
-import certifi
-import requests
 import os
 import shutil
-from time import sleep
+import sys
 from datetime import datetime
+from time import sleep
+
+import certifi
+import requests
+import urllib3
 
 configFile = open("config.json")
 config = json.load(configFile)

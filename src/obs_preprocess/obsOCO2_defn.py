@@ -14,10 +14,12 @@
 # limitations under the License.
 #
 
-import numpy as np
 import datetime as dt
-from obs_preprocess.ray_trace import Ray
+
+import numpy as np
+
 from obs_preprocess.obs_defn import ObsMultiRay
+from obs_preprocess.ray_trace import Ray
 
 
 class ObsOCO2(ObsMultiRay):
@@ -29,7 +31,7 @@ class ObsOCO2(ObsMultiRay):
 
     @classmethod
     def create(cls, **kwargs):
-        """kwargs comes from variables in oco2 file.
+        """Kwargs comes from variables in oco2 file.
         min. requirements for kwargs:
         - sounding_id : long_int
         - latitude : float (degrees)
@@ -66,7 +68,6 @@ class ObsOCO2(ObsMultiRay):
         if "weight_grid" in self.out_dict.keys():
             surf = [(v, k) for k, v in self.out_dict["weight_grid"].items() if k[2] == 0]
             self.out_dict["lite_coord"] = max(surf)[1]
-        return None
 
     def add_visibility(self, proportion, model_space):
         # obs pressure is in hPa, convert to model units (Pa)

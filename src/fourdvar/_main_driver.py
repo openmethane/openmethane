@@ -14,23 +14,21 @@
 # limitations under the License.
 #
 
-import numpy as np
 import time
 
-from fourdvar import datadef as d
-from fourdvar._transform import transform
-from fourdvar import user_driver
-import fourdvar.params.data_access as data_access
-import fourdvar.params.archive_defn as archive_defn
-
+import numpy as np
 import setup_logging
+
+from fourdvar import datadef as d
+from fourdvar import user_driver
+from fourdvar._transform import transform
+from fourdvar.params import archive_defn, data_access
 
 logger = setup_logging.get_logger(__file__)
 
 
 def cost_func(vector):
-    """
-    framework: cost function used by minimizer
+    """framework: cost function used by minimizer
     input: numpy.ndarray
     output: scalar
     """
@@ -83,13 +81,12 @@ def cost_func(vector):
     w_residual.cleanup()
 
     end_time = time.time()
-    logger.info("cost = {:} in {:}s".format(cost, int(end_time - start_time)))
+    logger.info(f"cost = {cost} in {int(end_time - start_time)}s")
     return cost
 
 
 def gradient_func(vector):
-    """
-    framework: gradient function used by minimizer
+    """framework: gradient function used by minimizer
     input: numpy.ndarray
     output: numpy.ndarray
     """
@@ -148,14 +145,13 @@ def gradient_func(vector):
 
     end_time = time.time()
     logger.info(
-        "gradient norm = {:} in {:}s".format(np.linalg.norm(gradient), int(end_time - start_time))
+        f"gradient norm = {np.linalg.norm(gradient)} in {int(end_time - start_time)}s"
     )
     return np.array(gradient)
 
 
 def get_answer():
-    """
-    framework: run the minimizer & display results from user_driver module
+    """framework: run the minimizer & display results from user_driver module
     input: None
     output: None (user_driver.display should print/save output as desired)
     """
@@ -173,4 +169,3 @@ def get_answer():
     out_unknown.cleanup()
     out_physical.cleanup()
     user_driver.cleanup()
-    return None

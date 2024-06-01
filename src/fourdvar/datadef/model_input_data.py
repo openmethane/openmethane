@@ -28,8 +28,7 @@ class ModelInputData(FourDVarData):
     """application"""
 
     def __init__(self):
-        """
-        application: create an instance of ModelInputData
+        """application: create an instance of ModelInputData
         input: user-defined
         output: None
 
@@ -44,18 +43,16 @@ class ModelInputData(FourDVarData):
             assert exists, "missing file {}".format(record["actual"])
 
     def get_variable(self, file_label, varname):
-        """
-        extension: return an array of a single variable
+        """extension: return an array of a single variable
         input: string, string
         output: numpy.ndarray
         """
-        err_msg = "file_label {} not in file_data".format(file_label)
+        err_msg = f"file_label {file_label} not in file_data"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
     def archive(self, dirname=None):
-        """
-        extension: save copy of files to archive/experiment directory
+        """extension: save copy of files to archive/experiment directory
         input: string or None
         output: None
 
@@ -74,8 +71,7 @@ class ModelInputData(FourDVarData):
 
     @classmethod
     def create_new(cls, **kwargs):
-        """
-        application: create an instance of ModelInputData from template with modified values.
+        """application: create an instance of ModelInputData from template with modified values.
         input: user_defined
         output: ModelInputData
         """
@@ -86,7 +82,7 @@ class ModelInputData(FourDVarData):
         msg = "input args incompatible with file list"
         assert set(fdata.keys()) == set(kwargs.keys()), msg
         for label, data in kwargs.items():
-            err_msg = "{} data doesn't match template.".format(label)
+            err_msg = f"{label} data doesn't match template."
             assert ncf.validate(fdata[label]["template"], data), err_msg
 
         for label, record in fdata.items():
@@ -101,8 +97,7 @@ class ModelInputData(FourDVarData):
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """
-        extension: create a ModelInputData from previous archived files
+        """extension: create a ModelInputData from previous archived files
         input: string (path/to/file)
         output: ModelInputData
 
@@ -119,8 +114,7 @@ class ModelInputData(FourDVarData):
 
     @classmethod
     def load_from_template(cls):
-        """
-        extension: create a ModelInputData from the template files
+        """extension: create a ModelInputData from the template files
         input: None
         output: ModelInputData
         """
@@ -132,8 +126,7 @@ class ModelInputData(FourDVarData):
         return cls()
 
     def cleanup(self):
-        """
-        application: called when model input is no longer required
+        """application: called when model input is no longer required
         input: None
         output: None
 

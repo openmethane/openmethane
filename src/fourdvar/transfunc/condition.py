@@ -22,8 +22,7 @@ from fourdvar.params.input_defn import inc_icon
 
 
 def condition_adjoint(physical_adjoint):
-    """
-    application: apply pre-conditioning to PhysicalAdjointData, get vector gradient
+    """application: apply pre-conditioning to PhysicalAdjointData, get vector gradient
     input: PhysicalAdjointData
     output: UnknownData
 
@@ -33,8 +32,7 @@ def condition_adjoint(physical_adjoint):
 
 
 def condition(physical):
-    """
-    application: apply pre-conditioning to PhysicalData, get vector to optimize
+    """application: apply pre-conditioning to PhysicalData, get vector to optimize
     input: PhysicalData
     output: UnknownData
 
@@ -44,8 +42,7 @@ def condition(physical):
 
 
 def phys_to_unk(physical, is_adjoint):
-    """
-    application: apply pre-conditioning to PhysicalData, get vector to optimize
+    """application: apply pre-conditioning to PhysicalData, get vector to optimize
     input: PhysicalData
     output: UnknownData
 

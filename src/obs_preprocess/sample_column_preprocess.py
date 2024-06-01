@@ -16,10 +16,10 @@
 
 import os
 
-from obs_preprocess.obs_defn import ObsInstantRay
-from obs_preprocess.model_space import ModelSpace
 import fourdvar.util.file_handle as fh
-import fourdvar.params.input_defn as input_defn
+from fourdvar.params import input_defn
+from obs_preprocess.model_space import ModelSpace
+from obs_preprocess.obs_defn import ObsInstantRay
 
 # save new obs file as fourdvar input file
 save_file = input_defn.obs_file
@@ -63,4 +63,4 @@ obs.interp_time = ointerp
 obs.model_process(model_grid)
 obslist = [model_grid.get_domain(), obs.get_obsdict()]
 fh.save_list(obslist, save_file)
-print("observations saved to {:}".format(save_file))
+print(f"observations saved to {save_file}")

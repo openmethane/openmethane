@@ -15,6 +15,7 @@
 #
 
 import datetime as dt
+
 import numpy as np
 
 from obs_preprocess.obs_defn import ObsMultiRay
@@ -30,16 +31,17 @@ ppm_scale = 1000000.0
 
 
 class ObsTROPOMI(ObsMultiRay):
-    """Single observation  from TROPOMI
+    """Single observation from TROPOMI.
+
     This observation class only works for 1 species.
     """
 
-    required = ["value", "uncertainty", "weight_grid", "offset_term"]
+    required = ("value", "uncertainty", "weight_grid", "offset_term")
     default = {"lite_coord": None}
 
     @classmethod
     def create(cls, **kwargs):
-        """kwargs comes from variables in oco2 file.
+        """Kwargs comes from variables in oco2 file.
         min. requirements for kwargs:
         - sounding_id : long_int
         - latitude : float (degrees)
@@ -76,7 +78,7 @@ class ObsTROPOMI(ObsMultiRay):
         return newobs
 
     def _convert_ppm(self, value, pressure_interval):
-        """convert molec. cm-2 to ppm"""
+        """Convert molec. cm-2 to ppm"""
         ppm_value = (
             ppm_scale * (value * cm_scale / avo) / (pressure_interval * kg_scale / (grav * mwair))
         )
@@ -100,7 +102,6 @@ class ObsTROPOMI(ObsMultiRay):
                 spc,
             )
 
-        return None
 
     def add_visibility(self, proportion, model_space):
         # obs pressure is in Pa,  model units Pa (unlike oco)
@@ -117,7 +118,7 @@ class ObsTROPOMI(ObsMultiRay):
         obs_apriori = np.array(self.src_data["co_profile_apriori"])
         # newobs.out_dict['uncertainty'] = in ppm UPDATE HERE
         # get sample model coordinate at surface
-        coord = [c for c in proportion.keys() if c[2] == 0][0]
+        coord = [key for key in proportion.keys() if key[2] == 0][0]
         model_pweight = model_space.get_pressure_weight(coord)
         ref_profile_molec = self.src_data["co_profile_apriori"]
         # ref_profile_mol = ref_profile_molec / avo
@@ -141,7 +142,7 @@ class ObsTROPOMI(ObsMultiRay):
         self.out_dict["offset_term"] = self.src_data["co_profile_apriori"] - column_xco.sum()
 
         weight_grid = {}
-        for l, weight in enumerate(model_vis):
+        for index, weight in enumerate(model_vis):
             # lrtainty : float (ppm)
             # co_column_apriori : float (ppm)
             # co_column_apriori : array[ float ] (length=levels, units=ppm)
@@ -149,7 +150,7 @@ class ObsTROPOMI(ObsMultiRay):
             # pressure_levels : array[ float ] (length=levels, units=hPa)
             # pressure_weight : array[ float ] (length=levels)
 
-            layer_slice = {c: v for c, v in proportion.items() if c[2] == l}
+            layer_slice = {c: v for c, v in proportion.items() if c[2] == index}
             layer_sum = sum(layer_slice.values())
             weight_slice = {c: weight * v / layer_sum for c, v in layer_slice.items()}
             weight_grid.update(weight_slice)

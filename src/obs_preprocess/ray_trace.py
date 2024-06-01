@@ -14,9 +14,11 @@
 # limitations under the License.
 #
 
-import numpy as np
-from obs_preprocess.plane import Plane, Polyhedron
 import itertools
+
+import numpy as np
+
+from obs_preprocess.plane import Plane, Polyhedron
 
 
 class Grid:
@@ -29,7 +31,6 @@ class Grid:
         self.shape = tuple(len(s) for s in spacing)
         tmp = [np.insert(spacing[dim], 0, offset[dim]) for dim in range(self.ndim)]
         self.edges = [np.cumsum(arr) for arr in tmp]
-        return None
 
     def get_cell_1d(self, value, dim):
         assert 0 <= dim < self.ndim, "invalid dimension"
@@ -79,7 +80,10 @@ class Grid:
         return result
 
     def get_beam_intersection_volume(self, beam_corners):
-        """calculate volume of intersection between a finite beam defined by four corner rays and each cell in grid. Returns a dictionary of all intersected grid indices and volume"""
+        """Calculate volume of intersection between a finite beam defined by four corner rays and each cell in grid.
+
+        Returns a dictionary of all intersected grid indices and volume
+        """
         xdim, ydim, zdim = 0, 1, 2  # just for later clarity naming indices
         result = {}
         # make sure all rays start from the ground
@@ -131,7 +135,7 @@ class Grid:
         return result
 
     def get_ray_cell_area(self, ray_list):
-        """calculate area at each level traversed by a beam defined by four rays"""
+        """Calculate area at each level traversed by a beam defined by four rays"""
         assert self.ndim == 3, "Only works for 3 dimensional (x,y,z) grids."
         xdim, ydim, zdim = 0, 1, 2
         assert all([r.ndim == self.ndim for r in ray_list]), "dimension mis-match"
@@ -156,8 +160,7 @@ class Grid:
 
         # utility function, returns True if point inside polygon/footprint
         def in_poly(pnt, poly_list):
-            """
-            Copyright 2000 softSurfer, 2012 Dan Sunday
+            """Copyright 2000 softSurfer, 2012 Dan Sunday
             This code may be freely used and modified for any purpose
             providing that this copyright notice is included with it.
             SoftSurfer makes no warranty for this code, and cannot be held
@@ -173,9 +176,8 @@ class Grid:
                 if ps[ydim] <= pnt[ydim]:
                     if pe[ydim] > pnt[ydim] and is_left(ps, pe, pnt) > 0:
                         wn += 1
-                else:
-                    if pe[ydim] <= pnt[ydim] and is_left(ps, pe, pnt) < 0:
-                        wn -= 1
+                elif pe[ydim] <= pnt[ydim] and is_left(ps, pe, pnt) < 0:
+                    wn -= 1
             return wn != 0
 
         # construct a dict, key=gridcell-coord, value=points of footprint polygon inside gridcell
@@ -307,14 +309,13 @@ class Grid:
         return result
 
 
-class Ray(object):
+class Ray:
     def __init__(self, start_point, end_point):
         self.start = Point(start_point)
         self.end = Point(end_point)
         assert self.start.ndim == self.end.ndim, "dimension mis-match"
         self.ndim = self.start.ndim
         self.length = self.start.dist(self.end)
-        return None
 
     def get_minmax_1d(self, dim):
         assert 0 <= dim < self.ndim, "invalid dimension"
@@ -335,13 +336,12 @@ class Ray(object):
         return Point(co_ord)
 
 
-class Point(object):
+class Point:
     def __init__(self, co_ord):
         if isinstance(co_ord, Point):
             co_ord = co_ord.co_ord
         self.co_ord = co_ord
         self.ndim = len(co_ord)
-        return None
 
     def __getitem__(self, dim):
         return self.co_ord[dim]
@@ -384,4 +384,4 @@ if __name__ == "__main__":
     my_ray = Ray(start, end)
     weight = my_grid.get_weight(my_ray)
     for k, v in weight.items():
-        print("{:}: {:.3}".format(k, v))
+        print(f"{k}: {v:.3}")

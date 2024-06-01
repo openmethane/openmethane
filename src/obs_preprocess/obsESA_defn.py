@@ -15,9 +15,8 @@
 #
 import numpy as np
 
-from obs_preprocess.ray_trace import Point, Ray
 from obs_preprocess.obs_defn import ObsMultiRay
-
+from obs_preprocess.ray_trace import Point, Ray
 
 # physical constants
 grav = 9.807
@@ -39,7 +38,7 @@ class ObsSRON(ObsMultiRay):
 
     @classmethod
     def create(cls, **kwargs):
-        """kwargs comes from variables in S5P file.
+        """Kwargs comes from variables in S5P file.
         min. requirements for kwargs:
         - time : datetime-obj (datetime)
         - latitude_center : float (degrees)
@@ -72,7 +71,7 @@ class ObsSRON(ObsMultiRay):
         return newobs
 
     def _convert_ppm(self, value, pressure_interval):
-        """convert mole m-2 to ppm"""
+        """Convert mole m-2 to ppm"""
         ppm_value = value / ((pressure_interval * kg_scale) / (grav * mwair * ppm_scale))
         return ppm_value
 
@@ -94,7 +93,6 @@ class ObsSRON(ObsMultiRay):
                 spc,
             )
             self.ready = True
-        return None
 
     def add_visibility(self, proportion, model_space):
         obs_pressure_bounds = np.array(self.src_data["pressure_levels"])

@@ -14,19 +14,16 @@
 # limitations under the License.
 #
 
-import numpy as np
 
-from fourdvar.datadef import ModelOutputData, ObservationData
 import fourdvar.util.netcdf_handle as ncf
+from fourdvar.datadef import ObservationData
 
 
 def obs_operator(model_output):
-    """
-    application: simulate set of observations from output of the forward model
+    """application: simulate set of observations from output of the forward model
     input: ModelOutputData
     output: ObservationData
     """
-
     ObservationData.assert_params()
 
     val_list = [0] * ObservationData.length

@@ -14,25 +14,23 @@
 # limitations under the License.
 #
 
-import os
 import glob
+import os
 import subprocess
 
-import fourdvar.util.date_handle as dt
+import setup_logging as logging
+
 import fourdvar.params.cmaq_config as cfg
 import fourdvar.params.template_defn as template
-import fourdvar.util.netcdf_handle as ncf
+import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
-
-
-import setup_logging as logging
+import fourdvar.util.netcdf_handle as ncf
 
 logger = logging.get_logger(__file__)
 
 
 def parse_env_dict(env_dict, date):
-    """
-    extension: convert date patterns into values
+    """extension: convert date patterns into values
     input: dictionary (envvar_name: pattern_value), dt.date
     output: dictionary (envvar_name: actual_value)
 
@@ -43,14 +41,13 @@ def parse_env_dict(env_dict, date):
         try:
             parsed[name] = dt.replace_date(value, date)
         except Exception as e:
-            logger.error("failed parsing {}: {}".format(name, value))
+            logger.error(f"failed parsing {name}: {value}")
             raise e
     return parsed
 
 
 def load_env(env_dict):
-    """
-    extension: load dictionary into environment variables
+    """extension: load dictionary into environment variables
     input: dictionary (envvar_name: value)
     output: None
 
@@ -58,18 +55,16 @@ def load_env(env_dict):
     """
     for name, value in env_dict.items():
         if logging.verbose_logfile is True:
-            logger.debug("setenv {} = {}".format(name, value))
+            logger.debug(f"setenv {name} = {value}")
         os.environ[name] = value
     # now remove empty strings from environment which are killing CMAQ multiprocessing
     for name, value in os.environ.items():
         if value == "":
             del os.environ[name]
-    return None
 
 
 def clean_env(env_dict):
-    """
-    extension: remove dictionary keys from environment variables
+    """extension: remove dictionary keys from environment variables
     input: dictionary (envvar_name: value)
     output: None
     """
@@ -78,17 +73,15 @@ def clean_env(env_dict):
             del os.environ[name]
         except KeyError:
             logger.warning("environment variable {name} not found")
-    return None
 
 
 def setup_run():
-    """
-    extension: setup all the constant environment variables
+    """extension: setup all the constant environment variables
     input: None
     output: None
     """
     env_dict = {}
-    env_dict["NPCOL_NPROW"] = "{:} {:}".format(cfg.npcol, cfg.nprow)
+    env_dict["NPCOL_NPROW"] = f"{cfg.npcol} {cfg.nprow}"
     env_dict["IOAPI_LOG_WRITE"] = "T" if cfg.ioapi_logging else "F"
     env_dict["CTM_MAXSYNC"] = str(cfg.maxsync)
     env_dict["CTM_MINSYNC"] = str(cfg.minsync)
@@ -98,9 +91,9 @@ def setup_run():
     env_dict["PROMPTFLAG"] = "T" if cfg.promptflag else "F"
     env_dict["EMISDATE"] = cfg.emisdate
     env_dict["CTM_STDATE"] = cfg.stdate
-    env_dict["CTM_STTIME"] = "".join(["{:02d}".format(i) for i in cfg.sttime])
-    env_dict["CTM_RUNLEN"] = "".join(["{:02d}".format(i) for i in cfg.runlen])
-    env_dict["CTM_TSTEP"] = "".join(["{:02d}".format(i) for i in cfg.tstep])
+    env_dict["CTM_STTIME"] = "".join([f"{i:02d}" for i in cfg.sttime])
+    env_dict["CTM_RUNLEN"] = "".join([f"{i:02d}" for i in cfg.runlen])
+    env_dict["CTM_TSTEP"] = "".join([f"{i:02d}" for i in cfg.tstep])
 
     if str(cfg.emis_lays).strip().lower() == "template":
         fname = dt.replace_date(template.emis, dt.start_date)
@@ -111,13 +104,13 @@ def setup_run():
 
     if str(cfg.conc_out_lays).strip().lower() == "template":
         conclays = int(ncf.get_attr(template.conc, "NLAYS"))
-        env_dict["CONC_BLEV_ELEV"] = "1 {:}".format(conclays)
+        env_dict["CONC_BLEV_ELEV"] = f"1 {conclays}"
     else:
         env_dict["CONC_BLEV_ELEV"] = str(cfg.conc_out_lays)
 
     if str(cfg.avg_conc_out_lays).strip().lower() == "template":
         conclays = int(ncf.get_attr(template.conc, "NLAYS"))
-        env_dict["ACONC_BLEV_ELEV"] = "1 {:}".format(conclays)
+        env_dict["ACONC_BLEV_ELEV"] = f"1 {conclays}"
     else:
         env_dict["ACONC_BLEV_ELEV"] = str(cfg.avg_conc_out_lays)
 
@@ -181,12 +174,10 @@ def setup_run():
 
 
 def run_fwd_single(date, is_first):
-    """
-    extension: run cmaq fwd for a single day
+    """extension: run cmaq fwd for a single day
     input: dt.date, Boolean (is this day the first of the model)
     output: None
     """
-
     env_dict = setup_run()
 
     env_dict["PERTCOLS"] = cfg.pertcols
@@ -223,7 +214,7 @@ def run_fwd_single(date, is_first):
     # print(run_cmd)
     if int(cfg.npcol) != 1 or int(cfg.nprow) != 1:
         # use mpi
-        run_cmd += "mpirun -np {:} ".format(int(cfg.npcol) * int(cfg.nprow))
+        run_cmd += f"mpirun -np {int(cfg.npcol) * int(cfg.nprow)} "
     # print(run_cmd)
     run_cmd += cfg.fwd_prog
     # print(run_cmd)
@@ -231,7 +222,7 @@ def run_fwd_single(date, is_first):
     print(stdout_fname)
     fh.ensure_path(stdout_fname, inc_file=True)
     with open(stdout_fname, "w") as stdout_file:
-        msg = "calling external process:\n{:}> {:}".format(cfg.cmd_shell, run_cmd)
+        msg = f"calling external process:\n{cfg.cmd_shell}> {run_cmd}"
         logger.debug(msg)
         statcode = subprocess.call(
             run_cmd,
@@ -247,16 +238,13 @@ def run_fwd_single(date, is_first):
         raise AssertionError(msg)
 
     clean_env(env_dict)
-    return None
 
 
 def run_bwd_single(date, is_first):
-    """
-    extension: run cmaq bwd for a single day
+    """extension: run cmaq bwd for a single day
     input: dt.date, Boolean (is this the first time called)
     output: None
     """
-
     env_dict = setup_run()
 
     env_dict["CTM_APPL"] = cfg.bwd_appl
@@ -307,12 +295,12 @@ def run_bwd_single(date, is_first):
     run_cmd = cfg.cmd_preamble
     if int(cfg.npcol) != 1 or int(cfg.nprow) != 1:
         # use mpi
-        run_cmd += "mpirun -np {:} ".format(int(cfg.npcol) * int(cfg.nprow))
+        run_cmd += f"mpirun -np {int(cfg.npcol) * int(cfg.nprow)} "
     run_cmd += cfg.bwd_prog
     stdout_fname = dt.replace_date(cfg.bwd_stdout_log, date)
     fh.ensure_path(stdout_fname, inc_file=True)
     with open(stdout_fname, "w") as stdout_file:
-        msg = "calling external process:\n{:}> {:}".format(cfg.cmd_shell, run_cmd)
+        msg = f"calling external process:\n{cfg.cmd_shell}> {run_cmd}"
         logger.debug(msg)
         statcode = subprocess.call(
             run_cmd,
@@ -328,12 +316,10 @@ def run_bwd_single(date, is_first):
         raise AssertionError(msg)
 
     clean_env(env_dict)
-    return None
 
 
 def clear_local_logs():
-    """
-    extension: delete logfiles CMAQ puts in cwd
+    """extension: delete logfiles CMAQ puts in cwd
     input: None
     output: None
     """
@@ -344,12 +330,10 @@ def clear_local_logs():
             full_file_name = os.path.realpath(file_name)
             if os.path.isfile(full_file_name):
                 os.remove(full_file_name)
-    return None
 
 
 def run_fwd():
-    """
-    extension: run cmaq fwd from current config
+    """extension: run cmaq fwd from current config
     input: None
     output: None
     """
@@ -358,12 +342,10 @@ def run_fwd():
         run_fwd_single(cur_date, isfirst)
         isfirst = False
         clear_local_logs()
-    return None
 
 
 def run_bwd():
-    """
-    extension: run cmaq bwd from current config
+    """extension: run cmaq bwd from current config
     input: None
     output: None
     """
@@ -372,12 +354,10 @@ def run_bwd():
         run_bwd_single(cur_date, isfirst)
         isfirst = False
         clear_local_logs()
-    return None
 
 
 def wipeout_bwd():
-    """
-    extension: delete all files created by a bwd run of cmaq
+    """extension: delete all files created by a bwd run of cmaq
     input: None
     output: None
     """
@@ -390,12 +370,10 @@ def wipeout_bwd():
         for fname in glob.glob(pat_name):
             if os.path.isfile(fname):
                 os.remove(fname)
-    return None
 
 
 def wipeout_fwd():
-    """
-    extension: delete all files created by a run of cmaq
+    """extension: delete all files created by a run of cmaq
     input: None
     output: None
     """
@@ -410,4 +388,3 @@ def wipeout_fwd():
         for fname in glob.glob(pat_name):
             if os.path.isfile(fname):
                 os.remove(fname)
-    return None

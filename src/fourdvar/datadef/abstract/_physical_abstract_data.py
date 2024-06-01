@@ -14,17 +14,17 @@
 # limitations under the License.
 #
 
-import numpy as np
 import os
 
-from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
-import fourdvar.util.netcdf_handle as ncf
-from fourdvar.util.archive_handle import get_archive_path
-import fourdvar.util.date_handle as dt
-from fourdvar.params.input_defn import inc_icon
-import fourdvar.params.template_defn as template
-
+import numpy as np
 import setup_logging
+
+import fourdvar.params.template_defn as template
+import fourdvar.util.date_handle as dt
+import fourdvar.util.netcdf_handle as ncf
+from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
+from fourdvar.params.input_defn import inc_icon
+from fourdvar.util.archive_handle import get_archive_path
 
 logger = setup_logging.get_logger(__file__)
 
@@ -57,8 +57,7 @@ class PhysicalAbstractData(FourDVarData):
     emis_units = "NA"  # unit to attach to netCDF archive
 
     def __init__(self, icon_dict, emis_dict, bcon_dict):
-        """
-        application: create an instance of PhysicalData
+        """application: create an instance of PhysicalData
         input: user-defined
         output: None
 
@@ -103,11 +102,9 @@ class PhysicalAbstractData(FourDVarData):
 
             self.bcon[spcs_name] = bcon_data
 
-        return None
 
     def archive(self, path=None):
-        """
-        extension: save a copy of data to archive/experiment directory
+        """extension: save a copy of data to archive/experiment directory
         input: string or None
         output: None
 
@@ -127,7 +124,7 @@ class PhysicalAbstractData(FourDVarData):
         attr_dict = {
             "SDATE": np.int32(dt.replace_date("<YYYYDDD>", dt.start_date)),
             "EDATE": np.int32(dt.replace_date("<YYYYDDD>", dt.end_date)),
-            "VAR-LIST": "".join(["{:<16}".format(s) for s in self.spcs]),
+            "VAR-LIST": "".join([f"{s:<16}" for s in self.spcs]),
         }
         dim_dict = {"ROW": self.nrows, "COL": self.ncols}
 
@@ -190,8 +187,7 @@ class PhysicalAbstractData(FourDVarData):
 
     @classmethod
     def from_file(cls, filename):
-        """
-        extension: create a PhysicalData instance from a file
+        """extension: create a PhysicalData instance from a file
         input: user-defined
         output: PhysicalData
 
@@ -297,10 +293,10 @@ class PhysicalAbstractData(FourDVarData):
                 # param already defined, ensure no clash.
                 if name in par_mutable:
                     # parameter is mutable, affect applied globally
-                    msg = "Any change to PhysicalAbstractData.{} is applied globally!".format(name)
+                    msg = f"Any change to PhysicalAbstractData.{name} is applied globally!"
                     logger.warn(msg)
                 else:
-                    msg = "cannot change PhysicalAbstractData.{}".format(name)
+                    msg = f"cannot change PhysicalAbstractData.{name}"
                     assert np.array_equal(old_val, val), msg
             # set this abstract classes attribute, not calling child!
             setattr(PhysicalAbstractData, name, val)
@@ -311,8 +307,7 @@ class PhysicalAbstractData(FourDVarData):
 
     @classmethod
     def assert_params(cls):
-        """
-        extension: assert that all needed physical parameters are valid.
+        """extension: assert that all needed physical parameters are valid.
         input: None
         output: None
 
@@ -335,12 +330,11 @@ class PhysicalAbstractData(FourDVarData):
         if inc_icon is True:
             par_name += ["icon_unc"]
         for param in par_name:
-            msg = "missing definition for {0}.{1}".format(cls.__name__, param)
+            msg = f"missing definition for {cls.__name__}.{param}"
             assert getattr(cls, param) is not None, msg
 
     def cleanup(self):
-        """
-        application: called when physical data instance is no longer required
+        """application: called when physical data instance is no longer required
         input: None
         output: None
 

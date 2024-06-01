@@ -14,16 +14,17 @@
 # limitations under the License.
 #
 
-from obs_preprocess.ray_trace import Point, Ray
 from copy import deepcopy
 
+from obs_preprocess.ray_trace import Point, Ray
 
-class ObsGeneral(object):
+
+class ObsGeneral:
     """base class for observations."""
 
     count = 0
     # required attributes must be defined in out_dict
-    required = ["value", "uncertainty", "weight_grid"]
+    required = ("value", "uncertainty", "weight_grid")
     # default attributes will be added to out_dice if not already present
     default = {"offset_term": 0.0, "lite_coord": None}
 
@@ -33,33 +34,32 @@ class ObsGeneral(object):
         self.out_dict = {"type": obstype}
         self.ready = False
         self.valid = True
-        return None
 
     def get_obsdict(self):
         if self.ready is False:
-            raise AttributeError("obs No. {} is not ready".format(self.id))
+            raise AttributeError(f"obs No. {self.id} is not ready")
         if self.valid is False:
-            raise AttributeError("obs No. {} is invalid".format(self.id))
+            raise AttributeError(f"obs No. {self.id} is invalid")
         keys = self.out_dict.keys()
         for attr in self.required:
             if attr not in keys:
-                raise AttributeError("obs No. {} is missing {}".format(self.id, attr))
+                raise AttributeError(f"obs No. {self.id} is missing {attr}")
         for attr, val in self.default.items():
             if attr not in keys:
-                print("{:} not defined, setting to {:}".format(attr, val))
+                print(f"{attr} not defined, setting to {val}")
                 self.out_dict[attr] = val
         return deepcopy(self.out_dict)
 
     def model_process(self, model_space):
         msg = "class {} must overload construct method"
         raise AttributeError(msg.format(self.__class__.__name__))
-        return None
 
 
 class ObsSimple(ObsGeneral):
     """Simple observation for testing.
     Instant point measurement
-    Provided with co-ordinate already mapped into model grid."""
+    Provided with co-ordinate already mapped into model grid.
+    """
 
     @classmethod
     def create(cls, cell, value, uncertainty, weight_grid):
@@ -81,13 +81,11 @@ class ObsSimple(ObsGeneral):
         else:
             self.valid = False
             self.ready = True
-        return None
 
     def coord_fail(self, fail_reason="unknown"):
         self.valid = False
         self.ready = True
         self.fail_reason = fail_reason
-        return None
 
 
 class ObsStationary(ObsSimple):
@@ -108,7 +106,6 @@ class ObsStationary(ObsSimple):
 
     def model_process(self, model_space):
         """Process the observation with the models parameters"""
-
         if self.spcs not in model_space.spcs:
             self.coord_fail("invalid spcs")
             return None
@@ -140,7 +137,8 @@ class ObsStationary(ObsSimple):
     def map_time(self, model_space):
         """Map self.time into dictionary where
         key   = model_space time co-ordinate,
-        value = proportion of observation."""
+        value = proportion of observation.
+        """
         ##assume self.time = [ start_time, end_time ]
         ##assume time recorded as [ int(YYYYMMDD), int(HHMMSS) ]
         if self.time[1][0] < self.time[0][0]:
@@ -189,7 +187,8 @@ class ObsStationary(ObsSimple):
     def map_location(self, model_space):
         """Map self.location into dictionary where
         key   = model_space lay/col/row co-ordinate,
-        value = proportion of observation."""
+        value = proportion of observation.
+        """
         assert model_space.gridmeta["GDTYP"] == 2, "invalid GDTYP"
         # Assume location provided in x,y,z co-ordinates.
         stationary_point = Point(self.location)
@@ -232,7 +231,6 @@ class ObsInstantRay(ObsSimple):
 
     def model_process(self, model_space):
         """Process the observation with the models parameters"""
-
         loc_dict = self.map_location(model_space)
         if self.valid is False:
             return None
@@ -268,7 +266,8 @@ class ObsInstantRay(ObsSimple):
     def map_time(self, model_space):
         """Map self.time into dictionary where
         key   = model_space time co-ordinate,
-        value = proportion of observation."""
+        value = proportion of observation.
+        """
         # assume self.time = [ int(YYYYMMDD), int(HHMMSS) ]
         # interpolate time between 2 closest timesteps
         # unless interp_time attr exists and is False
@@ -301,7 +300,8 @@ class ObsInstantRay(ObsSimple):
     def map_location(self, model_space):
         """Map self.location into dictionary where
         key   = model_space lay/col/row co-ordinate,
-        value = proportion of observation."""
+        value = proportion of observation.
+        """
         # assume self.location = [ loc_start, loc_end ]
         # assume loc recorded in (x,y,z) co-ordinates.
         assert model_space.gridmeta["GDTYP"] == 2, "invalid GDTYP"
@@ -352,7 +352,8 @@ class ObsMultiRay(ObsInstantRay):
     def map_location(self, model_space):
         """Map self.location into dictionary where
         key   = model_space lay/col/row co-ordinate,
-        value = proportion of observation."""
+        value = proportion of observation.
+        """
         # assume self.location = [ point_0, point_1, ..., point_n ]
         # assume point recorded in (x,y,z) co-ordinates.
         assert model_space.gridmeta["GDTYP"] == 2, "invalid GDTYP"

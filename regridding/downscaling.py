@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 print("load libraries")
 # Plot netCDF data on a Map
 # First we need to import netCDF-Pyton, Numpy, Matplotlib for plotting, and Basemap for the map
-from netCDF4 import Dataset as NetCDFFile
 import numpy as np
 import seaborn as sns
+from netCDF4 import Dataset as NetCDFFile
 
 sns.set()
 print("read data")
@@ -48,8 +47,7 @@ for imonth, month in enumerate(months):
     ##define the merged monthly emission files
     nc = NetCDFFile(
         "/scratch/q90/sa6589/test_Sougol/shared_Sougol/v7.0_FT2021_CH4_2019_TOTALS.0.1x0.1.nc".format(
-            month
-        )
+            )
     )
 
     # reading lat & lon from emission data
@@ -115,9 +113,7 @@ for imonth, month in enumerate(months):
     from netCDF4 import Dataset
 
     emission_Aus = Dataset(
-        "/scratch/q90/sa6589/test_Sougol/shared_Sougol/downscaling_out/emission_{}.nc".format(
-            month
-        ),
+        f"/scratch/q90/sa6589/test_Sougol/shared_Sougol/downscaling_out/emission_{month}.nc",
         "w",
         format="NETCDF4_CLASSIC",
     )
@@ -160,9 +156,7 @@ for imonth, month in enumerate(months):
     from netCDF4 import Dataset
 
     emission_population = Dataset(
-        "/scratch/q90/sa6589/test_Sougol/shared_Sougol/downscaling_out/emission_downscaled_{}.nc".format(
-            month
-        ),
+        f"/scratch/q90/sa6589/test_Sougol/shared_Sougol/downscaling_out/emission_downscaled_{month}.nc",
         "w",
         format="NETCDF4_CLASSIC",
     )

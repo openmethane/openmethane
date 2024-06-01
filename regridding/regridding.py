@@ -1,10 +1,18 @@
 #!/usr/bin/env python
-# coding: utf-8
 
+"""Remap downscaled emissions to the CMAQ domain.
 
-##Remap downscaled emissions to the CMAQ domain
-##originally written by JDS and modified by NS
-##this is an example for regridding dowmscaled CH4 emissions (CH4) to the CMAQ domains
+originally written by JDS and modified by NS
+This is an example for regridding downscaled CH4 emissions (CH4) to the CMAQ domains
+"""
+
+import datetime
+from math import pi, sin
+
+import numpy as np
+from netCDF4 import Dataset
+from numpy import random
+
 metcro3d = "/scratch/q90/pjr563/openmethane-beta/run-py4dvar/mcip/2019-05-01/d04/METCRO3D_8"
 
 
@@ -12,7 +20,6 @@ def arealatlon(lat1, lon1, lat2, lon2):
     """Returns the x & y coordinates in meters using a sinusoidal projection"""
     x1 = 0
     y1 = 0
-    from math import pi, sin, radians
 
     earth_radius = 6371009  # in meters
     lat10 = pi * lat1 / 180
@@ -21,10 +28,7 @@ def arealatlon(lat1, lon1, lat2, lon2):
     return area
 
 
-import numpy as np
-from netCDF4 import Dataset
-import datetime
-import numpy.random as random
+
 
 deflon = {"d01": 0.65, "d02": 0.22, "d03": 0.071, "d04": 0.0229}
 deflat = {"d01": 0.45, "d02": 0.16, "d03": 0.053, "d04": 0.0178}
@@ -75,7 +79,7 @@ attrnames = [
     "VAR-LIST",
     "FILEDESC",
 ]
-unicodeType = type("foo")
+unicodeType = str
 nlay = 1
 nvar = 1
 nz = lvls.size - 1  # lvls are layer boundaries and nz is number layers
@@ -85,16 +89,14 @@ lens["LAY"] = nz
 lens["TSTEP"] = 25
 lens["DATE-TIME"] = 2
 nc = Dataset(
-    "/scratch/q90/sa6589/test_Sougol/shared_Sougol/downscaling_out/emission_downscaled_{}.nc".format(
-        month
-    )
+    f"/scratch/q90/sa6589/test_Sougol/shared_Sougol/downscaling_out/emission_downscaled_{month}.nc"
 )
 for idate, date in enumerate(dates):
     yyyymmdd_dashed = date.strftime("%Y-%m-%d")
     for idomain, domain in enumerate(domains):
         ## pointer to where we can find the LATD/LOND grid description
         nc2 = Dataset(
-            "/scratch/q90/sa6589/test_Sougol/shared_Sougol/GRIDFILE/GRDFILE_{}.nc".format(domain)
+            f"/scratch/q90/sa6589/test_Sougol/shared_Sougol/GRIDFILE/GRDFILE_{domain}.nc"
         )
         down_lon = nc["longitude"][...][...]
         down_lat = nc["latitude"][...][...]
@@ -130,9 +132,7 @@ for idate, date in enumerate(dates):
                     # print(emi_grdcell[i,j])
 
         #        month='May'
-        emisfolder = "/scratch/q90/pjr563/openmethane-beta/run_cmaq/{}/{}".format(
-            yyyymmdd_dashed, domain
-        )
+        emisfolder = f"/scratch/q90/pjr563/openmethane-beta/run_cmaq/{yyyymmdd_dashed}/{domain}"
 
         dt = date.timetuple()
         emisfile = f"emis_record_{dt.tm_year:4d}{dt.tm_mon:02d}{dt.tm_mday:02d}.nc"
@@ -189,7 +189,7 @@ for idate, date in enumerate(dates):
             shuffle=False,
             chunksizes=np.array([1, 1, domShape[0], domShape[1]]),
         )
-        outvars[cmaqspec].setncattr("long_name", "{:<16}".format(cmaqspec))
+        outvars[cmaqspec].setncattr("long_name", f"{cmaqspec:<16}")
         outvars[cmaqspec].setncattr("units", "{:<16}".format("mols/s"))
         outvars[cmaqspec].setncattr("var_desc", "{:<80}".format("Emissions of " + cmaqspec))
         outvars[cmaqspec][...] = 0.0
@@ -209,7 +209,7 @@ for idate, date in enumerate(dates):
             elif a == "TSTEP":
                 grdem.setncattr(a, np.int32(100))
             elif a == "VAR-LIST":
-                VarString = "".join(["{:<16}".format(k) for k in cmaqSpecList])
+                VarString = "".join([f"{k:<16}" for k in cmaqSpecList])
                 grdem.setncattr(a, VarString)
             elif a == "GDNAM":
                 grdem.setncattr(a, "{:<16}".format("Aus"))

@@ -14,15 +14,13 @@
 # limitations under the License.
 #
 
-import numpy as np
 
-from fourdvar.datadef import AdjointForcingData, SensitivityData
 import fourdvar.util.cmaq_handle as cmaq
+from fourdvar.datadef import AdjointForcingData, SensitivityData
 
 
 def run_adjoint(adjoint_forcing):
-    """
-    application: run the adjoint model, construct SensitivityData from results
+    """application: run the adjoint model, construct SensitivityData from results
     input: AdjointForcingData
     output: SensitivityData
     """

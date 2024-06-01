@@ -14,9 +14,8 @@
 # limitations under the License.
 #
 
-import numpy as np
 import netCDF4 as nc
-
+import numpy as np
 
 cmaqSpecList = ["CH4"]
 cmaqspec = "CH4"
@@ -61,7 +60,7 @@ attrnames = [
     "VAR-LIST",
     "FILEDESC",
 ]
-unicodeType = type("foo")
+unicodeType = str
 nlay = 32
 nvar = 1
 nz = 32  # just surface for the moment
@@ -79,7 +78,7 @@ with nc.Dataset(met_cro_file, mode="r") as met_croNC:
         elif a == "TSTEP":
             attrDict[a] = np.int32(0)
         elif a == "VAR-LIST":
-            VarString = "".join(["{:<16}".format(k) for k in cmaqSpecList])
+            VarString = "".join([f"{k:<16}" for k in cmaqSpecList])
             attrDict[a] = VarString
         elif a == "GDNAM":
             attrDict[a] = "{:<16}".format("Aus")
@@ -136,7 +135,7 @@ with nc.Dataset(iconFile, "w") as output:
     outvars[cmaqspec] = output.createVariable(
         cmaqspec, "f4", ("TSTEP", "LAY", "ROW", "COL"), zlib=True, shuffle=False
     )
-    outvars[cmaqspec].setncattr("long_name", "{:<16}".format(cmaqspec))
+    outvars[cmaqspec].setncattr("long_name", f"{cmaqspec:<16}")
     outvars[cmaqspec].setncattr("units", "{:<16}".format("mols/s"))
     outvars[cmaqspec].setncattr("var_desc", "{:<80}".format("Emissions of " + cmaqspec))
     outvars[cmaqspec][...] = 1.84
@@ -169,7 +168,7 @@ with nc.Dataset(bconFile, "w") as output:
     outvars[cmaqspec] = output.createVariable(
         cmaqspec, "f4", ("TSTEP", "LAY", "PERIM"), zlib=True, shuffle=False
     )
-    outvars[cmaqspec].setncattr("long_name", "{:<16}".format(cmaqspec))
+    outvars[cmaqspec].setncattr("long_name", f"{cmaqspec:<16}")
     outvars[cmaqspec].setncattr("units", "{:<16}".format("mols/s"))
     outvars[cmaqspec].setncattr("var_desc", "{:<80}".format("boundary value of " + cmaqspec))
     outvars[cmaqspec][...] = 1.84

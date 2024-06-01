@@ -24,7 +24,6 @@ from fourdvar.params.date_defn import end_date, start_date
 from fourdvar.params.input_defn import obs_file, prior_file
 from fourdvar.util.file_handle import load_list, save_list
 
-
 sdate = datetime.date(start_date // 10000, (start_date // 100) % 100, start_date % 100)
 edate = datetime.date(end_date // 10000, (end_date // 100) % 100, end_date % 100)
 inObs = load_list(obs_file)

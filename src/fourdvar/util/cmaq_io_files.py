@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 
-import fourdvar.util.date_handle as dt
-import fourdvar.params.template_defn as template
 import fourdvar.params.archive_defn as archive
-import fourdvar.params.cmaq_config as cmaq_config
-import fourdvar.params.input_defn as input_defn
+import fourdvar.params.template_defn as template
+import fourdvar.util.date_handle as dt
+from fourdvar.params import cmaq_config, input_defn
 
 all_files = {
     "ModelInputData": {},
@@ -31,8 +30,7 @@ firsttime = True
 
 
 def get_filedict(clsname):
-    """
-    extension: return dictionary of files needed for data class
+    """extension: return dictionary of files needed for data class
     input: string, name of dataclass
     output: dict, filedict has 3 keys: actual, template and archive
             actual: path to the file used by cmaq.
@@ -51,8 +49,7 @@ def get_filedict(clsname):
 
 
 def build_filedict():
-    """
-    extension: constructed the dictionary of files for the required dates
+    """extension: constructed the dictionary of files for the required dates
     input: None
     output: None
 
@@ -111,4 +108,3 @@ def build_filedict():
             "archive": dt.replace_date(archive.sens_conc_file, date),
             "date": date,
         }
-    return None

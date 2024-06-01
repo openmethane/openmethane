@@ -20,25 +20,21 @@ from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 
 
 class UnknownData(FourDVarData):
-    """
-    application: vector of unknowns/optimization values
+    """application: vector of unknowns/optimization values
     note: all methods except 'clone' are already framework
     """
 
     def __init__(self, values):
-        """
-        framework: create an instance of UnknownData
+        """framework: create an instance of UnknownData
         input: iterable of scalars (eg: list of floats)
         output: None
 
         eg: new_unknown =  datadef.UnknownData( [ val1, val2, ... ] )
         """
         self.value_arr = np.array(values, dtype="float64")
-        return None
 
     def get_vector(self):
-        """
-        framework: return the values in UnknownData as a 1D numpy array
+        """framework: return the values in UnknownData as a 1D numpy array
         input: None
         output: np.ndarray
         """
@@ -46,8 +42,7 @@ class UnknownData(FourDVarData):
 
     @classmethod
     def clone(cls, source):
-        """
-        framework: copy an UnknownData instance
+        """framework: copy an UnknownData instance
         input: UnknownData
         output: UnknownData
 

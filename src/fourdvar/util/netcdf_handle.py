@@ -28,8 +28,7 @@ logger = logging.get_logger(__file__)
 
 
 def validate(filepath, dataset):
-    """
-    extension: test that dataset is compatible with a netCDF file.
+    """extension: test that dataset is compatible with a netCDF file.
     input: string (path/to/file.ncf), dict (see notes)
     output: Boolean, True == create_from_template will work
 
@@ -50,8 +49,7 @@ def validate(filepath, dataset):
 
 
 def create_from_template(source, dest, var_change={}, date=None, overwrite=True):
-    """
-    extension: create a new copy of a netCDF file, with new variable data
+    """extension: create a new copy of a netCDF file, with new variable data
     input: string (path/to/old.ncf), string (path/to/new.ncf), dict, date obj, boolean
     output: None
 
@@ -68,7 +66,7 @@ def create_from_template(source, dest, var_change={}, date=None, overwrite=True)
     """
     assert validate(source, var_change), "changes to template are invalid"
     if logging.verbose_logfile is True:
-        logger.debug("copy {} to {}.".format(source, dest))
+        logger.debug(f"copy {source} to {dest}.")
     shutil.copyfile(source, dest)
     with ncf.Dataset(dest, "a") as ncf_file:
         for var, data in var_change.items():
@@ -79,12 +77,10 @@ def create_from_template(source, dest, var_change={}, date=None, overwrite=True)
                 ncf_file.variables[var][:] = data + orig_data
         if date is not None:
             set_date(ncf_file, date)
-    return None
 
 
 def get_variable(filepath, varname, group=None):
-    """
-    extension: get all the values of a single variable
+    """extension: get all the values of a single variable
     input: string (path/to/file.ncf), string <OR> list, string (optional)
     output: numpy.ndarray OR dict
 
@@ -104,8 +100,7 @@ def get_variable(filepath, varname, group=None):
 
 
 def get_attr(filepath, attrname, group=None):
-    """
-    extension: get the value of a single attribute
+    """extension: get the value of a single attribute
     input: string (path/to/file.ncf), string, string
     output: attr value (variable type)
 
@@ -116,14 +111,13 @@ def get_attr(filepath, attrname, group=None):
         if group is not None:
             for g in group.split("/"):
                 source = source.groups[g]
-        assert attrname in source.ncattrs(), "{} not found".format(attrname)
+        assert attrname in source.ncattrs(), f"{attrname} not found"
         result = source.getncattr(attrname)
     return result
 
 
 def get_all_attr(filepath):
-    """
-    extension: get a dict of all global attributes
+    """extension: get a dict of all global attributes
     input: string (path/to/file.ncf)
     output: dict { str(attr_name) : attr_val }
     """
@@ -136,15 +130,14 @@ try_ncks = True
 
 
 def copy_compress(source, dest):
-    """
-    extension: create a compressed copy of a netCDF file
+    """extension: create a compressed copy of a netCDF file
     input: string (path/src.ncf), string (path/dst.ncf)
     output: None
 
     notes: if dst already exists it is overwritten.
     """
     global try_ncks
-    copy_msg = "copy {} to {}.".format(source, dest)
+    copy_msg = f"copy {source} to {dest}."
     if try_ncks is True:
         copy_cmd = ["ncks", "-4", "-L4", "-O", source, dest]
         try:
@@ -173,8 +166,7 @@ def copy_compress(source, dest):
 
 
 def set_date(fileobj, start_date):
-    """
-    extension: set the date in TFLAG variable & SDATE attribute
+    """extension: set the date in TFLAG variable & SDATE attribute
     input: string (path/file.ncf) OR netCDF file obj, datetime.date
     output: None
 
@@ -192,7 +184,6 @@ def set_date(fileobj, start_date):
             tflag_date[date_offset == i] = yj(date)
         ncf_file.variables["TFLAG"][:] = tflag
         ncf_file.setncattr("SDATE", yj(sdate))
-        return None
 
     if str(fileobj) == fileobj:
         # provided with filepath
@@ -201,12 +192,10 @@ def set_date(fileobj, start_date):
     else:
         # provided with file object
         _set_ncfobj_date(fileobj, start_date)
-    return None
 
 
 def match_attr(src1, src2, attrlist=None):
-    """
-    extension: check that attributes listed are the same for each src
+    """extension: check that attributes listed are the same for each src
     input: string <OR> dict, string <OR> dict, list
     output: bool
 
@@ -229,8 +218,7 @@ def match_attr(src1, src2, attrlist=None):
 
 
 def create(path=None, parent=None, name=None, attr={}, dim={}, var={}, is_root=True):
-    """
-    extension: create a new netCDF group or file
+    """extension: create a new netCDF group or file
     input: string, ncf obj, string, dict, dict, dict, bool
     output: ncf.Dataset obj
 

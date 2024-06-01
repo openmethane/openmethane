@@ -67,11 +67,13 @@ unfixable = [
 ]
 ignore = [
     "D100",  # Missing docstring in public module
+    "D102",  # Missing docstring in public method
     "D105",  # Missing docstring in magic methods
     "D106",  # Missing docstring in public nested class
     "D400",  # First line should end with a period
     "TRY003",  # Avoid specifying long messages outside the exception class
     "PD011", #  Use `.to_numpy()` instead of `.values`
+    "S101", #  Use of `assert` detected
 ]
 
 [tool.ruff.lint.per-file-ignores]

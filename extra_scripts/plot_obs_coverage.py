@@ -14,9 +14,10 @@
 # limitations under the License.
 #
 
-import numpy as np
 import datetime
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 import fourdvar.user_driver as user
 import fourdvar.util.date_handle as dt

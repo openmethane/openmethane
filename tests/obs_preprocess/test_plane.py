@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from obs_preprocess.plane import Plane, Polyhedron
-import numpy as np
 import itertools
+
+import numpy as np
+
+from obs_preprocess.plane import Plane, Polyhedron
 
 polyCorners = [[0.0, 0.0, -3.0], [1.0, 1.0, 3.0]]
 polyVertices = np.array(list(itertools.product(*zip(polyCorners[0], polyCorners[1]))))
-faces = [Plane.from_points(polyVertices[l]) for l in [[0, 2, 1], [4, 0, 5], [6, 4, 7], [2, 6, 3]]]
+faces = [Plane.from_points(polyVertices[face]) for face in [[0, 2, 1], [4, 0, 5], [6, 4, 7], [2, 6, 3]]]
 poly = Polyhedron(faces, nSamplePoints=200)
 c1 = [[0.2, 0.2, 0.2], [0.4, 0.4, 0.4]]
 print(

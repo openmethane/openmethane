@@ -64,8 +64,8 @@ obs_path = os.path.join(archive.get_archive_path(), obs_pert_archive)
 user.observed = d.ObservationData.from_file(obs_path)
 init_vec = transform(user.background, d.UnknownData).get_vector()
 cost = main.cost_func(init_vec)
-logger.info("No. obs = {:}".format(o_val.size))
-logger.info("Target cost = {:}".format(cost))
+logger.info(f"No. obs = {o_val.size}")
+logger.info(f"Target cost = {cost}")
 
 # replace current background/prior and observations with perturbed versions.
 bg_path = os.path.join(archive.get_archive_path(), prior_pert_archive)

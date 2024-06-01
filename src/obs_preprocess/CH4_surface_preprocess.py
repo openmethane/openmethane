@@ -15,13 +15,14 @@
 #
 import os
 
-from obs_preprocess.obs_defn import ObsSimple
-from obs_preprocess.model_space import ModelSpace
-from obs_preprocess.ray_trace import Point
-import fourdvar.util.file_handle as fh
-import fourdvar.params.input_defn as input_defn
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+import fourdvar.util.file_handle as fh
+from fourdvar.params import input_defn
+from obs_preprocess.model_space import ModelSpace
+from obs_preprocess.obs_defn import ObsSimple
+from obs_preprocess.ray_trace import Point
 
 # save new obs file as fourdvar input file
 save_file = input_defn.obs_file
@@ -100,4 +101,4 @@ for coord, val, unc in zip(obs_coord, obs_val, obs_unc):
 # obslist.append( obsdict )
 ##pdb.set_trace()
 fh.save_list(obslist, save_file)
-print("observations saved to {:}".format(save_file))
+print(f"observations saved to {save_file}")

@@ -13,22 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import multiprocessing
-import func_timeout
-import os
-import glob
-import time as timing
-import numpy as np
 import datetime as dt
-
-from obs_preprocess.obsESA_defn import ObsSRON
-from obs_preprocess.model_space import ModelSpace
-from netCDF4 import Dataset
-import fourdvar.util.file_handle as fh
-from fourdvar.util.date_handle import start_date, end_date
-import fourdvar.params.input_defn as input_defn
-import setup_logging
+import glob
+import multiprocessing
+import os
+import time as timing
 import traceback
+
+import func_timeout
+import numpy as np
+import setup_logging
+from netCDF4 import Dataset
+
+import fourdvar.util.file_handle as fh
+from fourdvar.params import input_defn
+from fourdvar.util.date_handle import end_date, start_date
+from obs_preprocess.model_space import ModelSpace
+from obs_preprocess.obsESA_defn import ObsSRON
 
 logger = setup_logging.get_logger(__file__)
 
@@ -90,7 +91,7 @@ elif source_type.lower() == "directory":
         if os.path.isfile(os.path.join(dirname, f))
     ]
 else:
-    raise TypeError("source_type '{}' not supported".format(source_type))
+    raise TypeError(f"source_type '{source_type}' not supported")
 
 obslist = []
 nObs = [0, 0]
@@ -222,9 +223,8 @@ for fname in filelist:
                 for obs in processOutput:
                     if obs is None:
                         nTimedOut += 1
-                    else:
-                        if obs.valid:
-                            obslist.append(obs)
+                    elif obs.valid:
+                        obslist.append(obs)
                     if nProcessed % 1000 == 0:
                         print(
                             f"{nProcessed} obs processed in {timing.time() -baseTime:8.1f} seconds"
@@ -246,6 +246,6 @@ if len(obslist) > 0:
     domain["is_lite"] = False
     datalist = [domain] + [o.out_dict for o in obslist]
     fh.save_list(datalist, output_file)
-    print("recorded observations to {}".format(output_file))
+    print(f"recorded observations to {output_file}")
 else:
     print("No valid observations found, no output file generated.")

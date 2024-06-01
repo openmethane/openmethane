@@ -36,8 +36,7 @@ allow_neg_values = True
 
 
 def setup():
-    """
-    application: setup any requirements for minimizer to run (eg: check resources, etc.)
+    """application: setup any requirements for minimizer to run (eg: check resources, etc.)
     input: None
     output: None
     """
@@ -51,18 +50,15 @@ def setup():
 
 
 def cleanup():
-    """
-    application: cleanup any unwanted output from minimizer (eg: delete checkpoints, etc.)
+    """application: cleanup any unwanted output from minimizer (eg: delete checkpoints, etc.)
     input: None
     output: None
     """
     cmaq.wipeout_fwd()
-    return None
 
 
 def get_background():
-    """
-    application: get the background / prior estimate for the minimizer
+    """application: get the background / prior estimate for the minimizer
     input: None
     output: PhysicalData (prior estimate)
     """
@@ -74,8 +70,7 @@ def get_background():
 
 
 def get_observed():
-    """
-    application: get the observed observations for the minimizer
+    """application: get the observed observations for the minimizer
     input: None
     output: ObservationData
     """
@@ -88,8 +83,7 @@ def get_observed():
 
 
 def callback_func(current_vector):
-    """
-    extension: called once for every iteration of minimizer
+    """extension: called once for every iteration of minimizer
     input: np.array
     output: None
     """
@@ -97,21 +91,20 @@ def callback_func(current_vector):
     iter_num += 1
     current_unknown = d.UnknownData(current_vector)
     current_physical = transform(current_unknown, d.PhysicalData)
-    current_physical.archive("iter{:04}.ncf".format(iter_num))
+    current_physical.archive(f"iter{iter_num:04}.ncf")
     if archive_defn.iter_model_output is True:
         current_model_output = d.ModelOutputData()
-        current_model_output.archive("conc_iter{:04}.ncf".format(iter_num))
+        current_model_output.archive(f"conc_iter{iter_num:04}.ncf")
     if archive_defn.iter_obs_lite is True:
         current_model_output = d.ModelOutputData()
         current_obs = transform(current_model_output, d.ObservationData)
-        current_obs.archive("obs_lite_iter{:04}.pic.gz".format(iter_num), force_lite=True)
+        current_obs.archive(f"obs_lite_iter{iter_num:04}.pic.gz", force_lite=True)
 
-    logger.info("iter_num = {}".format(iter_num))
+    logger.info(f"iter_num = {iter_num}")
 
 
 def minim(cost_func, grad_func, init_guess):
-    """
-    application: the minimizer function
+    """application: the minimizer function
     input: cost function, gradient function, prior estimate / background
     output: list (1st element is numpy.ndarray of solution, the rest are user-defined)
     """
@@ -136,8 +129,7 @@ def minim(cost_func, grad_func, init_guess):
 
 
 def post_process(out_physical, metadata):
-    """
-    application: how to handle/save results of minimizer
+    """application: how to handle/save results of minimizer
     input: PhysicalData (solution), list (user-defined output of minim)
     output: None
     """

@@ -205,8 +205,8 @@ def finite_diff(scale):
     eps = 1e-6
     if abs(pert_gradient - init_gradient).sum() > eps * abs(pert_gradient).sum():
         print("WARNING: pert & init gradients differ.")
-        print("init gradient norm = {:}".format(np.linalg.norm(init_gradient)))
-        print("pert gradient norm = {:}".format(np.linalg.norm(pert_gradient)))
+        print(f"init gradient norm = {np.linalg.norm(init_gradient)}")
+        print(f"pert gradient norm = {np.linalg.norm(pert_gradient)}")
 
     pert_diff = pert_vector - init_vector
     sense_score = 0.5 * ((pert_diff * init_gradient).sum() + (pert_diff * pert_gradient).sum())
@@ -229,8 +229,8 @@ if __name__ == "__main__":
     # perturbation = scale * uncertainty.
     sense, force = finite_diff(scale=1.0)
     print(40 * "-")
-    print("sensitivity dot perturbation = {:}".format(sense))
-    print("forcing dot conc_change = {:}".format(force))
-    print("abs difference = {:}".format(abs(sense - force)))
-    print("rel difference = {:}".format(2.0 * abs(sense - force) / (sense + force)))
+    print(f"sensitivity dot perturbation = {sense}")
+    print(f"forcing dot conc_change = {force}")
+    print(f"abs difference = {abs(sense - force)}")
+    print(f"rel difference = {2.0 * abs(sense - force) / (sense + force)}")
     print(40 * "-")

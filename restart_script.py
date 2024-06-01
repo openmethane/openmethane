@@ -48,7 +48,7 @@ else:
 
 assert start_no == int(start_no), "restart_number must be an integer."
 init_path = os.path.join(archive_path, iter_fname.format(start_no))
-assert os.path.isfile(init_path), "Cannot find {}".format(init_path)
+assert os.path.isfile(init_path), f"Cannot find {init_path}"
 
 log_path = os.path.join(archive_path, restart_log_fname)
 if os.path.isfile(log_path):
@@ -56,7 +56,7 @@ if os.path.isfile(log_path):
 else:
     ftype = "w"
 with open(log_path, ftype) as f:
-    f.write("restarted from iteration {}\n".format(start_no))
+    f.write(f"restarted from iteration {start_no}\n")
 
 user.iter_num = start_no
 init_phys = d.PhysicalData.from_file(init_path)

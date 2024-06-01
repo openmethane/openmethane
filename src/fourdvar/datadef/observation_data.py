@@ -15,18 +15,17 @@
 #
 
 import os
-import numpy as np
 from copy import deepcopy
 
-from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
-
-from fourdvar.util.archive_handle import get_archive_path
-import fourdvar.util.file_handle as fh
-import fourdvar.util.date_handle as dt
-import fourdvar.params.template_defn as template
-import fourdvar.util.netcdf_handle as ncf
-
+import numpy as np
 import setup_logging
+
+import fourdvar.params.template_defn as template
+import fourdvar.util.date_handle as dt
+import fourdvar.util.file_handle as fh
+import fourdvar.util.netcdf_handle as ncf
+from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
+from fourdvar.util.archive_handle import get_archive_path
 
 logger = setup_logging.get_logger(__file__)
 
@@ -35,7 +34,8 @@ class ObservationData(FourDVarData):
     """application: vector of observations, observed or simulated
     Can be either 'full' or 'lite' file.
     'lite' file has no weight_grid attribute and cannot be used in transforms
-        (for achiving and analysis only)"""
+    (for achiving and analysis only)
+    """
 
     # Parameters
     length = None
@@ -52,8 +52,7 @@ class ObservationData(FourDVarData):
     archive_name = "obsset.pickle.zip"
 
     def __init__(self, val_list, is_lite=False):
-        """
-        application: create an instance of ObservationData
+        """application: create an instance of ObservationData
         input: user-defined.
         output: None
 
@@ -67,19 +66,16 @@ class ObservationData(FourDVarData):
         self.assert_params(need_weight=False)
         assert len(val_list) == self.length, "invalid list of values"
         self.value = [float(v) for v in val_list]
-        return None
 
     def get_vector(self):
-        """
-        framework: return the values of ObservationData as a 1D numpy array
+        """framework: return the values of ObservationData as a 1D numpy array
         input: None
         output: np.ndarray
         """
         return np.array(self.value)
 
     def archive(self, name=None, force_lite=False):
-        """
-        extension: save a copy of data to archive/experiment directory
+        """extension: save a copy of data to archive/experiment directory
         input: string or None, boolean
         output: None
 
@@ -115,12 +111,10 @@ class ObservationData(FourDVarData):
 
         archive_list = [domain] + obs_list
         fh.save_list(archive_list, save_path)
-        return None
 
     @classmethod
     def check_grid(cls, other_grid=template.conc):
-        """
-        extension: check that griddata matches other
+        """extension: check that griddata matches other
         input: string(path/to/conc.ncf) <OR> dict
         output: Boolean
         """
@@ -129,8 +123,7 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def error_weight(cls, res):
-        """
-        application: return residual of observations weighted by the inverse error covariance
+        """application: return residual of observations weighted by the inverse error covariance
         input: ObservationData  (residual)
         output: ObservationData
 
@@ -141,8 +134,7 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def get_residual(cls, observed, simulated):
-        """
-        application: return the residual of 2 sets of observations
+        """application: return the residual of 2 sets of observations
         input: ObservationData, ObservationData
         output: ObservationData
 
@@ -153,8 +145,7 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def from_file(cls, filename):
-        """
-        extension: create an ObservationData from a file
+        """extension: create an ObservationData from a file
         input: user-defined
         output: ObservationData
 
@@ -254,8 +245,7 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def example(cls):
-        """
-        application: return a valid example with arbitrary values.
+        """application: return a valid example with arbitrary values.
         input: None
         output: ObservationData
 
@@ -267,8 +257,7 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def assert_params(cls, need_weight=True):
-        """
-        extension: assert that all needed observation parameters are valid
+        """extension: assert that all needed observation parameters are valid
         input: boolean (True == must have weight_grid (eg: not a obs-lite file))
         output: None
         """
@@ -287,12 +276,10 @@ class ObservationData(FourDVarData):
             assert cls.weight_grid is not None, "weight_grid is not set"
             assert cls.ind_by_date is not None, "ind_by_date is not set"
             assert len(cls.weight_grid) == cls.length, "invalid weight_grid length"
-        return None
 
     @classmethod
     def clone(cls, src):
-        """
-        application: copy an ObservationData.
+        """application: copy an ObservationData.
         input: ObservationData
         output: ObservationData
 
@@ -300,6 +287,6 @@ class ObservationData(FourDVarData):
 
         notes: ensure that copy is independant (eg: uses copies of files, etc.)
         """
-        msg = "cannot clone {0}".format(src.__class__.__name__)
+        msg = f"cannot clone {src.__class__.__name__}"
         assert isinstance(src, cls), msg
         return cls(src.value, is_lite=src.is_lite)

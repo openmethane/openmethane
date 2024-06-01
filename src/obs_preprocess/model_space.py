@@ -33,7 +33,7 @@ daysec = tosec(240000)
 earth_rad = 6370000
 
 
-class ModelSpace(object):
+class ModelSpace:
     gridmeta_keys = [
         "STIME",
         "TSTEP",
@@ -68,8 +68,7 @@ class ModelSpace(object):
         return cls(METCRO3D, METCRO2D, CONC, date_range)
 
     def __init__(self, METCRO3D, METCRO2D, CONC, date_range):
-        """
-        METCRO3D = path to any single METCRO3D file
+        """METCRO3D = path to any single METCRO3D file
         METCRO2D = path to any single METCRO2D file
         CONC = path to any concentration file output by CMAQ
         date_range = [ start_date, end_date ] (as datetime objects)
@@ -99,7 +98,7 @@ class ModelSpace(object):
         self.nlay = self.gridmeta["NLAYS"]
         self.spcs = self.gridmeta["VAR-LIST"].split()
         tsec = tosec(self.gridmeta["TSTEP"])
-        assert daysec % tsec == 0, "invalid TSTEP in {}".format(ncf_path)
+        assert daysec % tsec == 0, f"invalid TSTEP in {ncf_path}"
         self.nstep = (daysec // tsec) + 1
         self.max_height = layer_height[self.nlay]
 
@@ -134,10 +133,9 @@ class ModelSpace(object):
             min(ll_lon, ur_lon),
             max(ll_lon, ur_lon),
         )
-        return None
 
     def valid_coord(self, coord):
-        """return True if a coord is within the grid"""
+        """Return True if a coord is within the grid"""
         date, step, lay, row, col, spc = coord
         if not (self.sdate <= date <= self.edate):
             return False
@@ -195,7 +193,6 @@ class ModelSpace(object):
         with Dataset(new_file, "r") as f:
             self.psurf_arr = f.variables["PRSFC"][:, 0, :, :]
         self.psurf_date = date_int
-        return None
 
     def get_pressure_bounds(self, target_coord):
         date = target_coord[0]
@@ -253,7 +250,7 @@ class ModelSpace(object):
         return self.proj(lon, lat)
 
     def get_ray_top(self, start, zenith, azimuth):
-        """get the (x,y,z) point where a ray leaves the top of the model
+        """Get the (x,y,z) point where a ray leaves the top of the model
         start = (x,y,z) start point
         zenith = zenith angle (radians)
         azimuth = azimuth angle (angle east of north) (radians)

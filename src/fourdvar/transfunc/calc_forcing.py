@@ -14,17 +14,15 @@
 # limitations under the License.
 #
 
-from fourdvar.datadef import ObservationData, AdjointForcingData
 import fourdvar.util.cmaq_handle as cmaq
+from fourdvar.datadef import AdjointForcingData, ObservationData
 
 
 def calc_forcing(w_residual):
-    """
-    application: calculate the adjoint forcing values from the weighted residual of observations
+    """application: calculate the adjoint forcing values from the weighted residual of observations
     input: ObservationData  (weighted residuals)
     output: AdjointForcingData
     """
-
     kwargs = AdjointForcingData.get_kwargs_dict()
     for ymd, ilist in ObservationData.ind_by_date.items():
         spc_dict = kwargs["force." + ymd]

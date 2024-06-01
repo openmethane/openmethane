@@ -28,31 +28,31 @@ archive_defn.experiment = "tmp_grad_finite_diff"
 archive_defn.desc_name = ""
 
 archive_path = archive.get_archive_path()
-print("saving results in:\n{}".format(archive_path))
+print(f"saving results in:\n{archive_path}")
 
 
 print("get prior in PhysicalData format")
 st = time.time()
 prior_phys = user.get_background()
-print("completed in {}s".format(int(time.time() - st)))
+print(f"completed in {int(time.time() - st)}s")
 prior_phys.archive("prior.ncf")
 print("archived.")
 print("get observations in ObservationData format")
 st = time.time()
 observed = user.get_observed()
-print("completed in {}s".format(int(time.time() - st)))
+print(f"completed in {int(time.time() - st)}s")
 observed.archive("observed.pickle")
 print("archived.")
 
 print("convert prior into UnknownData format")
 st = time.time()
 prior_unknown = transform(prior_phys, d.UnknownData)
-print("completed in {}s".format(int(time.time() - st)))
+print(f"completed in {int(time.time() - st)}s")
 
 print("get unknowns in vector form.")
 st = time.time()
 prior_vector = prior_unknown.get_vector()
-print("completed in {}s".format(int(time.time() - st)))
+print(f"completed in {int(time.time() - st)}s")
 
 initCost = main.cost_func(prior_vector)
 initGrad = main.gradient_func(prior_vector)

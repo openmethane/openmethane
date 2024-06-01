@@ -16,10 +16,10 @@
 
 import os
 
-import fourdvar.util.file_handle as file_handle
-import fourdvar.params.archive_defn as defn
-
 import setup_logging
+
+import fourdvar.params.archive_defn as defn
+from fourdvar.util import file_handle
 
 logger = setup_logging.get_logger(__file__)
 
@@ -28,8 +28,7 @@ archive_path = ""
 
 
 def setup():
-    """
-    extension: setup the archive/experiment directory.
+    """extension: setup the archive/experiment directory.
     input: None
     output: None
 
@@ -42,7 +41,7 @@ def setup():
         return None
     path = os.path.join(defn.archive_path, defn.experiment)
     if os.path.isdir(path) is True:
-        logger.warn("{} already exists.".format(path))
+        logger.warn(f"{path} already exists.")
         if defn.overwrite is False:
             # need to generate new archive path name
             extn = defn.extension
@@ -57,7 +56,7 @@ def setup():
                 path = os.path.join(defn.archive_path, template.replace("<I>", str(i)))
                 unique = not os.path.isdir(path)
                 i += 1
-            logger.warn("moved archive to {}".format(path))
+            logger.warn(f"moved archive to {path}")
         else:
             logger.warn("deleted old archive.")
     archive_path = path
