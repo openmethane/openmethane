@@ -9,10 +9,11 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import numpy as np
-from plane import Plane, Polyhedron
+from obs_preprocess.plane import Plane, Polyhedron
 import itertools
 
-class Grid( object ):
+
+class Grid:
     def __init__( self, offset, spacing ):
         assert len( offset ) == len( spacing ), 'dimension mis-match'
         for s in spacing:

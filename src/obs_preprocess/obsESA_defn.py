@@ -9,11 +9,8 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import numpy as np
-import datetime as dt
 from ray_trace import Point, Ray
 from obs_defn import ObsMultiRay
-##NS added:
-import pdb
 
 #physical constants
 grav = 9.807

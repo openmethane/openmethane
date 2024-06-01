@@ -12,7 +12,7 @@ import os
 
 from obs_preprocess.obs_defn import ObsSimple
 from obs_preprocess.model_space import ModelSpace
-from ray_trace import Point
+from obs_preprocess.ray_trace import Point
 import fourdvar.util.file_handle as fh
 import fourdvar.params.input_defn as input_defn
 import pandas as pd

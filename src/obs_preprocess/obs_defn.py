@@ -8,9 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 
-import numpy as np
 from obs_preprocess.ray_trace import Point, Ray
 from copy import deepcopy
+
 
 class ObsGeneral( object ):
     """base class for observations."""

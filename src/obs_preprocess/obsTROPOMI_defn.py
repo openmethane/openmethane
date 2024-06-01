@@ -8,15 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 
-from __future__ import absolute_import
-
 import datetime as dt
 import numpy as np
 
-import context
-
-from obs_defn import ObsMultiRay
-#from ray_trace import Point, Ray
+from obs_preprocess.obs_defn import ObsMultiRay
 from obs_preprocess.ray_trace import Point, Ray
 
 #physical constants

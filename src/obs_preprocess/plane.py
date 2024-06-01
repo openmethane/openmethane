@@ -10,7 +10,9 @@ See the License for the specific language governing permissions and limitations 
 
 import numpy as np
 import itertools
-class Plane( object):
+
+
+class Plane:
     """ planes are defined by a unit normal vector and an anchoring point """
     def __init__( self, normal, anchor, orthogonalityTolerance=1e-6):
         """ initialise directly with defining attributes """
@@ -20,7 +22,6 @@ class Plane( object):
         assert self.anchor.ndim == 1, 'anchor must be one-dimensional'
         assert self.anchor.shape == self.normal.shape, 'anchor and normal must be same dimension'
         self.orthogonalityTolerance = orthogonalityTolerance
-        return None
     @classmethod
     def from_points( cls, pointsList):
         """ create a plane in R^3 from a list of 3 points """
@@ -53,7 +54,6 @@ class Polyhedron( object):
             raise ValueError('polyhedron not convex')
         self.rng = np.random.default_rng() # needed for later montecarlo 
         self.nSamplePoints = nSamplePoints
-        return None
     def isInside( self, point):
         """ check if a point is inside a polyhedron """
         return np.all([face.isUp( point) for face in self.faces])

@@ -16,8 +16,8 @@ import time as timing
 import numpy as np
 import datetime as dt
 
-from obsESA_defn import ObsSRON
-from model_space import ModelSpace
+from obs_preprocess.obsESA_defn import ObsSRON
+from obs_preprocess.model_space import ModelSpace
 from netCDF4 import Dataset
 import fourdvar.util.file_handle as fh
 from fourdvar.util.date_handle import start_date, end_date

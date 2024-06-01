@@ -9,6 +9,7 @@ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import os
 
 from fourdvar.util.date_handle import replace_date
 from fourdvar.params.template_defn import emis
@@ -17,7 +18,14 @@ import numpy as np
 import netCDF4 as nc
 import datetime
 
-openMethanePrior = '../../out-om-domain-info.nc'
+from pathlib import Path
+
+
+if "PRIOR_REPO_PATH" not in os.environ:
+    openMethanePrior = '../../out-om-domain-info.nc'
+else:
+    openMethanePrior = Path(os.environ["PRIOR_REPO_PATH"]) / 'outputs/out-om-domain-info.nc'
+
 kg2g = 1000. # conversion from kg to g
 molarMass = 16. # molar mass of CH4
 #attributes that CMAQ is expecting(1)
@@ -107,4 +115,5 @@ for i, date in enumerate(dates):
 
         output.setncattr('HISTORY',"")
         # copy other attributes accross
-        for k,v in attrDict.items(): output.setncattr( k, v)
+        for k,v in attrDict.items():
+            output.setncattr( k, v)
