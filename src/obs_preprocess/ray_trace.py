@@ -21,7 +21,34 @@ import numpy as np
 from obs_preprocess.plane import Plane, Polyhedron
 
 
+# utility function, returns True if point inside polygon/footprint
+def in_poly(pnt, poly_list, xdim, ydim):
+    """Copyright 2000 softSurfer, 2012 Dan Sunday
+    This code may be freely used and modified for any purpose
+    providing that this copyright notice is included with it.
+    SoftSurfer makes no warranty for this code, and cannot be held
+    liable for any real or imagined damage resulting from its use.
+    Users of this code must verify correctness for their application.
+    """
+
+    def is_left(p0, p1, p2):
+        return (p1[xdim] - p0[xdim]) * (p2[ydim] - p0[ydim]) - (p2[xdim] - p0[xdim]) * (
+            p1[ydim] - p0[ydim]
+        )
+
+    wn = 0
+    for ps, pe in zip(poly_list, poly_list[1:] + [poly_list[0]]):
+        if ps[ydim] <= pnt[ydim]:
+            if pe[ydim] > pnt[ydim] and is_left(ps, pe, pnt) > 0:
+                wn += 1
+        elif pe[ydim] <= pnt[ydim] and is_left(ps, pe, pnt) < 0:
+            wn -= 1
+    return wn != 0
+
+
 class Grid:
+    """Grid class for ray tracing in 3D space."""
+
     def __init__(self, offset, spacing):
         assert len(offset) == len(spacing), "dimension mis-match"
         for s in spacing:
@@ -72,7 +99,7 @@ class Grid:
         point_list = [ray.get_point(par) for par in ray_par_list]
 
         result = {}
-        for prev, point in zip(point_list[:-1], point_list[1:]):
+        for prev, point in itertools.pairwise(point_list):
             mid_point = Point.mid_point(prev, point)
             co_ord = self.get_cell(mid_point)
             # weight = point.dist( prev ) / ray.length
@@ -80,7 +107,9 @@ class Grid:
         return result
 
     def get_beam_intersection_volume(self, beam_corners):
-        """Calculate volume of intersection between a finite beam defined by four corner rays and each cell in grid.
+        """Calculate volume of intersection between a finite beam and each cell in grid.
+
+        The finite beam is defined by the four corner rays
 
         Returns a dictionary of all intersected grid indices and volume
         """
@@ -115,11 +144,12 @@ class Grid:
         beam_vertices = np.array(beam_vertices)
         # now make polyhedron with the four almost vertical faces, don't bother about top and bottom
         beam_faces = [
-            Plane.from_points(beam_vertices[l])
-            for l in [[0, 1, 2], [2, 3, 4], [4, 5, 6], [6, 7, 0]]
+            Plane.from_points(beam_vertices[face])
+            for face in [[0, 1, 2], [2, 3, 4], [4, 5, 6], [6, 7, 0]]
         ]
         beam_poly = Polyhedron(beam_faces)
-        # now loop over every possibe lpoint and calculate the intersection volume, don't need to nest the loops so use itertools
+        # now loop over every possibe lpoint and calculate the intersection volume,
+        # don't need to nest the loops so use itertools
         # we need to add 1 to the ranges to include the last cell
         for i, j, k in itertools.product(
             range(i_min, i_max + 1), range(j_min, j_max + 1), range(k_min, k_max)
@@ -135,7 +165,7 @@ class Grid:
         return result
 
     def get_ray_cell_area(self, ray_list):
-        """Calculate area at each level traversed by a beam defined by four rays"""
+        """Calculate area at each level traversed by a beam defined by four rays."""
         assert self.ndim == 3, "Only works for 3 dimensional (x,y,z) grids."
         xdim, ydim, zdim = 0, 1, 2
         assert all([r.ndim == self.ndim for r in ray_list]), "dimension mis-match"
@@ -158,28 +188,6 @@ class Grid:
             ray_collision.append(point_list)
         assert len(list(zip(*ray_collision))) == self.shape[zdim]
 
-        # utility function, returns True if point inside polygon/footprint
-        def in_poly(pnt, poly_list):
-            """Copyright 2000 softSurfer, 2012 Dan Sunday
-            This code may be freely used and modified for any purpose
-            providing that this copyright notice is included with it.
-            SoftSurfer makes no warranty for this code, and cannot be held
-            liable for any real or imagined damage resulting from its use.
-            Users of this code must verify correctness for their application.
-            """
-            is_left = lambda p0, p1, p2: (
-                (p1[xdim] - p0[xdim]) * (p2[ydim] - p0[ydim])
-                - (p2[xdim] - p0[xdim]) * (p1[ydim] - p0[ydim])
-            )
-            wn = 0
-            for ps, pe in zip(poly_list, poly_list[1:] + [poly_list[0]]):
-                if ps[ydim] <= pnt[ydim]:
-                    if pe[ydim] > pnt[ydim] and is_left(ps, pe, pnt) > 0:
-                        wn += 1
-                elif pe[ydim] <= pnt[ydim] and is_left(ps, pe, pnt) < 0:
-                    wn -= 1
-            return wn != 0
-
         # construct a dict, key=gridcell-coord, value=points of footprint polygon inside gridcell
         for zind, p_list in enumerate(
             zip(*ray_collision)
@@ -201,7 +209,7 @@ class Grid:
                     self.edges[ydim][coord[1]],
                     self.edges[zdim][coord[2]],
                 )
-                if in_poly(cpnt, p_list) is True:
+                if in_poly(cpnt, p_list, xdim, ydim) is True:
                     coord_dict[
                         (
                             coord[0],
@@ -243,8 +251,8 @@ class Grid:
                 assert ray_par_list[0] >= 0, "collision outside ray path"
                 assert ray_par_list[-1] <= 1, "collision outside ray path"
                 coll_pnt_list = [ray.get_point(par) for par in ray_par_list]
-                loc_list = [0] + ray_par_list + [1]
-                loc_list = [0.5 * (i + j) for i, j in zip(loc_list[:-1], loc_list[1:])]
+                loc_list = [0, *ray_par_list, 1]
+                loc_list = [0.5 * (i + j) for i, j in itertools.pairwise(loc_list)]
                 loc_list = [ray.get_point(par) for par in loc_list]
                 loc_list = [self.get_cell(pnt) for pnt in loc_list]
                 loc_list = [
@@ -291,7 +299,7 @@ class Grid:
                     )
                 ccw_list.sort()
                 poly_list = [c[1] for c in ccw_list]
-                poly_list = [pnt_list[0]] + poly_list
+                poly_list = [pnt_list[0], *poly_list]
 
                 # calc area of coord polygon
                 xarr = np.array([p[xdim] for p in poly_list])

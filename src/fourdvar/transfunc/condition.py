@@ -24,7 +24,7 @@ from fourdvar.params.input_defn import inc_icon
 def condition_adjoint(physical_adjoint):
     """application: apply pre-conditioning to PhysicalAdjointData, get vector gradient
     input: PhysicalAdjointData
-    output: UnknownData
+    output: UnknownData.
 
     notes: this function must apply the prior error covariance
     """
@@ -34,7 +34,7 @@ def condition_adjoint(physical_adjoint):
 def condition(physical):
     """application: apply pre-conditioning to PhysicalData, get vector to optimize
     input: PhysicalData
-    output: UnknownData
+    output: UnknownData.
 
     notes: this function must apply the inverse prior error covariance
     """
@@ -44,7 +44,7 @@ def condition(physical):
 def phys_to_unk(physical, is_adjoint):
     """application: apply pre-conditioning to PhysicalData, get vector to optimize
     input: PhysicalData
-    output: UnknownData
+    output: UnknownData.
 
     notes: this function must apply the inverse prior error covariance
     """
@@ -59,9 +59,13 @@ def phys_to_unk(physical, is_adjoint):
 
     # weighting function changes if is_adjoint
     if is_adjoint is True:
-        weight = lambda val, sd: val * sd
+
+        def weight(val, sd):
+            return val * sd
     else:
-        weight = lambda val, sd: val / sd
+
+        def weight(val, sd):
+            return val / sd
 
     arg = np.zeros(total_len)
     i = 0

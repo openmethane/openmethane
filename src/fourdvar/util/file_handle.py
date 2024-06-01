@@ -24,9 +24,9 @@ logger = setup_logging.get_logger(__file__)
 
 
 def ensure_path(path, inc_file=False):
-    """extension: ensures that the input path exists, creating directories as needed
+    """Ensures that the input path exists, creating directories as needed.
     input: string (path/to/file), Boolean (see notes)
-    output: None
+    output: None.
 
     notes: if inc_file is True the last element of path is assumed to be a file
     this file is created if it does not exist and is unaltered otherwise
@@ -48,9 +48,9 @@ def ensure_path(path, inc_file=False):
 
 
 def empty_dir(path):
-    """extension: delete every file and subdirectory in path
+    """Delete every file and subdirectory in path.
     input: string (path to directory to empty)
-    output: None
+    output: None.
 
     notes: if path does not exist, create it.
     """
@@ -66,9 +66,9 @@ def empty_dir(path):
 
 
 def save_list(obj_list, filepath):
-    """extension: save a list of python objects to a zipped pickle file
+    """Save a list of python objects to a zipped pickle file.
     input: list, string (path/to/file.pickle)
-    output: None
+    output: None.
     """
     fpath = os.path.realpath(filepath)
     ensure_path(os.path.dirname(fpath))
@@ -79,9 +79,9 @@ def save_list(obj_list, filepath):
 
 
 def load_list(filepath):
-    """extension: load a list of python objects from a zipped pickle file
+    """Load a list of python objects from a zipped pickle file.
     input: string (path/to/file.pickle)
-    output: list
+    output: list.
     """
     fpath = os.path.realpath(filepath)
     obj_list = []

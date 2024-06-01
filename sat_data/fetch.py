@@ -103,7 +103,7 @@ for item in results:
     try:
         if item["start"] and item["end"]:
             urls.append(item)
-    except:
+    except Exception:
         docs.append(item)
 
 # Print out the documentation links, but do not download them
@@ -136,19 +136,18 @@ for filename in os.listdir(outDirName):
         elif os.path.isdir(file_path):
             shutil.rmtree(file_path)
     except Exception as e:
-        print("Failed to delete %s. Reason: %s" % (file_path, e))
+        print(f"Failed to delete {file_path}. Reason: {e}")
 
 for item in urls:
     URL = item["link"]
-    result = requests.get(URL)
+    result = requests.get(URL, timeout=30)
     try:
         result.raise_for_status()
-        outfn = item["label"]
         outfn = os.path.join(outDirName, item["label"])
         f = open(outfn, "wb")
         f.write(result.content)
         f.close()
         print(outfn)
-    except:
+    except Exception:
         print("Error! Status code is %d for this URL:\n%s" % (result.status.code, URL))
         print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")

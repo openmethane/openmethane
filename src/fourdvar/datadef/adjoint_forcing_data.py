@@ -27,12 +27,10 @@ from fourdvar.util.file_handle import ensure_path
 
 
 class AdjointForcingData(FourDVarData):
-    """application"""
+    """Application."""
 
     def __init__(self):
         """application: create an instance of AdjointForcingData
-        input: None
-        output: None
 
         notes: assumes all files already exist,
         to create files see create_new or load_from_archive.
@@ -44,18 +42,17 @@ class AdjointForcingData(FourDVarData):
             assert exists, "missing file {}".format(record["actual"])
 
     def get_variable(self, file_label, varname):
-        """extension: return an array of a single variable
+        """Return an array of a single variable.
         input: string, string
-        output: numpy.ndarray
+        output: numpy.ndarray.
         """
         err_msg = f"file_label {file_label} not in file_details"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
-    def archive(self, dirname=None):
-        """extension: save copy of files to archive/experiment directory
+    def archive(self, dirname=None) -> None:
+        """Save copy of files to archive/experiment directory.
         input: string or None
-        output: None
 
         notes: this will overwrite any clash of namespace.
         if input is None file will write to experiment directory
@@ -72,9 +69,9 @@ class AdjointForcingData(FourDVarData):
 
     @classmethod
     def get_kwargs_dict(cls):
-        """extension: get a dict that will work as kwarg input
+        """Get a dict that will work as kwarg input.
         input: None
-        output: { file_label : { spcs : np.ndarray(<zeros>) } }
+        output: { file_label : { spcs : np.ndarray(<zeros>) } }.
         """
         file_labels = get_filedict(cls.__name__).keys()
         spcs = ncf.get_attr(template.force, "VAR-LIST").split()
@@ -89,7 +86,7 @@ class AdjointForcingData(FourDVarData):
     def create_new(cls, **kwargs):
         """application: create an instance of AdjointForcingData from template with new data
         input: user-defined
-        output: AdjointForcingData
+        output: AdjointForcingData.
 
         eg: new_forcing =  datadef.AdjointForcingData( filelist )
         """
@@ -115,9 +112,9 @@ class AdjointForcingData(FourDVarData):
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """extension: create an AdjointForcingData from previous archived files.
+        """Create an AdjointForcingData from previous archived files.
         input: string (path/to/file)
-        output: AdjointForcingData
+        output: AdjointForcingData.
 
         notes: this function assumes the filenames match current archive default names
         """
@@ -131,9 +128,7 @@ class AdjointForcingData(FourDVarData):
         return cls()
 
     def cleanup(self):
-        """application: called when forcing is no longer required
-        input: None
-        output: None
+        """Cleanup logging
 
         eg: old_forcing.cleanup()
 

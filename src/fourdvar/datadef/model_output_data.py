@@ -24,10 +24,10 @@ from fourdvar.util.file_handle import ensure_path
 
 
 class ModelOutputData(FourDVarData):
-    """application"""
+    """application."""
 
     # list of attributes that must match between actual and template
-    checklist = [
+    checklist = (
         "STIME",
         "TSTEP",
         "NCOLS",
@@ -48,12 +48,12 @@ class ModelOutputData(FourDVarData):
         "VGTOP",
         "VGLVLS",
         "VAR-LIST",
-    ]
+    )
 
     def __init__(self):
         """application: create an instance of ModelOutputData
         input: user-defined
-        output: None
+        output: None.
 
         eg: new_output =  datadef.ModelOutputData( filelist )
         """
@@ -68,18 +68,18 @@ class ModelOutputData(FourDVarData):
             assert ncf.match_attr(actual, template, self.checklist) is True, msg
 
     def get_variable(self, file_label, varname):
-        """extension: return an array of a single variable
+        """Return an array of a single variable.
         input: string, string
-        output: numpy.ndarray
+        output: numpy.ndarray.
         """
         err_msg = f"file_label {file_label} not in file_details"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
     def archive(self, dirname=None):
-        """extension: save copy of files to archive/experiment directory
+        """Save copy of files to archive/experiment directory.
         input: string or None
-        output: None
+        output: None.
 
         notes: this will overwrite any clash of namespace.
         if input is None file will write to experiment directory
@@ -96,9 +96,9 @@ class ModelOutputData(FourDVarData):
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """extension: create a ModelOutputData from previous archived files
+        """Create a ModelOutputData from previous archived files.
         input: string (path/to/file)
-        output: ModelOutputData
+        output: ModelOutputData.
 
         notes: this function assumes the filenames match archive default names
         """
@@ -115,7 +115,7 @@ class ModelOutputData(FourDVarData):
     def load_from_template(cls):
         """application: return a valid example with values from template.
         input: None
-        output: ModelOutputData
+        output: ModelOutputData.
 
         eg: mock_model_out = datadef.ModelOutputData.example()
 
@@ -131,7 +131,7 @@ class ModelOutputData(FourDVarData):
     def cleanup(self):
         """application: called when model output is no longer required
         input: None
-        output: None
+        output: None.
 
         eg: old_model_out.cleanup()
 

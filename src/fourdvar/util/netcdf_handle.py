@@ -28,9 +28,9 @@ logger = logging.get_logger(__file__)
 
 
 def validate(filepath, dataset):
-    """extension: test that dataset is compatible with a netCDF file.
+    """Test that dataset is compatible with a netCDF file.
     input: string (path/to/file.ncf), dict (see notes)
-    output: Boolean, True == create_from_template will work
+    output: Boolean, True == create_from_template will work.
 
     notes: dataset is a dictionary structured:
       key = name of variable
@@ -49,9 +49,9 @@ def validate(filepath, dataset):
 
 
 def create_from_template(source, dest, var_change={}, date=None, overwrite=True):
-    """extension: create a new copy of a netCDF file, with new variable data
+    """Create a new copy of a netCDF file, with new variable data.
     input: string (path/to/old.ncf), string (path/to/new.ncf), dict, date obj, boolean
-    output: None
+    output: None.
 
     notes: var_change is a dict of variables to change
         key = name of variable to change
@@ -80,9 +80,9 @@ def create_from_template(source, dest, var_change={}, date=None, overwrite=True)
 
 
 def get_variable(filepath, varname, group=None):
-    """extension: get all the values of a single variable
+    """Get all the values of a single variable.
     input: string (path/to/file.ncf), string <OR> list, string (optional)
-    output: numpy.ndarray OR dict
+    output: numpy.ndarray OR dict.
 
     notes: group allows chosing netCDF4 groups, leave as None to use root
     if varname is a string an array is returned, otherwise a dict is.
@@ -100,9 +100,9 @@ def get_variable(filepath, varname, group=None):
 
 
 def get_attr(filepath, attrname, group=None):
-    """extension: get the value of a single attribute
+    """Get the value of a single attribute.
     input: string (path/to/file.ncf), string, string
-    output: attr value (variable type)
+    output: attr value (variable type).
 
     notes: group allows chosing netCDF4 groups, leave as None to use root
     """
@@ -117,9 +117,9 @@ def get_attr(filepath, attrname, group=None):
 
 
 def get_all_attr(filepath):
-    """extension: get a dict of all global attributes
+    """Get a dict of all global attributes.
     input: string (path/to/file.ncf)
-    output: dict { str(attr_name) : attr_val }
+    output: dict { str(attr_name) : attr_val }.
     """
     with ncf.Dataset(filepath, "r") as f:
         attr_dict = {name: f.getncattr(name) for name in f.ncattrs()}
@@ -130,9 +130,9 @@ try_ncks = True
 
 
 def copy_compress(source, dest):
-    """extension: create a compressed copy of a netCDF file
+    """Create a compressed copy of a netCDF file.
     input: string (path/src.ncf), string (path/dst.ncf)
-    output: None
+    output: None.
 
     notes: if dst already exists it is overwritten.
     """
@@ -166,15 +166,17 @@ def copy_compress(source, dest):
 
 
 def set_date(fileobj, start_date):
-    """extension: set the date in TFLAG variable & SDATE attribute
+    """Set the date in TFLAG variable & SDATE attribute.
     input: string (path/file.ncf) OR netCDF file obj, datetime.date
-    output: None
+    output: None.
 
     notes: changes are made to file in place.
     """
 
     def _set_ncfobj_date(ncf_file, sdate):
-        yj = lambda date: np.int32(dt.replace_date("<YYYYDDD>", date))
+        def yj(date):
+            return np.int32(dt.replace_date("<YYYYDDD>", date))
+
         tflag = ncf_file.variables["TFLAG"][:]
         tflag_date = tflag[:, :, 0]
         base_date = tflag_date[0, 0]
@@ -195,9 +197,9 @@ def set_date(fileobj, start_date):
 
 
 def match_attr(src1, src2, attrlist=None):
-    """extension: check that attributes listed are the same for each src
+    """Check that attributes listed are the same for each src.
     input: string <OR> dict, string <OR> dict, list
-    output: bool
+    output: bool.
 
     notes: input sources can be either paths to netcdf files
     or dicts {attr_name : attr_val}.
@@ -218,9 +220,9 @@ def match_attr(src1, src2, attrlist=None):
 
 
 def create(path=None, parent=None, name=None, attr={}, dim={}, var={}, is_root=True):
-    """extension: create a new netCDF group or file
+    """Create a new netCDF group or file.
     input: string, ncf obj, string, dict, dict, dict, bool
-    output: ncf.Dataset obj
+    output: ncf.Dataset obj.
 
     notes: path = file path for ncf object, not required if is_root is False
            parent = ncf obj for parent group, not required if is_root is True

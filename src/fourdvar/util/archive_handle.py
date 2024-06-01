@@ -28,9 +28,9 @@ archive_path = ""
 
 
 def setup():
-    """extension: setup the archive/experiment directory.
+    """Setup the archive/experiment directory.
     input: None
-    output: None
+    output: None.
 
     notes: creates an empty directory for storing data
     """

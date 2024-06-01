@@ -22,7 +22,7 @@ from fourdvar.datadef import ObservationData
 def obs_operator(model_output):
     """application: simulate set of observations from output of the forward model
     input: ModelOutputData
-    output: ObservationData
+    output: ObservationData.
     """
     ObservationData.assert_params()
 
@@ -31,7 +31,6 @@ def obs_operator(model_output):
         conc_file = model_output.file_data["conc." + ymd]["actual"]
         var_dict = ncf.get_variable(conc_file, ObservationData.spcs)
         for i in ilist:
-            denom = 0.0
             for coord, weight in ObservationData.weight_grid[i].items():
                 if str(coord[0]) == ymd:
                     step, lay, row, col, spc = coord[1:]

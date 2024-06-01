@@ -34,7 +34,7 @@ class ObservationData(FourDVarData):
     """application: vector of observations, observed or simulated
     Can be either 'full' or 'lite' file.
     'lite' file has no weight_grid attribute and cannot be used in transforms
-    (for achiving and analysis only)
+    (for achiving and analysis only).
     """
 
     # Parameters
@@ -54,7 +54,7 @@ class ObservationData(FourDVarData):
     def __init__(self, val_list, is_lite=False):
         """application: create an instance of ObservationData
         input: user-defined.
-        output: None
+        output: None.
 
         eg: new_obs =  datadef.ObservationData( [{...}, {...}, ...] )
 
@@ -70,14 +70,14 @@ class ObservationData(FourDVarData):
     def get_vector(self):
         """framework: return the values of ObservationData as a 1D numpy array
         input: None
-        output: np.ndarray
+        output: np.ndarray.
         """
         return np.array(self.value)
 
     def archive(self, name=None, force_lite=False):
-        """extension: save a copy of data to archive/experiment directory
+        """Save a copy of data to archive/experiment directory.
         input: string or None, boolean
-        output: None
+        output: None.
 
         notes: this will overwrite any clash in namespace.
         if input is None file will use default name.
@@ -109,14 +109,14 @@ class ObservationData(FourDVarData):
                 odict["weight_grid"] = self.weight_grid[i]
             obs_list.append(odict)
 
-        archive_list = [domain] + obs_list
+        archive_list = [domain, *obs_list]
         fh.save_list(archive_list, save_path)
 
     @classmethod
     def check_grid(cls, other_grid=template.conc):
-        """extension: check that griddata matches other
+        """Check that griddata matches other.
         input: string(path/to/conc.ncf) <OR> dict
-        output: Boolean
+        output: Boolean.
         """
         attr_list = cls.grid_attr.keys()
         return ncf.match_attr(cls.grid_attr, other_grid, attr_list)
@@ -125,7 +125,7 @@ class ObservationData(FourDVarData):
     def error_weight(cls, res):
         """application: return residual of observations weighted by the inverse error covariance
         input: ObservationData  (residual)
-        output: ObservationData
+        output: ObservationData.
 
         eg: weighted_residual = datadef.ObservationData.weight( residual )
         """
@@ -136,7 +136,7 @@ class ObservationData(FourDVarData):
     def get_residual(cls, observed, simulated):
         """application: return the residual of 2 sets of observations
         input: ObservationData, ObservationData
-        output: ObservationData
+        output: ObservationData.
 
         eg: residual = datadef.ObservationData.get_residual( observed_obs, simulated_obs )
         """
@@ -145,9 +145,9 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def from_file(cls, filename):
-        """extension: create an ObservationData from a file
+        """Create an ObservationData from a file.
         input: user-defined
-        output: ObservationData
+        output: ObservationData.
 
         eg: observed = datadef.ObservationData.from_file( "saved_obs.data" )
         """
@@ -247,7 +247,7 @@ class ObservationData(FourDVarData):
     def example(cls):
         """application: return a valid example with arbitrary values.
         input: None
-        output: ObservationData
+        output: ObservationData.
 
         notes: only used for testing.
         """
@@ -257,9 +257,9 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def assert_params(cls, need_weight=True):
-        """extension: assert that all needed observation parameters are valid
+        """Assert that all needed observation parameters are valid.
         input: boolean (True == must have weight_grid (eg: not a obs-lite file))
-        output: None
+        output: None.
         """
         assert cls.length is not None, "length is not set"
         assert cls.uncertainty is not None, "uncertainty is not set"
@@ -281,7 +281,7 @@ class ObservationData(FourDVarData):
     def clone(cls, src):
         """application: copy an ObservationData.
         input: ObservationData
-        output: ObservationData
+        output: ObservationData.
 
         eg: obs_copy = datadef.ObservationData.clone( current_obs )
 

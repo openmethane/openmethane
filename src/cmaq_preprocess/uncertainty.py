@@ -21,10 +21,10 @@ import fourdvar.util.netcdf_handle as ncf
 
 def convert_unc(unc, val):
     """Convert the uncertainty object provided into a valid dictionary
-    uncertainty object is either a string (filepath), dictionary (of spcs) or a scalar
+    uncertainty object is either a string (filepath), dictionary (of spcs) or a scalar.
     """
     spc_list = val.keys()
-    arr_shape = list(val.values())[0].shape
+    arr_shape = next(iter(val.values())).shape
 
     if str(unc) == unc:
         try:
@@ -37,7 +37,7 @@ def convert_unc(unc, val):
             msg = f"unc file has data with wrong shape, needs {arr_shape!s}"
             assert arr.shape == arr_shape, msg
         unc_dict = {s: unc_var[s] for s in spc_list}
-    elif type(unc) == dict:
+    elif isinstance(unc, dict):
         msg = "uncertainty dictionary is missing needed spcs."
         assert set(spc_list).issubset(unc.keys()), msg
         unc_dict = {}

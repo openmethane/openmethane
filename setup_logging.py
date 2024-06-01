@@ -66,7 +66,7 @@ base_logger.debug("Logging setup finished.")
 def get_logger(filepath):
     """framework: return a modules logger
     input: string (always submodules __file__ keyword)
-    output: logging.Logger object (for writing)
+    output: logging.Logger object (for writing).
     """
     # suffix = '.py' or '.pyc'
     modpath = os.path.realpath(filepath)

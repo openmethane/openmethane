@@ -30,17 +30,17 @@ tag_map = {
 
 
 def add_days(date, ndays):
-    """extension: return the the date ndays before/after date
+    """Return the the date ndays before/after date.
     input: datetime.date, int (-ve for bwd in time)
-    output: datetime.date
+    output: datetime.date.
     """
     return date + dt.timedelta(days=ndays)
 
 
 def get_datelist():
-    """extension: get the list of dates which the model runs over
-    input: None
-    output: list of datetime.date objects
+    """Get the list of dates which the model runs over.
+
+    output: list of datetime.date objects.
 
     notes: require start_date & end_date to already be defined
     """
@@ -54,9 +54,10 @@ def get_datelist():
 
 
 def replace_date(src, date):
-    """extension: replace date tags with date data
+    """Replace date tags with date data.
+
     input: string, date representation
-    output: string
+    output: string.
 
     notes: date can be a datetime.date, datetime.datetime or a [year,month,day]
     """
@@ -84,9 +85,9 @@ def replace_date(src, date):
 
 
 def move_tag(src_str, ndays):
-    """extension: add a day modifier to a date tag
+    """Add a day modifier to a date tag.
     input: string, integer
-    output: string
+    output: string.
     """
     modifier = f"{int(ndays):+}"
     for tag in tag_map.keys():
@@ -97,9 +98,9 @@ def move_tag(src_str, ndays):
 
 
 def reset_tag(src_str):
-    """extension: undo move_tag day modifier
+    """Undo move_tag day modifier.
     input: string
-    output: string
+    output: string.
     """
     for tag in tag_map.keys():
         mtag = tag[:-1] + "#"

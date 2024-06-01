@@ -29,9 +29,9 @@ unit_convert_bcon = None
 
 
 def get_unit_convert_emis():
-    """extension: get unit conversion dictionary for sensitivity to each days emissions
+    """Get unit conversion dictionary for sensitivity to each days emissions.
     input: None
-    output: dict ('units.<YYYYMMDD>': np.ndarray( shape_of( template.sense_emis ) )
+    output: dict ('units.<YYYYMMDD>': np.ndarray( shape_of( template.sense_emis ) ).
 
     notes: SensitivityData.emis units = CF/(ppm/s)
            PhysicalAdjointData.emis units = CF/(mol/(s*m^2))
@@ -79,7 +79,7 @@ def get_unit_convert_emis():
 
 def get_unit_convert_bcon():
     """SensitivityData.emis units = CF/(ppm/s)
-    PhysicalAdjointData.bcon units = CF/(ppm/s)
+    PhysicalAdjointData.bcon units = CF/(ppm/s).
     """
     unit_dict = {dt.replace_date(unit_key, date): 1.0 for date in dt.get_datelist()}
     return unit_dict
@@ -88,7 +88,7 @@ def get_unit_convert_bcon():
 def map_sense(sensitivity):
     """application: map adjoint sensitivities to physical grid of unknowns.
     input: SensitivityData
-    output: PhysicalAdjointData
+    output: PhysicalAdjointData.
     """
     global unit_key
     global unit_convert_emis
@@ -145,9 +145,7 @@ def map_sense(sensitivity):
             icon_dict[spc] = (sense_data * icon_data).sum()
 
     b_daysize = float(24 * 60 * 60) / PhysicalAdjointData.tsec_bcon
-    nlay = PhysicalAdjointData.nlays_emis
     blay = PhysicalAdjointData.bcon_up_lay
-    model_step = mod_shape[0]
     nrow = mod_shape[2]
     ncol = mod_shape[3]
     emis_pattern = "emis.<YYYYMMDD>"
@@ -177,60 +175,18 @@ def map_sense(sensitivity):
 
             sense_arr_bcon = (sense_data_dict[spc][:] * bcon_unit)[:-1, :, :, :]
             tot_lay = sense_arr_bcon.shape[1]
-            # model_arr_bcon = sense_arr_bcon.reshape((model_step-1,-1,tot_lay,nrow,ncol)).sum( axis=1 )
-            # sougol
             model_arr_bcon = sense_arr_bcon.reshape((24, -1, tot_lay, nrow, ncol)).sum(axis=1)
             bcon_arr = model_arr_bcon.reshape((b_end - b_start, -1, tot_lay, nrow, ncol)).sum(
                 axis=1
             )
-            bcon_SL = bcon_arr[:, :blay, 0, 1:].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_SH = bcon_arr[:, blay:, 0, 1:].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_EL = bcon_arr[:, :blay, 1:, ncol - 1].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_EH = bcon_arr[:, blay:, 1:, ncol - 1].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_NL = bcon_arr[:, :blay, nrow - 1, :-1].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_NH = bcon_arr[:, blay:, nrow - 1, :-1].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_WL = bcon_arr[:, :blay, :-1, 0].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
-            bcon_WH = bcon_arr[:, blay:, :-1, 0].sum(
-                axis=(
-                    1,
-                    2,
-                )
-            )
+            bcon_SL = bcon_arr[:, :blay, 0, 1:].sum(axis=(1, 2))
+            bcon_SH = bcon_arr[:, blay:, 0, 1:].sum(axis=(1, 2))
+            bcon_EL = bcon_arr[:, :blay, 1:, ncol - 1].sum(axis=(1, 2))
+            bcon_EH = bcon_arr[:, blay:, 1:, ncol - 1].sum(axis=(1, 2))
+            bcon_NL = bcon_arr[:, :blay, nrow - 1, :-1].sum(axis=(1, 2))
+            bcon_NH = bcon_arr[:, blay:, nrow - 1, :-1].sum(axis=(1, 2))
+            bcon_WL = bcon_arr[:, :blay, :-1, 0].sum(axis=(1, 2))
+            bcon_WH = bcon_arr[:, blay:, :-1, 0].sum(axis=(1, 2))
             bcon_merge = np.stack(
                 [bcon_SL, bcon_SH, bcon_EL, bcon_EH, bcon_NL, bcon_NH, bcon_WL, bcon_WH], axis=1
             )

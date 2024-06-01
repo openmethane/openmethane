@@ -25,12 +25,12 @@ from fourdvar.util.file_handle import ensure_path
 
 
 class ModelInputData(FourDVarData):
-    """application"""
+    """application."""
 
     def __init__(self):
         """application: create an instance of ModelInputData
         input: user-defined
-        output: None
+        output: None.
 
         notes: assumes all files already exist,
         to create files see create_new or load_from_archive
@@ -43,18 +43,18 @@ class ModelInputData(FourDVarData):
             assert exists, "missing file {}".format(record["actual"])
 
     def get_variable(self, file_label, varname):
-        """extension: return an array of a single variable
+        """Return an array of a single variable.
         input: string, string
-        output: numpy.ndarray
+        output: numpy.ndarray.
         """
         err_msg = f"file_label {file_label} not in file_data"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
     def archive(self, dirname=None):
-        """extension: save copy of files to archive/experiment directory
+        """Save copy of files to archive/experiment directory.
         input: string or None
-        output: None
+        output: None.
 
         notes: this will overwrite any clash of namespace.
         if input is None file will write to experiment directory
@@ -73,7 +73,7 @@ class ModelInputData(FourDVarData):
     def create_new(cls, **kwargs):
         """application: create an instance of ModelInputData from template with modified values.
         input: user_defined
-        output: ModelInputData
+        output: ModelInputData.
         """
         # each input arg is a dictionary, matching to a record in file_details[class_name]
         # arg name matches the record key
@@ -97,9 +97,9 @@ class ModelInputData(FourDVarData):
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """extension: create a ModelInputData from previous archived files
+        """Create a ModelInputData from previous archived files.
         input: string (path/to/file)
-        output: ModelInputData
+        output: ModelInputData.
 
         notes: this function assumes the filenames match current archive default names
         """
@@ -114,9 +114,9 @@ class ModelInputData(FourDVarData):
 
     @classmethod
     def load_from_template(cls):
-        """extension: create a ModelInputData from the template files
+        """Create a ModelInputData from the template files.
         input: None
-        output: ModelInputData
+        output: ModelInputData.
         """
         filedict = get_filedict(cls.__name__)
         for record in filedict.values():
@@ -128,7 +128,7 @@ class ModelInputData(FourDVarData):
     def cleanup(self):
         """application: called when model input is no longer required
         input: None
-        output: None
+        output: None.
 
         eg: old_model_in.cleanup()
 

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import itertools
 
 import numpy as np
 
@@ -30,7 +31,7 @@ unit_convert_bcon = None
 
 def get_unit_convert_bcon():
     """PhysicalData.bcon units = ppm/day
-    ModelInputData.emis units = mol/s
+    ModelInputData.emis units = mol/s.
     """
     global unit_key
 
@@ -48,7 +49,7 @@ def get_unit_convert_bcon():
     ycell = ncf.get_attr(efile, "YCELL")
     area = float(xcell * ycell)
     lay_sigma = list(ncf.get_attr(efile, "VGLVLS"))
-    lay_thick = [l0 - l1 for l0, l1 in zip(lay_sigma[:-1], lay_sigma[1:])]
+    lay_thick = [l0 - l1 for l0, l1 in itertools.pairwise(lay_sigma)]
     lay_thick = np.array(lay_thick).reshape((1, len(lay_thick), 1, 1))
 
     for date in dt.get_datelist():
@@ -63,7 +64,7 @@ def get_unit_convert_bcon():
 def prepare_model(physical_data):
     """application: change resolution/formatting of physical data for input in forward model
     input: PhysicalData
-    output: ModelInputData
+    output: ModelInputData.
     """
     global unit_key
     global unit_convert_bcon
@@ -89,7 +90,6 @@ def prepare_model(physical_data):
     assert (b_daysize < 1) or (
         m_daysize % b_daysize == 0
     ), "physical & model input emis TSTEP incompatible."
-    nlay = physical_data.nlays_emis
     nrow, ncol = physical_data.nrows, physical_data.ncols
 
     emis_pattern = "emis.<YYYYMMDD>"

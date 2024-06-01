@@ -23,7 +23,7 @@ from fourdvar.params.input_defn import inc_icon
 def uncondition(unknown):
     """application: undo pre-conditioning of PhysicalData, add back any lost metadata
     input: UnknownData
-    output: PhysicalData
+    output: PhysicalData.
 
     notes: this function must apply the prior error covariance
     """

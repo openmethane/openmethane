@@ -30,7 +30,8 @@ firsttime = True
 
 
 def get_filedict(clsname):
-    """extension: return dictionary of files needed for data class
+    """Return dictionary of files needed for data class.
+
     input: string, name of dataclass
     output: dict, filedict has 3 keys: actual, template and archive
             actual: path to the file used by cmaq.
@@ -49,9 +50,9 @@ def get_filedict(clsname):
 
 
 def build_filedict():
-    """extension: constructed the dictionary of files for the required dates
+    """Constructed the dictionary of files for the required dates.
     input: None
-    output: None
+    output: None.
 
     notes: should only be called once, after date_handle has defined dates.
     """

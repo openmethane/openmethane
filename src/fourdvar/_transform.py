@@ -34,7 +34,7 @@ transmap = {
 def transform(input_instance, output_class):
     """framework: mapping of every transform to its input & output class
     input: instance of transform input, class of transform output
-    output: result of mapped transformation (instance of output_class)
+    output: result of mapped transformation (instance of output_class).
 
     eg:
     from datadef._transform import transform

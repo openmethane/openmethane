@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-print("load libraries")
-# Plot netCDF data on a Map
-# First we need to import netCDF-Pyton, Numpy, Matplotlib for plotting, and Basemap for the map
 import numpy as np
 import seaborn as sns
 from netCDF4 import Dataset as NetCDFFile
+
+print("load libraries")
+# Plot netCDF data on a Map
+# First we need to import netCDF-Pyton, Numpy, Matplotlib for plotting, and Basemap for the map
 
 sns.set()
 print("read data")
@@ -46,8 +47,7 @@ population = fac * (population1 + population2)
 for imonth, month in enumerate(months):
     ##define the merged monthly emission files
     nc = NetCDFFile(
-        "/scratch/q90/sa6589/test_Sougol/shared_Sougol/v7.0_FT2021_CH4_2019_TOTALS.0.1x0.1.nc".format(
-            )
+        "/scratch/q90/sa6589/test_Sougol/shared_Sougol/v7.0_FT2021_CH4_2019_TOTALS.0.1x0.1.nc".format()
     )
 
     # reading lat & lon from emission data
@@ -62,8 +62,10 @@ for imonth, month in enumerate(months):
     emission = nc.variables["emi_ch4"][ilat0:ilat1, ilon0:ilon1]
     # -----------------Downscaling----------------
     print("start to rescale emission data based on population data")
-    ## Creat a factor for extrapolating the EDGAR emissions
-    ###NOTE: for Ch4 the proxies are equal to 1.0, as both emissions and populations are for the same year (2018)
+
+    # Create a factor for extrapolating the EDGAR emissions
+    # NOTE: for Ch4 the proxies are equal to 1.0,
+    # as both emissions and populations are for the same year (2018)
     shape0 = population1.shape
     proxy_matrix = np.ones(shape0, dtype=float)
 
@@ -150,7 +152,7 @@ for imonth, month in enumerate(months):
     CH4_Aus[:, :] = emi_matrix
     print("CH4_Aus shape after adding data = ", CH4_Aus.shape)
     emission_Aus.close()
-    # --------------------Start making NetCDF File of Down-scaled Data (Emission based on population)------------------------
+    # Start making NetCDF File of Down-scaled Data (Emission based on population)
 
     print("Start to making netCDF4 file of Down-sacaled data based on population")
     from netCDF4 import Dataset

@@ -58,7 +58,7 @@ class ObsTROPOMI(ObsMultiRay):
         - co2_profile_apriori : array[ float ] (length=levels, units=ppm)
         - xco2_averaging_kernel : array[ float ] (length=levels)
         - pressure_levels : array[ float ] (length=levels, units=hPa)
-        - pressure_weight : array[ float ] (length=levels)
+        - pressure_weight : array[ float ] (length=levels).
         """
         newobs = cls(obstype="TROPOMI_sounding")
         # newobs.out_dict['value'] = kwargs['co_column']
@@ -78,7 +78,7 @@ class ObsTROPOMI(ObsMultiRay):
         return newobs
 
     def _convert_ppm(self, value, pressure_interval):
-        """Convert molec. cm-2 to ppm"""
+        """Convert molec. cm-2 to ppm."""
         ppm_value = (
             ppm_scale * (value * cm_scale / avo) / (pressure_interval * kg_scale / (grav * mwair))
         )
@@ -88,7 +88,7 @@ class ObsTROPOMI(ObsMultiRay):
         ObsMultiRay.model_process(self, model_space)
         # now created self.out_dict[ 'weight_grid' ]
         if "weight_grid" in self.out_dict.keys():
-            day, time, _, _, _, spc = list(self.out_dict["weight_grid"].keys())[0]
+            day, time, _, _, _, spc = next(iter(self.out_dict["weight_grid"].keys()))
             x, y = model_space.get_xy(
                 self.src_data["latitude_center"], self.src_data["longitude_center"]
             )
@@ -101,7 +101,6 @@ class ObsTROPOMI(ObsMultiRay):
                 col,
                 spc,
             )
-
 
     def add_visibility(self, proportion, model_space):
         # obs pressure is in Pa,  model units Pa (unlike oco)
@@ -118,7 +117,7 @@ class ObsTROPOMI(ObsMultiRay):
         obs_apriori = np.array(self.src_data["co_profile_apriori"])
         # newobs.out_dict['uncertainty'] = in ppm UPDATE HERE
         # get sample model coordinate at surface
-        coord = [key for key in proportion.keys() if key[2] == 0][0]
+        coord = next(key for key in proportion.keys() if key[2] == 0)
         model_pweight = model_space.get_pressure_weight(coord)
         ref_profile_molec = self.src_data["co_profile_apriori"]
         # ref_profile_mol = ref_profile_molec / avo

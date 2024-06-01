@@ -22,3 +22,14 @@ from fourdvar.datadef.physical_adjoint_data import PhysicalAdjointData
 from fourdvar.datadef.physical_data import PhysicalData
 from fourdvar.datadef.sensitivity_data import SensitivityData
 from fourdvar.datadef.unknown_data import UnknownData
+
+__all__ = [
+    "AdjointForcingData",
+    "ModelInputData",
+    "ModelOutputData",
+    "ObservationData",
+    "PhysicalAdjointData",
+    "PhysicalData",
+    "SensitivityData",
+    "UnknownData",
+]

@@ -38,7 +38,7 @@ allow_neg_values = True
 def setup():
     """application: setup any requirements for minimizer to run (eg: check resources, etc.)
     input: None
-    output: None
+    output: None.
     """
     archive.setup()
     if input_defn.inc_icon is False:
@@ -52,7 +52,7 @@ def setup():
 def cleanup():
     """application: cleanup any unwanted output from minimizer (eg: delete checkpoints, etc.)
     input: None
-    output: None
+    output: None.
     """
     cmaq.wipeout_fwd()
 
@@ -60,7 +60,7 @@ def cleanup():
 def get_background():
     """application: get the background / prior estimate for the minimizer
     input: None
-    output: PhysicalData (prior estimate)
+    output: PhysicalData (prior estimate).
     """
     global background
 
@@ -72,7 +72,7 @@ def get_background():
 def get_observed():
     """application: get the observed observations for the minimizer
     input: None
-    output: ObservationData
+    output: ObservationData.
     """
     global observed
 
@@ -83,9 +83,9 @@ def get_observed():
 
 
 def callback_func(current_vector):
-    """extension: called once for every iteration of minimizer
+    """Called once for every iteration of minimizer.
     input: np.array
-    output: None
+    output: None.
     """
     global iter_num
     iter_num += 1
@@ -106,7 +106,7 @@ def callback_func(current_vector):
 def minim(cost_func, grad_func, init_guess):
     """application: the minimizer function
     input: cost function, gradient function, prior estimate / background
-    output: list (1st element is numpy.ndarray of solution, the rest are user-defined)
+    output: list (1st element is numpy.ndarray of solution, the rest are user-defined).
     """
     # turn on skipping of unneeded fwd calls
     data_access.allow_fwd_skip = True
@@ -124,14 +124,14 @@ def minim(cost_func, grad_func, init_guess):
         cost_func, init_guess, bounds=bounds, fprime=grad_func, callback=callback_func, maxiter=20
     )
     # check answer warnflag, etc for success
-    answer = list(answer) + [start_dict]
+    answer = [*list(answer), start_dict]
     return answer
 
 
 def post_process(out_physical, metadata):
     """application: how to handle/save results of minimizer
     input: PhysicalData (solution), list (user-defined output of minim)
-    output: None
+    output: None.
     """
     out_physical.archive("final_solution.ncf")
     with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:

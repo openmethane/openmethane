@@ -28,17 +28,19 @@ ppm_scale = 1000000.0
 
 
 class ObsSRON(ObsMultiRay):
-    """Single observation of CH4 from TROPOMI instrument, processed by ESA
+    """Single observation of CH4 from TROPOMI instrument, processed by ESA.
+
     This observation class only works for 1 species.
     """
 
-    required = ["value", "uncertainty", "weight_grid", "alpha_scale"]
+    required = ("value", "uncertainty", "weight_grid", "alpha_scale")
     # remove offset_term from default dict for obs.
     default = {"lite_coord": None}
 
     @classmethod
     def create(cls, **kwargs):
         """Kwargs comes from variables in S5P file.
+
         min. requirements for kwargs:
         - time : datetime-obj (datetime)
         - latitude_center : float (degrees)
@@ -54,7 +56,7 @@ class ObsSRON(ObsMultiRay):
         - co_column_precision : float (molec. cm-2)
         - co_column_apriori : float (molec. cm-2)
         - co_profile_apriori : array[ float ] (length=levels, units=molec. cm-2)
-        - qa_value : float (unitless)
+        - qa_value : float (unitless).
         """
         newobs = cls(obstype="ESA_co_obs")
 
@@ -71,7 +73,7 @@ class ObsSRON(ObsMultiRay):
         return newobs
 
     def _convert_ppm(self, value, pressure_interval):
-        """Convert mole m-2 to ppm"""
+        """Convert mole m-2 to ppm."""
         ppm_value = value / ((pressure_interval * kg_scale) / (grav * mwair * ppm_scale))
         return ppm_value
 
@@ -79,7 +81,7 @@ class ObsSRON(ObsMultiRay):
         ObsMultiRay.model_process(self, model_space)
         # set lite_coord to surface cell containing lat/lon center
         if "weight_grid" in list(self.out_dict.keys()):
-            day, time, _, _, _, spc = list(self.out_dict["weight_grid"].keys())[0]
+            day, time, _, _, _, spc = next(iter(self.out_dict["weight_grid"].keys()))
             x, y = model_space.get_xy(
                 self.src_data["latitude_center"], self.src_data["longitude_center"]
             )
@@ -98,11 +100,10 @@ class ObsSRON(ObsMultiRay):
         obs_pressure_bounds = np.array(self.src_data["pressure_levels"])
         obs_pressure_center = 0.5 * (obs_pressure_bounds[1:] + obs_pressure_bounds[:-1])
         obs_pressure_interval = obs_pressure_bounds[1:] - obs_pressure_bounds[:-1]
-        ESA_unc_molec = self.src_data["ch4_column_precision"]
-        ESA_unc_ppm = 0.009  ##I set this value to test how the magnitude of unc can effect the cost-functions/gradients
+        self.src_data["ch4_column_precision"]
 
         # get sample model coordinate at surface
-        coord = [c for c in list(proportion.keys()) if c[2] == 0][0]
+        coord = next(c for c in list(proportion.keys()) if c[2] == 0)
 
         # need to save the ref. profile concentration & obs. uncertainty.
         model_pweight = model_space.get_pressure_weight(coord)

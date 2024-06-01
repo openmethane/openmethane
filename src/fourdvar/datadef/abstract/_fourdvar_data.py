@@ -15,14 +15,13 @@
 #
 
 
-
 class FourDVarData:
-    """framework: the abstarct global class for all FourDVar data structures"""
+    """framework: the abstarct global class for all FourDVar data structures."""
 
     def cleanup(self):
         """framework: generic cleanup function
         input: None
-        output: None
+        output: None.
 
         notes: currently only a stub, allows no-op cleanup.
         """

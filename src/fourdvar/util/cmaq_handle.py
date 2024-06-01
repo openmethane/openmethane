@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import datetime
 import glob
 import os
 import subprocess
@@ -30,9 +30,10 @@ logger = logging.get_logger(__file__)
 
 
 def parse_env_dict(env_dict, date):
-    """extension: convert date patterns into values
+    """Convert date patterns into values.
+
     input: dictionary (envvar_name: pattern_value), dt.date
-    output: dictionary (envvar_name: actual_value)
+    output: dictionary (envvar_name: actual_value).
 
     notes: all names and values must be strings
     """
@@ -40,16 +41,16 @@ def parse_env_dict(env_dict, date):
     for name, value in env_dict.items():
         try:
             parsed[name] = dt.replace_date(value, date)
-        except Exception as e:
-            logger.error(f"failed parsing {name}: {value}")
-            raise e
+        except Exception:
+            logger.exception(f"failed parsing {name}: {value}")
+            raise
     return parsed
 
 
-def load_env(env_dict):
-    """extension: load dictionary into environment variables
+def load_env(env_dict) -> None:
+    """Load dictionary into environment variables.
+
     input: dictionary (envvar_name: value)
-    output: None
 
     notes: all names and values must be strings
     """
@@ -64,9 +65,10 @@ def load_env(env_dict):
 
 
 def clean_env(env_dict):
-    """extension: remove dictionary keys from environment variables
+    """Remove dictionary keys from environment variables.
+
     input: dictionary (envvar_name: value)
-    output: None
+    output: None.
     """
     for name in env_dict.keys():
         try:
@@ -76,24 +78,22 @@ def clean_env(env_dict):
 
 
 def setup_run():
-    """extension: setup all the constant environment variables
-    input: None
-    output: None
-    """
-    env_dict = {}
-    env_dict["NPCOL_NPROW"] = f"{cfg.npcol} {cfg.nprow}"
-    env_dict["IOAPI_LOG_WRITE"] = "T" if cfg.ioapi_logging else "F"
-    env_dict["CTM_MAXSYNC"] = str(cfg.maxsync)
-    env_dict["CTM_MINSYNC"] = str(cfg.minsync)
-    env_dict["CTM_PT3DEMIS"] = "Y" if cfg.pt3demis else "N"
-    env_dict["KZMIN"] = "Y" if cfg.kzmin else "N"
-    env_dict["FL_ERR_STOP"] = "T" if cfg.fl_err_stop else "F"
-    env_dict["PROMPTFLAG"] = "T" if cfg.promptflag else "F"
-    env_dict["EMISDATE"] = cfg.emisdate
-    env_dict["CTM_STDATE"] = cfg.stdate
-    env_dict["CTM_STTIME"] = "".join([f"{i:02d}" for i in cfg.sttime])
-    env_dict["CTM_RUNLEN"] = "".join([f"{i:02d}" for i in cfg.runlen])
-    env_dict["CTM_TSTEP"] = "".join([f"{i:02d}" for i in cfg.tstep])
+    """Setup all the constant environment variables.  """
+    env_dict = {
+        "NPCOL_NPROW": f"{cfg.npcol} {cfg.nprow}",
+        "IOAPI_LOG_WRITE": "T" if cfg.ioapi_logging else "F",
+        "CTM_MAXSYNC": str(cfg.maxsync),
+        "CTM_MINSYNC": str(cfg.minsync),
+        "CTM_PT3DEMIS": "Y" if cfg.pt3demis else "N",
+        "KZMIN": "Y" if cfg.kzmin else "N",
+        "FL_ERR_STOP": "T" if cfg.fl_err_stop else "F",
+        "PROMPTFLAG": "T" if cfg.promptflag else "F",
+        "EMISDATE": cfg.emisdate,
+        "CTM_STDATE": cfg.stdate,
+        "CTM_STTIME": "".join([f"{i:02d}" for i in cfg.sttime]),
+        "CTM_RUNLEN": "".join([f"{i:02d}" for i in cfg.runlen]),
+        "CTM_TSTEP": "".join([f"{i:02d}" for i in cfg.tstep]),
+    }
 
     if str(cfg.emis_lays).strip().lower() == "template":
         fname = dt.replace_date(template.emis, dt.start_date)
@@ -173,10 +173,10 @@ def setup_run():
     return env_dict
 
 
-def run_fwd_single(date, is_first):
-    """extension: run cmaq fwd for a single day
+def run_fwd_single(date: datetime.date, is_first: bool) -> None:
+    """Run cmaq fwd for a single day.
+
     input: dt.date, Boolean (is this day the first of the model)
-    output: None
     """
     env_dict = setup_run()
 
@@ -241,9 +241,10 @@ def run_fwd_single(date, is_first):
 
 
 def run_bwd_single(date, is_first):
-    """extension: run cmaq bwd for a single day
+    """Run cmaq bwd for a single day.
+
     input: dt.date, Boolean (is this the first time called)
-    output: None
+    output: None.
     """
     env_dict = setup_run()
 
@@ -319,9 +320,9 @@ def run_bwd_single(date, is_first):
 
 
 def clear_local_logs():
-    """extension: delete logfiles CMAQ puts in cwd
+    """Delete logfiles CMAQ puts in cwd.
     input: None
-    output: None
+    output: None.
     """
     # delete every file that matches a pattern in cfg.cwd_logs
     for file_pattern in cfg.cwd_logs:
@@ -333,9 +334,9 @@ def clear_local_logs():
 
 
 def run_fwd():
-    """extension: run cmaq fwd from current config
+    """Run cmaq fwd from current config.
     input: None
-    output: None
+    output: None.
     """
     isfirst = True
     for cur_date in dt.get_datelist():
@@ -345,9 +346,9 @@ def run_fwd():
 
 
 def run_bwd():
-    """extension: run cmaq bwd from current config
+    """Run cmaq bwd from current config.
     input: None
-    output: None
+    output: None.
     """
     isfirst = True
     for cur_date in dt.get_datelist()[::-1]:
@@ -357,9 +358,9 @@ def run_bwd():
 
 
 def wipeout_bwd():
-    """extension: delete all files created by a bwd run of cmaq
+    """Delete all files created by a bwd run of cmaq.
     input: None
-    output: None
+    output: None.
     """
     clear_local_logs()
     # delete every file in wipeout_bwd_list
@@ -373,9 +374,9 @@ def wipeout_bwd():
 
 
 def wipeout_fwd():
-    """extension: delete all files created by a run of cmaq
+    """Delete all files created by a run of cmaq.
     input: None
-    output: None
+    output: None.
     """
     clear_local_logs()
     # cleanup fwd bwd as well

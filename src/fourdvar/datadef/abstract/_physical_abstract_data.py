@@ -30,7 +30,7 @@ logger = setup_logging.get_logger(__file__)
 
 
 class PhysicalAbstractData(FourDVarData):
-    """Parent for PhysicalData and PhysicalAdjointData"""
+    """Parent for PhysicalData and PhysicalAdjointData."""
 
     # Parameters
     tday_emis = None  # No. seconds per timestep
@@ -59,7 +59,7 @@ class PhysicalAbstractData(FourDVarData):
     def __init__(self, icon_dict, emis_dict, bcon_dict):
         """application: create an instance of PhysicalData
         input: user-defined
-        output: None
+        output: None.
 
         eg: new_phys =  datadef.PhysicalData( filelist )
         """
@@ -102,17 +102,18 @@ class PhysicalAbstractData(FourDVarData):
 
             self.bcon[spcs_name] = bcon_data
 
-
     def archive(self, path=None):
-        """extension: save a copy of data to archive/experiment directory
+        """Save a copy of data to archive/experiment directory.
         input: string or None
-        output: None
+        output: None.
 
         notes: this will overwrite any clash in namespace.
         if input is None file will write default archive_name.
         output is a netCDF file compatible with from_file method.
         """
-        unc = lambda spc: spc + "_UNC"
+
+        def unc(spc):
+            return spc + "_UNC"
 
         save_path = get_archive_path()
         if path is None:
@@ -187,14 +188,16 @@ class PhysicalAbstractData(FourDVarData):
 
     @classmethod
     def from_file(cls, filename):
-        """extension: create a PhysicalData instance from a file
+        """Create a PhysicalData instance from a file.
         input: user-defined
-        output: PhysicalData
+        output: PhysicalData.
 
         eg: prior_phys = datadef.PhysicalData.from_file( "saved_prior.data" )
         """
         daysec = 24 * 60 * 60
-        unc = lambda spc: spc + "_UNC"
+
+        def unc(spc):
+            return spc + "_UNC"
 
         # get all data/parameters from file
         sdate = str(ncf.get_attr(filename, "SDATE"))
@@ -307,9 +310,9 @@ class PhysicalAbstractData(FourDVarData):
 
     @classmethod
     def assert_params(cls):
-        """extension: assert that all needed physical parameters are valid.
+        """Assert that all needed physical parameters are valid.
         input: None
-        output: None
+        output: None.
 
         notes: method raises assertion error if None valued parameter is found.
         """
@@ -336,7 +339,7 @@ class PhysicalAbstractData(FourDVarData):
     def cleanup(self):
         """application: called when physical data instance is no longer required
         input: None
-        output: None
+        output: None.
 
         eg: old_phys.cleanup()
 

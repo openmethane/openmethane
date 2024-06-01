@@ -17,17 +17,12 @@ metcro3d = "/scratch/q90/pjr563/openmethane-beta/run-py4dvar/mcip/2019-05-01/d04
 
 
 def arealatlon(lat1, lon1, lat2, lon2):
-    """Returns the x & y coordinates in meters using a sinusoidal projection"""
-    x1 = 0
-    y1 = 0
-
+    """Returns the x & y coordinates in meters using a sinusoidal projection."""
     earth_radius = 6371009  # in meters
     lat10 = pi * lat1 / 180
     lat20 = pi * lat2 / 180
     area = (pi / 180) * (earth_radius**2.0) * abs(sin(lat20) - sin(lat10)) * abs(lon2 - lon1)
     return area
-
-
 
 
 deflon = {"d01": 0.65, "d02": 0.22, "d03": 0.071, "d04": 0.0229}
@@ -95,9 +90,7 @@ for idate, date in enumerate(dates):
     yyyymmdd_dashed = date.strftime("%Y-%m-%d")
     for idomain, domain in enumerate(domains):
         ## pointer to where we can find the LATD/LOND grid description
-        nc2 = Dataset(
-            f"/scratch/q90/sa6589/test_Sougol/shared_Sougol/GRIDFILE/GRDFILE_{domain}.nc"
-        )
+        nc2 = Dataset(f"/scratch/q90/sa6589/test_Sougol/shared_Sougol/GRIDFILE/GRDFILE_{domain}.nc")
         down_lon = nc["longitude"][...][...]
         down_lat = nc["latitude"][...][...]
         down_ch4 = nc["CH4_pop"][...][...]

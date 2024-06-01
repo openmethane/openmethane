@@ -43,8 +43,10 @@ model_input = transform(phys_true, d.ModelInputData)
 model_output = transform(model_input, d.ModelOutputData)
 obs_true = transform(model_output, d.ObservationData)
 
+o_val = obs_true.get_vector()
+
 unk = transform(phys_true, d.UnknownData)
-unk_pert = d.UnknownData(np.random.normal(unk.get_vector(), 1.0))
+unk_pert = d.UnknownData(np.random.normal(unk.get_vector(), 1.0))  # noqa: NPY002
 phys_pert = transform(unk_pert, d.PhysicalData)
 model_pert = transform(phys_pert, d.ModelInputData)
 

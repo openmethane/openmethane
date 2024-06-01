@@ -30,7 +30,7 @@ logger = setup_logging.get_logger(__file__)
 def cost_func(vector):
     """framework: cost function used by minimizer
     input: numpy.ndarray
-    output: scalar
+    output: scalar.
     """
     start_time = time.time()
     # set up prior/background and observed data
@@ -88,7 +88,7 @@ def cost_func(vector):
 def gradient_func(vector):
     """framework: gradient function used by minimizer
     input: numpy.ndarray
-    output: numpy.ndarray
+    output: numpy.ndarray.
     """
     start_time = time.time()
     # set up prior/background and observed data
@@ -144,16 +144,14 @@ def gradient_func(vector):
     un_gradient.cleanup()
 
     end_time = time.time()
-    logger.info(
-        f"gradient norm = {np.linalg.norm(gradient)} in {int(end_time - start_time)}s"
-    )
+    logger.info(f"gradient norm = {np.linalg.norm(gradient)} in {int(end_time - start_time)}s")
     return np.array(gradient)
 
 
 def get_answer():
     """framework: run the minimizer & display results from user_driver module
     input: None
-    output: None (user_driver.display should print/save output as desired)
+    output: None (user_driver.display should print/save output as desired).
     """
     # set up background unknowns
     bg_physical = user_driver.get_background()

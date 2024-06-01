@@ -25,8 +25,12 @@ from fourdvar.params import cmaq_config, template_defn
 from fourdvar.util import date_handle
 from obs_preprocess.ray_trace import Grid
 
+
 # convert HHMMSS into sec
-tosec = lambda t: 3600 * (int(t) // 10000) + 60 * ((int(t) // 100) % 100) + (int(t) % 100)
+def tosec(t):
+    return 3600 * (int(t) // 10000) + 60 * (int(t) // 100 % 100) + int(t) % 100
+
+
 # No.seconds in a day
 daysec = tosec(240000)
 # radius of the Earth, in meters
@@ -34,7 +38,7 @@ earth_rad = 6370000
 
 
 class ModelSpace:
-    gridmeta_keys = [
+    gridmeta_keys = (
         "STIME",
         "TSTEP",
         "GDTYP",
@@ -55,7 +59,7 @@ class ModelSpace:
         "VGLVLS",
         "NVARS",
         "VAR-LIST",
-    ]
+    )
 
     @classmethod
     def create_from_fourdvar(cls):
@@ -71,7 +75,7 @@ class ModelSpace:
         """METCRO3D = path to any single METCRO3D file
         METCRO2D = path to any single METCRO2D file
         CONC = path to any concentration file output by CMAQ
-        date_range = [ start_date, end_date ] (as datetime objects)
+        date_range = [ start_date, end_date ] (as datetime objects).
         """
         # read netCDF files
         self.gridmeta = {}
@@ -135,7 +139,7 @@ class ModelSpace:
         )
 
     def valid_coord(self, coord):
-        """Return True if a coord is within the grid"""
+        """Return True if a coord is within the grid."""
         date, step, lay, row, col, spc = coord
         if not (self.sdate <= date <= self.edate):
             return False
@@ -253,7 +257,7 @@ class ModelSpace:
         """Get the (x,y,z) point where a ray leaves the top of the model
         start = (x,y,z) start point
         zenith = zenith angle (radians)
-        azimuth = azimuth angle (angle east of north) (radians)
+        azimuth = azimuth angle (angle east of north) (radians).
 
         notes: function does not care about the horizontal domain of the model
         """

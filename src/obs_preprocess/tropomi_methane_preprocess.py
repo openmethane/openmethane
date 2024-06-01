@@ -41,8 +41,8 @@ logger = setup_logging.get_logger(__file__)
 source_type = "pattern"
 
 # source = [ os.path.join( store_path, 'obs_src', 's5p_l2_co_0007_04270.nc' ) ]
-source = "/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____20220721T063513_20220721T081643_24713_03_020400_20230201T030600.SUB.nc4"
-source = "/scratch/q90/pjr563/tmp/202207/S5P_OFFL_L2__CH4____20220730T070626_20220730T084755_24841_03_020400_20220801T012853.SUB.nc4"
+source = "/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____20220721T063513_20220721T081643_24713_03_020400_20230201T030600.SUB.nc4" # noqa
+source = "/scratch/q90/pjr563/tmp/202207/S5P_OFFL_L2__CH4____20220730T070626_20220730T084755_24841_03_020400_20220801T012853.SUB.nc4"# noqa
 source = "/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____202207*.nc4"
 output_file = input_defn.obs_file
 
@@ -109,7 +109,7 @@ for fname in filelist:
             errorString = f.getncattr("errors")
             print("error ", fname, errorString)
             continue  # no further processing on this file, context manager should close f
-        except:
+        except Exception:
             pass  # all ok, just continue
         if f.processing_status != "Nominal":
             print(f"file {fname} processing_status = {f.processing_status}, skipping")

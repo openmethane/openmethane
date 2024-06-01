@@ -94,7 +94,7 @@ for fname in filelist:
 if len(obslist) > 0:
     domain = model_grid.get_domain()
     domain["is_lite"] = False
-    datalist = [domain] + obslist
+    datalist = [domain, *obslist]
     fh.save_list(datalist, output_file)
     print(f"recorded observations to {output_file}")
 else:

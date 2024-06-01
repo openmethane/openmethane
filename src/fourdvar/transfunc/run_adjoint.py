@@ -22,7 +22,7 @@ from fourdvar.datadef import AdjointForcingData, SensitivityData
 def run_adjoint(adjoint_forcing):
     """application: run the adjoint model, construct SensitivityData from results
     input: AdjointForcingData
-    output: SensitivityData
+    output: SensitivityData.
     """
     assert isinstance(adjoint_forcing, AdjointForcingData)
     # should ensure that checkpoints exist first.

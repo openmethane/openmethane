@@ -24,7 +24,7 @@ from fourdvar.util.file_handle import ensure_path
 
 
 class SensitivityData(FourDVarData):
-    """application"""
+    """application."""
 
     # list of attributes that must match between actual and template
     checklist = [
@@ -53,7 +53,7 @@ class SensitivityData(FourDVarData):
     def __init__(self):
         """application: create an instance of SensitivityData
         input: user-defined
-        output: None
+        output: None.
 
         eg: new_sense =  datadef.SensitivityData( filelist )
         """
@@ -68,18 +68,18 @@ class SensitivityData(FourDVarData):
             assert ncf.match_attr(actual, template, self.checklist) is True, msg
 
     def get_variable(self, file_label, varname):
-        """extension: return an array of a single variable
+        """Return an array of a single variable.
         input: string, string
-        output: numpy.ndarray
+        output: numpy.ndarray.
         """
         err_msg = f"file_label {file_label} not in file_details"
         assert file_label in self.file_data.keys(), err_msg
         return ncf.get_variable(self.file_data[file_label]["actual"], varname)
 
     def archive(self, dirname=None):
-        """extension: save copy of files to archive/experiment directory
+        """Save copy of files to archive/experiment directory.
         input: string or None
-        output: None
+        output: None.
 
         notes: this will overwrite any clash of namespace.
         if input is None file will write to experiment directory
@@ -96,9 +96,9 @@ class SensitivityData(FourDVarData):
 
     @classmethod
     def load_from_archive(cls, dirname):
-        """extension: create a SensitivityData from previous archived files.
+        """Create a SensitivityData from previous archived files.
         input: string (path/to/file)
-        output: SensitivityData
+        output: SensitivityData.
         """
         pathname = os.path.realpath(dirname)
         assert os.path.isdir(pathname), "dirname must be an existing directory"
@@ -113,7 +113,7 @@ class SensitivityData(FourDVarData):
     def load_from_template(cls):
         """application: return a valid example with template values.
         input: None
-        output: SensitivityData
+        output: SensitivityData.
 
         notes: only used for testing.
         """
@@ -127,7 +127,7 @@ class SensitivityData(FourDVarData):
     def cleanup(self):
         """application: called when sensitivity is no longer required
         input: None
-        output: None
+        output: None.
 
         eg: sensitivity.cleanup()
 

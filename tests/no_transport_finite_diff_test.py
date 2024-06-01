@@ -135,7 +135,7 @@ def bwd_no_transport(adjoint_forcing):
     """mimic CMAQ_bwd with no transport.
     assumes ALL files have a 1-hour timestep"""
     # get nlays for force, sense & sense_emis
-    f_lay = ncf.get_variable(template.force, spcs_list[0]).shape[1]
+    ncf.get_variable(template.force, spcs_list[0]).shape[1]
     s_lay = ncf.get_variable(template.sense_conc, spcs_list[0]).shape[1]
     e_lay = ncf.get_variable(template.sense_emis, spcs_list[0]).shape[1]
 
@@ -180,7 +180,7 @@ def partial_adjoint(vector):
     unknown = d.UnknownData(vector)
     physical = transform(unknown, d.PhysicalData)
     model_input = transform(physical, d.ModelInputData)
-    model_output = fwd_no_transport(model_input)
+    fwd_no_transport(model_input)
     adjoint_forcing = make_forcing()
     sensitivity = bwd_no_transport(adjoint_forcing)
     phys_adjoint = transform(sensitivity, d.PhysicalAdjointData)

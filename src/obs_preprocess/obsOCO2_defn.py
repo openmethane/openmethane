@@ -48,7 +48,7 @@ class ObsOCO2(ObsMultiRay):
         - co2_profile_apriori : array[ float ] (length=levels, units=ppm)
         - xco2_averaging_kernel : array[ float ] (length=levels)
         - pressure_levels : array[ float ] (length=levels, units=hPa)
-        - pressure_weight : array[ float ] (length=levels)
+        - pressure_weight : array[ float ] (length=levels).
         """
         newobs = cls(obstype="OCO2_sounding")
         newobs.out_dict["value"] = kwargs["xco2"]
@@ -76,7 +76,7 @@ class ObsOCO2(ObsMultiRay):
         obs_apriori = np.array(self.src_data["co2_profile_apriori"])
 
         # get sample model coordinate at surface
-        coord = [c for c in proportion.keys() if c[2] == 0][0]
+        coord = next(c for c in proportion.keys() if c[2] == 0)
 
         model_pweight = model_space.get_pressure_weight(coord)
         model_kernel = model_space.pressure_interp(obs_pressure, obs_kernel, coord)
@@ -87,8 +87,8 @@ class ObsOCO2(ObsMultiRay):
         self.out_dict["offset_term"] = self.src_data["xco2_apriori"] - column_xco2.sum()
 
         weight_grid = {}
-        for l, weight in enumerate(model_vis):
-            layer_slice = {c: v for c, v in proportion.items() if c[2] == l}
+        for index, weight in enumerate(model_vis):
+            layer_slice = {c: v for c, v in proportion.items() if c[2] == index}
             layer_sum = sum(layer_slice.values())
             weight_slice = {c: weight * v / layer_sum for c, v in layer_slice.items()}
             weight_grid.update(weight_slice)
