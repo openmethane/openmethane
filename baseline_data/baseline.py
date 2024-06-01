@@ -14,9 +14,9 @@ meta = landuseData.meta
 
 ## Import a map of land use type numbers to emissions sectors
 landuseSectorMap = {}
-with open(SECTOR_MAP_PATH, 'r', newline='') as f:
+with open(SECTOR_MAP_PATH, "r", newline="") as f:
     reader = csv.reader(f)
-    next(reader) # toss headers
+    next(reader)  # toss headers
 
     for value, sector in reader:
         landuseSectorMap[int(value)] = sector
@@ -24,12 +24,42 @@ with open(SECTOR_MAP_PATH, 'r', newline='') as f:
 ## Import a map of emissions per sector, store it to hash table
 methaneInventoryBySector = {}
 seenHeaders = False
-with open(SECTORAL_EMISSIONS_MAP_PATH, 'r', newline='') as f:
+with open(SECTORAL_EMISSIONS_MAP_PATH, "r", newline="") as f:
     reader = csv.reader(f)
 
-    for year, ag, mining, manufacturing, energy, construction, commercial, transport, residential in reader:
+    for (
+        year,
+        ag,
+        mining,
+        manufacturing,
+        energy,
+        construction,
+        commercial,
+        transport,
+        residential,
+    ) in reader:
         if not seenHeaders:
-            yearLabel, agLabel, miningLabel, manufacturingLabel, energyLabel, constructionLabel, commercialLabel, transportLabel, residentialLabel = [year, ag, mining, manufacturing, energy, construction, commercial, transport, residential]
+            (
+                yearLabel,
+                agLabel,
+                miningLabel,
+                manufacturingLabel,
+                energyLabel,
+                constructionLabel,
+                commercialLabel,
+                transportLabel,
+                residentialLabel,
+            ) = [
+                year,
+                ag,
+                mining,
+                manufacturing,
+                energy,
+                construction,
+                commercial,
+                transport,
+                residential,
+            ]
             seenHeaders = True
         if year == "2020":
             methaneInventoryBySector[agLabel] = float(ag) * 1000000
@@ -54,7 +84,7 @@ usageCounts = dict(zip(unique, counts))
 ## Sum the land-use counts into sector counts
 for usageType, count in usageCounts.items():
     sector = landuseSectorMap[int(usageType)]
-    if (sector):
+    if sector:
         sectorCounts[sector] += count
 
 ## Calculate out a per grid-square value for each sector
@@ -70,5 +100,5 @@ for landUseType, _ in usageCounts.items():
     dataBand[dataBand == landUseType] = emission
 
 ## Write the data band to a new output image
-with rasterio.open(OUTPUT_PATH, 'w', **meta, compress = 'lzw') as dst:
-    dst.write(dataBand, indexes = 1)
+with rasterio.open(OUTPUT_PATH, "w", **meta, compress="lzw") as dst:
+    dst.write(dataBand, indexes=1)

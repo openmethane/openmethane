@@ -24,42 +24,42 @@ import fourdvar.util.archive_handle as archive
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn
 
-archive_defn.experiment = 'tmp_grad_finite_diff'
-archive_defn.desc_name = ''
+archive_defn.experiment = "tmp_grad_finite_diff"
+archive_defn.desc_name = ""
 
 archive_path = archive.get_archive_path()
-print('saving results in:\n{}'.format(archive_path))
+print("saving results in:\n{}".format(archive_path))
 
 
-print('get prior in PhysicalData format')
+print("get prior in PhysicalData format")
 st = time.time()
 prior_phys = user.get_background()
-print('completed in {}s'.format( int(time.time() - st) ))
-prior_phys.archive( 'prior.ncf' )
-print('archived.')
-print('get observations in ObservationData format')
+print("completed in {}s".format(int(time.time() - st)))
+prior_phys.archive("prior.ncf")
+print("archived.")
+print("get observations in ObservationData format")
 st = time.time()
 observed = user.get_observed()
-print('completed in {}s'.format( int(time.time() - st) ))
-observed.archive( 'observed.pickle' )
-print('archived.')
+print("completed in {}s".format(int(time.time() - st)))
+observed.archive("observed.pickle")
+print("archived.")
 
-print('convert prior into UnknownData format')
+print("convert prior into UnknownData format")
 st = time.time()
-prior_unknown = transform( prior_phys, d.UnknownData )
-print('completed in {}s'.format( int(time.time() - st) ))
+prior_unknown = transform(prior_phys, d.UnknownData)
+print("completed in {}s".format(int(time.time() - st)))
 
-print('get unknowns in vector form.')
+print("get unknowns in vector form.")
 st = time.time()
 prior_vector = prior_unknown.get_vector()
-print('completed in {}s'.format( int(time.time() - st) ))
+print("completed in {}s".format(int(time.time() - st)))
 
-initCost = main.cost_func( prior_vector)
-initGrad = main.gradient_func( prior_vector)
+initCost = main.cost_func(prior_vector)
+initGrad = main.gradient_func(prior_vector)
 
 epsilon = 1e-4
-dx =  epsilon*np.random.normal( 0.0, 1.0, prior_vector.shape )
-pertCost = main.cost_func( prior_vector + dx)
-print(('finite difference', pertCost -initCost))
-print(('grad calc', np.dot(dx, initGrad)))
-print('FINISHED!')
+dx = epsilon * np.random.normal(0.0, 1.0, prior_vector.shape)
+pertCost = main.cost_func(prior_vector + dx)
+print(("finite difference", pertCost - initCost))
+print(("grad calc", np.dot(dx, initGrad)))
+print("FINISHED!")

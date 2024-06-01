@@ -17,11 +17,16 @@ from obs_preprocess.plane import Plane, Polyhedron
 import numpy as np
 import itertools
 
-polyCorners = [[0.,0.,-3.],[1.,1.,3.]]
-polyVertices = np.array(list(itertools.product(*zip(polyCorners[0],polyCorners[1]))))
-faces = [ Plane.from_points( polyVertices[l]) for l in [[0,2,1], [4,0,5], [6,4,7], [2,6,3]]]
-poly=Polyhedron( faces, nSamplePoints=200)
-c1=[[.2,.2,.2],[.4,.4,.4]]
-print('checking isInside:',poly.isInside([.5,.5,.5]),poly.isInside([.5,1.5,.5]),poly.isInside([.5,.5,3.5]))
-print(poly.intersectionPrismVolume([[.1,.1,.1],[.5,.5,.5]]))
-print(poly.intersectionPrismVolume([[-.1,-.1,-.1],[.5,.5,.5]]))
+polyCorners = [[0.0, 0.0, -3.0], [1.0, 1.0, 3.0]]
+polyVertices = np.array(list(itertools.product(*zip(polyCorners[0], polyCorners[1]))))
+faces = [Plane.from_points(polyVertices[l]) for l in [[0, 2, 1], [4, 0, 5], [6, 4, 7], [2, 6, 3]]]
+poly = Polyhedron(faces, nSamplePoints=200)
+c1 = [[0.2, 0.2, 0.2], [0.4, 0.4, 0.4]]
+print(
+    "checking isInside:",
+    poly.isInside([0.5, 0.5, 0.5]),
+    poly.isInside([0.5, 1.5, 0.5]),
+    poly.isInside([0.5, 0.5, 3.5]),
+)
+print(poly.intersectionPrismVolume([[0.1, 0.1, 0.1], [0.5, 0.5, 0.5]]))
+print(poly.intersectionPrismVolume([[-0.1, -0.1, -0.1], [0.5, 0.5, 0.5]]))

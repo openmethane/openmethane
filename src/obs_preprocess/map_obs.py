@@ -18,14 +18,14 @@ import numpy as np
 from fourdvar.params.input_defn import obs_file
 from fourdvar.util import file_handle as fh
 
-obsList = fh.load_list( obs_file )
+obsList = fh.load_list(obs_file)
 domain = obsList.pop(0)
-obsCount = np.zeros((domain['NROWS'], domain['NCOLS']))
-obsMean = np.zeros_like( obsCount)
-for ob in  obsList:
-    obsCount[ ob['lite_coord'][3:5]] +=1
-    obsMean[ ob['lite_coord'][3:5]] += ob['value']
-hasObs = ( obsCount > 0.5) # at least one observation
-obsMean[ hasObs] /=  obsCount[ hasObs] # avoiding 0/0 error
-obsCount.dump('obsCount.pic')
-obsMean.dump('obsMean.pic')
+obsCount = np.zeros((domain["NROWS"], domain["NCOLS"]))
+obsMean = np.zeros_like(obsCount)
+for ob in obsList:
+    obsCount[ob["lite_coord"][3:5]] += 1
+    obsMean[ob["lite_coord"][3:5]] += ob["value"]
+hasObs = obsCount > 0.5  # at least one observation
+obsMean[hasObs] /= obsCount[hasObs]  # avoiding 0/0 error
+obsCount.dump("obsCount.pic")
+obsMean.dump("obsMean.pic")

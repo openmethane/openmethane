@@ -8,22 +8,21 @@ import shutil
 from time import sleep
 from datetime import datetime
 
-configFile = open('config.json')
+configFile = open("config.json")
 config = json.load(configFile)
 
-http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
 API_URL = "https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
 
 
 def get_http_data(request):
-    hdrs = {'Content-Type': 'application/json',
-            'Accept': 'application/json'}
+    hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
     data = json.dumps(request)
-    r = http.request('POST', API_URL, body=data, headers=hdrs)
+    r = http.request("POST", API_URL, body=data, headers=hdrs)
     response = json.loads(r.data)
     # Check for errors
-    if response['type'] == 'jsonwsp/fault':
-        print('API Error: faulty request')
+    if response["type"] == "jsonwsp/fault":
+        print("API Error: faulty request")
     return response
 
 
@@ -37,51 +36,43 @@ initData = {
         "agent": "SUBSET_LEVEL2",
         "presentation": "CROP",
         "role": "subset",
-        "data": [
-            {
-                "datasetId": "S5P_L2__CH4____HiR_2"
-            }
-        ]
+        "data": [{"datasetId": "S5P_L2__CH4____HiR_2"}],
     },
     "type": "jsonwsp/request",
-    "version": "1.0"
+    "version": "1.0",
 }
 
 response = get_http_data(initData)
-myJobId = response['result']['jobId']
+myJobId = response["result"]["jobId"]
 
 # Construct JSON WSP request for API method: GetStatus
 status_request = {
-    'methodname': 'GetStatus',
-    'version': '1.0',
-    'type': 'jsonwsp/request',
-    'args': {'jobId': myJobId}
+    "methodname": "GetStatus",
+    "version": "1.0",
+    "type": "jsonwsp/request",
+    "args": {"jobId": myJobId},
 }
 
-while response['result']['Status'] in ['Accepted', 'Running']:
+while response["result"]["Status"] in ["Accepted", "Running"]:
     sleep(5)
     response = get_http_data(status_request)
-    status = response['result']['Status']
-    percent = response['result']['PercentCompleted']
-    print('Job status: %s (%d%c complete)' % (status, percent, '%'))
+    status = response["result"]["Status"]
+    percent = response["result"]["PercentCompleted"]
+    print("Job status: %s (%d%c complete)" % (status, percent, "%"))
 
-if response['result']['Status'] == 'Succeeded':
-    print('Job Finished:  %s' % response['result']['message'])
+if response["result"]["Status"] == "Succeeded":
+    print("Job Finished:  %s" % response["result"]["message"])
 else:
-    print('Job Failed: %s' % response['fault']['code'])
+    print("Job Failed: %s" % response["fault"]["code"])
     sys.exit(1)
 
 # Construct JSON WSP request for API method: GetResult
 batchsize = 20
 results_request = {
-    'methodname': 'GetResult',
-    'version': '1.0',
-    'type': 'jsonwsp/request',
-    'args': {
-        'jobId': myJobId,
-        'count': batchsize,
-        'startIndex': 0
-    }
+    "methodname": "GetResult",
+    "version": "1.0",
+    "type": "jsonwsp/request",
+    "args": {"jobId": myJobId, "count": batchsize, "startIndex": 0},
 }
 
 # Retrieve the results in JSON in multiple batches
@@ -90,45 +81,45 @@ results_request = {
 results = []
 count = 0
 response = get_http_data(results_request)
-count = count + response['result']['itemsPerPage']
-results.extend(response['result']['items'])
+count = count + response["result"]["itemsPerPage"]
+results.extend(response["result"]["items"])
 
 # Increment the startIndex and keep asking for more results until we have them all
-total = response['result']['totalResults']
+total = response["result"]["totalResults"]
 while count < total:
-    results_request['args']['startIndex'] += batchsize
+    results_request["args"]["startIndex"] += batchsize
     response = get_http_data(results_request)
-    count = count + response['result']['itemsPerPage']
-    results.extend(response['result']['items'])
+    count = count + response["result"]["itemsPerPage"]
+    results.extend(response["result"]["items"])
 
 # Check on the bookkeeping
-print('Retrieved %d out of %d expected items' % (len(results), total))
+print("Retrieved %d out of %d expected items" % (len(results), total))
 
 # Sort the results into documents and URLs
 docs = []
 urls = []
 for item in results:
     try:
-        if item['start'] and item['end']:
+        if item["start"] and item["end"]:
             urls.append(item)
     except:
         docs.append(item)
 
 # Print out the documentation links, but do not download them
-print('\nDocumentation:')
+print("\nDocumentation:")
 for item in docs:
-    print(item['label']+': '+item['link'])
+    print(item["label"] + ": " + item["link"])
 
 # Use the requests library to submit the HTTP_Services URLs and write out the results.
-print('\nHTTP_services output:')
+print("\nHTTP_services output:")
 
 # make directory to store outputs if it doesn't already exist
 if not os.path.exists(config["data"]):
     os.mkdir(config["data"])
 
-start = datetime.fromisoformat(config['start']).strftime("%Y%m%d-%H-%M-%S")
-end = datetime.fromisoformat(config['end']).strftime("%Y%m%d-%H-%M-%S")
-boxString = "_".join(str(x) for x in config['box'])
+start = datetime.fromisoformat(config["start"]).strftime("%Y%m%d-%H-%M-%S")
+end = datetime.fromisoformat(config["end"]).strftime("%Y%m%d-%H-%M-%S")
+boxString = "_".join(str(x) for x in config["box"])
 outDirName = f'{config["data"]}/{start}_{end}_{boxString}'
 isExist = os.path.exists(outDirName)
 
@@ -144,20 +135,19 @@ for filename in os.listdir(outDirName):
         elif os.path.isdir(file_path):
             shutil.rmtree(file_path)
     except Exception as e:
-        print('Failed to delete %s. Reason: %s' % (file_path, e))
+        print("Failed to delete %s. Reason: %s" % (file_path, e))
 
 for item in urls:
-    URL = item['link']
+    URL = item["link"]
     result = requests.get(URL)
     try:
         result.raise_for_status()
-        outfn = item['label']
-        outfn = os.path.join(outDirName, item['label'])
-        f = open(outfn, 'wb')
+        outfn = item["label"]
+        outfn = os.path.join(outDirName, item["label"])
+        f = open(outfn, "wb")
         f.write(result.content)
         f.close()
         print(outfn)
     except:
-        print('Error! Status code is %d for this URL:\n%s' %
-              (result.status.code, URL))
-        print('Help for downloading data is at https://disc.gsfc.nasa.gov/data-access')
+        print("Error! Status code is %d for this URL:\n%s" % (result.status.code, URL))
+        print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")

@@ -19,29 +19,30 @@ import numpy as np
 from fourdvar.datadef import ModelOutputData, ObservationData
 import fourdvar.util.netcdf_handle as ncf
 
-def obs_operator( model_output ):
+
+def obs_operator(model_output):
     """
     application: simulate set of observations from output of the forward model
     input: ModelOutputData
     output: ObservationData
     """
-    
+
     ObservationData.assert_params()
-    
+
     val_list = [0] * ObservationData.length
     for ymd, ilist in ObservationData.ind_by_date.items():
-        conc_file = model_output.file_data['conc.'+ymd]['actual']
-        var_dict = ncf.get_variable( conc_file, ObservationData.spcs )
+        conc_file = model_output.file_data["conc." + ymd]["actual"]
+        var_dict = ncf.get_variable(conc_file, ObservationData.spcs)
         for i in ilist:
-            denom = 0. 
+            denom = 0.0
             for coord, weight in ObservationData.weight_grid[i].items():
-                if str( coord[0] ) == ymd:
-                    step,lay,row,col,spc = coord[1:]
-                    conc = var_dict[spc][step,lay,row,col]
-               #     val_list[i] += (weight * conc * ObservationData.ref_profile[i][lay]) #dot product
+                if str(coord[0]) == ymd:
+                    step, lay, row, col, spc = coord[1:]
+                    conc = var_dict[spc][step, lay, row, col]
+                    #     val_list[i] += (weight * conc * ObservationData.ref_profile[i][lay]) #dot product
                     val_list[i] += weight * conc
-               #     denom += weight*(ObservationData.ref_profile[i][lay])**2
-            #val_list[i] /= denom
-   # val_list = [ v/ObservationData.alpha_scale[i] for i,v in enumerate(val_list) ]
-    
-    return ObservationData( val_list )
+            #     denom += weight*(ObservationData.ref_profile[i][lay])**2
+            # val_list[i] /= denom
+    # val_list = [ v/ObservationData.alpha_scale[i] for i,v in enumerate(val_list) ]
+
+    return ObservationData(val_list)
