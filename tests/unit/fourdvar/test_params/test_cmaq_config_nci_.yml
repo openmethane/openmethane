@@ -21,10 +21,10 @@ conc_out_lays: template
 conc_sense_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/LGRID.bwd_COonly.<YYYYMMDD>.nc'
 conc_spcs: CH4
 cpl_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/CPL_CHK.<YYYYMMDD>.nc'
-curdir: /Users/jared/code/cr/openmethane/openmethane
+curdir: /path/to/curdir
 cwd_logs:
-- /Users/jared/code/cr/openmethane/openmethane/CTM_LOG_*
-- /Users/jared/code/cr/openmethane/openmethane/N_SPC_EMIS.dat
+- /path/to/curdir/CTM_LOG_*
+- /path/to/curdir/N_SPC_EMIS.dat
 depv_trac: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METCRO2D_2'
 drydep_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/DRYDEP.<YYYYMMDD>.nc'
 emis_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/EMIS_CHK.<YYYYMMDD>.nc'
