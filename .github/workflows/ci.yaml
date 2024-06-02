@@ -64,4 +64,5 @@ jobs:
           poetry build --no-interaction
       - name: Check build
         run: |
-          tar -tvf dist/openmethane_prior-*.tar.gz --wildcards '*openmethane_prior/py.typed'
+          # Not checking for py.typed file
+          tar -tvf dist/openmethane-*.tar.gz --wildcards '*fourdvar' --wildcards '*cmaq_preprocess' --wildcards '*obs_preprocess'
