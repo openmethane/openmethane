@@ -152,15 +152,15 @@ emis_file = os.path.join(emis_path, "emis.<YYYY-MM-DD>.nc")  # Shak
 force_file = os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc")
 
 
-MCIP_DOMAIN = os.environ["MCIP_DOMAIN"]
+_MCIP_DOMAIN = os.environ.get("MCIP_DOMAIN", "2")
 
 # required met data, use unknown #?????
-grid_dot_2d = os.path.join(grid_path, f"GRIDDOT2D_{MCIP_DOMAIN}")
-grid_cro_2d = os.path.join(grid_path, f"GRIDCRO2D_{MCIP_DOMAIN}")
-met_cro_2d = os.path.join(mcip_path, f"METCRO2D_{MCIP_DOMAIN}")
-met_cro_3d = os.path.join(mcip_path, f"METCRO3D_{MCIP_DOMAIN}")
-met_dot_3d = os.path.join(mcip_path, f"METDOT3D_{MCIP_DOMAIN}")
-met_bdy_3d = os.path.join(mcip_path, f"METBDY3D_{MCIP_DOMAIN}")
+grid_dot_2d = os.path.join(grid_path, f"GRIDDOT2D_{_MCIP_DOMAIN}")
+grid_cro_2d = os.path.join(grid_path, f"GRIDCRO2D_{_MCIP_DOMAIN}")
+met_cro_2d = os.path.join(mcip_path, f"METCRO2D_{_MCIP_DOMAIN}")
+met_cro_3d = os.path.join(mcip_path, f"METCRO3D_{_MCIP_DOMAIN}")
+met_dot_3d = os.path.join(mcip_path, f"METDOT3D_{_MCIP_DOMAIN}")
+met_bdy_3d = os.path.join(mcip_path, f"METBDY3D_{_MCIP_DOMAIN}")
 layerfile = met_cro_3d
 depv_trac = met_cro_2d
 xj_data = os.path.join(jproc_path, "JTABLE_<YYYYDDD>")

@@ -1,0 +1,18 @@
+archive_path: /home/test/scratch/openmethane-beta/run-py4dvar/archive_Pert
+conc_file: conc.<YYYYMMDD>.nc
+desc_name: description.txt
+description: 'This is a test of the fourdvar system.
+
+  The description here should contain details of the experiment
+
+  and is written to the description text file.'
+emis_file: emis.<YYYYMMDD>.nc
+experiment: 202207_test
+extension: <E>_vsn<I>
+force_file: force.<YYYYMMDD>.nc
+icon_file: icon.nc
+iter_model_output: true
+iter_obs_lite: true
+overwrite: false
+sens_conc_file: sens_conc.<YYYYMMDD>.nc
+sens_emis_file: sens_emis.<YYYYMMDD>.nc
