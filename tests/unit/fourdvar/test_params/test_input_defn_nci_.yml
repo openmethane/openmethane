@@ -1,0 +1,3 @@
+inc_icon: false
+obs_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/test_obs.pic.gz'
+prior_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/prior.nc'

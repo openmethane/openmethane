@@ -1,4 +1,4 @@
-archive_path: /home/test/scratch/openmethane-beta/run-py4dvar/archive_Pert
+archive_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/archive_Pert'
 conc_file: conc.<YYYYMMDD>.nc
 desc_name: description.txt
 description: 'This is a test of the fourdvar system.

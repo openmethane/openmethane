@@ -6,7 +6,7 @@ setups = pytest.mark.parametrize("setup", ("nci",))
 
 @pytest.fixture()
 def static_environment(monkeypatch):
-    monkeypatch.setenv("HOME", "/home/test")
+    monkeypatch.setenv("HOME", "{HOME}")
 
     reload(root_path_defn)
     reload(input_defn)
