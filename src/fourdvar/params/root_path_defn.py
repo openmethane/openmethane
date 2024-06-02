@@ -14,15 +14,11 @@
 # limitations under the License.
 #
 
-from pathlib import Path
 import os
 
 
-ROOT_DIR = Path(__file__).resolve().parents[3]
-
-
 #full path to the top level of the repository
-root_path = str(ROOT_DIR)  #os.environ['HOME']+'/openmethane-beta/py4dvar'
+root_path = os.environ['HOME']+'/openmethane-beta/py4dvar'
 
 #full path to the branch-specific data
-store_path = os.environ["STORE_PATH"]
+store_path = os.environ['HOME']+'/scratch/openmethane-beta/run-py4dvar'
