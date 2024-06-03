@@ -15,12 +15,12 @@
 #
 
 
-import setup_logging
+import logging
 
 import fourdvar.util.cmaq_handle as cmaq
 from fourdvar.datadef import ModelInputData, ModelOutputData
 
-logger = setup_logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def run_model(model_input):

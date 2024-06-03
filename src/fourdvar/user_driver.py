@@ -16,8 +16,8 @@
 
 import os
 import pickle
+import logging
 
-import setup_logging
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import fourdvar.datadef as d
@@ -26,7 +26,7 @@ import fourdvar.util.cmaq_handle as cmaq
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn, data_access, input_defn
 
-logger = setup_logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 observed = None
 background = None

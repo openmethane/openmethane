@@ -15,10 +15,9 @@
 #
 import datetime
 import glob
+import logging
 import os
 import subprocess
-
-import setup_logging as logging
 
 import fourdvar.params.cmaq_config as cfg
 import fourdvar.params.template_defn as template
@@ -26,7 +25,7 @@ import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
 
-logger = logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def parse_env_dict(env_dict, date):
@@ -55,8 +54,7 @@ def load_env(env_dict) -> None:
     notes: all names and values must be strings
     """
     for name, value in env_dict.items():
-        if logging.verbose_logfile is True:
-            logger.debug(f"setenv {name} = {value}")
+        logger.debug(f"setenv {name} = {value}")
         os.environ[name] = value
     # now remove empty strings from environment which are killing CMAQ multiprocessing
     for name, value in os.environ.items():
