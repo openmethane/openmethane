@@ -18,93 +18,94 @@ import datetime as dt
 
 import fourdvar.params.date_defn as defn
 
-start_date = dt.datetime.strptime( str( defn.start_date ), '%Y%m%d' ).date()
-end_date = dt.datetime.strptime( str( defn.end_date ), '%Y%m%d' ).date()
+start_date = dt.datetime.strptime(str(defn.start_date), "%Y%m%d").date()
+end_date = dt.datetime.strptime(str(defn.end_date), "%Y%m%d").date()
 
-#map string tags to date conversion functions
+# map string tags to date conversion functions
 tag_map = {
-    '<YYYYMMDD>': lambda date: date.strftime( '%Y%m%d' ),
-    '<YYYYDDD>': lambda date: date.strftime( '%Y%j' ),
-    '<YYYY-MM-DD>': lambda date: date.strftime( '%Y-%m-%d' )
+    "<YYYYMMDD>": lambda date: date.strftime("%Y%m%d"),
+    "<YYYYDDD>": lambda date: date.strftime("%Y%j"),
+    "<YYYY-MM-DD>": lambda date: date.strftime("%Y-%m-%d"),
 }
 
-def add_days( date, ndays ):
-    """
-    extension: return the the date ndays before/after date
+
+def add_days(date, ndays):
+    """Return the the date ndays before/after date.
     input: datetime.date, int (-ve for bwd in time)
-    output: datetime.date
+    output: datetime.date.
     """
-    return date + dt.timedelta( days=ndays )
+    return date + dt.timedelta(days=ndays)
+
 
 def get_datelist():
-    """
-    extension: get the list of dates which the model runs over
-    input: None
-    output: list of datetime.date objects
-    
+    """Get the list of dates which the model runs over.
+
+    output: list of datetime.date objects.
+
     notes: require start_date & end_date to already be defined
     """
     global start_date
     global end_date
     if start_date is None or end_date is None:
-        raise ValueError( 'Need to define start_date and end_date.' )
+        raise ValueError("Need to define start_date and end_date.")
     days = (end_date - start_date).days + 1
-    datelist = [ add_days( start_date, i ) for i in range(days) ]
+    datelist = [add_days(start_date, i) for i in range(days)]
     return datelist
 
-def replace_date( src, date ):
-    """
-    extension: replace date tags with date data
+
+def replace_date(src, date):
+    """Replace date tags with date data.
+
     input: string, date representation
-    output: string
-    
+    output: string.
+
     notes: date can be a datetime.date, datetime.datetime or a [year,month,day]
     """
-    #force date into type dt.date
-    if isinstance( date, dt.date ):
+    # force date into type dt.date
+    if isinstance(date, dt.date):
         pass
-    elif isinstance( date, dt.datetime ):
+    elif isinstance(date, dt.datetime):
         date = date.date()
     else:
-        date = dt.date( date[0], date[1], date[2] )
-    
-    #replace all date tags
+        date = dt.date(date[0], date[1], date[2])
+
+    # replace all date tags
     for tag in tag_map.keys():
         if tag in src:
-            src = src.replace( tag, tag_map[ tag ]( date ) )
-        mtag = tag[:-1] + '#'
+            src = src.replace(tag, tag_map[tag](date))
+        mtag = tag[:-1] + "#"
         while mtag in src:
-            tstart = src.index( mtag ) + len(mtag)
-            tend = src.index( '>', tstart )
-            ndays = int( src[tstart:tend] )
-            mdate = add_days( date, ndays )
-            src = src[:tstart-1] + src[tend:]
-            src = src.replace( tag, tag_map[ tag ](mdate) )
+            tstart = src.index(mtag) + len(mtag)
+            tend = src.index(">", tstart)
+            ndays = int(src[tstart:tend])
+            mdate = add_days(date, ndays)
+            src = src[: tstart - 1] + src[tend:]
+            src = src.replace(tag, tag_map[tag](mdate))
     return src
 
-def move_tag( src_str, ndays ):
-    """
-    extension: add a day modifier to a date tag
+
+def move_tag(src_str, ndays):
+    """Add a day modifier to a date tag.
     input: string, integer
-    output: string
+    output: string.
     """
-    modifier = '{:+}'.format( int(ndays) )
+    modifier = f"{int(ndays):+}"
     for tag in tag_map.keys():
         if tag in src_str:
-            new_tag = '<{}#{}>'.format( tag[1:-1], modifier )
-            src_str = src_str.replace( tag, new_tag )
+            new_tag = f"<{tag[1:-1]}#{modifier}>"
+            src_str = src_str.replace(tag, new_tag)
     return src_str
 
-def reset_tag( src_str ):
-    """
-    extension: undo move_tag day modifier
+
+def reset_tag(src_str):
+    """Undo move_tag day modifier.
     input: string
-    output: string
+    output: string.
     """
     for tag in tag_map.keys():
-        mtag = tag[:-1] + '#'
+        mtag = tag[:-1] + "#"
         while mtag in src_str:
-            tstart = src_str.index( mtag ) + len(mtag)
-            tend = src_str.index( '>', tstart )
-            src_str = src_str[:tstart-1] + src_str[tend:]
+            tstart = src_str.index(mtag) + len(mtag)
+            tend = src_str.index(">", tstart)
+            src_str = src_str[: tstart - 1] + src_str[tend:]
     return src_str

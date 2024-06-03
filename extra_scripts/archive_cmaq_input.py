@@ -14,15 +14,15 @@
 # limitations under the License.
 #
 
-import fourdvar.util.archive_handle as archive_handle
-import fourdvar.params.archive_defn as archive_defn
 import fourdvar.datadef as d
+from fourdvar.params import archive_defn
+from fourdvar.util import archive_handle
 
 # archive file name
-archive_fname = 'original_CMAQ_input'
+archive_fname = "original_CMAQ_input"
 
 archive_handle.archive_path = archive_defn.archive_path
 archive_handle.finished_setup = True
 
 model_input = d.ModelInputData()
-model_input.archive( archive_fname )
+model_input.archive(archive_fname)

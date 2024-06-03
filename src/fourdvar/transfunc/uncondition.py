@@ -20,22 +20,29 @@ from fourdvar.datadef import PhysicalData
 from fourdvar.params.input_defn import inc_icon
 
 
-def uncondition( unknown ):
-    """
-    application: undo pre-conditioning of PhysicalData, add back any lost metadata
+def uncondition(unknown):
+    """application: undo pre-conditioning of PhysicalData, add back any lost metadata
     input: UnknownData
-    output: PhysicalData
-    
+    output: PhysicalData.
+
     notes: this function must apply the prior error covariance
     """
     PhysicalData.assert_params()
     p = PhysicalData
-    emis_shape = ( p.nstep_emis, p.nlays_emis, p.nrows, p.ncols, )
+    emis_shape = (
+        p.nstep_emis,
+        p.nlays_emis,
+        p.nrows,
+        p.ncols,
+    )
     emis_len = p.nstep_emis * p.nlays_emis * p.nrows * p.ncols
-    bcon_shape = ( p.nstep_bcon, p.bcon_region, )
-    bcon_len = np.prod( bcon_shape )
+    bcon_shape = (
+        p.nstep_bcon,
+        p.bcon_region,
+    )
+    bcon_len = np.prod(bcon_shape)
     del p
-    
+
     vals = unknown.get_vector()
     if inc_icon is True:
         icon_dict = {}
@@ -44,22 +51,22 @@ def uncondition( unknown ):
     i = 0
     for spc in PhysicalData.spcs:
         if inc_icon is True:
-            icon = vals[ i ]
+            icon = vals[i]
             i += 1
-            icon_dict[ spc ] = icon * PhysicalData.icon_unc[ spc ]
-        
-        emis = vals[ i:i+emis_len ]
-        emis = emis.reshape( emis_shape )
-        emis_dict[ spc ] = emis * PhysicalData.emis_unc[ spc ]
+            icon_dict[spc] = icon * PhysicalData.icon_unc[spc]
+
+        emis = vals[i : i + emis_len]
+        emis = emis.reshape(emis_shape)
+        emis_dict[spc] = emis * PhysicalData.emis_unc[spc]
         i += emis_len
 
-        bcon = vals[ i:i+bcon_len ]
-        bcon = bcon.reshape( bcon_shape )
-        bcon_dict[ spc ] = bcon * PhysicalData.bcon_unc[ spc ]
+        bcon = vals[i : i + bcon_len]
+        bcon = bcon.reshape(bcon_shape)
+        bcon_dict[spc] = bcon * PhysicalData.bcon_unc[spc]
         i += bcon_len
-    
-    assert i == len(vals), 'Some physical data left unassigned!'
-    
+
+    assert i == len(vals), "Some physical data left unassigned!"
+
     if inc_icon is False:
         icon_dict = None
-    return PhysicalData( icon_dict, emis_dict, bcon_dict )
+    return PhysicalData(icon_dict, emis_dict, bcon_dict)

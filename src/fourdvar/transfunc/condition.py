@@ -20,32 +20,32 @@ from fourdvar.datadef import UnknownData
 from fourdvar.datadef.abstract._physical_abstract_data import PhysicalAbstractData
 from fourdvar.params.input_defn import inc_icon
 
-def condition_adjoint( physical_adjoint ):
-    """
-    application: apply pre-conditioning to PhysicalAdjointData, get vector gradient
+
+def condition_adjoint(physical_adjoint):
+    """application: apply pre-conditioning to PhysicalAdjointData, get vector gradient
     input: PhysicalAdjointData
-    output: UnknownData
-    
+    output: UnknownData.
+
     notes: this function must apply the prior error covariance
     """
-    return phys_to_unk( physical_adjoint, True )
+    return phys_to_unk(physical_adjoint, True)
 
-def condition( physical ):
-    """
-    application: apply pre-conditioning to PhysicalData, get vector to optimize
+
+def condition(physical):
+    """application: apply pre-conditioning to PhysicalData, get vector to optimize
     input: PhysicalData
-    output: UnknownData
-    
+    output: UnknownData.
+
     notes: this function must apply the inverse prior error covariance
     """
-    return phys_to_unk( physical, False )
+    return phys_to_unk(physical, False)
 
-def phys_to_unk( physical, is_adjoint ):
-    """
-    application: apply pre-conditioning to PhysicalData, get vector to optimize
+
+def phys_to_unk(physical, is_adjoint):
+    """application: apply pre-conditioning to PhysicalData, get vector to optimize
     input: PhysicalData
-    output: UnknownData
-    
+    output: UnknownData.
+
     notes: this function must apply the inverse prior error covariance
     """
     p = PhysicalAbstractData
@@ -56,27 +56,31 @@ def phys_to_unk( physical, is_adjoint ):
     else:
         total_len = len(p.spcs) * (emis_len + bcon_len)
     del p
-    
-    #weighting function changes if is_adjoint
+
+    # weighting function changes if is_adjoint
     if is_adjoint is True:
-        weight = lambda val, sd: val * sd
+
+        def weight(val, sd):
+            return val * sd
     else:
-        weight = lambda val, sd: val / sd
-    
-    arg = np.zeros( total_len )
+
+        def weight(val, sd):
+            return val / sd
+
+    arg = np.zeros(total_len)
     i = 0
     for spc in PhysicalAbstractData.spcs:
         if inc_icon is True:
-            icon = weight( physical.icon[ spc ], physical.icon_unc[ spc ] )
-            arg[ i ] = icon
+            icon = weight(physical.icon[spc], physical.icon_unc[spc])
+            arg[i] = icon
             i += 1
 
-        emis = weight( physical.emis[ spc ], physical.emis_unc[ spc ] )
-        arg[ i:i+emis_len ] = emis.flatten()
+        emis = weight(physical.emis[spc], physical.emis_unc[spc])
+        arg[i : i + emis_len] = emis.flatten()
         i += emis_len
 
-        bcon = weight( physical.bcon[ spc ], physical.bcon_unc[ spc ] )
-        arg[ i:i+bcon_len ] = bcon.flatten()
+        bcon = weight(physical.bcon[spc], physical.bcon_unc[spc])
+        arg[i : i + bcon_len] = bcon.flatten()
         i += bcon_len
-    assert i == total_len, 'Some unknowns left unassigned!'
-    return UnknownData( arg )
+    assert i == total_len, "Some unknowns left unassigned!"
+    return UnknownData(arg)

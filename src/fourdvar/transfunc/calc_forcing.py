@@ -14,27 +14,25 @@
 # limitations under the License.
 #
 
-from fourdvar.datadef import ObservationData, AdjointForcingData
 import fourdvar.util.cmaq_handle as cmaq
+from fourdvar.datadef import AdjointForcingData, ObservationData
 
 
-def calc_forcing( w_residual ):
-    """
-    application: calculate the adjoint forcing values from the weighted residual of observations
+def calc_forcing(w_residual):
+    """application: calculate the adjoint forcing values from the weighted residual of observations
     input: ObservationData  (weighted residuals)
-    output: AdjointForcingData
+    output: AdjointForcingData.
     """
-    
     kwargs = AdjointForcingData.get_kwargs_dict()
     for ymd, ilist in ObservationData.ind_by_date.items():
-        spc_dict = kwargs[ 'force.'+ymd ]
+        spc_dict = kwargs["force." + ymd]
         for i in ilist:
-            for coord,weight in ObservationData.weight_grid[i].items():
-                if str( coord[0] ) == ymd:
-                    step,lay,row,col,spc = coord[1:]
+            for coord, weight in ObservationData.weight_grid[i].items():
+                if str(coord[0]) == ymd:
+                    step, lay, row, col, spc = coord[1:]
                     w_val = w_residual.value[i] * weight
-                    spc_dict[spc][step,lay,row,col] += w_val
+                    spc_dict[spc][step, lay, row, col] += w_val
 
     cmaq.wipeout_bwd()
-    
-    return AdjointForcingData.create_new( **kwargs )
+
+    return AdjointForcingData.create_new(**kwargs)

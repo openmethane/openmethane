@@ -29,11 +29,10 @@ restart_from_last = False
 restart_number = 0
 
 # Must match filename used by user_driver.callback_func!
-iter_fname = 'iter{:04}.ncf'
+iter_fname = "iter{:04}.ncf"
 
 # name of restart log file saved to archive
-restart_log_fname = 'restart_log.txt'
-
+restart_log_fname = "restart_log.txt"
 
 
 archive_path = os.path.join(archive_defn.archive_path, archive_defn.experiment)
@@ -44,30 +43,29 @@ if not restart_from_last:
     start_no = restart_number
 else:
     start_no = 1
-    while os.path.isfile( os.path.join( archive_path,
-                                        iter_fname.format(start_no+1) ) ):
+    while os.path.isfile(os.path.join(archive_path, iter_fname.format(start_no + 1))):
         start_no += 1
 
-assert start_no == int(start_no), 'restart_number must be an integer.'
-init_path = os.path.join( archive_path, iter_fname.format(start_no) )
-assert os.path.isfile( init_path ), 'Cannot find {}'.format( init_path )
+assert start_no == int(start_no), "restart_number must be an integer."
+init_path = os.path.join(archive_path, iter_fname.format(start_no))
+assert os.path.isfile(init_path), f"Cannot find {init_path}"
 
-log_path = os.path.join( archive_path, restart_log_fname )
-if os.path.isfile( log_path ):
-    ftype = 'r+'
+log_path = os.path.join(archive_path, restart_log_fname)
+if os.path.isfile(log_path):
+    ftype = "r+"
 else:
-    ftype = 'w'
-with open( log_path, ftype ) as f:
-    f.write( 'restarted from iteration {}\n'.format( start_no ) )
+    ftype = "w"
+with open(log_path, ftype) as f:
+    f.write(f"restarted from iteration {start_no}\n")
 
 user.iter_num = start_no
-init_phys = d.PhysicalData.from_file( init_path )
-init_unk = transform( init_phys, d.UnknownData )
+init_phys = d.PhysicalData.from_file(init_path)
+init_unk = transform(init_phys, d.UnknownData)
 init_vec = init_unk.get_vector()
 
-min_output = user.minim( main.cost_func, main.gradient_func, init_vec )
+min_output = user.minim(main.cost_func, main.gradient_func, init_vec)
 out_vector = min_output[0]
-out_unknown = d.UnknownData( out_vector )
-out_physical = transform( out_unknown, d.PhysicalData )
-user.post_process( out_physical, min_output[1:] )
+out_unknown = d.UnknownData(out_vector)
+out_physical = transform(out_unknown, d.PhysicalData)
+user.post_process(out_physical, min_output[1:])
 user.cleanup()
