@@ -15,10 +15,9 @@
 #
 
 import os
-from pathlib import Path
 
-#full path to the top level of the repository
-root_path = os.environ['HOME']+'/openmethane-beta/py4dvar'
+# full path to the top level of the repository
+root_path = os.environ["HOME"] + "/openmethane-beta/py4dvar"
 
-#full path to the branch-specific data
-store_path = os.environ['HOME']+'/scratch/openmethane-beta/run-py4dvar'
+# full path to the branch-specific data
+store_path = os.environ["HOME"] + "/scratch/openmethane-beta/run-py4dvar"

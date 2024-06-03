@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  tests:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: [ "3.11" ]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
+        with:
+          python-version: "${{ matrix.python-version }}"
+          venv-id: "tests-${{ runner.os }}"
+      - name: Run tests
+        run: |
+         # TODO: Not running integration tests
+         poetry run pytest -r a -v tests/unit
+        env:
+          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
+          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
+
+  imports-without-extras:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: [ "3.11" ]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          python-version: "${{ matrix.python-version }}"
+          venv-id: "imports-without-extras-${{ runner.os }}"
+          poetry-dependency-install-flags: "--only main"
+      - name: Check importable without extras
+        run: poetry run python scripts/test_install.py
+
+  check-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          python-version: "3.11"
+          venv-id: "check-build-${{ runner.os }}"
+          run-poetry-install: false
+          poetry-dependency-install-flags: "not used"
+      - name: Build package
+        run: |
+          poetry build --no-interaction
+      - name: Check build
+        run: |
+          # Not checking for py.typed file
+          tar -tvf dist/openmethane-*.tar.gz --wildcards '*fourdvar' --wildcards '*cmaq_preprocess' --wildcards '*obs_preprocess'

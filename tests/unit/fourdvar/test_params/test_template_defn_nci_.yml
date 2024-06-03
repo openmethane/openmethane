@@ -1,0 +1,8 @@
+conc: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/conc_template.nc'
+diurnal: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/diurnal.nc'
+emis: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/record/emis_record_<YYYY-MM-DD>.nc'
+force: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/force_template.nc'
+icon: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/record/icon_record.nc'
+sense_conc: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/sense_conc_template.nc'
+sense_emis: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates/sense_emis_template.nc'
+template_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/templates'

@@ -17,3 +17,6 @@ load_p4d_modules.sh
 # Python virtual environments
 venv
 .venv
+
+# Build artifacts
+dist

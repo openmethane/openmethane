@@ -78,7 +78,7 @@ def clean_env(env_dict):
 
 
 def setup_run():
-    """Setup all the constant environment variables.  """
+    """Setup all the constant environment variables."""
     env_dict = {
         "NPCOL_NPROW": f"{cfg.npcol} {cfg.nprow}",
         "IOAPI_LOG_WRITE": "T" if cfg.ioapi_logging else "F",
