@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
+import logging
 import os
 import pickle
-import logging
 
 from scipy.optimize import fmin_l_bfgs_b as minimize
 

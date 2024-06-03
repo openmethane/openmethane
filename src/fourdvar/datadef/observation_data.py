@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 
+import logging
 import os
 from copy import deepcopy
 
 import numpy as np
-import logging
 
 import fourdvar.params.template_defn as template
 import fourdvar.util.date_handle as dt

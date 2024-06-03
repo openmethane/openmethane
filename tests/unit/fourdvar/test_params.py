@@ -14,7 +14,7 @@ from fourdvar.params import (
     template_defn,
 )
 
-targets = pytest.mark.parametrize("target", ("nci",))
+targets = pytest.mark.parametrize("target", ("nci", "docker"))
 
 
 def target_environment(monkeypatch, target: str):

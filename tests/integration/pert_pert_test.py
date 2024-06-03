@@ -16,16 +16,15 @@
 import os
 
 import numpy as np
-from fourdvar import logging
 
 import fourdvar._main_driver as main
 import fourdvar.datadef as d
 import fourdvar.user_driver as user
 import fourdvar.util.archive_handle as archive
 import fourdvar.util.cmaq_handle as cmaq
+from fourdvar import logging
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn
-
 
 logger = logging.get_logger(__name__)
 logging.setup_logging()
