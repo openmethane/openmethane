@@ -14,17 +14,17 @@
 # limitations under the License.
 #
 
+import logging
 import os
 import shutil
 import subprocess
 
 import netCDF4 as ncf
 import numpy as np
-import setup_logging as logging
 
 import fourdvar.util.date_handle as dt
 
-logger = logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def validate(filepath, dataset):
@@ -65,8 +65,7 @@ def create_from_template(source, dest, var_change={}, date=None, overwrite=True)
     designed for IOAPI compliant netCDF files, other netCDF files may not work.
     """
     assert validate(source, var_change), "changes to template are invalid"
-    if logging.verbose_logfile is True:
-        logger.debug(f"copy {source} to {dest}.")
+    logger.debug(f"copy {source} to {dest}.")
     shutil.copyfile(source, dest)
     with ncf.Dataset(dest, "a") as ncf_file:
         for var, data in var_change.items():
@@ -154,15 +153,11 @@ def copy_compress(source, dest):
             msg += "switching to uncompressed copying."
             logger.warn(msg)
         else:
-            if logging.verbose_logfile is True:
-                logger.debug(copy_msg)
-            return None
+            logger.debug(copy_msg)
 
     # if code reaches here ncks-copy failed or wasn't tried.
     shutil.copyfile(source, dest)
-    if logging.verbose_logfile is True:
-        logger.debug(copy_msg)
-    return None
+    logger.debug(copy_msg)
 
 
 def set_date(fileobj, start_date):

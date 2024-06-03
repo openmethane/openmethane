@@ -15,12 +15,11 @@
 #
 
 import gzip
+import logging
 import os
 import pickle
 
-import setup_logging
-
-logger = setup_logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def ensure_path(path, inc_file=False):

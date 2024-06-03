@@ -14,14 +14,13 @@
 # limitations under the License.
 #
 
+import logging
 import os
-
-import setup_logging
 
 import fourdvar.params.archive_defn as defn
 from fourdvar.util import file_handle
 
-logger = setup_logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 finished_setup = False
 archive_path = ""
@@ -37,11 +36,11 @@ def setup():
     global finished_setup
     global archive_path
     if finished_setup is True:
-        logger.warn("archive setup called again. Ignoring")
+        logger.warning("archive setup called again. Ignoring")
         return None
     path = os.path.join(defn.archive_path, defn.experiment)
     if os.path.isdir(path) is True:
-        logger.warn(f"{path} already exists.")
+        logger.warning(f"{path} already exists.")
         if defn.overwrite is False:
             # need to generate new archive path name
             extn = defn.extension

@@ -18,7 +18,7 @@ import os
 from copy import deepcopy
 
 import numpy as np
-import setup_logging
+import logging
 
 import fourdvar.params.template_defn as template
 import fourdvar.util.date_handle as dt
@@ -27,7 +27,7 @@ import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
 
-logger = setup_logging.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class ObservationData(FourDVarData):

@@ -16,7 +16,7 @@
 import os
 
 import numpy as np
-import setup_logging
+from fourdvar import logging
 
 import fourdvar._main_driver as main
 import fourdvar.datadef as d
@@ -26,7 +26,9 @@ import fourdvar.util.cmaq_handle as cmaq
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn
 
-logger = setup_logging.get_logger(__file__)
+
+logger = logging.get_logger(__name__)
+logging.setup_logging()
 
 # replace archive directory name and description file
 archive_defn.experiment = "emis_sens"

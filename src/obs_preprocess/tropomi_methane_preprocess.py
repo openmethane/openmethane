@@ -22,7 +22,7 @@ import traceback
 
 import func_timeout
 import numpy as np
-import setup_logging
+from fourdvar import logging
 from netCDF4 import Dataset
 
 import fourdvar.util.file_handle as fh
@@ -31,7 +31,8 @@ from fourdvar.util.date_handle import end_date, start_date
 from obs_preprocess.model_space import ModelSpace
 from obs_preprocess.obsESA_defn import ObsSRON
 
-logger = setup_logging.get_logger(__file__)
+logging.setup_logging()
+logger = logging.get_logger(__name__)
 
 # -CONFIG-SETTINGS---------------------------------------------------------
 
