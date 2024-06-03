@@ -1,28 +1,37 @@
+#
+# Copyright 2016 University of Melbourne.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 """
-no_transport_finite_diff_test.py
+Run a simple no transport dot-test to check adjoint math.
 
-Copyright 2016 University of Melbourne.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
+This test is only valid for 1-hour resolution output & sensitivities.
 """
-# Run a simple no transport dot-test to check adjoint math.
-# This test is only valid for 1-hour resolution output & sensitivities.
 
-import numpy as np
 import os
 
-import context
+import numpy as np
+
 import fourdvar.datadef as d
-from fourdvar._transform import transform
-import fourdvar.user_driver as user
-import fourdvar.params.template_defn as template
 import fourdvar.params.cmaq_config as cmaq
+import fourdvar.params.template_defn as template
+import fourdvar.user_driver as user
+import fourdvar.util.archive_handle as archive
 import fourdvar.util.date_handle as dt
 import fourdvar.util.netcdf_handle as ncf
-import fourdvar.params.archive_defn as archive_defn
-import fourdvar.util.archive_handle as archive
+from fourdvar._transform import transform
+from fourdvar.params import archive_defn
 
 spcs_list = ['CO2'] # species to perturb within CMAQ.
 tsec = 3600. #seconds per timestep, DO NOT MODIFY
@@ -167,32 +176,32 @@ def finite_diff( scale ):
 
     eps = 1e-6
     if abs(pert_gradient-init_gradient).sum() > eps*abs(pert_gradient).sum():
-        print "WARNING: pert & init gradients differ."
-        print "init gradient norm = {:}".format( np.linalg.norm(init_gradient) )
-        print "pert gradient norm = {:}".format( np.linalg.norm(pert_gradient) )
+        print( "WARNING: pert & init gradients differ.")
+        print( "init gradient norm = {:}".format( np.linalg.norm(init_gradient) ))
+        print( "pert gradient norm = {:}".format( np.linalg.norm(pert_gradient) ))
 
     pert_diff = pert_vector - init_vector
     sense_score = .5*( (pert_diff*init_gradient).sum() + (pert_diff*pert_gradient).sum() )
 
     force_score = 0.
-    iconc_file = os.path.join( archive_path, 'init_conc', archive_defn.conc_file )
-    pconc_file = os.path.join( archive_path, 'pert_conc', archive_defn.conc_file )
-    force_file = os.path.join( archive_path, 'force', archive_defn.force_file )
+    iconc_file = os.path.join(archive_path, 'init_conc', archive_defn.conc_file)
+    pconc_file = os.path.join(archive_path, 'pert_conc', archive_defn.conc_file)
+    force_file = os.path.join(archive_path, 'force', archive_defn.force_file)
     for date in dt.get_datelist():
         iconc = ncf.get_variable( dt.replace_date(iconc_file,date), spcs_list )
         pconc = ncf.get_variable( dt.replace_date(pconc_file,date), spcs_list )
         force = ncf.get_variable( dt.replace_date(force_file,date), spcs_list )
         c_diff = { s: pconc[s] - iconc[s] for s in spcs_list }
         force_score += sum([ (c_diff[s] * force[s]).sum() for s in spcs_list ])
-    
+
     return sense_score, force_score
 
 if __name__ == "__main__":
     #perturbation = scale * uncertainty.
     sense, force = finite_diff( scale=1. )
-    print 40*'-'
-    print 'sensitivity dot perturbation = {:}'.format( sense )
-    print 'forcing dot conc_change = {:}'.format( force )
-    print 'abs difference = {:}'.format( abs( sense-force ) )
-    print 'rel difference = {:}'.format( 2.*abs(sense-force) / (sense+force) )
-    print 40*'-'
+    print (40*'-')
+    print ('sensitivity dot perturbation = {:}'.format( sense ))
+    print ('forcing dot conc_change = {:}'.format( force ))
+    print( 'abs difference = {:}'.format( abs( sense-force ) ))
+    print( 'rel difference = {:}'.format( 2.*abs(sense-force) / (sense+force) ))
+    print( 40*'-')

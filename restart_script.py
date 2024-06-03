@@ -1,20 +1,26 @@
-"""
-restart_script.py
-
-Copyright 2016 University of Melbourne.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-"""
+#
+# Copyright 2016 University of Melbourne.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 import os
 
-import fourdvar.user_driver as user
 import fourdvar._main_driver as main
-import fourdvar.util.archive_handle as archive_handle
-import fourdvar.params.archive_defn as archive_defn
 import fourdvar.datadef as d
+import fourdvar.user_driver as user
 from fourdvar._transform import transform
+from fourdvar.params import archive_defn
+from fourdvar.util import archive_handle
 
 # If true restart_script uses last iteration in archive
 restart_from_last = False
@@ -30,11 +36,11 @@ restart_log_fname = 'restart_log.txt'
 
 
 
-archive_path = os.path.join( archive_defn.archive_path, archive_defn.experiment )
+archive_path = os.path.join(archive_defn.archive_path, archive_defn.experiment)
 archive_handle.archive_path = archive_path
 archive_handle.finished_setup = True
 
-if restart_from_last == False:
+if not restart_from_last:
     start_no = restart_number
 else:
     start_no = 1

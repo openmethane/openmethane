@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
 
 ##Remap downscaled emissions to the CMAQ domain
 ##originally written by JDS and modified by NS

@@ -1,10 +1,6 @@
-import numpy as np
-import gzip
-from pickle import load
-import setup_logging
 from fourdvar.util import file_handle as fh
 import numpy as np
-import matplotlib.pyplot as plt
+
 obsList = fh.load_list('/scratch/q90/cm5310/store_share_p4d/archive/november2019/observed.pickle')
 obsList = obsList[1:]
 def obs2ppm( ob): return ob['value']*(np.array(list(ob['weight_grid'].values()))@ob['ref_profile'])
