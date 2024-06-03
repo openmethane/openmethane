@@ -18,6 +18,8 @@ import os
 
 from fourdvar.params.root_path_defn import store_path
 
+from ._env import env
+
 # Settings for archive processes
 
 # location of archive directory
@@ -32,7 +34,7 @@ iter_obs_lite = True
 # experiment name & name of directory to save results in
 # experiment = 'pert_pert_test'##'example_experiment'
 # experiment = 'real_test'
-experiment = "202207_test"  # Pert
+experiment = env.str("EXPERIMENT", "202207_test")
 
 # description is copied into a txt file in the experiment directory
 description = """This is a test of the fourdvar system.

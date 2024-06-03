@@ -14,10 +14,17 @@
 # limitations under the License.
 #
 
-import os
+"""
+Common path definitions
+
+These definitions are used in other parameter definitions.
+"""
+
+from ._env import env
 
 # full path to the top level of the repository
-root_path = os.environ["HOME"] + "/openmethane-beta/py4dvar"
+# TODO: Not sure if this needs an env variable
+root_path = env.str("ROOT_PATH")
 
 # full path to the branch-specific data
-store_path = os.environ["HOME"] + "/scratch/openmethane-beta/run-py4dvar"
+store_path = env.str("STORE_PATH")

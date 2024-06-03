@@ -14,9 +14,10 @@
 # limitations under the License.
 #
 
+from ._env import env
 
-# start date in int(YYYYMMDD) format
-start_date = 20220701
+# start date in YYYY-MM-DD format
+start_date = env.date("START_DATE", "2022-07-01")
 
-# end date in int(YYYYMMDD) format
-end_date = 20220730
+# end date in YYYY-MM-DD format
+end_date = env.date("END_DATE", "2022-07-30")

@@ -18,8 +18,9 @@ import datetime as dt
 
 import fourdvar.params.date_defn as defn
 
-start_date = dt.datetime.strptime(str(defn.start_date), "%Y%m%d").date()
-end_date = dt.datetime.strptime(str(defn.end_date), "%Y%m%d").date()
+# TODO: Remove these global values
+start_date = defn.start_date
+end_date = defn.end_date
 
 # map string tags to date conversion functions
 tag_map = {
@@ -44,12 +45,10 @@ def get_datelist():
 
     notes: require start_date & end_date to already be defined
     """
-    global start_date
-    global end_date
-    if start_date is None or end_date is None:
+    if defn.start_date is None or defn.end_date is None:
         raise ValueError("Need to define start_date and end_date.")
-    days = (end_date - start_date).days + 1
-    datelist = [add_days(start_date, i) for i in range(days)]
+    days = (defn.end_date - defn.start_date).days + 1
+    datelist = [add_days(defn.start_date, i) for i in range(days)]
     return datelist
 
 
