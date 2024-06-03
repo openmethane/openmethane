@@ -24,10 +24,8 @@ def import_submodules(package_name):
         if is_pkg:
             import_submodules(full_name)
 
-
-# TODO: Don't run these yet until the logger works correctly
-# import_submodules("fourdvar")
+import_submodules("fourdvar")
+# TODO: Don't run these yet as there is still scripts that run on import
 # import_submodules("cmaq_preprocess")
 # import_submodules("obs_preprocess")
-# This line breaks the script. I'm not sure it's needed
 print(fourdvar.__version__)
