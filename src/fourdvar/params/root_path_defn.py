@@ -20,11 +20,14 @@ Common path definitions
 These definitions are used in other parameter definitions.
 """
 
+from pathlib import Path
+
 from ._env import env
 
+ROOT_DIR = Path(__file__).resolve().parents[3]
+
 # full path to the top level of the repository
-# TODO: Not sure if this needs an env variable
-root_path = env.str("ROOT_PATH")
+root_path = str(ROOT_DIR)
 
 # full path to the branch-specific data
 store_path = env.str("STORE_PATH")
