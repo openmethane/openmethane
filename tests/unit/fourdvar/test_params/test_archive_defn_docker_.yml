@@ -1,4 +1,4 @@
-archive_path: /opt/project/openmethane/data/archive_Pert
+archive_path: /opt/project/openmethane/openmethane/data/archive_Pert
 conc_file: conc.<YYYYMMDD>.nc
 desc_name: description.txt
 description: 'This is a test of the fourdvar system.
