@@ -39,24 +39,26 @@ This `.env` file contains the target specific configuration values.
 To run your first test case you will need to:
 
 
-1: go to cmaq_preprocess and run (in listed order):
- - make_template.py
-	creates template files needed to for py4dvar to generate input files,
-	assumes that all the input files defined in cmaq_config (MET, emis, icon, etc) already exist
- - make_prior.py
+1: Run the following scripts (in listed order):
+ - `scripts/cmaq_preprocess/make_emis_template.py`
+	Create the emission template file from the prior estimate
+ - `scripts/cmaq_preprocess/make_template.py`
+	Creates template files needed to for py4dvar to generate input files,
+	Assumes that all the input files defined in cmaq_config (MET, emis, icon, etc) already exist
+ - `scripts/cmaq_preprocess/make_prior.py`
 	creates the prior estimate of the fluxes (and initial conditions if input_defn.inc_icon is True)
 	includes modifiable parameters at the start of the file with descriptions.
 
 2: go to obs_preprocess and run one of:
- - sample_point_preprocess.py
+ - `sample_point_preprocess.py`
 	creates a test set of instant, point source observations, with easy to edit values.
- - sample_column_preprocess.py
+ - `sample_column_preprocess.py`
 	creates a test single vertical column observation, with easy to edit values.
 
 3: go to tests and run:
- - test_cost_verbose.py
+ - `test_cost_verbose.py`
 	runs the cost function logic with a random perturbation in the prior.
- - test_grad_verbose.py
+ - test_grad_verbose.py`
 	runs the gradient function logic with a random perturbation in the prior.
 
-4: run the main code via runscript.py
+4: run the main code via `runscript.py`

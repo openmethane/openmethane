@@ -16,6 +16,7 @@
 
 import os
 
+from fourdvar.params._env import env
 from fourdvar.params.root_path_defn import store_path
 
 # notes: the patterns <YYYYMMDD>, <YYYYDDD> & <YYYY-MM-DD> will be replaced
@@ -103,7 +104,8 @@ tstep = [1, 0, 0]  # output timestep [hours, minutes, seconds]
 
 cmaq_base = os.path.join(store_path, "run-cmaq")
 output_path = os.path.join(cmaq_base, "output")
-wrf_path = os.path.join(store_path, "mcip")
+mcip_output_path = env.str("MCIP_OUTPUT_PATH")
+
 if use_jobfs is True:
     chk_path = os.environ.get("PBS_JOBFS", None)
     if chk_path is None:
@@ -111,14 +113,15 @@ if use_jobfs is True:
         raise ValueError(msg)
 else:
     chk_path = os.path.join(cmaq_base, "chkpnt")
-mcip_path = os.path.join(wrf_path, "<YYYY-MM-DD>", "d01")
-grid_path = os.path.join(wrf_path, "<YYYY-MM-DD>", "d01")
+
+mcip_met_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
+mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
 bcon_path = os.path.join(store_path, "input/")
 icon_path = os.path.join(store_path, "input/")
 emis_path = os.path.join(cmaq_base, "emissions")
 # horizontal grid definition file
-griddesc = os.path.join(grid_path, "GRIDDESC")
+griddesc = os.path.join(mcip_grid_path, "GRIDDESC")
 gridname = "o"
 # gridname = 'W'
 
@@ -155,12 +158,12 @@ force_file = os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc")
 _MCIP_DOMAIN = os.environ.get("MCIP_DOMAIN", "2")
 
 # required met data, use unknown #?????
-grid_dot_2d = os.path.join(grid_path, f"GRIDDOT2D_{_MCIP_DOMAIN}")
-grid_cro_2d = os.path.join(grid_path, f"GRIDCRO2D_{_MCIP_DOMAIN}")
-met_cro_2d = os.path.join(mcip_path, f"METCRO2D_{_MCIP_DOMAIN}")
-met_cro_3d = os.path.join(mcip_path, f"METCRO3D_{_MCIP_DOMAIN}")
-met_dot_3d = os.path.join(mcip_path, f"METDOT3D_{_MCIP_DOMAIN}")
-met_bdy_3d = os.path.join(mcip_path, f"METBDY3D_{_MCIP_DOMAIN}")
+grid_dot_2d = os.path.join(mcip_grid_path, f"GRIDDOT2D_{_MCIP_DOMAIN}")
+grid_cro_2d = os.path.join(mcip_grid_path, f"GRIDCRO2D_{_MCIP_DOMAIN}")
+met_cro_2d = os.path.join(mcip_met_path, f"METCRO2D_{_MCIP_DOMAIN}")
+met_cro_3d = os.path.join(mcip_met_path, f"METCRO3D_{_MCIP_DOMAIN}")
+met_dot_3d = os.path.join(mcip_met_path, f"METDOT3D_{_MCIP_DOMAIN}")
+met_bdy_3d = os.path.join(mcip_met_path, f"METBDY3D_{_MCIP_DOMAIN}")
 layerfile = met_cro_3d
 depv_trac = met_cro_2d
 xj_data = os.path.join(jproc_path, "JTABLE_<YYYYDDD>")

@@ -15,20 +15,16 @@
 # limitations under the License.
 #
 import datetime
-import os
 from pathlib import Path
 
 import netCDF4 as nc
 import numpy as np
 
 from fourdvar.params.cmaq_config import met_cro_3d
-from fourdvar.params.template_defn import emis
+from fourdvar.params.template_defn import emis, prior_path
 from fourdvar.util.date_handle import replace_date
 
-if "PRIOR_REPO_PATH" not in os.environ:
-    openMethanePrior = "../../out-om-domain-info.nc"
-else:
-    openMethanePrior = Path(os.environ["PRIOR_REPO_PATH"]) / "outputs/out-om-domain-info.nc"
+OPENMETHANE_PRIOR = prior_path
 
 kg2g = 1000.0  # conversion from kg to g
 molarMass = 16.0  # molar mass of CH4
@@ -71,7 +67,7 @@ unicodeType = str
 nlay = 32
 nvar = 1
 nz = 32  # just surface for the moment
-with nc.Dataset(openMethanePrior, mode="r") as input:
+with nc.Dataset(OPENMETHANE_PRIOR, mode="r") as input:
     dates = nc.num2date(
         input["date"][:], input["date"].getncattr("units"), only_use_cftime_datetimes=False
     )
@@ -121,6 +117,10 @@ for i, date in enumerate(dates):
 
     ##  write this to file
     emisFile = replace_date(emis, date)
+
+    # Create the parent directory if it doesn't exist
+    Path(emisFile).parent.mkdir(parents=True, exist_ok=True)
+
     with nc.Dataset(emisFile, mode="w", format="NETCDF4_CLASSIC", clobber=True) as output:
         for k in lens.keys():
             outdims[k] = output.createDimension(k, lens[k])
