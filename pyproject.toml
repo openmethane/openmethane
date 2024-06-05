@@ -9,7 +9,6 @@ authors = [
 ]
 readme = "README.md"
 packages = [
-    {include = "cmaq_preprocess", from = "src"},
     {include = "fourdvar", from = "src"},
     {include = "obs_preprocess", from = "src"},
 ]
