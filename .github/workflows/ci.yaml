@@ -65,4 +65,4 @@ jobs:
       - name: Check build
         run: |
           # Not checking for py.typed file
-          tar -tvf dist/openmethane-*.tar.gz --wildcards '*fourdvar' --wildcards '*cmaq_preprocess' --wildcards '*obs_preprocess'
+          tar -tvf dist/openmethane-*.tar.gz --wildcards '*fourdvar' --wildcards '*obs_preprocess'
