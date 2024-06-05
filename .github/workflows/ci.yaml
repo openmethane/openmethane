@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: |
          # TODO: Not running integration tests
-         poetry run pytest -r a -v tests/unit
+         poetry run pytest -r a -v tests/unit tests/integration/cmaq_preprocess
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
