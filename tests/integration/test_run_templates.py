@@ -31,7 +31,7 @@ def test_make_emissions_templates(test_data_dir, tmpdir, file_regression, data_r
     assert list(ds.variables.keys()) == ["TFLAG", "CH4"]
 
     # Check TFLAG
-    assert ds["CH4"].dims == ("TFLAG", "VAR", "DATE-TIME")
+    assert ds["TFLAG"].dims == ("TSTEP", "VAR", "DATE-TIME")
     # Check that times are set correctly
     # [integer of form YYYYDDD, HHMM]
     # Not sure who makes this up...

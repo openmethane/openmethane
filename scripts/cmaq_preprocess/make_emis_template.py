@@ -16,9 +16,11 @@
 #
 import datetime
 from pathlib import Path
+from typing import Any
 
 import netCDF4 as nc
 import numpy as np
+from numpy.typing import NDArray
 
 from fourdvar.params import cmaq_config, template_defn
 from fourdvar.util.date_handle import replace_date
@@ -65,7 +67,80 @@ N_VARIABLES = 1
 NZ = 32  # just surface for the moment
 
 
-def make_emissions_templates(prior_filename: str, metcro_template: str, emis_template: str):  # noqa: PLR0915
+def read_metcro(
+    met_cro_file: str, spec_list: list[str], expected_grid_shape: tuple[int, int]
+) -> tuple[dict[str, int], dict[str, Any]]:
+    """
+    Read dimensions and attributes from the MCIP cross file
+    """
+    with nc.Dataset(met_cro_file, mode="r") as met_croNC:
+        attrs = {}
+        for a in ATTR_NAMES:
+            val = met_croNC.getncattr(a)
+            if a == "SDATE":
+                attrs[a] = np.int32(-635)
+            elif a == "NVARS":
+                attrs[a] = np.int32(len(spec_list))
+            elif a == "TSTEP":
+                attrs[a] = np.int32(100)
+            elif a == "VAR-LIST":
+                var_string = "".join([f"{k:<16}" for k in spec_list])
+                attrs[a] = var_string
+            elif a == "GDNAM":
+                attrs[a] = "{:<16}".format("Aus")
+            elif a == "VGLVLS":
+                attrs[a] = val
+            else:
+                attrs[a] = val
+        dimension_sizes = {"VAR": N_VARIABLES, "LAY": NZ, "TSTEP": 25, "DATE-TIME": 2}
+
+        dom_shape = (met_croNC.NROWS, met_croNC.NCOLS)
+        if dom_shape != expected_grid_shape:
+            raise ValueError("incompatible dimensions in metcro and emissions")
+        for k in met_croNC.dimensions.keys():
+            dimension_sizes[k] = len(met_croNC.dimensions[k])
+    # now correct a few of these
+    dimension_sizes["VAR"] = N_VARIABLES
+    dimension_sizes["LAY"] = NZ
+    dimension_sizes["TSTEP"] = 25
+
+    return dimension_sizes, attrs
+
+
+def build_tflag_data(current: datetime.date, shape: tuple[int, int, int]) -> NDArray:
+    """
+    Build the contents of tflag
+
+    tflag is a 3d array with the dimensions (TSTEPS, VARS, DATE-TIME).
+
+    The datetime is represented using two parts (the last dimension),
+    the first component is the date (YYYYDDD) and the second is the time (HHMM)
+    """
+    HOURS_IN_DAY = 24
+
+    assert shape[0] == HOURS_IN_DAY + 1
+    assert shape[-1] == 2
+
+    times = np.zeros(shape, dtype=np.int32)
+
+    # Date component of timestep
+    # integer of form: YYYYDDD
+    date_doy = current.timetuple().tm_yday
+    times[:, :, 0] = 1000 * current.year + date_doy
+
+    # need to set next day which requires care if it's Dec 31
+    next = current + datetime.timedelta(1)  # add one day
+    next_doy = next.timetuple().tm_yday
+    times[-1, :, 0] = 1000 * next.year + next_doy  # setting date of last time-slice
+
+    # hourly timestep including last timeslice to 0
+    # integer of form: HHMM
+    hours = (np.arange(shape[0]) % HOURS_IN_DAY) * 100
+    times[:, :, 1] = hours[:, np.newaxis]
+    return times
+
+
+def make_emissions_templates(prior_filename: str, metcro_template: str, emis_template: str):
     """
     Create emissions template files for CMAQ using the OpenMethane prior data
 
@@ -87,102 +162,71 @@ def make_emissions_templates(prior_filename: str, metcro_template: str, emis_tem
         This may contain a date placeholder that will be replaced with the date of the emissions
     """
     with nc.Dataset(prior_filename, mode="r") as input:
-        dates = nc.num2date(
+        prior_dates = nc.num2date(
             input["date"][:], input["date"].getncattr("units"), only_use_cftime_datetimes=False
         )
         emissions = input["OCH4_TOTAL"][...]
-    cmaqSpecList = ["CH4"]
-    cmaqspec = "CH4"
-    for i, date in enumerate(dates):
-        met_cro_file = replace_date(metcro_template, date)
-        with nc.Dataset(met_cro_file, mode="r") as met_croNC:
-            attrDict = {}
-            for a in ATTR_NAMES:
-                val = met_croNC.getncattr(a)
-                if a == "SDATE":
-                    attrDict[a] = np.int32(-635)
-                elif a == "NVARS":
-                    attrDict[a] = np.int32(len(cmaqSpecList))
-                elif a == "TSTEP":
-                    attrDict[a] = np.int32(100)
-                elif a == "VAR-LIST":
-                    VarString = "".join([f"{k:<16}" for k in cmaqSpecList])
-                    attrDict[a] = VarString
-                elif a == "GDNAM":
-                    attrDict[a] = "{:<16}".format("Aus")
-                elif a == "VGLVLS":
-                    attrDict[a] = val
-                else:
-                    attrDict[a] = val
-            lens = {"VAR": N_VARIABLES, "LAY": NZ, "TSTEP": 25, "DATE-TIME": 2}
+        grid_shape = emissions.shape[2:]
 
-            outdims = dict()
-            domShape = (met_croNC.NROWS, met_croNC.NCOLS)
-            if domShape != emissions.shape[-2:]:
-                raise ValueError("incompatible dimensions in metcro and emissions")
-            for k in met_croNC.dimensions.keys():
-                lens[k] = len(met_croNC.dimensions[k])
-        # now correct a few of these
-        lens["VAR"] = N_VARIABLES
-        lens["LAY"] = NZ
-        lens["TSTEP"] = 25
+    cmaq_spec = "CH4"
+    for i, current_date in enumerate(prior_dates):
+        met_cro_filename = replace_date(metcro_template, current_date)
+        lens, attrDict = read_metcro(
+            met_cro_filename, spec_list=[cmaq_spec], expected_grid_shape=grid_shape
+        )
 
         ##  write this to file
-        emisFile = replace_date(emis_template, date)
+        output_filename = replace_date(emis_template, current_date)
 
         # Create the parent directory if it doesn't exist
-        Path(emisFile).parent.mkdir(parents=True, exist_ok=True)
+        Path(output_filename).parent.mkdir(parents=True, exist_ok=True)
 
-        with nc.Dataset(emisFile, mode="w", format="NETCDF4_CLASSIC", clobber=True) as output:
+        with nc.Dataset(
+            output_filename, mode="w", format="NETCDF4_CLASSIC", clobber=True
+        ) as output:
+            # Write dimensions
             for k in lens.keys():
-                outdims[k] = output.createDimension(k, lens[k])
-            outvars = dict()
-            outvars["TFLAG"] = output.createVariable(
-                "TFLAG",
-                "i4",
-                (
-                    "TSTEP",
-                    "VAR",
-                    "DATE-TIME",
-                ),
-            )
+                output.createDimension(k, lens[k])
+
+            # Create TFLAG variable
+            outvars = {
+                "TFLAG": output.createVariable(
+                    "TFLAG",
+                    "i4",
+                    (
+                        "TSTEP",
+                        "VAR",
+                        "DATE-TIME",
+                    ),
+                )
+            }
             outvars["TFLAG"].setncattr("long_name", "{:<16}".format("TFLAG"))
-            tflag = np.zeros(outvars["TFLAG"].shape, dtype=np.int32)  # Peter
-            emisyear = date.timetuple().tm_year  # Peter
-            # print(emisyear)
-            emisday = date.timetuple().tm_yday  # Peter
-            tflag[:, 0, 0] = 1000 * emisyear + emisday  # Peter
-            # need to set next day which requires care if it's Dec 31
-            nextDate = date + datetime.timedelta(1)  # add one day
-            nextyear = nextDate.timetuple().tm_year  # Peter
-            nextday = nextDate.timetuple().tm_yday  # Peter
-            tflag[-1, :, 0] = 1000 * nextyear + nextday  # setting date of last time-slice
-            tflag[:, 0, 1] = (
-                np.arange(lens["TSTEP"]) % (lens["TSTEP"] - 1)
-            ) * 100  # hourly timestep including last timeslice to 0 I hope
-            outvars["TFLAG"][...] = tflag
-            ## one chunk per layer per time
-            outvars[cmaqspec] = output.createVariable(
-                cmaqspec,
+            tflag_data = build_tflag_data(current_date, outvars["TFLAG"].shape)
+            outvars["TFLAG"][...] = tflag_data
+
+            # Create data variable
+            outvars[cmaq_spec] = output.createVariable(
+                cmaq_spec,
                 "f4",
                 ("TSTEP", "LAY", "ROW", "COL"),
                 zlib=True,
                 shuffle=False,
-                chunksizes=np.array([1, 1, domShape[0], domShape[1]]),
+                ## one chunk per layer per time
+                chunksizes=np.array([1, 1, *grid_shape]),
             )
-            outvars[cmaqspec].setncattr("long_name", f"{cmaqspec:<16}")
-            outvars[cmaqspec].setncattr("units", "{:<16}".format("mols/s"))
-            outvars[cmaqspec].setncattr("var_desc", "{:<80}".format("Emissions of " + cmaqspec))
-            convFac = (
+            outvars[cmaq_spec].setncattr("long_name", f"{cmaq_spec:<16}")
+            outvars[cmaq_spec].setncattr("units", "{:<16}".format("mols/s"))
+            outvars[cmaq_spec].setncattr("var_desc", "{:<80}".format("Emissions of " + cmaq_spec))
+            unit_conversion_factor = (
                 attrDict["XCELL"] * attrDict["YCELL"] * KG_TO_G / MOLAR_MASS_CH4
             )  # from kg/m^2/s to moles/gridcell/s
-            outvars[cmaqspec][...] = 0.0
-            outvars[cmaqspec][:, 0, ...] = np.stack(
-                [convFac * emissions[i, ...]] * lens["TSTEP"], axis=0
+            outvars[cmaq_spec][...] = 0.0
+            outvars[cmaq_spec][:, 0, ...] = np.stack(
+                [unit_conversion_factor * emissions[i, ...]] * lens["TSTEP"], axis=0
             )
 
             output.setncattr("HISTORY", "")
-            # copy other attributes accross
+            # copy other attributes across
             for k, v in attrDict.items():
                 output.setncattr(k, v)
 
