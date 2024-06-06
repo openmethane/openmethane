@@ -37,8 +37,7 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
 
 # Container for running the project
 # This isn't a hyper optimised container but it's a good starting point
-#FROM debian:bookworm
-FROM setup_wrf
+FROM debian:bookworm
 
 MAINTAINER Jared Lewis <jared.lewis@climate-resource.com>
 
@@ -56,10 +55,20 @@ ENV VIRTUAL_ENV=/opt/venv \
 ENV LD_LIBRARY_PATH="/opt/venv/lib:${LD_LIBRARY_PATH}"
 ENV TARGET=docker
 
+RUN apt-get update && \
+    apt-get install -y csh psutils && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /opt/project/openmethane
 
 # Copy across the virtual environment
 COPY --from=builder /opt/venv /opt/venv
+
+# Copy in CMAQ binaries
+# https://github.com/openmethane/docker-cmaq
+# TODO: temporarily pinned staging builds until this is verified to work
+# Otherwise the CI will be broken for main
+COPY --from=ghcr.io/openmethane/cmaq:pr-4 /opt/cmaq /opt/cmaq
 
 # Copy in the rest of the project
 # For testing it might be easier to mount $(PWD):/opt/project so that local changes are reflected in the container

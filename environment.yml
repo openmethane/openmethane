@@ -9,3 +9,4 @@ dependencies:
   - gfortran=10.4
   - nco
   - python=3.11
+  - gdb
