@@ -22,16 +22,24 @@ import fourdvar.params.template_defn as template
 import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
+from fourdvar.logging import setup_logging
 from fourdvar.params import cmaq_config
 from fourdvar.util import cmaq_handle
 
+setup_logging()
+
 # define cmaq filenames for first day of model run.
-emis_file = dt.replace_date(cmaq_config.emis_file, dt.start_date)
+emis_file = dt.replace_date(template.emis, dt.start_date)
 icon_file = dt.replace_date(cmaq_config.icon_file, dt.start_date)
 conc_file = dt.replace_date(cmaq_config.conc_file, dt.start_date)
 force_file = dt.replace_date(cmaq_config.force_file, dt.start_date)
 sense_conc_file = dt.replace_date(cmaq_config.conc_sense_file, dt.start_date)
 sense_emis_file = dt.replace_date(cmaq_config.emis_sense_file, dt.start_date)
+
+# Prepare CMAQ run directories
+fh.ensure_path(os.path.dirname(force_file))
+fh.ensure_path(os.path.dirname(emis_file))
+fh.ensure_path(cmaq_config.chk_path)
 
 # redefine any cmaq_config variables dependent on template files
 if str(cmaq_config.emis_lays).lower() == "template":
@@ -65,6 +73,7 @@ if str(cmaq_config.sense_emis_lays).lower() == "template":
 # generate sample files by running 1 day of cmaq (fwd & bwd)
 cmaq_handle.wipeout_fwd()
 cmaq_handle.run_fwd_single(dt.start_date, is_first=True)
+
 # make force file with same attr as conc and all data zeroed
 conc_spcs = ncf.get_attr(conc_file, "VAR-LIST").split()
 conc_data = ncf.get_variable(conc_file, conc_spcs)

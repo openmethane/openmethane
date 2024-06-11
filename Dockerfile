@@ -68,7 +68,7 @@ COPY --from=builder /opt/venv /opt/venv
 # https://github.com/openmethane/docker-cmaq
 # TODO: temporarily pinned staging builds until this is verified to work
 # Otherwise the CI will be broken for main
-COPY --from=ghcr.io/openmethane/cmaq:pr-4 /opt/cmaq /opt/cmaq
+COPY --from=ghcr.io/openmethane/cmaq:pr-6 /opt/cmaq /opt/cmaq
 
 # Copy in the rest of the project
 # For testing it might be easier to mount $(PWD):/opt/project so that local changes are reflected in the container
