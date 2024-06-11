@@ -23,5 +23,14 @@ from fourdvar.transfunc.run_adjoint import run_adjoint
 from fourdvar.transfunc.run_model import run_model
 from fourdvar.transfunc.uncondition import uncondition
 
-__all__ = ["calc_forcing", "condition", "condition_adjoint", "map_sense", "obs_operator", "prepare_model", "run_adjoint", "run_model", "uncondition"]
-
+__all__ = [
+    "calc_forcing",
+    "condition",
+    "condition_adjoint",
+    "map_sense",
+    "obs_operator",
+    "prepare_model",
+    "run_adjoint",
+    "run_model",
+    "uncondition",
+]

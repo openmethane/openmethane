@@ -22,10 +22,10 @@ import traceback
 
 import func_timeout
 import numpy as np
-from fourdvar import logging
 from netCDF4 import Dataset
 
 import fourdvar.util.file_handle as fh
+from fourdvar import logging
 from fourdvar.params import input_defn
 from fourdvar.util.date_handle import end_date, start_date
 from obs_preprocess.model_space import ModelSpace

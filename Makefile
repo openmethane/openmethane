@@ -6,3 +6,10 @@ virtual-environment:  ## update virtual environment, create a new one if it does
 	poetry install --all-extras
 	# TODO: Add last line back in when pre-commit is set up
 	# poetry run pre-commit install
+
+.PHONY: ruff-fixes
+ruff-fixes:  # Run ruff on the project
+ 	# Run the formatting first to ensure that is applied even if the checks fail
+	poetry run ruff format .
+	poetry run ruff check --fix .
+	poetry run ruff format .
