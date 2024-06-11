@@ -39,7 +39,7 @@ def _extract_params(module, attributes):
 def test_root_data_defn(data_regression, monkeypatch, target):
     target_environment(monkeypatch, target)
 
-    data_regression.check(_extract_params(root_path_defn, ["root_path", "store_path"]))
+    data_regression.check(_extract_params(root_path_defn, ["store_path"]))
 
 
 @targets
@@ -127,6 +127,7 @@ def test_cmaq_config(data_regression, monkeypatch, target):
     # There are alot of attributes in cmaq_config,
     # so manually specifying the attributes is prone to error/flux
     attributes = set([item for item in dir(cmaq_config) if not item.startswith("_")]) - {
+        "env",
         "os",
         "store_path",
     }

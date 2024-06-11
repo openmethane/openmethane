@@ -21,10 +21,8 @@ import numpy as np
 import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
-from cmaq_preprocess.uncertainty import convert_unc
 from fourdvar.params import cmaq_config, input_defn, template_defn
-
-# parameters
+from fourdvar.uncertainty import convert_unc
 
 # filepath to save new prior file to
 save_path = input_defn.prior_file

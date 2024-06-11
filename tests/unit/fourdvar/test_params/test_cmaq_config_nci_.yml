@@ -46,7 +46,6 @@ fwd_stdout_log: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/fwd
 fwd_xfirst_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/XFIRST.<YYYYMMDD>'
 grid_cro_2d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRIDCRO2D_2'
 grid_dot_2d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRIDDOT2D_2'
-grid_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01'
 griddesc: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRIDDESC'
 gridname: o
 ha_rhoj_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc'
@@ -65,7 +64,9 @@ kzmin: false
 last_grid_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/CGRID.<YYYYMMDD>.nc'
 layerfile: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METCRO3D_2'
 maxsync: 600
-mcip_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01'
+mcip_grid_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01'
+mcip_met_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01'
+mcip_output_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/'
 met_bdy_3d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METBDY3D_2'
 met_cro_2d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METCRO2D_2'
 met_cro_3d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METCRO3D_2'
@@ -144,5 +145,4 @@ wipeout_fwd_list:
 - '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/RJ_1.<YYYYMMDD>.nc'
 - '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/RJ_2.<YYYYMMDD>.nc'
 - '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/fwd_stdout.log'
-wrf_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip'
 xj_data: /scratch/q90/sa6589/test_Sougol/run_cmaq/JTABLE_<YYYYDDD>

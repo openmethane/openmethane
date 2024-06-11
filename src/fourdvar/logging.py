@@ -17,7 +17,7 @@
 import logging
 import os
 
-from fourdvar.params.root_path_defn import root_path, store_path
+from fourdvar.params.root_path_defn import store_path
 
 
 def setup_logging(verbose: bool = False, reset_logfile: bool = True):
@@ -42,9 +42,7 @@ def setup_logging(verbose: bool = False, reset_logfile: bool = True):
     # to_file_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     to_file_format = "%(name)s - %(levelname)s - %(message)s"
 
-    project_name = os.path.split(root_path)[1]
-
-    base_logger = logging.getLogger(project_name)
+    base_logger = logging.getLogger("fourdvar")
     base_logger.setLevel(logging.DEBUG)
 
     to_screen_handle = logging.StreamHandler()

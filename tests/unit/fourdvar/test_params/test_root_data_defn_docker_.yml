@@ -1,2 +1,1 @@
-root_path: '{HOME}/openmethane-beta/py4dvar'
-store_path: /opt/project/openmethane/data
+store_path: /opt/project/openmethane/openmethane/data
