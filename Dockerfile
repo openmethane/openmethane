@@ -59,7 +59,8 @@ RUN apt-get update && \
     apt-get install -y csh psutils && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/project/openmethane
+# /opt/project is chosen because pycharm will automatically mount to this directory
+WORKDIR /opt/project
 
 # Copy across the virtual environment
 COPY --from=builder /opt/venv /opt/venv
@@ -72,7 +73,7 @@ COPY --from=ghcr.io/openmethane/cmaq:pr-6 /opt/cmaq /opt/cmaq
 
 # Copy in the rest of the project
 # For testing it might be easier to mount $(PWD):/opt/project so that local changes are reflected in the container
-COPY . /opt/project/openmethane
+COPY . /opt/project
 
 # Install the local package in editable mode
 RUN pip install -e .

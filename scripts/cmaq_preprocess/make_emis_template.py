@@ -77,19 +77,11 @@ def read_metcro(
         attrs = {}
         for a in ATTR_NAMES:
             val = met_croNC.getncattr(a)
-            if a == "SDATE":
-                attrs[a] = np.int32(-635)
-            elif a == "NVARS":
+            if a == "NVARS":
                 attrs[a] = np.int32(len(spec_list))
-            elif a == "TSTEP":
-                attrs[a] = np.int32(100)
             elif a == "VAR-LIST":
                 var_string = "".join([f"{k:<16}" for k in spec_list])
                 attrs[a] = var_string
-            elif a == "GDNAM":
-                attrs[a] = "{:<16}".format("Aus")
-            elif a == "VGLVLS":
-                attrs[a] = val
             else:
                 attrs[a] = val
         dimension_sizes = {"VAR": N_VARIABLES, "LAY": NZ, "TSTEP": 25, "DATE-TIME": 2}
@@ -135,7 +127,7 @@ def build_tflag_data(current: datetime.date, shape: tuple[int, int, int]) -> NDA
 
     # hourly timestep including last timeslice to 0
     # integer of form: HHMM
-    hours = (np.arange(shape[0]) % HOURS_IN_DAY) * 100
+    hours = (np.arange(shape[0]) % HOURS_IN_DAY) * 10000
     times[:, :, 1] = hours[:, np.newaxis]
     return times
 
