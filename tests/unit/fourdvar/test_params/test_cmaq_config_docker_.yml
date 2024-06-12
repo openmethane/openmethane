@@ -4,7 +4,7 @@ aerovis_file: /opt/project/data/run-cmaq/output/AEROVIS.<YYYYMMDD>.nc
 avg_conc_file: /opt/project/data/run-cmaq/output/ACONC.<YYYYMMDD>.nc
 avg_conc_out_lays: template
 avg_conc_spcs: CH4
-bcon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/template_bcon_profile_CH4only_d01.nc'
+bcon_file: /opt/openmethane/setup_wrf/data/cmaq/template_bcon_profile_CH4only_d01.nc
 bwd_appl: ADJOINT_BWD
 bwd_logfile: /opt/project/data/run-cmaq/output/bwd_CH4_only.<YYYYMMDD>.log
 bwd_prog: /opt/cmaq/cmaq_adj/BLD_bwd_CH4only/ADJOINT_BWD
@@ -49,7 +49,7 @@ griddesc: /opt/openmethane/setup_wrf/data/mcip/<YYYY-MM-DD>/d01/GRIDDESC
 gridname: o
 ha_rhoj_chk: /opt/project/data/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc
 hadv_chk: /opt/project/data/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc
-icon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/template_icon_profile_CH4only_d01.nc'
+icon_file: /opt/openmethane/setup_wrf/data/cmaq/template_icon_profile_CH4only_d01.nc
 ioapi_logging: false
 ipr1_file: /opt/project/data/run-cmaq/output/PA_1.<YYYYMMDD>.nc
 ipr2_file: /opt/project/data/run-cmaq/output/PA_2.<YYYYMMDD>.nc
