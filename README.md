@@ -14,13 +14,15 @@ make virtual-environment
 NOTE: The CMAQ-adj model and the benchmark data are not included in the GitHub repository. 
 You will need to obtain these from another source.
 
-
-
 ## Configuration
 
 The configuration is defined in `fourdvar.params` and the modules within that package.
 The configuration is defined at import time.
 A bulk of parameters are static, but some are dynamic and can be set via environment variables.
+
+Some sensitive environment parameters are required to be set in a `.env` file.
+These environment variables aren't checked into the repository for security reasons.
+A useful starting point for this `.env` file is the `.env.example` file.
 
 See `docs/parameters.md` for the full list of parameters that can be configured via environment variables.
 

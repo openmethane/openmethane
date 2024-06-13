@@ -26,3 +26,15 @@ For values with a default of N/A an exception will be raised if
 the environment variable is not defined.
 
 `{CMAQ_BASE}` represents the directory that contains the CMAQ output (`$STORE_PATH/run-cmaq`).
+
+
+## EarthData Login
+
+The `fetch.py` script requires an EarthData login to download the TropOMI data
+with permission to access the GES DISC data archive.
+A tutorial for creating an account and accepting the licence agreements is available
+[here](https://disc.gsfc.nasa.gov/earthdata-login).
+
+Once you have a login, 
+the `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables can added to the `.env` file.
+These will be used by the `fetch.py` script to authenticate with the GES DISC data archive.
