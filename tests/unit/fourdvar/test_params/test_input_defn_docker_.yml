@@ -1,3 +1,3 @@
 inc_icon: false
-obs_file: /opt/project/openmethane/openmethane/data/input/test_obs.pic.gz
-prior_file: /opt/project/openmethane/openmethane/data/input/prior.nc
+obs_file: /opt/project/data/input/test_obs.pic.gz
+prior_file: /opt/project/data/input/prior.nc

@@ -754,7 +754,22 @@ io = ["cftime", "fsspec", "h5netcdf", "netCDF4", "pooch", "pydap", "scipy", "zar
 parallel = ["dask[complete]"]
 viz = ["matplotlib", "nc-time-axis", "seaborn"]
 
+[[package]]
+name = "xarray-datatree"
+version = "0.0.14"
+description = "Hierarchical tree-like data structures for xarray"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "xarray-datatree-0.0.14.tar.gz", hash = "sha256:26169af35b0df0d17652e229cef210decf0711dd88e33419142edc6674113af4"},
+    {file = "xarray_datatree-0.0.14-py3-none-any.whl", hash = "sha256:07f5d0d9a03a3220d732e1c764ee60f2c5110f884a290b2af371f92952379166"},
+]
+
+[package.dependencies]
+packaging = "*"
+xarray = ">=2023.12.0"
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "6ebcac4e9c4f387e0af8ad366c68b04545f9ea041da0f7fd2cfbc3b4f97b3690"
+content-hash = "37c05fcda907ec707e4d1ee9019d1d4246185b5d0fcadc9b8249264e4a79ae25"

@@ -14,7 +14,7 @@ def _squeeze_strs(values: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def test_make_emissions_templates(test_data_dir, tmpdir, file_regression, data_regression):
+def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset):
     data_dir = tmpdir.mkdir("data")
     make_emissions_templates(
         prior_filename=str(test_data_dir / "prior" / "out-om-domain-info.nc"),
@@ -36,7 +36,7 @@ def test_make_emissions_templates(test_data_dir, tmpdir, file_regression, data_r
     # [integer of form YYYYDDD, HHMM]
     # Not sure who makes this up...
     assert (ds["TFLAG"].sel(TSTEP=0).values == [2022182, 0]).all()
-    assert (ds["TFLAG"].sel(TSTEP=1).values == [2022182, 100]).all()
+    assert (ds["TFLAG"].sel(TSTEP=1).values == [2022182, 10000]).all()
     assert (ds["TFLAG"].sel(TSTEP=-1).values == [2022183, 0]).all()
 
     # Check Methane emissions
@@ -51,4 +51,4 @@ def test_make_emissions_templates(test_data_dir, tmpdir, file_regression, data_r
     # This is a bit annoying as it probably doesn't test much
     # assert ds["CH4"].sum()
 
-    file_regression.check(open(expected_file, "rb").read(), binary=True, extension=".nc")
+    compare_dataset(ds)

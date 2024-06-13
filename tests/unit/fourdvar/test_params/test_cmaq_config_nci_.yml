@@ -5,7 +5,6 @@ avg_conc_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/ACON
 avg_conc_out_lays: template
 avg_conc_spcs: CH4
 bcon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/BCON.d01.o.CH4only.nc'
-bcon_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/'
 bwd_appl: ADJOINT_BWD
 bwd_logfile: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/bwd_CH4_only.<YYYYMMDD>.log'
 bwd_prog: /home/563/sa6589/cmaq_adj/BLD_bwd_CH4only/ADJOINT_BWD
@@ -14,7 +13,7 @@ bwd_xfirst_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/XF
 chem_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/CHEM_CHK.<YYYYMMDD>.nc'
 chk_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt'
 cmaq_base: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq'
-cmd_preamble: 'unlimit; '
+cmd_preamble: ''
 cmd_shell: /bin/csh
 conc_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/CONC.<YYYYMMDD>.nc'
 conc_out_lays: template
@@ -51,7 +50,6 @@ gridname: o
 ha_rhoj_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc'
 hadv_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc'
 icon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/ICON.d01.o.CH4only.nc'
-icon_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/'
 ioapi_logging: false
 ipr1_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/PA_1.<YYYYMMDD>.nc'
 ipr2_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/PA_2.<YYYYMMDD>.nc'

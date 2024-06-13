@@ -17,18 +17,27 @@ from fourdvar.params import (
 targets = pytest.mark.parametrize("target", ("nci", "docker"))
 
 
-def target_environment(monkeypatch, target: str):
-    monkeypatch.setenv("HOME", "{HOME}")
-    monkeypatch.setenv("TARGET", target)
+@pytest.fixture
+def target_environment(monkeypatch):
+    initial_env = dict(os.environ)
 
-    reload(_env)
-    reload(root_path_defn)
-    reload(input_defn)
-    reload(date_defn)
-    reload(archive_defn)
-    reload(template_defn)
-    reload(data_access)
-    reload(cmaq_config)
+    def run(target: str):
+        monkeypatch.setenv("HOME", "{HOME}")
+        monkeypatch.setenv("TARGET", target)
+
+        reload(_env)
+        reload(root_path_defn)
+        reload(input_defn)
+        reload(date_defn)
+        reload(archive_defn)
+        reload(template_defn)
+        reload(data_access)
+        reload(cmaq_config)
+
+    yield run
+
+    os.environ.clear()
+    os.environ.update(initial_env)
 
 
 def _extract_params(module, attributes):
@@ -36,29 +45,29 @@ def _extract_params(module, attributes):
 
 
 @targets
-def test_root_data_defn(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_root_data_defn(data_regression, target_environment, target):
+    target_environment(target)
 
     data_regression.check(_extract_params(root_path_defn, ["store_path"]))
 
 
 @targets
-def test_input_defn(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_input_defn(data_regression, target_environment, target):
+    target_environment(target)
 
     data_regression.check(_extract_params(input_defn, ["prior_file", "obs_file", "inc_icon"]))
 
 
 @targets
-def test_date_defn(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_date_defn(data_regression, target_environment, target):
+    target_environment(target)
 
     data_regression.check(_extract_params(date_defn, ["start_date", "end_date"]))
 
 
 @targets
-def test_archive_defn(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_archive_defn(data_regression, target_environment, target):
+    target_environment(target)
 
     data_regression.check(
         _extract_params(
@@ -84,8 +93,8 @@ def test_archive_defn(data_regression, monkeypatch, target):
 
 
 @targets
-def test_template_defn(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_template_defn(data_regression, target_environment, target):
+    target_environment(target)
 
     data_regression.check(
         _extract_params(
@@ -105,8 +114,8 @@ def test_template_defn(data_regression, monkeypatch, target):
 
 
 @targets
-def test_data_access(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_data_access(data_regression, target_environment, target):
+    target_environment(target)
 
     data_regression.check(
         _extract_params(
@@ -120,8 +129,8 @@ def test_data_access(data_regression, monkeypatch, target):
 
 
 @targets
-def test_cmaq_config(data_regression, monkeypatch, target):
-    target_environment(monkeypatch, target)
+def test_cmaq_config(data_regression, target_environment, target):
+    target_environment(target)
 
     # Extract attributes from module
     # There are alot of attributes in cmaq_config,

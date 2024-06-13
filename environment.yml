@@ -1,0 +1,12 @@
+name: openmethane
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - hdf5=1.14.3
+  - mpich=4.2.1
+  - netcdf-fortran=4.6.1
+  - gfortran=10.4
+  - nco
+  - python=3.11
+  - gdb

@@ -2,16 +2,27 @@
 
 The following environment variables are configurable:
 
-| Variable         | Type              | Description                           | Default     |
-|------------------|-------------------|---------------------------------------|-------------|
-| TARGET           | str               | Defines the target environment        | nci         |
-| START_DATE       | date (YYYY-MM-DD) | Start date of the run                 | 2022-07-01  |
-| END_DATE         | date (YYYY-MM-DD) | End date of the run                   | 2022-07-30  |
-| STORE_PATH       | str               | Full path to the branch-specific data |             |
-| EXPERIMENT       | str               | Name of the experiment being run      | 202207_test |
-| PRIOR_PATH       | str               | Name of the experiment being run      | N/A         |
-| MCIP_OUTPUT_PATH | str               | Path to the root MCIP directory       | N/A         |
+| Variable         | Type              | Description                                 | Default                                    |
+|------------------|-------------------|---------------------------------------------|--------------------------------------------|
+| TARGET           | str               | Defines the target environment              | nci                                        |
+| START_DATE       | date (YYYY-MM-DD) | Start date of the run                       | 2022-07-01                                 |
+| END_DATE         | date (YYYY-MM-DD) | End date of the run                         | 2022-07-30                                 |
+| STORE_PATH       | str               | Full path to the branch-specific data       |                                            |
+| EXPERIMENT       | str               | Name of the experiment being run            | 202207_test                                |
+| GRID_NAME        | str               | Name of the grid being used                 | openmethane                                |
+| PRIOR_PATH       | str               | Path to the concentration prior file        | N/A                                        |
+| MCIP_OUTPUT_PATH | str               | Path to the root MCIP directory             | N/A                                        |
+| ICON_FILE        | str               | Path to ICON file generated in setup_wrf    | N/A                                        |
+| BCON_FILE        | str               | Path to BCON file generated in setup_wrf    | N/A                                        |
+| EMIS_FILE        | str               | Path to emissions files                     | {CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc |
+| FORCE_FILE       | str               | Path to the template forcing file           | {CMAQ_BASE}/force/ADJ_FORCE.<YYYYMMDD>.nc  |
+| ADJOINT_FWD      | str               | Path to forward adjoint executable          | N/A                                        |
+| ADJOINT_BWD      | str               | Path to backward adjoint executable         | N/A                                        |
+| NUM_PROC_COLS    | int               | Number of processors to use for the columns | 1                                          |
+| NUM_PROC_ROW     | int               | Number of processors to use for the rows    | 1                                          |
 
 
 For values with a default of N/A an exception will be raised if
 the environment variable is not defined.
+
+`{CMAQ_BASE}` represents the directory that contains the CMAQ output (`$STORE_PATH/run-cmaq`).

@@ -18,6 +18,7 @@ import logging
 import os
 import shutil
 import subprocess
+from typing import Any
 
 import netCDF4 as ncf
 import numpy as np
@@ -48,7 +49,7 @@ def validate(filepath, dataset):
     return True
 
 
-def create_from_template(source, dest, var_change={}, date=None, overwrite=True):
+def create_from_template(source, dest, var_change=None, date=None, overwrite=True):
     """Create a new copy of a netCDF file, with new variable data.
     input: string (path/to/old.ncf), string (path/to/new.ncf), dict, date obj, boolean
     output: None.
@@ -64,6 +65,9 @@ def create_from_template(source, dest, var_change={}, date=None, overwrite=True)
 
     designed for IOAPI compliant netCDF files, other netCDF files may not work.
     """
+
+    if var_change is None:
+        var_change = {}
     assert validate(source, var_change), "changes to template are invalid"
     logger.debug(f"copy {source} to {dest}.")
     shutil.copyfile(source, dest)
@@ -128,7 +132,7 @@ def get_all_attr(filepath):
 try_ncks = True
 
 
-def copy_compress(source, dest):
+def copy_compress(source, dest) -> None:
     """Create a compressed copy of a netCDF file.
     input: string (path/src.ncf), string (path/dst.ncf)
     output: None.
@@ -151,9 +155,10 @@ def copy_compress(source, dest):
             try_ncks = False
             msg = "failed to copy_compress netCDF file with ncks, "
             msg += "switching to uncompressed copying."
-            logger.warn(msg)
+            logger.warning(msg)
         else:
             logger.debug(copy_msg)
+            return
 
     # if code reaches here ncks-copy failed or wasn't tried.
     shutil.copyfile(source, dest)
@@ -214,7 +219,15 @@ def match_attr(src1, src2, attrlist=None):
     return True
 
 
-def create(path=None, parent=None, name=None, attr={}, dim={}, var={}, is_root=True):
+def create(
+    path: str | None=None,
+    parent=None,
+    name: str | None = None,
+    attr: dict[str, Any] | None = None,
+    dim: dict[str, Any] | None = None,
+    var: dict[str, Any] | None = None,
+    is_root=True,
+):
     """Create a new netCDF group or file.
     input: string, ncf obj, string, dict, dict, dict, bool
     output: ncf.Dataset obj.
@@ -229,6 +242,14 @@ def create(path=None, parent=None, name=None, attr={}, dim={}, var={}, is_root=T
 
            If namespace clash this function will overwrite existing files!
     """
+
+    if attr is None:
+        attr = {}
+    if dim is None:
+        dim = {}
+    if var is None:
+        var = {}
+
     if is_root is True:
         assert path is not None, "root group must have a path"
         grp = ncf.Dataset(path, "w")

@@ -25,11 +25,9 @@ from fourdvar.params.root_path_defn import store_path
 use_jobfs = False
 
 # No. of processors per column
-# npcol = 1
-npcol = 6  # pert
+npcol = env.int("NUM_PROC_COLS", 1)  # pert
 # No. of processors per row
-# nprow = 1
-nprow = 8  # pert
+nprow = env.int("NUM_PROC_ROWS", 1)  # pert
 # note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 # extra ioapi write logging
@@ -117,12 +115,10 @@ else:
 mcip_met_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
-bcon_path = os.path.join(store_path, "input/")
-icon_path = os.path.join(store_path, "input/")
 emis_path = os.path.join(cmaq_base, "emissions")
 # horizontal grid definition file
 griddesc = os.path.join(mcip_grid_path, "GRIDDESC")
-gridname = "o"
+gridname = env.str("GRID_NAME", "openmethane")
 # gridname = 'W'
 
 # logfile
@@ -149,10 +145,10 @@ fwd_xfirst_file = os.path.join(output_path, "XFIRST.<YYYYMMDD>")
 bwd_xfirst_file = os.path.join(output_path, "XFIRST.bwd.<YYYYMMDD>")
 
 # input files
-icon_file = os.path.join(icon_path, "ICON.d01.o.CH4only.nc")
-bcon_file = os.path.join(bcon_path, "BCON.d01.o.CH4only.nc")
-emis_file = os.path.join(emis_path, "emis.<YYYY-MM-DD>.nc")  # Shak
-force_file = os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc")
+icon_file = env.str("ICON_FILE")
+bcon_file = env.str("BCON_FILE")
+emis_file = env.str("EMIS_FILE", os.path.join(emis_path, "emis.<YYYY-MM-DD>.nc"))
+force_file = env.str("FORCE_FILE", os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc"))
 
 
 _MCIP_DOMAIN = os.environ.get("MCIP_DOMAIN", "2")
@@ -244,11 +240,11 @@ wipeout_bwd_list = [
 ]
 
 # drivers
-fwd_prog = os.path.join("/home/563/sa6589/cmaq_adj/BLD_fwd_CH4only/", "ADJOINT_FWD")
-bwd_prog = os.path.join("/home/563/sa6589/cmaq_adj/BLD_bwd_CH4only/", "ADJOINT_BWD")
+fwd_prog = env.str("ADJOINT_FWD")
+bwd_prog = env.str("ADJOINT_BWD")
 
 # shell used to call drivers
 cmd_shell = "/bin/csh"
 
 # shell input added before running drivers
-cmd_preamble = "unlimit; "
+cmd_preamble = ""

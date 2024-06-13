@@ -1,8 +1,8 @@
-conc: /opt/project/openmethane/openmethane/data/templates/conc_template.nc
-diurnal: /opt/project/openmethane/openmethane/data/templates/diurnal.nc
-emis: /opt/project/openmethane/openmethane/data/templates/record/emis_record_<YYYY-MM-DD>.nc
-force: /opt/project/openmethane/openmethane/data/templates/force_template.nc
-icon: /opt/project/openmethane/openmethane/data/templates/record/icon_record.nc
-sense_conc: /opt/project/openmethane/openmethane/data/templates/sense_conc_template.nc
-sense_emis: /opt/project/openmethane/openmethane/data/templates/sense_emis_template.nc
-template_path: /opt/project/openmethane/openmethane/data/templates
+conc: /opt/project/data/templates/conc_template.nc
+diurnal: /opt/project/data/templates/diurnal.nc
+emis: /opt/project/data/templates/record/emis_record_<YYYY-MM-DD>.nc
+force: /opt/project/data/templates/force_template.nc
+icon: /opt/project/data/templates/record/icon_record.nc
+sense_conc: /opt/project/data/templates/sense_conc_template.nc
+sense_emis: /opt/project/data/templates/sense_emis_template.nc
+template_path: /opt/project/data/templates
