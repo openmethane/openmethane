@@ -1,9 +1,8 @@
-
 from datatree import open_datatree
 from scripts.cmaq_preprocess.make_prior import make_prior
 
 
-def test_make_prior(test_data_dir, tmpdir, file_regression, emission_template):
+def test_make_prior(test_data_dir, tmpdir, compare_dataset, emission_template):
     expected_file = tmpdir / "prior.nc"
     make_prior(save_path=str(expected_file), emis_template=emission_template)
 
@@ -11,11 +10,11 @@ def test_make_prior(test_data_dir, tmpdir, file_regression, emission_template):
 
     ds = open_datatree(expected_file)
 
-    assert ds.groups == ('/', '/emis', '/bcon')
+    assert ds.groups == ("/", "/emis", "/bcon")
 
-    assert ds["emis"].dims == {'TSTEP': 1, 'LAY': 1, 'ROW': 5, 'COL': 5}
+    assert ds["emis"].dims == {"TSTEP": 1, "LAY": 1, "ROW": 5, "COL": 5}
 
     # TODO: Check if this makes sense
-    assert ds["bcon"].dims == {'TSTEP': 0, 'BCON': 8}
+    assert ds["bcon"].dims == {"TSTEP": 0, "BCON": 8}
 
-    file_regression.check(open(expected_file, "rb").read(), binary=True, extension=".nc")
+    compare_dataset(ds)

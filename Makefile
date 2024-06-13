@@ -18,3 +18,7 @@ ruff-fixes:  # Run ruff on the project
 .PHONY: test
 test:  ## Run the tests
 	poetry run python -m pytest -r a -v tests/unit tests/integration/cmaq_preprocess
+
+.PHONY: test-regen
+test-regen:  ## Regenerate the expected test data
+	poetry run python -m pytest -r a -v tests/unit tests/integration/cmaq_preprocess --force-regen

@@ -37,6 +37,11 @@ ruff = "^0.4.6"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
 [tool.ruff]
 src = ["src"]
 target-version = "py311"

@@ -16,10 +16,12 @@ from fourdvar.params import (
 
 targets = pytest.mark.parametrize("target", ("nci", "docker"))
 
+
 @pytest.fixture
 def target_environment(monkeypatch):
     initial_env = dict(os.environ)
-    def run( target: str):
+
+    def run(target: str):
         monkeypatch.setenv("HOME", "{HOME}")
         monkeypatch.setenv("TARGET", target)
 
@@ -92,7 +94,7 @@ def test_archive_defn(data_regression, target_environment, target):
 
 @targets
 def test_template_defn(data_regression, target_environment, target):
-    target_environment( target)
+    target_environment(target)
 
     data_regression.check(
         _extract_params(

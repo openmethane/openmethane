@@ -13,6 +13,4 @@ def emission_template(test_data_dir, tmpdir):
         emis_template=emis_template,
     )
 
-
     yield emis_template
-
