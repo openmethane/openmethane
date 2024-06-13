@@ -42,7 +42,7 @@ def copy_file(src_template: str, dest_template: str, date: datetime.date | None)
 
 setup_logging()
 
-# Copy the initial template emissions file into the input directory
+# Copy a template emissions file into the input directory
 emis_file = dt.replace_date(cmaq_config.emis_file, dt.start_date)
 copy_file(template.emis, cmaq_config.emis_file, dt.start_date)
 
@@ -97,11 +97,6 @@ cmaq_handle.run_bwd_single(dt.start_date, is_first=True)
 
 # create record for icon & emis files
 copy_file(cmaq_config.icon_file, template.icon, dt.start_date)
-
-# TODO: Check if this is intended. These files are already created via make_emis_template
-# Therefore this would overwrite subsequent emis files
-# for date in dt.get_datelist():
-#     copy(cmaq_config.emis_file, template.emis, date)
 
 # create template for conc, force & sense files
 # The template files don't have a date in their names
