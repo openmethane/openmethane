@@ -1,7 +1,7 @@
 """
 Download TropOMI data from the NASA GES DISC API
 
-Uses a bounding box to limit the required data
+Uses a bounding box to limit the required data.
 """
 
 import json
@@ -27,7 +27,8 @@ def create_session() -> requests.Session:
     Create a new requests session
 
     Creates the .netrc file with the Earthdata credentials if it does not exist.
-    Uses the Earthdata username and password if available in the environment variables.
+    Uses the EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables if available
+    to setup the required `~/.netrc` file.
     See [Data Access](https://disc.gsfc.nasa.gov/information/documents?title=Data%20Access)
     for more information about accessing NASA data.
 
