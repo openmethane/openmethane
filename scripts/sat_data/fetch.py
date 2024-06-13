@@ -1,31 +1,70 @@
+"""
+Download TropOMI data from the NASA GES DISC API
+
+Uses a bounding box to limit the required data
+"""
+
 import json
 import os
 import shutil
 import sys
+from pathlib import Path
 from time import sleep
+from typing import Any
 
-import certifi
 import click
 import dotenv
 import requests
-import urllib3
 
+# Load environment variables from a local .env file
 dotenv.load_dotenv()
 
-http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
 API_URL = "https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
-TOKEN=os.environ.get("EARTHDATA_TOKEN")
 
 
-def get_http_data(request):
-    hdrs = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": f"Bearer {TOKEN}"}
-    data = json.dumps(request)
-    r = http.request("POST", API_URL, body=data, headers=hdrs)
-    response = json.loads(r.data)
+def create_session() -> requests.Session:
+    """
+    Create a new requests session
+
+    Creates the .netrc file with the Earthdata credentials if it does not exist.
+    Uses the Earthdata username and password if available in the environment variables.
+    See [Data Access](https://disc.gsfc.nasa.gov/information/documents?title=Data%20Access)
+    for more information about accessing NASA data.
+
+    In the case where the `.netrc` file already exists,
+    users must add the required line manually.
+    """
+    session = requests.Session()
+
+    credentials_path = Path("~/.netrc").expanduser()
+    if not credentials_path.exists():
+        # Create the .netrc file with the Earthdata credentials
+        if not os.environ.get("EARTHDATA_USERNAME") or not os.environ.get("EARTHDATA_PASSWORD"):
+            print("EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing")
+            sys.exit(1)
+
+        print("Writing .netrc file")
+
+        with open(credentials_path, "a") as file:
+            file.write(
+                "machine urs.earthdata.nasa.gov login {} password {}".format(
+                    os.environ.get("EARTHDATA_USERNAME"), os.environ.get("EARTHDATA_PASSWORD")
+                )
+            )
+
+    return session
+
+
+def get_http_data(body: dict[str, Any], session: requests.Session):
+    hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
+    response = session.post(API_URL, json=body, headers=hdrs, timeout=30)
+    response.raise_for_status()
+
+    content = response.json()
     # Check for errors
-    if response["type"] == "jsonwsp/fault":
+    if content["type"] == "jsonwsp/fault":
         print("API Error: faulty request")
-    return response
+    return content
 
 
 @click.command()
@@ -50,13 +89,22 @@ def get_http_data(request):
     type=click.DateTime(),
     required=True,
 )
-def fetch_data(config_file, start, end):
+@click.option(
+    "-e",
+    "--end",
+    help="Datetime of end of the period to fetch",
+    type=click.DateTime(),
+    required=True,
+)
+@click.argument("output", type=click.Path(file_okay=False, dir_okay=True, writable=True))
+def fetch_data(config_file, start, end, output):
     """Fetch TropOMI data
 
     Data from the TropOMI instrument on the Sentinel-5P satellite
     is available from the NASA GES DISC API.
     """
     config = json.load(config_file)
+    session = create_session()
 
     initData = {
         "methodname": "subset",
@@ -74,7 +122,7 @@ def fetch_data(config_file, start, end):
         "version": "1.0",
     }
 
-    response = get_http_data(initData)
+    response = get_http_data(initData, session)
     myJobId = response["result"]["jobId"]
 
     # Construct JSON WSP request for API method: GetStatus
@@ -87,7 +135,7 @@ def fetch_data(config_file, start, end):
 
     while response["result"]["Status"] in ["Accepted", "Running"]:
         sleep(5)
-        response = get_http_data(status_request)
+        response = get_http_data(status_request, session)
         status = response["result"]["Status"]
         percent = response["result"]["PercentCompleted"]
         print("Job status: %s (%d%c complete)" % (status, percent, "%"))
@@ -112,7 +160,7 @@ def fetch_data(config_file, start, end):
     # Add the results from this batch to the list and increment the count
     results = []
     count = 0
-    response = get_http_data(results_request)
+    response = get_http_data(results_request, session)
     count = count + response["result"]["itemsPerPage"]
     results.extend(response["result"]["items"])
 
@@ -120,7 +168,7 @@ def fetch_data(config_file, start, end):
     total = response["result"]["totalResults"]
     while count < total:
         results_request["args"]["startIndex"] += batchsize
-        response = get_http_data(results_request)
+        response = get_http_data(results_request, session)
         count = count + response["result"]["itemsPerPage"]
         results.extend(response["result"]["items"])
 
@@ -146,14 +194,13 @@ def fetch_data(config_file, start, end):
     print("\nHTTP_services output:")
 
     # make directory to store outputs if it doesn't already exist
-    if not os.path.exists(config["data"]):
-        os.mkdir(config["data"])
+    os.makedirs(output, exist_ok=True)
 
     # TODO: change to ISO format
     start_str = start.strftime("%Y%m%d-%H-%M-%S")
     end_str = end.strftime("%Y%m%d-%H-%M-%S")
     boxString = "_".join(str(x) for x in config["box"])
-    outDirName = f'{config["data"]}/{start_str}_{end_str}_{boxString}'
+    outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
     isExist = os.path.exists(outDirName)
 
     if not isExist:
@@ -172,7 +219,7 @@ def fetch_data(config_file, start, end):
 
     for item in urls:
         URL = item["link"]
-        result = requests.get(URL, timeout=30)
+        result = session.get(URL, timeout=30)
         try:
             result.raise_for_status()
             outfn = os.path.join(outDirName, item["label"])
@@ -180,8 +227,7 @@ def fetch_data(config_file, start, end):
             f.write(result.content)
             f.close()
             print(outfn)
-        except Exception:
-            print(result)
+        except requests.exceptions.RequestException:
             print("Error! Status code is %d for this URL:\n%s" % (result.status_code, URL))
             print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")
 
