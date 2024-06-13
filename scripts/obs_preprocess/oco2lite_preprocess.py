@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+"""
+TODO: Verify if used in the project
+"""
+
 import glob
 import os
 
@@ -21,7 +25,7 @@ from netCDF4 import Dataset
 
 import fourdvar.util.file_handle as fh
 from fourdvar.params import input_defn
-from fourdvar.params.root_path_defn import share_path
+from fourdvar.params.root_path_defn import store_path
 from obs_preprocess.model_space import ModelSpace
 from obs_preprocess.obsOCO2_defn import ObsOCO2
 
@@ -32,7 +36,7 @@ from obs_preprocess.obsOCO2_defn import ObsOCO2
 #'pattern': source = file_pattern_string, use all files that match pattern
 source_type = "directory"
 
-source = os.path.join(share_path, "obs_oco2_data")
+source = os.path.join(store_path, "obs_oco2_data")
 
 output_file = input_defn.obs_file
 
