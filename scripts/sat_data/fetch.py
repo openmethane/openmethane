@@ -41,8 +41,10 @@ def create_session() -> requests.Session:
     if not credentials_path.exists():
         # Create the .netrc file with the Earthdata credentials
         if not os.environ.get("EARTHDATA_USERNAME") or not os.environ.get("EARTHDATA_PASSWORD"):
-            print("EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing")
-            sys.exit(1)
+            raise click.ClickException(
+                "EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing"
+            )
+            raise click.Abort()
 
         print("Writing .netrc file")
 
@@ -231,8 +233,8 @@ def fetch_data(config_file, start, end, output):
         except requests.exceptions.RequestException:
             print("Error! Status code is %d for this URL:\n%s" % (result.status_code, URL))
             print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")
+    print("Data fetched successfully!")
 
 
 if __name__ == "__main__":
     fetch_data()
-    print("Data fetched successfully!")

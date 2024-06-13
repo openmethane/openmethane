@@ -4,6 +4,9 @@ else
 	PYTHON_CMD := python
 endif
 
+
+TEST_DIRS := tests/unit tests/integration/cmaq_preprocess tests/integration/sat_data
+
 .PHONY: virtual-environment
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
 	poetry lock --no-update
@@ -39,11 +42,11 @@ run: build  ## Run the docker container locally
 
 .PHONY: test
 test:  ## Run the tests
-	$(PYTHON_CMD) -m pytest -r a -v tests/unit tests/integration/cmaq_preprocess
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v tests/unit tests/integration/cmaq_preprocess --force-regen
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)  --force-regen
 
 
 # Processing steps
