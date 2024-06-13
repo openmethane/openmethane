@@ -220,7 +220,7 @@ def match_attr(src1, src2, attrlist=None):
 
 
 def create(
-    path: str | None=None,
+    path: str | None = None,
     parent=None,
     name: str | None = None,
     attr: dict[str, Any] | None = None,
