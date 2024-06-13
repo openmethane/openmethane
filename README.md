@@ -36,12 +36,15 @@ Once you have logged into the GitHub Container Registry, you can build the docke
 	make build
 ```
 
-
 ## Configuration
 
 The configuration is defined in `fourdvar.params` and the modules within that package.
 The configuration is defined at import time.
 A bulk of parameters are static, but some are dynamic and can be set via environment variables.
+
+Some sensitive environment parameters are required to be set in a `.env` file.
+These environment variables aren't checked into the repository for security reasons.
+A useful starting point for this `.env` file is the `.env.example` file.
 
 See `docs/parameters.md` for the full list of parameters that can be configured via environment variables.
 
@@ -70,19 +73,24 @@ To run your first test case you will need to:
 	creates the prior estimate of the fluxes (and initial conditions if input_defn.inc_icon is True)
 	includes modifiable parameters at the start of the file with descriptions.
 
-2: go to obs_preprocess and run one of:
+2: fetch the TropOMI data:
+ - `scripts/sat_data/fetch.py -c scripts/sat_data/config.{grid}.json -s {start_date} -e {end_date} {output_dir}`
+	Downloads the TropOMI data for the specified date range and region.
+	Requires a EarthData login. See the script for more details about how to set this up.
+ 
+3: go to obs_preprocess and run one of:
  - `sample_point_preprocess.py`
 	creates a test set of instant, point source observations, with easy to edit values.
  - `sample_column_preprocess.py`
 	creates a test single vertical column observation, with easy to edit values.
 
-3: go to tests and run:
+4: go to tests and run:
  - `test_cost_verbose.py`
 	runs the cost function logic with a random perturbation in the prior.
  - test_grad_verbose.py`
 	runs the gradient function logic with a random perturbation in the prior.
 
-4: run the main code via `runscript.py`
+5: run the main code via `runscript.py`
 
 ## Running locally
 

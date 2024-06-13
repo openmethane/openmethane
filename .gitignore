@@ -21,9 +21,11 @@ venv
 # Build artifacts
 dist
 
-
 # Local run directory
 data
 
 # Generated during a CMAQ run
 N_SPC_EMIS.dat
+
+# Environment file with sensitive information
+.env
