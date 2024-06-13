@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import datetime
 import os
 
 import numpy as np
@@ -26,19 +26,33 @@ from fourdvar.logging import setup_logging
 from fourdvar.params import cmaq_config
 from fourdvar.util import cmaq_handle
 
+
+def copy_file(src_template: str, dest_template: str, date: datetime.date | None):
+    """
+    Copy a (potentially) templated file to another location
+
+    This additionally compresses the resulting file
+    """
+    src = dt.replace_date(src_template, date) if date else src_template
+    dest = dt.replace_date(dest_template, date) if date else dest_template
+
+    fh.ensure_path(os.path.dirname(dest))
+    ncf.copy_compress(src, dest)
+
+
 setup_logging()
 
+# Copy the initial template emissions file into the input directory
+emis_file = dt.replace_date(cmaq_config.emis_file, dt.start_date)
+copy_file(template.emis, cmaq_config.emis_file, dt.start_date)
+
 # define cmaq filenames for first day of model run.
-emis_file = dt.replace_date(template.emis, dt.start_date)
 icon_file = dt.replace_date(cmaq_config.icon_file, dt.start_date)
 conc_file = dt.replace_date(cmaq_config.conc_file, dt.start_date)
 force_file = dt.replace_date(cmaq_config.force_file, dt.start_date)
-sense_conc_file = dt.replace_date(cmaq_config.conc_sense_file, dt.start_date)
-sense_emis_file = dt.replace_date(cmaq_config.emis_sense_file, dt.start_date)
 
 # Prepare CMAQ run directories
 fh.ensure_path(os.path.dirname(force_file))
-fh.ensure_path(os.path.dirname(emis_file))
 fh.ensure_path(cmaq_config.chk_path)
 
 # redefine any cmaq_config variables dependent on template files
@@ -82,23 +96,19 @@ ncf.create_from_template(conc_file, force_file, force_data)
 cmaq_handle.run_bwd_single(dt.start_date, is_first=True)
 
 # create record for icon & emis files
-fh.ensure_path(os.path.dirname(template.icon))
-ncf.copy_compress(icon_file, template.icon)
-for date in dt.get_datelist():
-    emis_src = dt.replace_date(cmaq_config.emis_file, date)
-    emis_dst = dt.replace_date(template.emis, date)
-    fh.ensure_path(os.path.dirname(emis_dst))
-    ncf.copy_compress(emis_src, emis_dst)
+copy_file(cmaq_config.icon_file, template.icon, dt.start_date)
+
+# TODO: Check if this is intended. These files are already created via make_emis_template
+# Therefore this would overwrite subsequent emis files
+# for date in dt.get_datelist():
+#     copy(cmaq_config.emis_file, template.emis, date)
 
 # create template for conc, force & sense files
-fh.ensure_path(os.path.dirname(template.conc))
-fh.ensure_path(os.path.dirname(template.force))
-fh.ensure_path(os.path.dirname(template.sense_emis))
-fh.ensure_path(os.path.dirname(template.sense_conc))
-ncf.copy_compress(conc_file, template.conc)
-ncf.copy_compress(force_file, template.force)
-ncf.copy_compress(sense_emis_file, template.sense_emis)
-ncf.copy_compress(sense_conc_file, template.sense_conc)
+# The template files don't have a date in their names
+copy_file(conc_file, template.conc, None)
+copy_file(force_file, template.force, None)
+copy_file(cmaq_config.emis_sense_file, template.sense_emis, dt.start_date)
+copy_file(cmaq_config.conc_sense_file, template.sense_conc, dt.start_date)
 
 # clean up files created by cmaq
 cmaq_handle.wipeout_fwd()

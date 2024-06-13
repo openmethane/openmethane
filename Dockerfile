@@ -56,7 +56,7 @@ ENV LD_LIBRARY_PATH="/opt/venv/lib:${LD_LIBRARY_PATH}"
 ENV TARGET=docker
 
 RUN apt-get update && \
-    apt-get install -y csh psutils && \
+    apt-get install -y csh make nano && \
     rm -rf /var/lib/apt/lists/*
 
 # /opt/project is chosen because pycharm will automatically mount to this directory
@@ -71,11 +71,15 @@ COPY --from=builder /opt/venv /opt/venv
 # Otherwise the CI will be broken for main
 COPY --from=ghcr.io/openmethane/cmaq:pr-6 /opt/cmaq /opt/cmaq
 
+# Install the local package in editable mode
+# Requires scaffolding the src directories
+COPY pyproject.toml poetry.lock README.md ./
+RUN mkdir -p src/fourdvar src/obs_preprocess && touch src/fourdvar/__init__.py src/obs_preprocess/__init__.py
+RUN pip install -e .
+
 # Copy in the rest of the project
 # For testing it might be easier to mount $(PWD):/opt/project so that local changes are reflected in the container
 COPY . /opt/project
 
-# Install the local package in editable mode
-RUN pip install -e .
 
 CMD ["/bin/bash"]
