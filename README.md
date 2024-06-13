@@ -62,3 +62,43 @@ To run your first test case you will need to:
 	runs the gradient function logic with a random perturbation in the prior.
 
 4: run the main code via `runscript.py`
+
+## Running locally
+
+For local testing and development, we recommend that the docker container is used.
+
+
+The docker container assumes that the openmethane-prior and setup_wrf repositories have been cloned
+locally (as `../openmethane-prior` and `../setup_wrf` respectively).
+There are artifacts from these repos that are required to be run before running the adjoint model.
+
+TODO: Document what steps are required
+
+The docker container can be built and run with:
+
+```shell
+	make run
+```
+
+This will drop you into a shell in the docker container.
+From here you can run the scripts in the order above,
+or use the following make commands to run the scripts in the correct order:
+
+```shell
+	make prepare-templates
+```
+
+### PyCharm
+
+Pycharm provides some support for using a 
+[remote interpreter](https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html) 
+in a docker container.
+This feature is only available for PyCharm Professional.
+
+The volumes may need to be adjusted to match the local paths for the openmethane-prior and setup_wrf repositories
+as described above.
+This will create a new docker container when running the scripts or tests.
+
+This can be a bit flakey in PyCharm. 
+Similar functionality can be achieved with VSCode in a likely more stable manner.
+

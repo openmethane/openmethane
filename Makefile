@@ -48,8 +48,8 @@ test-regen:  ## Regenerate the expected test data
 
 # Processing steps
 
-.PHONY: prepare
-prepare:  ## Preprare the template files for a CMAQ run
+.PHONY: prepare-templates
+prepare-templates:  ## Preprare the template files for a CMAQ run
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_emis_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_prior.py
