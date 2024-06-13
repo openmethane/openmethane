@@ -232,7 +232,11 @@ def fetch_data(config_file, start, end, output):
             print(outfn)
         except requests.exceptions.RequestException:
             print("Error! Status code is %d for this URL:\n%s" % (result.status_code, URL))
+            if result.status_code == 401:
+                print("Unauthorised: Check your Earthdata credentials in the ~/.netrc file")
             print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")
+
+            # TODO: decide what to do if a single file fails to download
     print("Data fetched successfully!")
 
 
