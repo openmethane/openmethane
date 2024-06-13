@@ -36,7 +36,7 @@ def test_make_emissions_templates(test_data_dir, tmpdir, file_regression, data_r
     # [integer of form YYYYDDD, HHMM]
     # Not sure who makes this up...
     assert (ds["TFLAG"].sel(TSTEP=0).values == [2022182, 0]).all()
-    assert (ds["TFLAG"].sel(TSTEP=1).values == [2022182, 100]).all()
+    assert (ds["TFLAG"].sel(TSTEP=1).values == [2022182, 10000]).all()
     assert (ds["TFLAG"].sel(TSTEP=-1).values == [2022183, 0]).all()
 
     # Check Methane emissions
