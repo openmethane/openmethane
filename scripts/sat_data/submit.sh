@@ -1,4 +1,5 @@
 #!/bin/bash
+# """
 # submit.sh
 #
 #
@@ -17,14 +18,12 @@
 # limitations under the License.
 #
 #PBS -P q90
-#PBS -q normal
-#PBS -N obs_preproc
-#PBS -l walltime=24:00:00,mem=128GB
-#PBS -l ncpus=48
+#PBS -q copyq
+#PBS -N tropomi_download
+#PBS -l walltime=10:00:00,mem=32GB
+#PBS -l storage=gdata/sx70+gdata/hh5+gdata/ua8+gdata/ub4
+#PBS -l ncpus=1
 #PBS -l wd
-cd ~/openmethane-beta/py4dvar/obs_preprocess
-source ../load_p4d_modules.sh
-# replace previous line with whatever you source to run py4dvar
-
-#python3 restart_script.py
-python3 tropomi_methane_preprocess.py
+module use /g/data3/hh5/public/modules
+module load conda/analysis3
+python3 fetch.py
