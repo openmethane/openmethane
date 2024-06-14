@@ -48,9 +48,7 @@ test:  ## Run the tests
 test-regen:  ## Regenerate the expected test data
 	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)  --force-regen
 
-
 # Processing steps
-
 .PHONY: prepare-templates
 prepare-templates:  ## Preprare the template files for a CMAQ run
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_emis_template.py
