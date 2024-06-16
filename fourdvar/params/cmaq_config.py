@@ -108,8 +108,8 @@ else:
 mcip_path = os.path.join( wrf_path, '<YYYY-MM-DD>','d01' )
 grid_path = os.path.join(  wrf_path, '<YYYY-MM-DD>','d01' )
 jproc_path = os.path.join( '/scratch/q90/sa6589/test_Sougol/run_cmaq' )#Sougol
-bcon_path = os.path.join( store_path, 'input/')
-icon_path = os.path.join( store_path, 'input/')
+bcon_path = os.path.join( store_path, 'cmaq/<YYYY-MM-DD>/d01')
+icon_path = os.path.join( store_path, 'cmaq/<YYYY-MM-DD>/d01')
 emis_path = os.path.join(cmaq_base, 'emissions' )
 #horizontal grid definition file
 griddesc = os.path.join( grid_path, 'GRIDDESC' )
