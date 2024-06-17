@@ -10,9 +10,9 @@
 # """
 #
 #PBS -P q90
-#PBS -q hugemem
+#PBS -q express
 #PBS -N test_grad
-#PBS -l walltime=48:00:00,mem=999GB
+#PBS -l walltime=24:00:00,mem=128GB
 #PBS -l ncpus=48
 #PBS -l wd
 ####PBS -L storage=scratch/q90
@@ -20,4 +20,4 @@ source ../load_p4d_modules.sh
 # replace previous line with whatever you source to run py4dvar
 
 #python3 restart_script.py
-python3 test_grad_finite_diff.py
+python3 test_grad_step.py

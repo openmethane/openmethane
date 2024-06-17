@@ -28,7 +28,7 @@ def get_unit_convert_emis():
     output: dict ('units.<YYYYMMDD>': np.ndarray( shape_of( template.sense_emis ) )
     
     notes: SensitivityData.emis units = CF/(ppm/s)
-           PhysicalAdjointData.emis units = CF/(mol/(s*m^2))
+           PhysicalAdjointData.emis units = CF/(mol/(s))
     """
     global unit_key
     
@@ -53,6 +53,10 @@ def get_unit_convert_emis():
     for date in dt.get_datelist():
         met_file = dt.replace_date( cmaq_config.met_cro_3d, date )
         #slice off any extra layers above area of interest
+        xcell = ncf.get_attr( met_file, 'XCELL' )
+        ycell = ncf.get_attr( met_file, 'YCELL' )
+        cell_area = float(xcell*ycell)
+
         rhoj = ncf.get_variable( met_file, 'DENSA_J' )[ :, :len( lay_thick ), ... ]
         #assert timesteps are compatible
         assert (target_shape[0]-1) >= (rhoj.shape[0]-1), 'incompatible timesteps'
@@ -64,7 +68,7 @@ def get_unit_convert_emis():
             frac = float(2*r+1) / float(2*reps)
             rhoj_interp[r:-1:reps,...] = (1-frac)*rhoj[:-1,...] + frac*rhoj[1:,...]
         rhoj_interp[-1,...] = rhoj[-1,...]
-        unit_array = (ppm_scale*kg_scale*mwair) / (rhoj_interp*lay_thick)
+        unit_array = (ppm_scale*kg_scale*mwair) / (rhoj_interp*lay_thick)/cell_area
         
         day_label = dt.replace_date( unit_key, date )
         unit_dict[ day_label ] = unit_array
@@ -153,7 +157,7 @@ def map_sense( sensitivity ):
         emis_unit = unit_convert_emis[ dt.replace_date( unit_key, date ) ]
         bcon_unit = unit_convert_bcon[ dt.replace_date( unit_key, date ) ]
         for spc in PhysicalAdjointData.spcs:
-            sense_arr_emis = (sense_data_dict[ spc ] * emis_unit)/cell_area # really a unit conversion 
+            sense_arr_emis = (sense_data_dict[ spc ] * emis_unit) # really a unit conversion 
             emis_dict[spc][pstep,:,:,:] += (sense_arr_emis * emis_vars[spc]).sum(axis=(0,1)) # reverses splattering over timesteps and layers in prepare-model
 
             #sense_arr_bcon = (sense_data_dict[ spc ][:] * bcon_unit)[:-1,:,:,:]

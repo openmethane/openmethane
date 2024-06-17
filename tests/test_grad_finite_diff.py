@@ -38,8 +38,8 @@ print('get observations in ObservationData format')
 st = time.time()
 observed = user.get_observed()
 print('completed in {}s'.format( int(time.time() - st) ))
-observed.archive( 'observed.pickle' )
-print('archived.')
+#observed.archive( 'observed.pickle' )
+#print('archived.')
 
 print('convert prior into UnknownData format')
 st = time.time()
@@ -52,11 +52,14 @@ prior_vector = prior_unknown.get_vector()
 print('completed in {}s'.format( int(time.time() - st) ))
 
 initCost = main.cost_func( prior_vector)
+print('initCost',initCost)
 initGrad = main.gradient_func( prior_vector)
 
-epsilon = 1e-4
+epsilon = 1e-3
 dx =  epsilon*np.random.normal( 0.0, 1.0, prior_vector.shape )
+dx[:-8]=0. # kill emission perturbation leaving only BC
 pertCost = main.cost_func( prior_vector + dx)
+print('pertCost', pertCost)
 print(('finite difference', pertCost -initCost))
 print(('grad calc', np.dot(dx, initGrad)))
 print('FINISHED!')

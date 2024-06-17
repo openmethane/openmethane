@@ -12,7 +12,8 @@ import numpy as np
 
 from fourdvar.datadef import ObservationData, AdjointForcingData, ModelOutputData
 import fourdvar.util.cmaq_handle as cmaq
-
+ppm2ppb =1e3
+convFac = ppm2ppb
 def calc_forcing( w_residual ):
     """
     application: calculate the adjoint forcing values from the weighted residual of observations
@@ -27,7 +28,7 @@ def calc_forcing( w_residual ):
             for coord,weight in ObservationData.weight_grid[i].items():
                 if str( coord[0] ) == ymd:
                     step,lay,row,col,spc = coord[1:]
-                    w_val = w_residual.value[i] * weight
+                    w_val = (convFac) * w_residual.value[i] * weight
                     spc_dict[spc][step,lay,row,col] += w_val
 
     cmaq.wipeout_bwd()
