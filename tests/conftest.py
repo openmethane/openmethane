@@ -1,7 +1,20 @@
+import os
+from importlib import reload
 from pathlib import Path
 
 import pytest
 import xarray as xr
+
+from fourdvar.params import (
+    _env,
+    archive_defn,
+    cmaq_config,
+    data_access,
+    date_defn,
+    input_defn,
+    root_path_defn,
+    template_defn,
+)
 
 
 @pytest.fixture
@@ -54,3 +67,32 @@ def compare_dataset(data_regression):
         data_regression.check(content)
 
     return compare
+
+
+def _reload_params():
+    reload(_env)
+    reload(root_path_defn)
+    reload(input_defn)
+    reload(date_defn)
+    reload(archive_defn)
+    reload(template_defn)
+    reload(data_access)
+    reload(cmaq_config)
+
+
+@pytest.fixture
+def target_environment(monkeypatch):
+    initial_env = dict(os.environ)
+
+    def run(target: str, home: str = "{HOME}") -> None:
+        monkeypatch.setenv("HOME", home)
+        monkeypatch.setenv("TARGET", target)
+
+        _reload_params()
+
+    yield run
+
+    os.environ.clear()
+    os.environ.update(initial_env)
+
+    _reload_params()

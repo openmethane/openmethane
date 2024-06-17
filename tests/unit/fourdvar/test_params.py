@@ -1,10 +1,8 @@
 import os.path
-from importlib import reload
 
 import pytest
 
 from fourdvar.params import (
-    _env,
     archive_defn,
     cmaq_config,
     data_access,
@@ -15,29 +13,6 @@ from fourdvar.params import (
 )
 
 targets = pytest.mark.parametrize("target", ("nci", "docker"))
-
-
-@pytest.fixture
-def target_environment(monkeypatch):
-    initial_env = dict(os.environ)
-
-    def run(target: str):
-        monkeypatch.setenv("HOME", "{HOME}")
-        monkeypatch.setenv("TARGET", target)
-
-        reload(_env)
-        reload(root_path_defn)
-        reload(input_defn)
-        reload(date_defn)
-        reload(archive_defn)
-        reload(template_defn)
-        reload(data_access)
-        reload(cmaq_config)
-
-    yield run
-
-    os.environ.clear()
-    os.environ.update(initial_env)
 
 
 def _extract_params(module, attributes):
