@@ -138,7 +138,9 @@ def process_file(
     edate = dt.datetime(end_date.year, end_date.month, end_date.day)
     size = include_filter.sum()
 
-    file_valid_obs = size
+    if size:
+        print(f"{size} observations in domain")
+
     file_total_obs = include_filter.size
 
     obs_collection = []
@@ -177,11 +179,12 @@ def process_file(
         }
 
         obs_collection.append((obs_variables, model_grid))
-    obs_list = process_observations(obs_collection, max_process_time=max_process_time)
-
-    print(len(obs_collection), "possible observations")
-
-    return obs_list, file_total_obs, file_valid_obs
+    if len(obs_collection):
+        obs_list = process_observations(obs_collection, max_process_time=max_process_time)
+    else:
+        print("no valid observations remain")
+        obs_list = []
+    return obs_list, file_total_obs, len(obs_collection)
 
 
 def process_observations(
@@ -229,7 +232,10 @@ def process_observations(
                 print(f"{n_processed} obs processed in {timing.time() - base_time:8.1f} seconds")
             n_processed += 1
 
-    print(f"{n_timed_out} observations timed out after {max_process_time} seconds")
+    print(
+        f"{n_timed_out}/{len(obs_collection)} "
+        f"observations timed out after {max_process_time} seconds"
+    )
 
     return obs_list
 
@@ -274,9 +280,9 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, max_process_time):
                 if hasattr(ds, "errors"):
                     print(f"error in file = {ds.errors}, skipping")
                     continue
-                elif ds.processing_status != "Nominal":
-                    print(f"processing_status = {ds.processing_status}, skipping")
-                    continue
+                # elif ds.processing_status != "Nominal":
+                #     print(f"processing_status = {ds.processing_status}, skipping")
+                #     continue
 
                 new_obs, file_total_obs, file_valid_obs = process_file(
                     model_grid,
