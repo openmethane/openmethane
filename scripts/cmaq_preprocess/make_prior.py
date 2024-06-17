@@ -162,9 +162,6 @@ def make_prior(save_path: str, emis_template: str) -> None:
     estep = int(ncf.get_attr(emissions_filename, "TSTEP"))
     print("estep:", estep)
 
-    # TODO: JL: I'm not sure that this is correct
-    bcon_tsec = 172800  # need to be changed according to days*sec
-
     emis_nstep = tot_nday // tday
     bcon_nstep = len(dt.get_datelist()) * daysec // bcon_tsec
 
