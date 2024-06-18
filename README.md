@@ -59,10 +59,6 @@ To run your first test case you will need to:
 3: go to `scripts/obs_preprocess` and run one of:
  - `scripts/obs_preprocess/tropomi_methane_preprocess.py`
 	process the downloaded TropOMI data into a format that can be used by `fourdvar`.
- - `scripts/obs_preprocess/sample_point_preprocess.py`
-	creates a test set of instant, point source observations, with easy to edit values.
- - `scripts/obs_preprocess/sample_column_preprocess.py`
-	creates a test single vertical column observation, with easy to edit values.
 
 4: go to tests and run:
  - `test_cost_verbose.py`
