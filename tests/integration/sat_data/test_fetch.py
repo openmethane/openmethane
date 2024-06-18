@@ -26,9 +26,9 @@ def test_fetch(tmpdir, root_dir):
     assert "Data fetched successfully!" in result.output
 
     # Check that the expected files are created
-    assert os.listdir(tmpdir) == ["20220701-00-00-00_20220702-00-00-00_134.0_-29.0_138.0_-25.5"]
-    assert os.listdir(tmpdir / "20220701-00-00-00_20220702-00-00-00_134.0_-29.0_138.0_-25.5") == [
-        "S5P_RPRO_L2__CH4____20220701T042859_20220701T061029_24428_03_020400_20230131T105627.SUB.nc4"
+    assert os.listdir(tmpdir) == ["2022-07-01T0000_2022-07-02T0000_148.0_-23.5_150.0_-22.0"]
+    assert os.listdir(tmpdir / "2022-07-01T0000_2022-07-02T0000_148.0_-23.5_150.0_-22.0") == [
+        "S5P_RPRO_L2__CH4____20220701T042859_20220701T061029_24428_03_020400_20230131T105627"
     ]
 
 
