@@ -46,7 +46,7 @@ fwd_xfirst_file: /opt/project/data/run-cmaq/output/XFIRST.<YYYYMMDD>
 grid_cro_2d: /opt/openmethane/setup-wrf/data/mcip/<YYYY-MM-DD>/d01/GRIDCRO2D_220701_aust-test
 grid_dot_2d: /opt/openmethane/setup-wrf/data/mcip/<YYYY-MM-DD>/d01/GRIDDOT2D_220701_aust-test
 griddesc: /opt/openmethane/setup-wrf/data/mcip/<YYYY-MM-DD>/d01/GRIDDESC
-gridname: o
+gridname: openmethane
 ha_rhoj_chk: /opt/project/data/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc
 hadv_chk: /opt/project/data/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc
 icon_file: /opt/openmethane/setup-wrf/data/cmaq/template_icon_profile_CH4only_d01.nc
@@ -70,8 +70,8 @@ met_cro_2d: /opt/openmethane/setup-wrf/data/mcip/<YYYY-MM-DD>/d01/METCRO2D_22070
 met_cro_3d: /opt/openmethane/setup-wrf/data/mcip/<YYYY-MM-DD>/d01/METCRO3D_220701_aust-test
 met_dot_3d: /opt/openmethane/setup-wrf/data/mcip/<YYYY-MM-DD>/d01/METDOT3D_220701_aust-test
 minsync: 300
-npcol: 6
-nprow: 8
+npcol: 1
+nprow: 1
 output_path: /opt/project/data/run-cmaq/output
 pertcols: '1'
 pertdelt: '1.00'
