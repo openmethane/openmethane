@@ -23,11 +23,13 @@ cp $OPENMETHANE_PRIOR_ROOT/outputs/out-om-domain-info.nc $DIR/prior/
 
 # Copy the BC/IC from CMAQ
 rm -rf $DIR/cmaq/
-cp -r $SETUP_WRF_ROOT/data/cmaq/$TARGET_DATE $DIR/cmaq/
+mkdir -p $DIR/cmaq
+cp -r $SETUP_WRF_ROOT/data/cmaq/template_* $DIR/cmaq/
 
 # Copy the Met data from WRF
 rm -rf $DIR/mcip/
-cp -r $SETUP_WRF_ROOT/data/mcip/$TARGET_DATE $DIR/mcip/
+mkdir -p $DIR/mcip
+cp -r $SETUP_WRF_ROOT/data/mcip/$TARGET_DATE $DIR/mcip/$TARGET_DATE
 
 echo "Data copied"
 echo "Current directory sizes:"

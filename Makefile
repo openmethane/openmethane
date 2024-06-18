@@ -5,7 +5,7 @@ else
 endif
 
 
-TEST_DIRS := tests/unit tests/integration/cmaq_preprocess tests/integration/sat_data
+TEST_DIRS := tests
 
 .PHONY: virtual-environment
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
@@ -25,20 +25,28 @@ ruff-fixes:  # Run ruff on the project
 
 .PHONY: clean
 clean:  ## remove generated temporary files
-	rm -r data
+	find data ! -path "data/tropomi*" -delete
 
 .PHONY: build
 build:  ## Build the docker container locally
 	docker build --platform=linux/amd64 -t openmethane .
 
-.PHONY: run
-run: build  ## Run the docker container locally
+.PHONY: start
+start: build  ## Start the docker container locally
 	# Requires local clones of setup_wrf and openmethane-prior
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
 		-v $(PWD)/../setup_wrf:/opt/openmethane/setup_wrf \
 		-v $(PWD)/../openmethane-prior:/opt/openmethane/openmethane-prior \
 		openmethane
+
+.PHONY: run
+run: build clean  ## Run the test domain in the docker container using the bundled test-data
+	docker run --rm -it \
+		-v $(PWD):/opt/project \
+		-e TARGET=docker-test \
+		openmethane \
+		bash scripts/run-all.sh
 
 .PHONY: test
 test:  ## Run the tests
@@ -50,7 +58,7 @@ test-regen:  ## Regenerate the expected test data
 
 # Processing steps
 .PHONY: prepare-templates
-prepare-templates:  ## Preprare the template files for a CMAQ run
+prepare-templates:  ## Prepare the template files for a CMAQ run
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_emis_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_prior.py
