@@ -28,55 +28,62 @@ from fourdvar.params import archive_defn
 
 # TODO: Check if this is needed
 
-logger = logging.get_logger(__name__)
-logging.setup_logging()
 
-# replace archive directory name and description file
-archive_defn.experiment = "emis_sens"
-archive_defn.description = """testing emission sensitivities"""
-# create the true and perturbed input data
-prior_true_archive = "prior_true.nc"
-prior_pert_archive = "prior_pert.nc"
-obs_true_archive = "obs_true.pic.gz"
-obs_pert_archive = "obs_pert.pic.gz"
+def runner():
+    # This is the main function that is called by the test
+    logger = logging.get_logger(__name__)
+    logging.setup_logging()
 
-phys_true = user.get_background()
-obs_orig = user.get_observed()
-model_input = transform(phys_true, d.ModelInputData)
-model_output = transform(model_input, d.ModelOutputData)
-obs_true = transform(model_output, d.ObservationData)
+    # replace archive directory name and description file
+    archive_defn.experiment = "emis_sens"
+    archive_defn.description = """testing emission sensitivities"""
+    # create the true and perturbed input data
+    prior_true_archive = "prior_true.nc"
+    prior_pert_archive = "prior_pert.nc"
+    obs_true_archive = "obs_true.pic.gz"
+    obs_pert_archive = "obs_pert.pic.gz"
 
-o_val = obs_true.get_vector()
+    phys_true = user.get_background()
+    obs_orig = user.get_observed()
+    model_input = transform(phys_true, d.ModelInputData)
+    model_output = transform(model_input, d.ModelOutputData)
+    obs_true = transform(model_output, d.ObservationData)
 
-unk = transform(phys_true, d.UnknownData)
-unk_pert = d.UnknownData(np.random.normal(unk.get_vector(), 1.0))  # noqa: NPY002
-phys_pert = transform(unk_pert, d.PhysicalData)
-model_pert = transform(phys_pert, d.ModelInputData)
+    o_val = obs_true.get_vector()
 
-conc_pert = transform(model_pert, d.ModelOutputData)
-obs_pert = transform(conc_pert, d.ObservationData)
+    unk = transform(phys_true, d.UnknownData)
+    unk_pert = d.UnknownData(np.random.normal(unk.get_vector(), 1.0))  # noqa: NPY002
+    phys_pert = transform(unk_pert, d.PhysicalData)
+    model_pert = transform(phys_pert, d.ModelInputData)
 
-phys_true.archive(prior_true_archive)
-phys_pert.archive(prior_pert_archive)
-obs_true.archive(obs_true_archive)
-obs_pert.archive(obs_pert_archive)
-cmaq.wipeout_fwd()
+    conc_pert = transform(model_pert, d.ModelOutputData)
+    obs_pert = transform(conc_pert, d.ObservationData)
 
-# Output the target cost value for this test
-bg_path = os.path.join(archive.get_archive_path(), prior_pert_archive)
-user.background = d.PhysicalData.from_file(bg_path)
-obs_path = os.path.join(archive.get_archive_path(), obs_pert_archive)
-user.observed = d.ObservationData.from_file(obs_path)
-init_vec = transform(user.background, d.UnknownData).get_vector()
-cost = main.cost_func(init_vec)
-logger.info(f"No. obs = {o_val.size}")
-logger.info(f"Target cost = {cost}")
+    phys_true.archive(prior_true_archive)
+    phys_pert.archive(prior_pert_archive)
+    obs_true.archive(obs_true_archive)
+    obs_pert.archive(obs_pert_archive)
+    cmaq.wipeout_fwd()
 
-# replace current background/prior and observations with perturbed versions.
-bg_path = os.path.join(archive.get_archive_path(), prior_pert_archive)
-user.background = d.PhysicalData.from_file(bg_path)
-obs_path = os.path.join(archive.get_archive_path(), obs_pert_archive)
-user.observed = d.ObservationData.from_file(obs_path)
+    # Output the target cost value for this test
+    bg_path = os.path.join(archive.get_archive_path(), prior_pert_archive)
+    user.background = d.PhysicalData.from_file(bg_path)
+    obs_path = os.path.join(archive.get_archive_path(), obs_pert_archive)
+    user.observed = d.ObservationData.from_file(obs_path)
+    init_vec = transform(user.background, d.UnknownData).get_vector()
+    cost = main.cost_func(init_vec)
+    logger.info(f"No. obs = {o_val.size}")
+    logger.info(f"Target cost = {cost}")
 
-# run minimizer
-main.get_answer()
+    # replace current background/prior and observations with perturbed versions.
+    bg_path = os.path.join(archive.get_archive_path(), prior_pert_archive)
+    user.background = d.PhysicalData.from_file(bg_path)
+    obs_path = os.path.join(archive.get_archive_path(), obs_pert_archive)
+    user.observed = d.ObservationData.from_file(obs_path)
+
+    # run minimizer
+    main.get_answer()
+
+
+if __name__ == "__main__":
+    runner()

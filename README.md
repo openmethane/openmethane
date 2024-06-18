@@ -63,7 +63,7 @@ To run your first test case you will need to:
 4: go to tests and run:
  - `test_cost_verbose.py`
 	runs the cost function logic with a random perturbation in the prior.
- - test_grad_verbose.py`
+ - `test_grad_verbose.py`
 	runs the gradient function logic with a random perturbation in the prior.
 
 5: run the main code via `runscript.py`
