@@ -33,10 +33,10 @@ build:  ## Build the docker container locally
 
 .PHONY: start
 start: build  ## Start the docker container locally
-	# Requires local clones of setup_wrf and openmethane-prior
+	# Requires local clones of setup-wrf and openmethane-prior
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
-		-v $(PWD)/../setup_wrf:/opt/openmethane/setup_wrf \
+		-v $(PWD)/../setup-wrf:/opt/openmethane/setup-wrf \
 		-v $(PWD)/../openmethane-prior:/opt/openmethane/openmethane-prior \
 		openmethane
 

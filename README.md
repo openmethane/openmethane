@@ -37,7 +37,7 @@ The value of `TARGET` is used to load a `.env.${TARGET}` file.
 This `.env` file contains the target specific configuration values.
 
 A `docker-test` target has been provided which uses locally tracked versions
-of the required input data from the `openmethane-prior` and `setup_wrf` repositories.
+of the required input data from the `openmethane-prior` and `setup-wrf` repositories.
 This target is useful for testing and development.
 
 ## First Run
@@ -75,8 +75,9 @@ To run your first test case you will need to:
 
 For local testing and development, we recommend that the docker container is used.
 
-The docker container assumes that the openmethane-prior and setup_wrf repositories have been cloned
-locally (as `../openmethane-prior` and `../setup_wrf` respectively).
+The docker container assumes that the [openmethane-prior](https://github.com/openmethane/openmethane-prior) 
+and [setup-wrf](https://github.com/openmethane/setup-wrf) repositories have been cloned locally 
+(as `../openmethane-prior` and `../setup-wrf` respectively).
 There are artifacts from these repos that are required to be run before running the adjoint model.
 
 The docker container can be built and run with:
@@ -100,7 +101,7 @@ Pycharm provides some support for using a
 in a docker container.
 This feature is only available for PyCharm Professional.
 
-The volumes may need to be adjusted to match the local paths for the openmethane-prior and setup_wrf repositories
+The volumes may need to be adjusted to match the local paths for the openmethane-prior and setup-wrf repositories
 as described above.
 This will create a new docker container when running the scripts or tests.
 

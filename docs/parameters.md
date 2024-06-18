@@ -12,8 +12,8 @@ The following environment variables are configurable:
 | GRID_NAME        | str               | Name of the grid being used                 | openmethane                                |
 | PRIOR_PATH       | str               | Path to the concentration prior file        | N/A                                        |
 | MCIP_OUTPUT_PATH | str               | Path to the root MCIP directory             | N/A                                        |
-| ICON_FILE        | str               | Path to ICON file generated in setup_wrf    | N/A                                        |
-| BCON_FILE        | str               | Path to BCON file generated in setup_wrf    | N/A                                        |
+| ICON_FILE        | str               | Path to ICON file generated in setup-wrf    | N/A                                        |
+| BCON_FILE        | str               | Path to BCON file generated in setup-wrf    | N/A                                        |
 | EMIS_FILE        | str               | Path to emissions files                     | {CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc |
 | FORCE_FILE       | str               | Path to the template forcing file           | {CMAQ_BASE}/force/ADJ_FORCE.<YYYYMMDD>.nc  |
 | ADJOINT_FWD      | str               | Path to forward adjoint executable          | N/A                                        |
