@@ -36,10 +36,13 @@ The target environment is defined by the `TARGET` environment variable (default=
 The value of `TARGET` is used to load a `.env.${TARGET}` file.
 This `.env` file contains the target specific configuration values.
 
+A `docker-test` target has been provided which uses locally tracked versions
+of the required input data from the `openmethane-prior` and `setup_wrf` repositories.
+This target is useful for testing and development.
+
 ## First Run
 
 To run your first test case you will need to:
-
 
 1: Run the following scripts (in listed order):
  - `scripts/cmaq_preprocess/make_emis_template.py`
@@ -60,7 +63,7 @@ To run your first test case you will need to:
  - `scripts/obs_preprocess/tropomi_methane_preprocess.py --source data/tropomi/*`
 	process the downloaded TropOMI data into a format that can be used by `fourdvar`.
 
-4: go to tests and run:
+4: go to `tests/integration/fourdvar` and run:
  - `test_cost_verbose.py`
 	runs the cost function logic with a random perturbation in the prior.
  - `test_grad_verbose.py`
@@ -72,25 +75,22 @@ To run your first test case you will need to:
 
 For local testing and development, we recommend that the docker container is used.
 
-
 The docker container assumes that the openmethane-prior and setup_wrf repositories have been cloned
 locally (as `../openmethane-prior` and `../setup_wrf` respectively).
 There are artifacts from these repos that are required to be run before running the adjoint model.
 
-TODO: Document what steps are required
-
 The docker container can be built and run with:
 
 ```shell
-	make run
+	make start
 ```
 
 This will drop you into a shell in the docker container.
 From here you can run the scripts in the order above,
-or use the following make commands to run the scripts in the correct order:
+or use the following script to run the scripts in the correct order:
 
 ```shell
-	make prepare-templates
+	bash scripts/run-all.sh
 ```
 
 ### PyCharm
