@@ -14,11 +14,11 @@ def _squeeze_strs(values: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset):
+def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset, metcro3d_file):
     data_dir = tmpdir.mkdir("data")
     make_emissions_templates(
         prior_filename=str(test_data_dir / "prior" / "out-om-domain-info.nc"),
-        metcro_template=str(test_data_dir / "mcip" / "METCRO3D_220701_aust-test"),
+        metcro_template=metcro3d_file,
         emis_template=str(data_dir / "emis_record_<YYYY-MM-DD>.nc"),
     )
 
