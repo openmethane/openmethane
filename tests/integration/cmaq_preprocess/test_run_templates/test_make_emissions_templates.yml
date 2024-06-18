@@ -1,12 +1,12 @@
 attrs:
-  CDATE: 2024153
-  CTIME: 63659
+  CDATE: 2024166
+  CTIME: 83816
   EXEC_ID: 'mcip                                                                            '
   FILEDESC: 'US EPA COMMUNITY MULTISCALE AIR QUALITY MODEL                                   METEOROLOGY-CHEMISTRY
     INTERFACE PROCESSOR                                                                                                                       MCIP
     V4.2  FROZEN 09/30/2013                                                                                                                                                                                                                    INPUT
     METEOROLOGY DATA FROM WRF ARW V4.5.1                                      INPUT
-    RUN INITIALIZED:  2022-07-01-00:00:00.0000                                                                                                                CUMULUS
+    RUN INITIALIZED:  2022-07-22-00:00:00.0000                                                                                                                CUMULUS
     PARAMETERIZATION:  Grell G3                                                                                                                             SHALLOW
     CONVECTION:  No shallow convection                                                                                                                      MICROPHYSICS:  Morrison
     2-moment                                                                                                                                LONGWAVE
@@ -44,7 +44,7 @@ attrs:
   P_ALP: -40.0
   P_BET: -15.0
   P_GAM: 133.302001953125
-  SDATE: 2022182
+  SDATE: 2022203
   STIME: 0
   TSTEP: 10000
   UPNAM: 'METCRO          '
@@ -85,14 +85,14 @@ attrs:
   - 0.0
   VGTOP: 5000.0
   VGTYP: 7
-  WDATE: 2024153
-  WTIME: 63659
+  WDATE: 2024166
+  WTIME: 83816
   XCELL: 10000.0
   XCENT: 133.302001953125
-  XORIG: -2309999.25
+  XORIG: 1511422.625
   YCELL: 10000.0
   YCENT: -27.5
-  YORIG: -2205629.25
+  YORIG: 385760.4375
 coords: {}
 dims:
   COL: 5

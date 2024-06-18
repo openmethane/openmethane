@@ -22,7 +22,7 @@ def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset, metcro
         emis_template=str(data_dir / "emis_record_<YYYY-MM-DD>.nc"),
     )
 
-    expected_file = data_dir / "emis_record_2022-07-01.nc"
+    expected_file = data_dir / "emis_record_2022-07-22.nc"
     assert expected_file.exists()
 
     ds = xr.load_dataset(expected_file)
@@ -35,9 +35,9 @@ def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset, metcro
     # Check that times are set correctly
     # [integer of form YYYYDDD, HHMM]
     # Not sure who makes this up...
-    assert (ds["TFLAG"].sel(TSTEP=0).values == [2022182, 0]).all()
-    assert (ds["TFLAG"].sel(TSTEP=1).values == [2022182, 10000]).all()
-    assert (ds["TFLAG"].sel(TSTEP=-1).values == [2022183, 0]).all()
+    assert (ds["TFLAG"].sel(TSTEP=0).values == [2022203, 0]).all()
+    assert (ds["TFLAG"].sel(TSTEP=1).values == [2022203, 10000]).all()
+    assert (ds["TFLAG"].sel(TSTEP=-1).values == [2022204, 0]).all()
 
     # Check Methane emissions
     assert ds["CH4"].dims == ("TSTEP", "LAY", "ROW", "COL")
@@ -47,8 +47,6 @@ def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset, metcro
         "var_desc": "Emissions of CH4",
     }
 
-    # TODO: the test domain that we use has no emissions in the prior
-    # This is a bit annoying as it probably doesn't test much
-    # assert ds["CH4"].sum()
+    assert ds["CH4"].sum()
 
     compare_dataset(ds)

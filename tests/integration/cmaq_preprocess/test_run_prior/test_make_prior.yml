@@ -1,24 +1,24 @@
 attrs:
-  EDATE: 2022211
-  SDATE: 2022182
+  EDATE: 2022203
+  SDATE: 2022203
   VAR-LIST: 'CH4             '
 groups:
   /:
     attrs:
-      EDATE: 2022211
-      SDATE: 2022182
+      EDATE: 2022203
+      SDATE: 2022203
       VAR-LIST: 'CH4             '
     coords: {}
     dims: {}
     variables: {}
   /bcon:
     attrs:
-      TSEC: 172800
+      TSEC: 86400
       UP_LAY: 15
     coords: {}
     dims:
       BCON: 8
-      TSTEP: 0
+      TSTEP: 1
     variables:
       CH4:
         attrs: {}
