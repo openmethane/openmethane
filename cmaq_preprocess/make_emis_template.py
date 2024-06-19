@@ -18,7 +18,7 @@ from fourdvar.params.cmaq_config import met_cro_3d
 import numpy as np
 import netCDF4 as nc
 import datetime
-openMethanePrior = '../../out-om-domain-info.nc'
+openMethanePrior = '/scratch/q90/pjr563/out-om-domain-info.nc'
 kg2g = 1000. # conversion from kg to g
 molarMass = 16. # molar mass of CH4
 #attributes that CMAQ is expecting(1)
@@ -49,7 +49,7 @@ for i, date in enumerate(dates):
             elif a=='NVARS':
                 attrDict[a]=np.int32(len(cmaqSpecList))
             elif a=='TSTEP':
-                attrDict[a]=np.int32(100)
+                attrDict[a]=np.int32(10000)
             elif a=='VAR-LIST':
                 VarString = "".join([ "{:<16}".format(k) for k in cmaqSpecList ])
                 attrDict[a]=VarString
@@ -84,17 +84,17 @@ for i, date in enumerate(dates):
         outvars = dict()
         outvars['TFLAG'] = output.createVariable('TFLAG', 'i4', ('TSTEP','VAR','DATE-TIME',))
         outvars['TFLAG'].setncattr('long_name',"{:<16}".format('TFLAG'))
-        tflag = np.zeros(outvars['TFLAG'].shape, dtype=np.int32) #Peter
-        emisyear = date.timetuple().tm_year #Peter
+        tflag = np.zeros(outvars['TFLAG'].shape, dtype=np.int32)
+        emisyear = date.timetuple().tm_year
         #print(emisyear)
-        emisday=date.timetuple().tm_yday #Peter
+        emisday=date.timetuple().tm_yday
         tflag[:,0,0] = 1000*emisyear+emisday #Peter
         # need to set next day which requires care if it's Dec 31
         nextDate = date + datetime.timedelta(1) # add one day
-        nextyear = nextDate.timetuple().tm_year #Peter
-        nextday=nextDate.timetuple().tm_yday #Peter
+        nextyear = nextDate.timetuple().tm_year
+        nextday=nextDate.timetuple().tm_yday
         tflag[-1,:,0] = 1000*nextyear+nextday # setting date of last time-slice
-        tflag[:,0,1] = (np.arange(lens['TSTEP'])%(lens['TSTEP']-1))*100 # hourly timestep including last timeslice to 0 I hope
+        tflag[:,0,1] = (np.arange(lens['TSTEP'])%(lens['TSTEP']-1)) * 10000 # hourly timestep including last timeslice to 0 I hope, *1000 means 0 mins and 0 seconds
         outvars['TFLAG'][...] = tflag
         ## one chunk per layer per time
         outvars[cmaqspec] = output.createVariable(cmaqspec, 'f4', ('TSTEP', 'LAY', 'ROW', 'COL'), zlib = True, shuffle = False, chunksizes = np.array([1,1,domShape[0], domShape[1]]) )

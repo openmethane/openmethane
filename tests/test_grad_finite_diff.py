@@ -57,7 +57,6 @@ initGrad = main.gradient_func( prior_vector)
 
 epsilon = 1e-3
 dx =  epsilon*np.random.normal( 0.0, 1.0, prior_vector.shape )
-dx[:-8]=0. # kill emission perturbation leaving only BC
 pertCost = main.cost_func( prior_vector + dx)
 print('pertCost', pertCost)
 print(('finite difference', pertCost -initCost))

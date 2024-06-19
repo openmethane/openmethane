@@ -15,7 +15,7 @@ from fourdvar.params.root_path_defn import store_path
 #notes: the patterns <YYYYMMDD>, <YYYYDDD> & <YYYY-MM-DD> will be replaced
 #with the year, month and day of the current model run
 
-use_jobfs = False
+use_jobfs = True
 
 #No. of processors per column
 #npcol = 1
@@ -140,8 +140,8 @@ fwd_xfirst_file = os.path.join( output_path, 'XFIRST.<YYYYMMDD>' )
 bwd_xfirst_file = os.path.join( output_path, 'XFIRST.bwd.<YYYYMMDD>' )
 
 #input files
-icon_file = os.path.join( icon_path, 'ICON.d01.o.CH4only.nc' )
-bcon_file = os.path.join( bcon_path, 'BCON.d01.o.CH4only.nc')
+icon_file = os.path.join( icon_path, 'icon.nc' )
+bcon_file = os.path.join( bcon_path, 'bcon.nc')
 emis_file = os.path.join( emis_path, 'emis.<YYYY-MM-DD>.nc' )#Shak
 force_file = os.path.join( cmaq_base,  'force', 'ADJ_FORCE.<YYYYMMDD>.nc' )
 #required met data, use unknown #?????
