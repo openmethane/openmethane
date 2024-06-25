@@ -20,8 +20,8 @@ if [[ $tropomi_files -eq 0 ]]; then
 
   python scripts/sat_data/fetch.py \
     -c scripts/sat_data/config.austtest.json \
-    -s 2022-07-01 \
-    -e 2022-07-01 \
+    -s 2022-07-22 \
+    -e 2022-07-22 \
     $TROPOMI_DIR
 fi
 
