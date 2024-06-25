@@ -78,11 +78,9 @@ To run your first test case you will need to:
 	Downloads the TropOMI data for the specified date range and region.
 	Requires a EarthData login. See the script for more details about how to set this up.
  
-3: go to obs_preprocess and run one of:
- - `sample_point_preprocess.py`
-	creates a test set of instant, point source observations, with easy to edit values.
- - `sample_column_preprocess.py`
-	creates a test single vertical column observation, with easy to edit values.
+3: go to `scripts/obs_preprocess` and run one of:
+ - `scripts/obs_preprocess/tropomi_methane_preprocess.py`
+	process the downloaded TropOMI data into a format that can be used by `fourdvar`.
 
 4: go to tests and run:
  - `test_cost_verbose.py`
