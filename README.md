@@ -4,8 +4,11 @@ Scripts for running the adjoint of the CMAQ model for methane emissions estimati
 
 ## Getting Started
 
-To get started, you will need to make sure that [poetry](https://python-poetry.org/docs/) is installed.
-The Open Methane can be installed from source into a virtual environment with:
+To get started, you will need to make sure that [poetry](https://python-poetry.org/docs/) 
+and [docker](https://www.docker.com/) is installed if you intend to run this project using containers. 
+Docker engine version v23 or later is required as this project uses docker `buildkit` features.
+
+OpenMethane can be installed from source into a virtual environment with:
 
 ```bash
 make virtual-environment
@@ -13,6 +16,25 @@ make virtual-environment
 
 NOTE: The CMAQ-adj model and the benchmark data are not included in the GitHub repository. 
 You will need to obtain these from another source.
+
+### Docker
+
+The docker container containing CMAQ, the adjoint model and the python dependencies can be built locally.
+This is the recommended way to run the code.
+The required CMAQ docker image is built via the [openmethane/docker-cmaq](https://github.com/openmethane/docker-cmaq)
+repository and the hosted as a private image at ghcr.io/openmethane/cmaq.
+Since the image is not public,
+you will need to authenticate with the GitHub Container Registry (ghcr.io) before building the image.
+
+This can be done using a GitHub personal access token (PAT) with the `read:packages` scope.
+Instructions on how to do this can be found [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
+
+
+Once you have logged into the GitHub Container Registry, you can build the docker image with:
+
+```shell
+	make build
+```
 
 ## Configuration
 

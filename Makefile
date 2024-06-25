@@ -1,4 +1,4 @@
-ifneq (, $(shell which poetry))
+ifneq (, $(shell command -v poetry))
 	PYTHON_CMD := poetry run python
 else
 	PYTHON_CMD := python
