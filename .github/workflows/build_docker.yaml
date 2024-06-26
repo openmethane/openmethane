@@ -90,12 +90,12 @@ jobs:
       - name: Run pytests
         run: |
           docker run --rm \
-#            -v ${{ github.workspace }}:/opt/project \
+            -v ${{ github.workspace }}:/opt/project \
 #            -v ${{ github.workspace }}:/opt/openmethane/setup_wrf \
-            -v ${{ github.workspace }}:/opt/openmethane/openmethane \
+#            -v ${{ github.workspace }}:/opt/openmethane/openmethane \
 #            -v ${{ github.workspace }}/../openmethane-prior:/opt/openmethane/openmethane-prior \
-            openmethane
-#            ${{ env.IMAGE_ID }} \
+#            openmethane
+            ${{ env.IMAGE_ID }} \
             pytest -r a -v tests/unit
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
