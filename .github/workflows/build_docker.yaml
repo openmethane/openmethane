@@ -65,7 +65,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
   test-unit:
-    timeout-minutes: 20
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: build
     permissions:
@@ -98,28 +98,40 @@ jobs:
 #          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
 #          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
 #          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
-#  test-integration:
-#    runs-on: ubuntu-latest
-#    needs: build
-#    permissions:
-#      contents: read
-#      packages: read
-#    env:
-#      IMAGE_ID: ghcr.io/openmethane/setup-wrf@${{ needs.build.outputs.digest }}
-#    steps:
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#      - name: Login to Container registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Pull built docker image
-#        run: |
-#          docker pull ${{ env.IMAGE_ID }}
+  test-integration:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      packages: read
+    env:
+      IMAGE_ID: ghcr.io/openmethane/openmethane@${{ needs.build.outputs.digest }}
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Login to Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull built docker image
+        run: |
+          docker pull ${{ env.IMAGE_ID }}
+      - name: Run pytests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/opt/openmethane/ \
+            ${{ env.IMAGE_ID }} \
+            pytest -r a -v tests/integration/cmaq_preprocess tests/integration/sat_data
+        env:
+          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
+          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
+          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
+          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
 #      - name: Cache Geog data
 #        id: cache-geog
 #        uses: actions/cache@v4
