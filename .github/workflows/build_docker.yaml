@@ -92,7 +92,7 @@ jobs:
           docker run --rm \
 #            -v ${{ github.workspace }}:/opt/project \
 #            -v ${{ github.workspace }}:/opt/openmethane/setup_wrf \
-             -v ${{ github.workspace }}:/opt/openmethane/openmethane \
+            -v ${{ github.workspace }}:/opt/openmethane/openmethane \
 #            -v ${{ github.workspace }}/../openmethane-prior:/opt/openmethane/openmethane-prior \
             ${{ env.IMAGE_ID }} \
             pytest -r a -v tests/unit
