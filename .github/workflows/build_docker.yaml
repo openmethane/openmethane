@@ -93,11 +93,11 @@ jobs:
             -v ${{ github.workspace }}:/opt/openmethane/ \
             ${{ env.IMAGE_ID }} \
             pytest -r a -v tests/unit
-        env:
-          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
-          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
-          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
+#        env:
+#          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
+#          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
+#          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
+#          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
 #  test-integration:
 #    runs-on: ubuntu-latest
 #    needs: build
