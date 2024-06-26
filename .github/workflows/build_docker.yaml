@@ -90,7 +90,7 @@ jobs:
       - name: Run pytests
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:${pwd} \
+            -v ${{ github.workspace }}:/opt/project \
             ${{ env.IMAGE_ID }} \
             ubuntu pwd
 #            pytest -r a -v tests/unit
