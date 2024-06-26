@@ -90,10 +90,9 @@ jobs:
       - name: Run pytests
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/opt/project \
+            -v ${{ github.workspace }}:/opt/openmethane/setup_wrf \
             ${{ env.IMAGE_ID }} \
-            ubuntu pwd
-#            pytest -r a -v tests/unit
+            pytest -r a -v tests/unit
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
