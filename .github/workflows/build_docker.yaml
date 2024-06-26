@@ -92,7 +92,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/opt/project \
             ${{ env.IMAGE_ID }} \ 
-          pytest -r a -v tests/unit
+            pytest -r a -v tests/unit
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
