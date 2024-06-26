@@ -89,10 +89,10 @@ jobs:
           docker pull ${{ env.IMAGE_ID }}
       - name: Run pytests
         run: |
-          docker ps
-#          docker run --rm \
-#            -v ${{ github.workspace }}:/opt/project \
-#            ${{ env.IMAGE_ID }} \
+          docker run --rm \
+            -v ${{ github.workspace }}:${pwd} \
+            ${{ env.IMAGE_ID }} \
+            ubuntu pwd
 #            pytest -r a -v tests/unit
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
