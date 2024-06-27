@@ -7,6 +7,6 @@ dependencies:
   - mpich=4.2.1
   - netcdf-fortran=4.6.1
   - gfortran=10.4
-  - nco
+  - nco=5.2.4
   - python=3.11
   - gdb
