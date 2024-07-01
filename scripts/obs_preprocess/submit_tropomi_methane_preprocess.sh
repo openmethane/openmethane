@@ -27,4 +27,4 @@ source ../load_p4d_modules.sh
 # replace previous line with whatever you source to run py4dvar
 
 #python3 restart_script.py
-python3 tropomi_methane_preprocess.py
+python3 tropomi_methane_preprocess.py --source "/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____202207*.nc4"

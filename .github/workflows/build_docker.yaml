@@ -28,7 +28,6 @@ jobs:
       packages: write
 
     outputs:
-      imageid: ${{ steps.build.outputs.imageid }}
       digest: ${{ steps.build.outputs.digest }}
 
     # Builds and pushes the image
@@ -92,7 +91,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
             ${{ env.IMAGE_ID }} \
-            pytest -r a -v tests/unit
+            python -m pytest -r a -v tests/unit
   test-integration:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -121,8 +120,9 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
             ${{ env.IMAGE_ID }} \
-            pytest -r a -v tests/integration/cmaq_preprocess tests/integration/sat_data
+            python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/sat_data
         env:
+          TARGET: "docker-test"
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
