@@ -46,7 +46,7 @@ fwd_xfirst_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/XF
 grid_cro_2d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRIDCRO2D_2'
 grid_dot_2d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRIDDOT2D_2'
 griddesc: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRIDDESC'
-gridname: openmethane
+gridname: o
 ha_rhoj_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc'
 hadv_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc'
 icon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/input/ICON.d01.o.CH4only.nc'
