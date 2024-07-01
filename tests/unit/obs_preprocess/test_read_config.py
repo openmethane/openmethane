@@ -130,8 +130,6 @@ def cmaq_config_dict():
             "mcipRun": {"path": "/opt/project/templateRunScripts/run.mcip"},
             "bconRun": {"path": "/opt/project/templateRunScripts/run.bcon"},
             "iconRun": {"path": "/opt/project/templateRunScripts/run.icon"},
-            "cctmRun": {"path": "/opt/project/templateRunScripts/run.cctm"},
-            "cmaqRun": {"path": "/opt/project/templateRunScripts/runCMAQ.sh"},
         },
         "cctmExec": "ADJOINT_FWD",
         "CAMSToCmaqBiasCorrect": 0.06700000000000017,

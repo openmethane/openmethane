@@ -32,10 +32,6 @@ scenarioTag:
 scripts:
   bconRun:
     path: /opt/project/templates/cmaq_preprocess/run.bcon
-  cctmRun:
-    path: /opt/project/templates/cmaq_preprocess/run.cctm
-  cmaqRun:
-    path: /opt/project/templates/cmaq_preprocess/runCMAQ.sh
   iconRun:
     path: /opt/project/templates/cmaq_preprocess/run.icon
   mcipRun:

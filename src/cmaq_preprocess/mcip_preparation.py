@@ -10,7 +10,7 @@ import numpy
 from cmaq_preprocess.utils import getDistanceFromLatLonInKm
 
 
-def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
+def check_input_met_and_output_folders(ctmDir, metDir, dates, domains):
     """
     Check that MCIP inputs are present, and create directories for CCTM input/output if need be
 
@@ -71,7 +71,7 @@ def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
     return allMcipFilesFound
 
 
-def getMcipGridNames(metDir, dates, domains):
+def get_mcip_grid_names(metDir, dates, domains):
     """Get grid names from the MCIP GRIDDESC file
 
     Args:

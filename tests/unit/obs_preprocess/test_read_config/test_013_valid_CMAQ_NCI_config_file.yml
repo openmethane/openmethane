@@ -32,10 +32,6 @@ scenarioTag:
 scripts:
   bconRun:
     path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.bcon
-  cctmRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.cctm
-  cmaqRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/runCMAQ.sh
   iconRun:
     path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.icon
   mcipRun:

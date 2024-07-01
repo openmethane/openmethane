@@ -16,19 +16,18 @@ import datetime
 import click
 
 from cmaq_preprocess import utils
-from cmaq_preprocess.cams import interpolateFromCAMSToCmaqGrid
+from cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
 from cmaq_preprocess.mcip import runMCIP
 from cmaq_preprocess.mcip_preparation import (
-    checkInputMetAndOutputFolders,
-    getMcipGridNames,
+    check_input_met_and_output_folders,
+    get_mcip_grid_names,
 )
 from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_cmaq_config
 from cmaq_preprocess.run_scripts import (
-    prepareBconRunScripts,
-    prepareCctmRunScripts,
-    prepareMainRunScript,
-    prepareTemplateBconFiles,
-    prepareTemplateIconFiles,
+    prepare_bcon_run_scripts,
+    prepare_main_run_script,
+    prepare_template_bcon_files,
+    prepare_template_icon_files,
 )
 
 
@@ -57,7 +56,7 @@ def setup_for_cmaq(config: CMAQConfig):
     print(
         "Check that input meteorology files are provided and create output destinations (if need be)"
     )
-    mcip_output_found = checkInputMetAndOutputFolders(
+    mcip_output_found = check_input_met_and_output_folders(
         config.ctmDir, config.metDir, dates, config.domains
     )
     print("\t... done")
@@ -84,79 +83,60 @@ def setup_for_cmaq(config: CMAQConfig):
         )
 
     # extract some parameters about the MCIP setup
-    CoordNames, GridNames, APPL = getMcipGridNames(config.metDir, dates, config.domains)
+    coord_names, grid_names, appl = get_mcip_grid_names(config.metDir, dates, config.domains)
 
     if config.prepareICandBC:
         # prepare the template boundary condition concentration files
         # from profiles using BCON
-        templateBconFiles = prepareTemplateBconFiles(
+        template_bcon_files = prepare_template_bcon_files(
             date=dates[0],
             domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
-            CFG=config.run,
+            ctm_dir=config.ctmDir,
+            met_dir=config.metDir,
+            cmaq_dir=config.CMAQdir,
+            simulation_name=config.run,
             mech=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            grid_names=grid_names,
+            mcip_suffix=appl,
             scripts=scripts,
-            forceUpdate=config.forceUpdateICandBC,
+            force_update=config.forceUpdateICandBC,
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
-        templateIconFiles = prepareTemplateIconFiles(
+        template_icon_files = prepare_template_icon_files(
             date=dates[0],
             domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
-            CFG=config.run,
+            ctm_dir=config.ctmDir,
+            met_dir=config.metDir,
+            cmaq_dir=config.CMAQdir,
+            simulation_name=config.run,
             mech=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            grid_names=grid_names,
+            mcip_suffix=appl,
             scripts=scripts,
-            forceUpdate=config.forceUpdateICandBC,
+            force_update=config.forceUpdateICandBC,
         )
         # use the template initial and boundary condition concentration
         # files and populate them with values from MOZART output
-        interpolateFromCAMSToCmaqGrid(
+        interpolate_from_cams_to_cmaq_grid(
             dates,
             config.domains,
             config.mech,
             config.inputCAMSFile,
-            templateIconFiles,
-            templateBconFiles,
-            config.metDir,
-            config.ctmDir,
-            GridNames,
-            mcipsuffix=APPL,
-            forceUpdate=config.forceUpdateICandBC,
+            template_icon_files=template_icon_files,
+            template_bcon_files=template_bcon_files,
+            met_dir=config.metDir,
+            ctm_dir=config.ctmDir,
+            grid_names=grid_names,
+            mcip_suffix=appl,
+            force_update=config.forceUpdateICandBC,
             bias_correct=config.CAMSToCmaqBiasCorrect,
         )
 
     if config.prepareRunScripts:
-        print("Prepare ICON, BCON and CCTM run scripts")
-        # prepare the scripts for CCTM
-        prepareCctmRunScripts(
-            dates=dates,
-            domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
-            CFG=config.run,
-            mech=config.mech,
-            mechCMAQ=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
-            scripts=scripts,
-            EXEC=config.cctmExec,
-            SZpath=config.ctmDir,
-            nhours=config.nhoursPerRun,
-            printFreqHours=config.printFreqHours,
-            forceUpdate=config.forceUpdateRunScripts,
-        )
+        print("Prepare ICON, BCON run scripts")
         # prepare the scripts for BCON
-        prepareBconRunScripts(
+        prepare_bcon_run_scripts(
             sufadjname=config.sufadj,
             dates=dates,
             domains=config.domains,
@@ -166,22 +146,22 @@ def setup_for_cmaq(config: CMAQConfig):
             CFG=config.run,
             mech=config.mech,
             mechCMAQ=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            GridNames=grid_names,
+            mcip_suffix=appl,
             scripts=scripts,
-            forceUpdate=config.forceUpdateRunScripts,
+            force_update=config.forceUpdateRunScripts,
         )
         # prepare the main run script
-        prepareMainRunScript(
+        prepare_main_run_script(
             dates=dates,
             domains=config.domains,
-            ctmDir=config.ctmDir,
-            CMAQdir=config.CMAQdir,
+            ctm_dir=config.ctmDir,
+            cmaq_dir=config.CMAQdir,
             scripts=scripts,
-            doCompress=config.doCompress,
-            compressScript=config.compressScript,
+            do_compress=config.doCompress,
+            compress_script=config.compressScript,
             run=config.run,
-            forceUpdate=config.forceUpdateRunScripts,
+            force_update=config.forceUpdateRunScripts,
         )
 
 

@@ -21,7 +21,8 @@ def match_two_sorted_arrays(arr1, arr2):
         arr2: A sorted 1D numpy array
 
     Returns:
-        result: numpy integer array with the same dimensions as array arr2, with each element containing the index of arr1 that provides the *closest* match to the given entry in arr2
+        result: numpy integer array with the same dimensions as array arr2, with each element
+        containing the index of arr1 that provides the *closest* match to the given entry in arr2
     """
     result = numpy.zeros(arr2.shape, dtype=int)
     for i, v in enumerate(arr2):
@@ -176,20 +177,20 @@ def print_boundary_variable(cmspec, out_boundary, factor):
     print(f"{cmspec:20} {out_boundary[:, 0, :].mean() * factor:.3e}")
 
 
-def interpolateFromCAMSToCmaqGrid(
+def interpolate_from_cams_to_cmaq_grid(
     dates,
     doms,
     mech,
-    inputCAMSFile,
-    templateIconFiles,
-    templateBconFiles,
-    metDir,
-    ctmDir,
-    GridNames,
-    mcipsuffix,
-    forceUpdate,
-    bias_correct=0.0,
-    defaultSpec="O3",
+    input_cams_file,
+    template_icon_files,
+    template_bcon_files,
+    met_dir,
+    ctm_dir,
+    grid_names,
+    mcip_suffix,
+    force_update: bool,
+    bias_correct: float = 0.0,
+    default_spec="O3",
 ):
     """Function to interpolate the from the global CAMS CTM output to ICs and BCs for CMAQ
 
@@ -197,15 +198,16 @@ def interpolateFromCAMSToCmaqGrid(
         dates: list of datetime objects, one per date MCIP and CCTM output should be defined
         doms: list of domain names (e.g. ['d01', 'd02'] )
         mech: name of chemical mechanism to appear in filenames
-        inputCAMSFile: Output from CAMS to use for boundary and initial conditions
-        templateIconFiles: list of filenames for template ICON files
-        templateBconFiles: list of filenames for template BCON files
-        metDir: base directory for the MCIP output
-        ctmDir: base directory for the CCTM inputs and outputs
-        GridNames: list of MCIP map projection names (one per domain)
-        mcipsuffix: Suffix for the MCIP output files
-        forceUpdate: Boolean (True/False) for whether we should update the output if it already exists
-        defaultSpec: A species that is known to exist in the CAMS files (defaults to 'O3'), used for checking dimension information
+        input_cams_file: Output from CAMS to use for boundary and initial conditions
+        template_icon_files: list of filenames for template ICON files
+        template_bcon_files: list of filenames for template BCON files
+        met_dir: base directory for the MCIP output
+        ctm_dir: base directory for the CCTM inputs and outputs
+        grid_names: list of MCIP map projection names (one per domain)
+        mcip_suffix: Suffix for the MCIP output files
+        force_update: Whether we should update the output if it already exists
+        default_spec: A species that is known to exist in the CAMS files (defaults to 'O3'),
+            used for checking dimension information
 
     Returns:
         Nothing
@@ -214,27 +216,27 @@ def interpolateFromCAMSToCmaqGrid(
     ##
     ## if we aren't forcing an update, check whether files exist and
     ## return early if possible
-    if not forceUpdate:
-        allFilesExist = True
+    if not force_update:
+        all_files_exist = True
         for idate, date in enumerate(dates):
             yyyymmdd_dashed = date.strftime("%Y-%m-%d")
             do_ICs = idate == 0
             for idom, dom in enumerate(doms):
-                grid = GridNames[idom]
-                chemdir = f"{ctmDir}/{yyyymmdd_dashed}/{dom}"
+                grid = grid_names[idom]
+                chemdir = f"{ctm_dir}/{yyyymmdd_dashed}/{dom}"
                 do_BCs = dom == doms[0]
                 ##
                 outBCON = f"{chemdir}/BCON.{dom}.{grid}.{mech}.nc"
                 outICON = f"{chemdir}/ICON.{dom}.{grid}.{mech}.nc"
                 ##
                 if do_BCs and (not os.path.exists(outBCON)):
-                    allFilesExist = False
+                    all_files_exist = False
                 ##
                 if do_ICs and (not os.path.exists(outICON)):
-                    allFilesExist = False
+                    all_files_exist = False
                 ##
         ##
-        if allFilesExist:
+        if all_files_exist:
             return
 
     ##
@@ -242,9 +244,9 @@ def interpolateFromCAMSToCmaqGrid(
         yyyymmdd_dashed = date.strftime("%Y-%m-%d")
         do_ICs = idate == 0
         for idom, dom in enumerate(doms):
-            grid = GridNames[idom]
-            mcipdir = f"{metDir}/{yyyymmdd_dashed}/{dom}"
-            chemdir = f"{ctmDir}/{yyyymmdd_dashed}/{dom}"
+            grid = grid_names[idom]
+            mcipdir = f"{met_dir}/{yyyymmdd_dashed}/{dom}"
+            chemdir = f"{ctm_dir}/{yyyymmdd_dashed}/{dom}"
 
             ## check that the output directory exists - if not, create it
             os.makedirs(chemdir, exist_ok=True)
@@ -254,15 +256,15 @@ def interpolateFromCAMSToCmaqGrid(
             if not (do_ICs or do_BCs):
                 continue
 
-            croFile = f"{mcipdir}/GRIDCRO2D_{mcipsuffix[idom]}"
-            dotFile = f"{mcipdir}/GRIDDOT2D_{mcipsuffix[idom]}"
-            bdyFile = f"{mcipdir}/GRIDBDY2D_{mcipsuffix[idom]}"
-            metFile = f"{mcipdir}/METCRO3D_{mcipsuffix[idom]}"
-            srfFile = f"{mcipdir}/METCRO2D_{mcipsuffix[idom]}"
+            croFile = f"{mcipdir}/GRIDCRO2D_{mcip_suffix[idom]}"
+            dotFile = f"{mcipdir}/GRIDDOT2D_{mcip_suffix[idom]}"
+            bdyFile = f"{mcipdir}/GRIDBDY2D_{mcip_suffix[idom]}"
+            metFile = f"{mcipdir}/METCRO3D_{mcip_suffix[idom]}"
+            srfFile = f"{mcipdir}/METCRO2D_{mcip_suffix[idom]}"
             outBCON = f"{chemdir}/BCON.{dom}.{grid}.{mech}.nc"
             outICON = f"{chemdir}/ICON.{dom}.{grid}.{mech}.nc"
-            templateIconFile = templateIconFiles[idom]
-            templateBconFile = templateBconFiles[idom]
+            templateIconFile = template_icon_files[idom]
+            templateBconFile = template_bcon_files[idom]
 
             if do_BCs:
                 if os.path.exists(outBCON):
@@ -282,7 +284,7 @@ def interpolateFromCAMSToCmaqGrid(
                 netCDF4.Dataset(bdyFile, "r", format="NETCDF4") as ncbdy,
                 netCDF4.Dataset(metFile, "r", format="NETCDF4") as ncmet,
                 netCDF4.Dataset(srfFile, "r", format="NETCDF4") as ncsrf,
-                netCDF4.Dataset(inputCAMSFile, "r", format="NETCDF4") as ncin,
+                netCDF4.Dataset(input_cams_file, "r", format="NETCDF4") as ncin,
             ):
                 if do_BCs:
                     print("write BCs to file: ", outBCON)
@@ -426,7 +428,7 @@ def interpolateFromCAMSToCmaqGrid(
                             ncouti.createVariable(
                                 varname=spec,
                                 datatype="f4",
-                                dimensions=ncouti.variables[defaultSpec].dimensions,
+                                dimensions=ncouti.variables[default_spec].dimensions,
                                 zlib=isnetcdf4,
                             )
                             ncouti.long_name = f"{spec:16}"
@@ -442,7 +444,7 @@ def interpolateFromCAMSToCmaqGrid(
                             ncoutb.createVariable(
                                 varname=spec,
                                 datatype="f4",
-                                dimensions=ncoutb.variables[defaultSpec].dimensions,
+                                dimensions=ncoutb.variables[default_spec].dimensions,
                                 zlib=isnetcdf4,
                             )
                             ncoutb.long_name = f"{spec:16}"
