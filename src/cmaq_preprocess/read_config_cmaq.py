@@ -15,14 +15,20 @@ def boolean_tuple(x):
 
 @define
 class CMAQConfig:
+    """
+    Configuration used to generate the CMAQ setup and run scripts.
+    """
+
     CMAQdir: str
-    """ base directory for the CMAQ model """
+    """Base directory for the CMAQ model"""
     MCIPdir: str
     """directory containing the MCIP executable"""
     templateDir: str
     """folder containing the template run scripts"""
     metDir: str
-    """base directory for the MCIP output.
+    """
+    Base directory for the MCIP output.
+    
     convention for MCIP output is that we have data organised by day and domain,
      eg metDir/2016-11-29/d03"""
     ctmDir: str

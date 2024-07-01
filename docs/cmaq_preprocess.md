@@ -1,0 +1,31 @@
+# cmaq_preprocess
+
+## download_cams_input
+
+## setup_for_cmaq
+
+The `scripts/cmaq_preprocess/setup_for_cmaq.py` script generates the required configuration and data to run CMAQ for a given domain and time.
+
+Before running this script, the WRF model must be run to generate the meteorological data and the CAMS data must be downloaded
+(`scripts/cmaq_preprocess/download_cams_input.py`) for the period of interest.
+[CAMS](https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4) 
+is a global atmospheric reanalysis data set that can be used to provide boundary conditions for CMAQ.
+
+The `setup_for_cmaq.py` script does the following:
+* Checks if the required input files are available (WRF output files from the above section)
+* Run MCIP to extract the meteorological data from the WRF output files and interpolate onto the CMAQ grid
+* Prepares the initial and boundary conditions for CMAQ (using ICON and BCON respectively)
+* Interpolate CAMS data to the CMAQ grid
+* Generate the run script for CMAQ for each job # TODO: remove this step
+
+Depending on the configuration of the script, 
+multiple CMAQ jobs may be generated.
+
+After the `setup_for_cmaq.py` script has been run successfully,
+there should be results in the `data/mcip` and `data/cmaq` directory.
+The `data/cmaq/runCMAQ.sh` script in the runs output directory can be used to run CMAQ for all jobs sequentially.
+
+
+## make_emis_template
+## make_template
+## make_prior

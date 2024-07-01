@@ -1,15 +1,14 @@
 import datetime
 import json
-from collections.abc import Mapping
 
 import pytz
 
 
 def boolean_converter(
-    value: str,
-    true_vals: list[str] = ("True", "true", "1", "t", "y", "yes"),
-    false_vals: list[str] = ("False", "false", "0", "f", "n", "no"),
-):
+    value: str | bool,
+    true_vals: tuple[str] = ("True", "true", "1", "t", "y", "yes"),
+    false_vals: tuple[str] = ("False", "false", "0", "f", "n", "no"),
+) -> bool:
     """
     Convert a string value to a boolean based on predefined true and false values.
 
@@ -30,35 +29,11 @@ def boolean_converter(
 
     boolvals = true_vals + false_vals
 
-    assert value.lower() in boolvals, f"Key {value} not a recognised boolean value"
+    value_str = str(value).lower()
 
-    return value.lower() in true_vals
+    assert value_str in boolvals, f"Key {value} not a recognised boolean value"
 
-
-def add_environment_variables(
-    config: dict[str, str | bool | int], environment_variables: Mapping[str, str]
-) -> dict[str, str | bool | int]:
-    """
-    Add environment variables to the configuration that may be needed for substitutions.
-
-    Parameters
-    ----------
-    config
-        The configuration dictionary.
-    environment_variables
-        Process environment variables.
-
-    Returns
-    -------
-        The updated configuration dictionary with added environment variables.
-
-    """
-    envVarsToInclude = config["environment_variables_for_substitutions"].split(",")
-
-    for envVarToInclude in envVarsToInclude:
-        config[envVarToInclude] = environment_variables[envVarToInclude]
-
-    return config
+    return value_str in true_vals
 
 
 def process_date_string(date_str: str) -> datetime.datetime:

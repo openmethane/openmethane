@@ -5,7 +5,6 @@ import pytest
 from attrs import asdict
 
 from cmaq_preprocess.config_read_functions import (
-    add_environment_variables,
     boolean_converter,
     load_json,
     process_date_string,
@@ -33,32 +32,6 @@ def temp_config_file(tmp_path, request):
     temp_file = tmp_path / "temp_config.json"
     temp_file.write_text(content)
     return str(temp_file)
-
-
-def test_005_add_environment_variable():
-    config = {
-        "some": "value",
-        "more": "values",
-        "environment_variables_for_substitutions": "HOME",
-    }
-
-    environment_variables = {
-        "some": "value",
-        "USER": "test_user",
-        "HOME": "/Users/test_user",
-    }
-
-    expected = {
-        "some": "value",
-        "more": "values",
-        "environment_variables_for_substitutions": "HOME",
-        "HOME": "/Users/test_user",
-    }
-
-    assert (
-        add_environment_variables(environment_variables=environment_variables, config=config)
-        == expected
-    )
 
 
 def test_007_parse_boolean_keys():

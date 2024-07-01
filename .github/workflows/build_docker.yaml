@@ -130,7 +130,7 @@ jobs:
             -v ${{ github.workspace }}:/opt/project \
             -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
             ${{ env.IMAGE_ID }} \
-            python scripts/download_cams_input.py \
+            python scripts/cmaq_preprocess/download_cams_input.py \
             -s 2022-07-01 \
             -e 2022-07-01 \
             data/cams/cams_eac4_methane.nc
