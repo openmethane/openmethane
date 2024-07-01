@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import logging
 import os
 
 from fourdvar.params._env import env
 from fourdvar.params.root_path_defn import store_path
+
+logger = logging.getLogger(__name__)
 
 # notes: the patterns <YYYYMMDD>, <YYYYDDD> & <YYYY-MM-DD> will be replaced
 # with the year, month and day of the current model run
@@ -107,8 +109,8 @@ mcip_output_path = env.str("MCIP_OUTPUT_PATH")
 if use_jobfs is True:
     chk_path = os.environ.get("PBS_JOBFS", None)
     if chk_path is None:
-        msg = "cannot find PBS_JOBFS, use_jobfs can only be run with qsub."
-        raise ValueError(msg)
+        logger.warning("cannot find PBS_JOBFS, use_jobfs can only be run with qsub.")
+        chk_path = os.path.join(cmaq_base, "chkpnt")
 else:
     chk_path = os.path.join(cmaq_base, "chkpnt")
 
