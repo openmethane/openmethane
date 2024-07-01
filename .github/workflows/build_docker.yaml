@@ -116,6 +116,7 @@ jobs:
       - name: Pull built docker image
         run: |
           docker pull ${{ env.IMAGE_ID }}
+          # Ensure that the data directory exists and is writable
           mkdir data
       - name: Cache CAMS data
         id: cache-cams
@@ -137,7 +138,6 @@ jobs:
             data/cams/cams_eac4_methane.nc
       - name: Run pytest
         run: |
-          ls -al data
           make fetch-domains
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
