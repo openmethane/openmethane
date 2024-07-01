@@ -136,6 +136,7 @@ jobs:
             data/cams/cams_eac4_methane.nc
       - name: Run pytest
         run: |
+          ls -al data
           make fetch-domains
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
