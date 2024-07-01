@@ -10,7 +10,7 @@ from cmaq_preprocess.read_config_cmaq import load_cmaq_config
 @pytest.fixture
 def wrf_run(root_dir):
     # Verify that WRF has been successfully run previously
-    wrf_output_dir = Path(os.path.join(root_dir, "data", "runs", "aust-test", "2022072200"))
+    wrf_output_dir = Path(root_dir) / "tests" / "test-data" / "wrf" / "aust-test" / "2022072200"
 
     try:
         assert (wrf_output_dir / "WRFOUT_d01_2022-07-22T0000Z.nc").exists()
@@ -18,6 +18,8 @@ def wrf_run(root_dir):
         assert (wrf_output_dir / "WRFOUT_d01_2022-07-23T0000Z.nc").exists()
     except AssertionError:
         pytest.fail("WRF has not been run successfully. Failing test.")
+
+    return wrf_output_dir
 
 
 def _get_filelisting(directory: Path):
@@ -33,7 +35,7 @@ def test_setup_for_cmaq(
     data_regression,
     compare_dataset,
 ):
-    config = load_cmaq_config(os.path.join(root_dir, "config/cmaq/config.docker.json"))
+    config = load_cmaq_config(os.path.join(root_dir, "config/cmaq_preprocess/config.docker.json"))
 
     cmaq_dir = Path(tmpdir / "cmaq")
     mcip_dir = Path(tmpdir / "mcip")
@@ -41,6 +43,7 @@ def test_setup_for_cmaq(
     # Override some settings
     config.metDir = str(mcip_dir)
     config.ctmDir = str(cmaq_dir)
+    config.wrfDir = str(wrf_run.parent)
 
     # Run the CMAQ preprocessing scripts
     setup_for_cmaq.main(config)

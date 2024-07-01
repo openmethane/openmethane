@@ -28,7 +28,8 @@ def test_data_dir(root_dir) -> Path:
 
 
 def _clean_attrs(
-    attrs: dict, excluded_fields: tuple[str, ...] = ("WDATE", "WTIME", "CDATE", "CTIME", "HISTORY")
+    attrs: dict,
+    excluded_fields: tuple[str, ...] = ("HISTORY", "CDATE", "CTIME", "WDATE", "WTIME"),
 ) -> dict:
     clean = {}
     for key, value in attrs.items():
@@ -60,7 +61,10 @@ def compare_dataset(data_regression):
     Check if the structure of xarray dataset/datatree instance has changed
     """
 
-    def compare(ds):
+    def compare(ds: xr.Dataset | str, basename: str | None = None):
+        if isinstance(ds, Path | str):
+            ds = xr.load_dataset(ds)
+
         if not hasattr(ds, "groups"):
             content = _extract_group(ds)
         else:
@@ -68,7 +72,7 @@ def compare_dataset(data_regression):
                 "groups": {k: _extract_group(ds[k]) for k in ds.groups},
                 "attrs": _clean_attrs(ds.attrs),
             }
-        data_regression.check(content)
+        data_regression.check(content, basename=basename)
 
     return compare
 
