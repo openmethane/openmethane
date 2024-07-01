@@ -1,12 +1,14 @@
 * Steps towards Beta version
-** TODO choose domain
+** DONE choose domain
 :PROPERTIES:
 :ORDERED:  t
 :END:
-** TODO choose study period
+- State "DONE"       from "TODO"       [2024-01-09 Tue 11:29]
+** DONE choose study period
 :PROPERTIES:
 :ORDERED:  t
 :END:
+- State "DONE"       from "TODO"       [2024-01-09 Tue 11:29]
 ** DONE build WRF
 :PROPERTIES:
 :ORDERED:  t
@@ -14,20 +16,25 @@
 - State "DONE"       from "TODO"       [2023-03-13 Mon 05:59] \\
   Stayed with WRFV4.3 from https://github.com/coecms/WRF already
   compiled on gadi
-** TODO generate CMAQ inputs
+** DONE generate CMAQ inputs
 :PROPERTIES:
 :ORDERED:  t
 :END:
+- State "DONE"       from "TODO"       [2024-01-09 Tue 11:29] \\
+  MCIP running successfully
+  let's see if we comment on prior later
 ** DONE build CMAQ
 :PROPERTIES:
 :ORDERED:  t
 :END:
 - State "DONE"       from "TODO"       [2023-03-23 Thu 10:57] \\
   running on gadi
-** TODO generate inventory
+** DONE generate inventory
 :PROPERTIES:
 :ORDERED:  t
 :END:
+- State "DONE"       from "TODO"       [2024-01-09 Tue 11:31] \\
+  done via openmethane prior but will be ongoing
 ** TODO customize py4dvar
 :PROPERTIES:
 :ORDERED:  t
@@ -35,11 +42,18 @@
 *** DONE replicate Sougol setup
 - State "DONE"       from "TODO"       [2023-03-29 Wed 10:10]
 *** TODO Write ObsOp
-**** TODO Read ATBD
-** TODO process TROPOMI obs
+**** DONE Read ATBD
+- State "DONE"       from "TODO"       [2024-01-09 Tue 11:33] \\
+  though still not quite clear on role of prior, the dofs in the
+  retrieval files suggest it doesn't matter much
+** DONE process TROPOMI obs
 :PROPERTIES:
 :ORDERED:  t
 :END:
+- State "DONE"       from "TODO"       [2024-01-09 Tue 11:34] \\
+  needed to rewrite tropomi_preproc to use geometry package and
+  parallelise it. Still appears to be failing for Nasimeh's grid, will
+  get back to that
 ** TODO run inversion
 :PROPERTIES:
 :ORDERED:  t
@@ -52,3 +66,11 @@
 :PROPERTIES:
 :ORDERED:  t
 :END:
+
+* some code suggestions
+- intermediate class for objects that contain file lists,
+  ModelInputData, ModelOutputData, AdjointForcingData and
+  SensitivityData, currently they share many equivalent methods e.g. get_vector()
+- Refactor so that run_adjoint and prepare_model are adjoint,
+  currently prepare_model takes fluxes in mole-s and run_adjoint
+  outputs ppm/s

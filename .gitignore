@@ -13,3 +13,19 @@ baseline_data/NLUM_ALUMV8_250m_2015_16_alb.tif
 load_p4d_modules.sh
 *.o[0-9]*
 *.e[0-9]*
+
+# Python virtual environments
+venv
+.venv
+
+# Build artifacts
+dist
+
+# Local run directory
+data
+
+# Generated during a CMAQ run
+N_SPC_EMIS.dat
+
+# Environment file with sensitive information
+.env

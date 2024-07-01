@@ -314,3 +314,13 @@ that region.
 | 30 iterations py4dvar | 1000 CPU hours & 50GB | estimated from 3 days, = 1 node for one day |
 | temporary storage     | 500GB                 |                                             |
 | Data export           | 2GB                   |                                             |
+
+* Unit conversions and adjoints
+Let's write down the steps in the current implementation and their
+expected units
+- UnknownData is unitless
+- uncondition just multiplies by uncertainty here. Note that this will be unitless for emissions when we're using the template but may have units for iCon and bCon, need to check on units for bCon
+- ModelInputData has emission units of mole/s which is what the templates should have, and appears correct
+- ModelOutputData has units of ppm
+- ObservationData has units of ppb so there's a multiplication by 1000 in obs_operator
+- w_resid has units per-ppb (divides residual by  uncertainty squared. cmaq_bwd expects its input in ppm. I think the inverse units (per ppb) mean we should be dividing by convFac not multiplying. Effectively cmaq_bwd calculates the number of seconds you need to run an emission to get a given concentration change so it multiplies by seconds. This means our sensitivity unit out the back of cmaq_bwd is per-ppb/s and we want to convert that to per-mol/s so we need to divide by 1e9 not 1e6. Not sure where the best place to do this is, at the moment I've put it in calc_forcing 

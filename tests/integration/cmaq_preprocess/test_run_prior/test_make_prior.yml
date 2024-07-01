@@ -1,0 +1,56 @@
+attrs:
+  EDATE: 2022211
+  SDATE: 2022182
+  VAR-LIST: 'CH4             '
+groups:
+  /:
+    attrs:
+      EDATE: 2022211
+      SDATE: 2022182
+      VAR-LIST: 'CH4             '
+    coords: {}
+    dims: {}
+    variables: {}
+  /bcon:
+    attrs:
+      TSEC: 172800
+      UP_LAY: 15
+    coords: {}
+    dims:
+      BCON: 8
+      TSTEP: 0
+    variables:
+      CH4:
+        attrs: {}
+        dims:
+        - TSTEP
+        - BCON
+      CH4_UNC:
+        attrs: {}
+        dims:
+        - TSTEP
+        - BCON
+  /emis:
+    attrs:
+      TDAY: 1
+    coords: {}
+    dims:
+      COL: 5
+      LAY: 1
+      ROW: 5
+      TSTEP: 1
+    variables:
+      CH4:
+        attrs: {}
+        dims:
+        - TSTEP
+        - LAY
+        - ROW
+        - COL
+      CH4_UNC:
+        attrs: {}
+        dims:
+        - TSTEP
+        - LAY
+        - ROW
+        - COL
