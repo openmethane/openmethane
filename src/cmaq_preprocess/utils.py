@@ -50,51 +50,50 @@ def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
     return d
 
 
-def compressNCfile(filename, ppc=None):
+def compress_nc_file(filename: str, ppc: int | None = None) -> None:
     """Compress a netCDF3 file to netCDF4 using ncks
 
     Args:
-        filename: Path to the netCDF3 file to commpress
+        filename: Path to the netCDF3 file to compress
         ppc: number of significant digits to retain (default is to retain all)
 
     Returns:
         Nothing
     """
 
-    if os.path.exists(filename):
-        print(f"Compress file {filename} with ncks")
-        command = f"ncks -4 -L4 -O {filename} {filename}"
-        print("\t" + command)
-        commandList = command.split(" ")
-        if ppc is None:
-            ppcText = ""
-        elif not isinstance(ppc, int):
+    if not os.path.exists(filename):
+        raise RuntimeError(f"File {filename} not found...")
+
+    print(f"Compress file {filename} with ncks")
+    command = f"ncks -4 -L4 -O {filename} {filename}"
+    print("\t" + command)
+    command_list = command.split(" ")
+    if ppc is not None:
+        if not isinstance(ppc, int):
             raise RuntimeError("Argument ppc should be an integer...")
         elif ppc < 1 or ppc > 6:
             raise RuntimeError("Argument ppc should be between 1 and 6...")
         else:
             ppcText = f"--ppc default={ppc}"
-            commandList = [commandList[0]] + ppcText.split(" ") + commandList[1:]
-        ##
-        ##
-        p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if len(stderr) > 0 or len(stdout) > 0:
-            print("stdout = " + stdout.decode())
-            print("stderr = " + stderr.decode())
-            raise RuntimeError("Error from ncks...")
-    else:
-        print(f"File {filename} not found...")
+            command_list = [command_list[0]] + ppcText.split(" ") + command_list[1:]
+    p = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # noqa: S603
+    stdout, stderr = p.communicate()
+    if len(stderr) > 0 or len(stdout) > 0:
+        print("stdout = " + stdout.decode())
+        print("stderr = " + stderr.decode())
+        raise RuntimeError("Error from ncks...")
 
 
-def loadScripts(scripts):
+def load_scripts(scripts):
     """Read the contents (i.e. the lines of text) of a set of scripts into a dictionary
 
     Args:
         scripts: A dictionary of dictionaries, with the inner level containing the key 'path'
 
     Returns:
-        scripts: A dictionary of dictionaries, with the inner level containing the keys 'path' and 'lines' (giving their file path and lines of text, respectively)
+        scripts: A dictionary of dictionaries,
+            with the inner level containing the keys 'path' and 'lines'
+            (giving their file path and lines of text, respectively)
     """
     scripts = copy.copy(scripts)
     ## for each of the scripts, read in the contents
@@ -104,10 +103,8 @@ def loadScripts(scripts):
             raise RuntimeError(
                 "Template run script {} not found at {} ... ".format(k, scripts[k]["path"])
             )
-        ##
-        f = open(scripts[k]["path"])
-        scripts[k]["lines"] = f.readlines()
-        f.close()
+        with open(scripts[k]["path"]) as fh:
+            scripts[k]["lines"] = fh.readlines()
     ##
     return scripts
 

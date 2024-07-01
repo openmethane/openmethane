@@ -46,7 +46,7 @@ def test_setup_for_cmaq(
     config.wrfDir = str(wrf_run.parent)
 
     # Run the CMAQ preprocessing scripts
-    setup_for_cmaq.main(config)
+    setup_for_cmaq.setup_for_cmaq(config)
 
     assert (cmaq_dir / "template_bcon_profile_CH4only_d01.nc").exists()
     assert (cmaq_dir / "template_icon_profile_CH4only_d01.nc").exists()

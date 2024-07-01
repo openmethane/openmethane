@@ -3,7 +3,7 @@
 import os
 import subprocess
 
-from cmaq_preprocess.utils import compressNCfile, replace_and_write
+from cmaq_preprocess.utils import compress_nc_file, replace_and_write
 
 
 def prepareCctmRunScripts(
@@ -344,7 +344,7 @@ def prepareTemplateBconFiles(
         ##
         print("Compress the output file")
         filename = f"{ctmDir}/{outfile}"
-        compressNCfile(filename)
+        compress_nc_file(filename)
         outputFiles[idomain] = filename
     ##
 
@@ -497,6 +497,6 @@ def prepareTemplateIconFiles(
         ##
         print("Compress the output file")
         filename = f"{ctmDir}/{outfile}"
-        compressNCfile(filename)
+        compress_nc_file(filename)
     ##
     return outputFiles

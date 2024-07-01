@@ -13,6 +13,8 @@
 
 import datetime
 
+import click
+
 from cmaq_preprocess import utils
 from cmaq_preprocess.cams import interpolateFromCAMSToCmaqGrid
 from cmaq_preprocess.mcip import runMCIP
@@ -30,34 +32,47 @@ from cmaq_preprocess.run_scripts import (
 )
 
 
-def main(setup_cmaq: CMAQConfig):
+@click.command()
+@click.option(
+    "-c",
+    "--config-file",
+    type=click.Path(exists=True),
+    default="config/cmaq_preprocess/config.docker.json",
+)
+def main(config_file: str):
+    config = load_cmaq_config(config_file)
+
+    setup_for_cmaq(config)
+
+
+def setup_for_cmaq(config: CMAQConfig):
     # define date range
-    ndates = (setup_cmaq.endDate - setup_cmaq.startDate).days + 1
-    dates = [setup_cmaq.startDate + datetime.timedelta(days=d) for d in range(ndates)]
+    ndates = (config.endDate - config.startDate).days + 1
+    dates = [config.startDate + datetime.timedelta(days=d) for d in range(ndates)]
 
     # read in the template run-scripts
-    scripts = utils.loadScripts(scripts=setup_cmaq.scripts)
+    scripts = utils.load_scripts(scripts=config.scripts)
 
     # create output destinations, if need be:
     print(
         "Check that input meteorology files are provided and create output destinations (if need be)"
     )
-    mcipOuputFound = checkInputMetAndOutputFolders(
-        setup_cmaq.ctmDir, setup_cmaq.metDir, dates, setup_cmaq.domains
+    mcip_output_found = checkInputMetAndOutputFolders(
+        config.ctmDir, config.metDir, dates, config.domains
     )
     print("\t... done")
 
-    if (not mcipOuputFound) or setup_cmaq.forceUpdateMcip:
+    if (not mcip_output_found) or config.forceUpdateMcip:
         runMCIP(
             dates=dates,
-            domains=setup_cmaq.domains,
-            metDir=setup_cmaq.metDir,
-            wrfDir=setup_cmaq.wrfDir,
-            geoDir=setup_cmaq.geoDir,
-            ProgDir=setup_cmaq.MCIPdir,
-            APPL=setup_cmaq.scenarioTag,
-            CoordName=setup_cmaq.mapProjName,
-            GridName=setup_cmaq.gridName,
+            domains=config.domains,
+            metDir=config.metDir,
+            wrfDir=config.wrfDir,
+            geoDir=config.geoDir,
+            ProgDir=config.MCIPdir,
+            APPL=config.scenarioTag,
+            CoordName=config.mapProjName,
+            GridName=config.gridName,
             scripts=scripts,
             compressWithNco=True,
             fix_simulation_start_date=True,
@@ -65,113 +80,110 @@ def main(setup_cmaq: CMAQConfig):
             truelat2=None,
             wrfRunName=None,
             doArchiveWrf=False,
-            add_qsnow=setup_cmaq.add_qsnow,
+            add_qsnow=config.add_qsnow,
         )
 
     # extract some parameters about the MCIP setup
-    CoordNames, GridNames, APPL = getMcipGridNames(setup_cmaq.metDir, dates, setup_cmaq.domains)
+    CoordNames, GridNames, APPL = getMcipGridNames(config.metDir, dates, config.domains)
 
-    if setup_cmaq.prepareICandBC:
+    if config.prepareICandBC:
         # prepare the template boundary condition concentration files
         # from profiles using BCON
         templateBconFiles = prepareTemplateBconFiles(
             date=dates[0],
-            domains=setup_cmaq.domains,
-            ctmDir=setup_cmaq.ctmDir,
-            metDir=setup_cmaq.metDir,
-            CMAQdir=setup_cmaq.CMAQdir,
-            CFG=setup_cmaq.run,
-            mech=setup_cmaq.mechCMAQ,
+            domains=config.domains,
+            ctmDir=config.ctmDir,
+            metDir=config.metDir,
+            CMAQdir=config.CMAQdir,
+            CFG=config.run,
+            mech=config.mechCMAQ,
             GridNames=GridNames,
             mcipsuffix=APPL,
             scripts=scripts,
-            forceUpdate=setup_cmaq.forceUpdateICandBC,
+            forceUpdate=config.forceUpdateICandBC,
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
         templateIconFiles = prepareTemplateIconFiles(
             date=dates[0],
-            domains=setup_cmaq.domains,
-            ctmDir=setup_cmaq.ctmDir,
-            metDir=setup_cmaq.metDir,
-            CMAQdir=setup_cmaq.CMAQdir,
-            CFG=setup_cmaq.run,
-            mech=setup_cmaq.mechCMAQ,
+            domains=config.domains,
+            ctmDir=config.ctmDir,
+            metDir=config.metDir,
+            CMAQdir=config.CMAQdir,
+            CFG=config.run,
+            mech=config.mechCMAQ,
             GridNames=GridNames,
             mcipsuffix=APPL,
             scripts=scripts,
-            forceUpdate=setup_cmaq.forceUpdateICandBC,
+            forceUpdate=config.forceUpdateICandBC,
         )
         # use the template initial and boundary condition concentration
         # files and populate them with values from MOZART output
         interpolateFromCAMSToCmaqGrid(
             dates,
-            setup_cmaq.domains,
-            setup_cmaq.mech,
-            setup_cmaq.inputCAMSFile,
+            config.domains,
+            config.mech,
+            config.inputCAMSFile,
             templateIconFiles,
             templateBconFiles,
-            setup_cmaq.metDir,
-            setup_cmaq.ctmDir,
+            config.metDir,
+            config.ctmDir,
             GridNames,
             mcipsuffix=APPL,
-            forceUpdate=setup_cmaq.forceUpdateICandBC,
-            bias_correct=setup_cmaq.CAMSToCmaqBiasCorrect,
+            forceUpdate=config.forceUpdateICandBC,
+            bias_correct=config.CAMSToCmaqBiasCorrect,
         )
 
-    if setup_cmaq.prepareRunScripts:
+    if config.prepareRunScripts:
         print("Prepare ICON, BCON and CCTM run scripts")
         # prepare the scripts for CCTM
         prepareCctmRunScripts(
             dates=dates,
-            domains=setup_cmaq.domains,
-            ctmDir=setup_cmaq.ctmDir,
-            metDir=setup_cmaq.metDir,
-            CMAQdir=setup_cmaq.CMAQdir,
-            CFG=setup_cmaq.run,
-            mech=setup_cmaq.mech,
-            mechCMAQ=setup_cmaq.mechCMAQ,
+            domains=config.domains,
+            ctmDir=config.ctmDir,
+            metDir=config.metDir,
+            CMAQdir=config.CMAQdir,
+            CFG=config.run,
+            mech=config.mech,
+            mechCMAQ=config.mechCMAQ,
             GridNames=GridNames,
             mcipsuffix=APPL,
             scripts=scripts,
-            EXEC=setup_cmaq.cctmExec,
-            SZpath=setup_cmaq.ctmDir,
-            nhours=setup_cmaq.nhoursPerRun,
-            printFreqHours=setup_cmaq.printFreqHours,
-            forceUpdate=setup_cmaq.forceUpdateRunScripts,
+            EXEC=config.cctmExec,
+            SZpath=config.ctmDir,
+            nhours=config.nhoursPerRun,
+            printFreqHours=config.printFreqHours,
+            forceUpdate=config.forceUpdateRunScripts,
         )
         # prepare the scripts for BCON
         prepareBconRunScripts(
-            sufadjname=setup_cmaq.sufadj,
+            sufadjname=config.sufadj,
             dates=dates,
-            domains=setup_cmaq.domains,
-            ctmDir=setup_cmaq.ctmDir,
-            metDir=setup_cmaq.metDir,
-            CMAQdir=setup_cmaq.CMAQdir,
-            CFG=setup_cmaq.run,
-            mech=setup_cmaq.mech,
-            mechCMAQ=setup_cmaq.mechCMAQ,
+            domains=config.domains,
+            ctmDir=config.ctmDir,
+            metDir=config.metDir,
+            CMAQdir=config.CMAQdir,
+            CFG=config.run,
+            mech=config.mech,
+            mechCMAQ=config.mechCMAQ,
             GridNames=GridNames,
             mcipsuffix=APPL,
             scripts=scripts,
-            forceUpdate=setup_cmaq.forceUpdateRunScripts,
+            forceUpdate=config.forceUpdateRunScripts,
         )
         # prepare the main run script
         prepareMainRunScript(
             dates=dates,
-            domains=setup_cmaq.domains,
-            ctmDir=setup_cmaq.ctmDir,
-            CMAQdir=setup_cmaq.CMAQdir,
+            domains=config.domains,
+            ctmDir=config.ctmDir,
+            CMAQdir=config.CMAQdir,
             scripts=scripts,
-            doCompress=setup_cmaq.doCompress,
-            compressScript=setup_cmaq.compressScript,
-            run=setup_cmaq.run,
-            forceUpdate=setup_cmaq.forceUpdateRunScripts,
+            doCompress=config.doCompress,
+            compressScript=config.compressScript,
+            run=config.run,
+            forceUpdate=config.forceUpdateRunScripts,
         )
 
 
 if __name__ == "__main__":
-    config_file: str = "config/cmaq/config.docker.json"
-    setup_cmaq = load_cmaq_config(config_file)
-
-    main(setup_cmaq)
+    main()
