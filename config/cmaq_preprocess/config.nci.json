@@ -37,19 +37,19 @@
   "compressScript": "/home/563/ns0890/runCMAQ/Melb_Sch01/find_and_compress_netcdf3_to_netcdf4",
   "scripts": {
     "mcipRun": {
-      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preproces/run.mcip"
+      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.mcip"
     },
     "bconRun": {
-      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preproces/run.bcon"
+      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.bcon"
     },
     "iconRun": {
-      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preproces/run.icon"
+      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.icon"
     },
     "cctmRun": {
-      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preproces/run.cctm"
+      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.cctm"
     },
     "cmaqRun": {
-      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preproces/runCMAQ.sh"
+      "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/runCMAQ.sh"
     }
   },
   "cctmExec": "ADJOINT_FWD",
