@@ -11,10 +11,11 @@
 #
 #PBS -P q90
 #PBS -q hugemem
-#PBS -N run_test
+#PBS -N test_py4dvar
 #PBS -l walltime=48:00:00,mem=999GB
-#PBS -l ncpus=48
+#PBS -l ncpus=96
 #PBS -l wd
+#PBS -l jobfs=1400GB
 source load_p4d_modules.sh
 # replace previous line with whatever you source to run py4dvar
 
