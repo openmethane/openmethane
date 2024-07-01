@@ -67,8 +67,6 @@ phys_pert.archive(prior_pert_archive)
 obs_true.archive(obs_true_archive)
 simul_pert.archive(obs_pert_archive)
 
-# TODO: Verify why ex
-exit()
 cmaq.wipeout_fwd()
 
 # Output the target cost value for this test
