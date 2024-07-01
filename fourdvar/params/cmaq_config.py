@@ -19,10 +19,10 @@ use_jobfs = True
 
 #No. of processors per column
 #npcol = 1
-npcol = 6 #pert
+npcol = 8 #pert
 #No. of processors per row
 #nprow = 1
-nprow = 8 #pert
+nprow = 12 #pert
 #note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 #extra ioapi write logging
