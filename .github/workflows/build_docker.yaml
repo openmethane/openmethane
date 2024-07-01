@@ -119,6 +119,11 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
+            -e TARGET=docker-test \
+            -e CDSAPI_KEY=$CDSAPI_KEY \
+            -e CDSAPI_URL=$CDSAPI_URL \
+            -e EARTHDATA_USERNAME=$EARTHDATA_USERNAME \
+            -e EARTHDATA_PASSWORD=$EARTHDATA_PASSWORD \
             ${{ env.IMAGE_ID }} \
             python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/sat_data
         env:
