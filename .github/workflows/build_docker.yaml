@@ -91,6 +91,7 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
+            -e TARGET=docker \
             ${{ env.IMAGE_ID }} \
             python -m pytest -r a -v tests/unit
   test-integration:
