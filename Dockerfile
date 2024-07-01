@@ -1,3 +1,6 @@
+# Secret management
+FROM segment/chamber:2 AS chamber
+
 # Build the reqired depencies
 FROM continuumio/miniconda3 as builder
 
@@ -61,6 +64,9 @@ RUN apt-get update && \
 
 # /opt/project is chosen because pycharm will automatically mount to this directory
 WORKDIR /opt/project
+
+# Secret management
+COPY --from=chamber /chamber /bin/chamber
 
 # Copy across the virtual environment
 COPY --from=builder /opt/venv /opt/venv
