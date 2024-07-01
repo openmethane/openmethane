@@ -116,6 +116,7 @@ jobs:
       - name: Pull built docker image
         run: |
           docker pull ${{ env.IMAGE_ID }}
+          mkdir data
       - name: Cache CAMS data
         id: cache-cams
         uses: actions/cache@v4
