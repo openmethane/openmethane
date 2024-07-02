@@ -62,11 +62,13 @@ def _run_grad_finite_diff():
     print(f"completed in {int(time.time() - st)}s")
 
     initCost = main.cost_func(prior_vector)
+    print("initCost", initCost)
     initGrad = main.gradient_func(prior_vector)
 
-    epsilon = 1e-4
+    epsilon = 1e-3
     dx = epsilon * np.random.normal(0.0, 1.0, prior_vector.shape)
     pertCost = main.cost_func(prior_vector + dx)
+    print("pertCost", pertCost)
     print(("finite difference", pertCost - initCost))
     print(("grad calc", np.dot(dx, initGrad)))
 
