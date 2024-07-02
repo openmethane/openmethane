@@ -17,18 +17,10 @@ import click
 
 from cmaq_preprocess import utils
 from cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
-from cmaq_preprocess.mcip import runMCIP
-from cmaq_preprocess.mcip_preparation import (
-    check_input_met_and_output_folders,
-    get_mcip_grid_names,
-)
+from cmaq_preprocess.mcip import run_mcip
+from cmaq_preprocess.mcip_preparation import check_input_met_and_output_folders, get_mcip_grid_names
 from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_cmaq_config
-from cmaq_preprocess.run_scripts import (
-    prepare_bcon_run_scripts,
-    prepare_main_run_script,
-    prepare_template_bcon_files,
-    prepare_template_icon_files,
-)
+from cmaq_preprocess.run_scripts import prepare_template_bcon_files, prepare_template_icon_files
 
 
 @click.command()
@@ -45,6 +37,19 @@ def main(config_file: str):
 
 
 def setup_for_cmaq(config: CMAQConfig):
+    """
+    Set up the CMAQ run
+
+    This function
+
+    Parameters
+    ----------
+    config
+
+    Returns
+    -------
+
+    """
     # define date range
     ndates = (config.endDate - config.startDate).days + 1
     dates = [config.startDate + datetime.timedelta(days=d) for d in range(ndates)]
@@ -62,7 +67,7 @@ def setup_for_cmaq(config: CMAQConfig):
     print("\t... done")
 
     if (not mcip_output_found) or config.forceUpdateMcip:
-        runMCIP(
+        run_mcip(
             dates=dates,
             domains=config.domains,
             metDir=config.metDir,
@@ -117,7 +122,7 @@ def setup_for_cmaq(config: CMAQConfig):
             force_update=config.forceUpdateICandBC,
         )
         # use the template initial and boundary condition concentration
-        # files and populate them with values from MOZART output
+        # files and populate them with values from CAMS output
         interpolate_from_cams_to_cmaq_grid(
             dates,
             config.domains,
@@ -131,37 +136,6 @@ def setup_for_cmaq(config: CMAQConfig):
             mcip_suffix=appl,
             force_update=config.forceUpdateICandBC,
             bias_correct=config.CAMSToCmaqBiasCorrect,
-        )
-
-    if config.prepareRunScripts:
-        print("Prepare ICON, BCON run scripts")
-        # prepare the scripts for BCON
-        prepare_bcon_run_scripts(
-            sufadjname=config.sufadj,
-            dates=dates,
-            domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
-            CFG=config.run,
-            mech=config.mech,
-            mechCMAQ=config.mechCMAQ,
-            GridNames=grid_names,
-            mcip_suffix=appl,
-            scripts=scripts,
-            force_update=config.forceUpdateRunScripts,
-        )
-        # prepare the main run script
-        prepare_main_run_script(
-            dates=dates,
-            domains=config.domains,
-            ctm_dir=config.ctmDir,
-            cmaq_dir=config.CMAQdir,
-            scripts=scripts,
-            do_compress=config.doCompress,
-            compress_script=config.compressScript,
-            run=config.run,
-            force_update=config.forceUpdateRunScripts,
         )
 
 

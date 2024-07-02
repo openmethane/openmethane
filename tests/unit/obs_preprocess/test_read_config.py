@@ -253,12 +253,12 @@ def test_017_scripts_validator(input_value, test_id, cmaq_config_dict):
         ),
         (
             {"mcipRun": {"path": "some/path"}},
-            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun', 'cctmRun', 'cmaqRun']",
+            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun']",
             "missing_keys",
         ),
         (
             {},
-            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun', 'cctmRun', 'cmaqRun']",
+            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun']",
             "empty_dict",
         ),
     ],

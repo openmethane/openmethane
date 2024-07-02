@@ -21,7 +21,7 @@ def deg2rad(deg):
     return deg * numpy.pi / 180.0
 
 
-def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
+def get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2):
     """Calculate the distance between points based on the latides and longitudes
 
     Distances between multiple pairs of points can be calculated, so
@@ -109,36 +109,44 @@ def load_scripts(scripts):
     return scripts
 
 
-def replace_and_write(lines, outfile, substitutions, strict=True, makeExecutable=False):
+def replace_and_write(
+    lines: list[str],
+    out_file: str,
+    substitutions: list[tuple[str, str]],
+    strict: bool = True,
+    make_executable: bool = False,
+):
     """Make a set of substitutions from a list of strings and write to file
 
     Args:
         lines: List of strings
-        outfile: Place to write the destination
+        out_file: Place to write the destination
         substitutions: List of substitutions
         strict: Boolean, if True, it will cause an error if substitutions don't mattch exactly once
-        makeExecutable: Make the output script an executable
+        make_executable: Make the output script an executable
 
     Returns:
         Nothing
     """
-    Lines = copy.copy(lines)
+    lines_subs = copy.copy(lines)
     for subst in substitutions:
         token = subst[0]
         replc = subst[1]
-        matches = [iline for iline, line in enumerate(Lines) if line.find(token) != -1]
+        matches = [iline for iline, line in enumerate(lines_subs) if line.find(token) != -1]
         nmatches = len(matches)
         if (nmatches == 1) or (nmatches > 0 and (not strict)):
             for iline in matches:
-                ## Lines[iline] = re.sub(token, replc, Lines[iline])
-                Lines[iline] = Lines[iline].replace(token, replc)
+                ## lines_subs[iline] = re.sub(token, replc, lines_subs[iline])
+                lines_subs[iline] = lines_subs[iline].replace(token, replc)
         elif strict:
             raise ValueError("Token '%s' matches %i times..." % (token, nmatches))
-    if os.path.exists(outfile):
-        os.remove(outfile)
-    f = open(outfile, "w")
-    for line in Lines:
-        f.write(line)
-    f.close()
-    if makeExecutable:
-        os.chmod(outfile, 0o0744)
+
+    if os.path.exists(out_file):
+        os.remove(out_file)
+
+    with open(out_file, "w") as f:
+        for line in lines_subs:
+            f.write(line)
+
+    if make_executable:
+        os.chmod(out_file, 0o0744)

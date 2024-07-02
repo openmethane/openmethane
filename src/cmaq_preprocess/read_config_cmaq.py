@@ -28,7 +28,7 @@ class CMAQConfig:
     metDir: str
     """
     Base directory for the MCIP output.
-    
+
     convention for MCIP output is that we have data organised by day and domain,
      eg metDir/2016-11-29/d03"""
     ctmDir: str
@@ -144,12 +144,11 @@ class CMAQConfig:
     mcipRun - MCIP run script
     bconRun - BCON run script
     iconRun - ICON run script
-    cctmRun - CCTM run script
-    cmaqRun - main CMAQ run script"""
+    """
 
     @scripts.validator
     def check_scripts(self, attribute, value):
-        expected_keys = ["mcipRun", "bconRun", "iconRun", "cctmRun", "cmaqRun"]
+        expected_keys = ["mcipRun", "bconRun", "iconRun"]
         if sorted(list(value.keys())) != sorted(expected_keys):
             raise ValueError(f"{attribute.name} must have the keys {expected_keys}")
         for key in value:

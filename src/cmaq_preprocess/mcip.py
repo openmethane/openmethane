@@ -41,7 +41,7 @@ def to_wrf_filename(domain: str, time: datetime.datetime) -> str:
     return f'WRFOUT_{domain}_{time.strftime("%Y-%m-%dT%H%M")}Z.nc'
 
 
-def runMCIP(
+def run_mcip(
     dates,
     domains,
     metDir,
@@ -216,10 +216,10 @@ def runMCIP(
             tmpRunMcipPath = f"{mcipDir}/run.mcip.{dom}.csh"
             replace_and_write(
                 lines=scripts["mcipRun"]["lines"],
-                outfile=tmpRunMcipPath,
+                out_file=tmpRunMcipPath,
                 substitutions=subs,
                 strict=False,
-                makeExecutable=True,
+                make_executable=True,
             )
             ##
             ## print '4. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])

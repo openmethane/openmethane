@@ -8,7 +8,7 @@ import warnings
 import netCDF4
 import numpy
 
-from cmaq_preprocess.utils import getDistanceFromLatLonInKm
+from cmaq_preprocess.utils import get_distance_from_lat_lon_in_km
 
 moleMass = {"air": 28.96, "ch4_c": 16}
 
@@ -30,7 +30,7 @@ def match_two_sorted_arrays(arr1, arr2):
     return result
 
 
-def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, P, near_interior):
+def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, near_interior):
     """Interpolate from the CAMS grid to the CMAQ interior points (i.e. the full 3D array)
 
     Args:
@@ -43,7 +43,6 @@ def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, P, ne
         isAerosol: Boolean (True/False) whether this is an aerosol species or not
         mz_mw_aerosol: molecular weight of the CAMS species
         T: array of temperatures (units = K) from the CAMS output
-        P: array of pressures (units = Pa) from the CAMS output
         near_interior: array of indices matching up the CAMS grid-points with CMAQ grid-points
 
     Returns:
@@ -71,7 +70,7 @@ def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, P, ne
 
 
 def extract_and_interpolate_boundary(
-    mzspec, ncin, lens, LONP, Iz, iMZtime_for_each_CMtime, P, near_boundary
+    mzspec, ncin, lens, LONP, Iz, iMZtime_for_each_CMtime, near_boundary
 ):
     """Interpolate from the CAMS grid to the CMAQ boundary points
 
@@ -82,7 +81,6 @@ def extract_and_interpolate_boundary(
         LONP: array of longitudes of CMAQ boundary points with the same size as the output array
         Iz: array of indices of CAMS levels that correspond to the CMAQ levels
         iMZtime_for_each_CMtime: index of the CAMS time to use, one entry for each CMAQ time
-        P: array of pressures (units = Pa) from the CAMS output
         near_boundary: array of indices matching up the CAMS grid-points with CMAQ boundary grid-points
 
     Returns:
@@ -178,21 +176,21 @@ def print_boundary_variable(cmspec, out_boundary, factor):
 
 
 def interpolate_from_cams_to_cmaq_grid(
-    dates,
-    doms,
-    mech,
-    input_cams_file,
-    template_icon_files,
-    template_bcon_files,
-    met_dir,
-    ctm_dir,
-    grid_names,
-    mcip_suffix,
+    dates: list[datetime.date],
+    doms: list[str],
+    mech: str,
+    input_cams_file: str,
+    template_icon_files: list[str],
+    template_bcon_files: list[str],
+    met_dir: str,
+    ctm_dir: str,
+    grid_names: list[str],
+    mcip_suffix: list[str],
     force_update: bool,
     bias_correct: float = 0.0,
     default_spec="O3",
 ):
-    """Function to interpolate the from the global CAMS CTM output to ICs and BCs for CMAQ
+    """Function to interpolate from the global CAMS CTM output to ICs and BCs for CMAQ
 
     Args:
         dates: list of datetime objects, one per date MCIP and CCTM output should be defined
@@ -263,20 +261,20 @@ def interpolate_from_cams_to_cmaq_grid(
             srfFile = f"{mcipdir}/METCRO2D_{mcip_suffix[idom]}"
             outBCON = f"{chemdir}/BCON.{dom}.{grid}.{mech}.nc"
             outICON = f"{chemdir}/ICON.{dom}.{grid}.{mech}.nc"
-            templateIconFile = template_icon_files[idom]
-            templateBconFile = template_bcon_files[idom]
+            template_icon_file = template_icon_files[idom]
+            template_bcon_file = template_bcon_files[idom]
 
             if do_BCs:
                 if os.path.exists(outBCON):
                     os.remove(outBCON)
-                shutil.copyfile(templateBconFile, outBCON)
-                print(f"copy {templateBconFile} to {outBCON}")
+                shutil.copyfile(template_bcon_file, outBCON)
+                print(f"copy {template_bcon_file} to {outBCON}")
 
             if do_ICs:
                 if os.path.exists(outICON):
                     os.remove(outICON)
-                shutil.copyfile(templateIconFile, outICON)
-                print(f"copy {templateIconFile} to {outICON}")
+                shutil.copyfile(template_icon_file, outICON)
+                print(f"copy {template_icon_file} to {outICON}")
 
             print(dotFile)
             with (
@@ -361,7 +359,7 @@ def interpolate_from_cams_to_cmaq_grid(
 
                 for irow in range(LON.shape[0]):
                     for icol in range(LON.shape[1]):
-                        dists = getDistanceFromLatLonInKm(
+                        dists = get_distance_from_lat_lon_in_km(
                             LAT[irow, icol], LON[irow, icol], LATMZ, LONMZ
                         )
                         minidx = numpy.argmin(dists)
@@ -370,7 +368,9 @@ def interpolate_from_cams_to_cmaq_grid(
                         near_interior[irow, icol, 1] = iy
 
                 for iperim in range(LONP.shape[0]):
-                    dists = getDistanceFromLatLonInKm(LATP[iperim], LONP[iperim], LATMZ, LONMZ)
+                    dists = get_distance_from_lat_lon_in_km(
+                        LATP[iperim], LONP[iperim], LATMZ, LONMZ
+                    )
                     minidx = numpy.argmin(dists)
                     ix, iy = numpy.unravel_index(minidx, LONMZ.shape)
                     near_boundary[iperim, 0] = ix
@@ -457,28 +457,21 @@ def interpolate_from_cams_to_cmaq_grid(
                     MZspec = species_map[ispec]["MZspec"]
                     CMspec = species_map[ispec]["CMspec"]
                     coefs = species_map[ispec]["coef"]
-                    Factor = 1.0e3  ## convert from ppm to ppb
+                    scale_factor = 1.0e3  ## convert from ppm to ppb
                     ##
                     if do_ICs:
                         out_interior = extract_and_interpolate_interior(
-                            MZspec, ncin, lens, LON, Iz, iMZtime, P, near_interior
+                            MZspec, ncin, lens, LON, Iz, iMZtime, near_interior
                         )
                         out_interior += bias_correct
-                        print_interior_variable(MZspec, out_interior, Factor)
+                        print_interior_variable(MZspec, out_interior, scale_factor)
                     ##
                     if do_BCs:
                         out_boundary = extract_and_interpolate_boundary(
-                            MZspec,
-                            ncin,
-                            lens,
-                            LONP,
-                            Iz,
-                            iMZtime_for_each_CMtime,
-                            P,
-                            near_boundary,
+                            MZspec, ncin, lens, LONP, Iz, iMZtime_for_each_CMtime, near_boundary
                         )
                         out_boundary += bias_correct
-                        print_boundary_variable(MZspec, out_boundary, Factor)
+                        print_boundary_variable(MZspec, out_boundary, scale_factor)
                     ##
                     if do_ICs:
                         populate_interior_variable(ncouti, CMspec, out_interior, coefs)
