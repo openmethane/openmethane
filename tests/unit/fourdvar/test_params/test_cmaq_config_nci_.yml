@@ -4,7 +4,7 @@ aerovis_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/AEROV
 avg_conc_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/ACONC.<YYYYMMDD>.nc'
 avg_conc_out_lays: template
 avg_conc_spcs: CH4
-bcon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq/<YYYY-MM-DD>/d01/bcon.nc'
+bcon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq/<YYYY-MM-DD>/d01/BCON.d01.o.CH4only.nc'
 bwd_appl: ADJOINT_BWD
 bwd_logfile: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/bwd_CH4_only.<YYYYMMDD>.log'
 bwd_prog: /home/563/sa6589/cmaq_adj/BLD_bwd_CH4only/ADJOINT_BWD
@@ -49,7 +49,7 @@ griddesc: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/GRI
 gridname: o
 ha_rhoj_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc'
 hadv_chk: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc'
-icon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq/<YYYY-MM-DD>/d01/icon.nc'
+icon_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq/<YYYY-MM-DD>/d01/ICON.d01.o.CH4only.nc'
 ioapi_logging: false
 ipr1_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/PA_1.<YYYYMMDD>.nc'
 ipr2_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output/PA_2.<YYYYMMDD>.nc'
@@ -70,8 +70,8 @@ met_cro_2d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/M
 met_cro_3d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METCRO3D_2'
 met_dot_3d: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip/<YYYY-MM-DD>/d01/METDOT3D_2'
 minsync: 300
-npcol: 6
-nprow: 8
+npcol: 8
+nprow: 12
 output_path: '{HOME}/scratch/openmethane-beta/run-py4dvar/run-cmaq/output'
 pertcols: '1'
 pertdelt: '1.00'
