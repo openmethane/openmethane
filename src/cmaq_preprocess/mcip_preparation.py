@@ -38,17 +38,17 @@ def check_input_met_and_output_folders(
         if not os.path.exists(parent_chemdir):
             os.mkdir(parent_chemdir)
         for idomain, domain in enumerate(domains):
-            mcipdir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
+            mcip_dir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
             chemdir = f"{ctm_dir}/{yyyymmdd_dashed}/{domain}"
-            if not os.path.exists(mcipdir):
-                warnings.warn(f"MCIP output directory not found at {mcipdir} ... ")
+            if not os.path.exists(mcip_dir):
+                warnings.warn(f"MCIP output directory not found at {mcip_dir} ... ")
                 all_mcip_files_found = False
                 return all_mcip_files_found
             ## create output destination
             if not os.path.exists(chemdir):
                 os.mkdir(chemdir)
             ## check that the MCIP GRIDDESC file is present
-            griddesc_file_path = f"{mcipdir}/GRIDDESC"
+            griddesc_file_path = f"{mcip_dir}/GRIDDESC"
             if not os.path.exists(griddesc_file_path):
                 warnings.warn(f"GRIDDESC file not found at {griddesc_file_path} ... ")
                 all_mcip_files_found = False
@@ -64,9 +64,9 @@ def check_input_met_and_output_folders(
                 "METDOT3D",
             ]
             for filetype in filetypes:
-                matches = glob.glob(f"{mcipdir}/{filetype}_*")
+                matches = glob.glob(f"{mcip_dir}/{filetype}_*")
                 if len(matches) == 0:
-                    warnings.warn(f"{filetype} file not found in folder {mcipdir} ... ")
+                    warnings.warn(f"{filetype} file not found in folder {mcip_dir} ... ")
                     all_mcip_files_found = False
                     return all_mcip_files_found
                 elif len(matches) > 1:
@@ -150,32 +150,32 @@ def check_wrf_mcip_domain_sizes(
     ncolsin = numpy.zeros((ndom,), dtype=int)
     nrowsin = numpy.zeros((ndom,), dtype=int)
     for idomain, domain in enumerate(domains):
-        mcipdir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
+        mcip_dir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
         ## find the APPL suffix
         filetype = "GRIDCRO2D"
-        matches = glob.glob(f"{mcipdir}/{filetype}_*")
+        matches = glob.glob(f"{mcip_dir}/{filetype}_*")
         if len(matches) == 0:
-            raise RuntimeError(f"{filetype} file not found in folder {mcipdir} ... ")
+            raise RuntimeError(f"{filetype} file not found in folder {mcip_dir} ... ")
         ##
         APPL = matches[0].split("/")[-1].replace(f"{filetype}_", "")
         ## open the GRIDCRO2D file
-        gridcro2dfilepath = f"{mcipdir}/{filetype}_{APPL}"
+        gridcro2dfilepath = f"{mcip_dir}/{filetype}_{APPL}"
         nc = netCDF4.Dataset(gridcro2dfilepath)
         ## read in the latitudes and longitudes
         mcip_lat = nc.variables["LAT"][0, 0, :, :]
         mcip_lon = nc.variables["LON"][0, 0, :, :]
         nc.close()
         ## find a WRF file
-        matches = glob.glob(f"{mcipdir}/WRFOUT_{domain}_*")
+        matches = glob.glob(f"{mcip_dir}/WRFOUT_{domain}_*")
         if len(matches) == 0:
             if wrf_dir is None:
                 raise RuntimeError(
-                    f"No files matched the pattern WRFOUT_{domain}_* in folder {mcipdir}"
+                    f"No files matched the pattern WRFOUT_{domain}_* in folder {mcip_dir}"
                     f", and no alternative WRF directory was provided..."
                 )
             elif len(matches) > 1:
                 warnings.warn(
-                    f"Multiple files match the pattern WRFOUT_{domain}_* in folder {mcipdir},"
+                    f"Multiple files match the pattern WRFOUT_{domain}_* in folder {mcip_dir},"
                     f" using file {matches[0]}"
                 )
             else:
@@ -183,7 +183,7 @@ def check_wrf_mcip_domain_sizes(
                 if len(matches) == 0:
                     raise RuntimeError(
                         f"No files matched the pattern WRFOUT_{domain}_* "
-                        f"the folders {mcipdir} and {wrf_dir} ..."
+                        f"the folders {mcip_dir} and {wrf_dir} ..."
                     )
                 elif len(matches) > 1:
                     warnings.warn(

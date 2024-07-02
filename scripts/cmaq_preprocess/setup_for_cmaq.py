@@ -40,43 +40,39 @@ def setup_for_cmaq(config: CMAQConfig):
     """
     Set up the CMAQ run
 
-    This function
+    This function runs MCIP, ICON and BCON to generate the required input files for running
+    openmethane.
 
     Parameters
     ----------
     config
-
-    Returns
-    -------
-
+        Configuration to use
     """
     # define date range
-    ndates = (config.endDate - config.startDate).days + 1
-    dates = [config.startDate + datetime.timedelta(days=d) for d in range(ndates)]
+    ndates = (config.end_date - config.start_date).days + 1
+    dates = [config.start_date + datetime.timedelta(days=d) for d in range(ndates)]
 
     # read in the template run-scripts
     scripts = utils.load_scripts(scripts=config.scripts)
 
     # create output destinations, if need be:
-    print(
-        "Check that input meteorology files are provided and create output destinations (if need be)"
-    )
+    print("Check input meteorology files are provided and create output directories (if need be)")
     mcip_output_found = check_input_met_and_output_folders(
-        config.ctmDir, config.metDir, dates, config.domains
+        config.ctm_dir, config.met_dir, dates, config.domains
     )
     print("\t... done")
 
-    if (not mcip_output_found) or config.forceUpdateMcip:
+    if (not mcip_output_found) or config.force_update:
         run_mcip(
             dates=dates,
             domains=config.domains,
-            metDir=config.metDir,
-            wrfDir=config.wrfDir,
-            geoDir=config.geoDir,
-            ProgDir=config.MCIPdir,
-            APPL=config.scenarioTag,
-            CoordName=config.mapProjName,
-            GridName=config.gridName,
+            metDir=config.met_dir,
+            wrfDir=config.wrf_dir,
+            geoDir=config.geo_dir,
+            ProgDir=config.mcip_dir,
+            APPL=config.scenario_tag,
+            CoordName=config.map_projection_name,
+            GridName=config.grid_name,
             scripts=scripts,
             compressWithNco=True,
             fix_simulation_start_date=True,
@@ -84,42 +80,41 @@ def setup_for_cmaq(config: CMAQConfig):
             truelat2=None,
             wrfRunName=None,
             doArchiveWrf=False,
-            add_qsnow=config.add_qsnow,
         )
 
     # extract some parameters about the MCIP setup
-    coord_names, grid_names, appl = get_mcip_grid_names(config.metDir, dates, config.domains)
+    coord_names, grid_names, appl = get_mcip_grid_names(config.met_dir, dates, config.domains)
 
-    if config.prepareICandBC:
+    if config.prepare_ic_and_bc:
         # prepare the template boundary condition concentration files
         # from profiles using BCON
         template_bcon_files = prepare_template_bcon_files(
             date=dates[0],
             domains=config.domains,
-            ctm_dir=config.ctmDir,
-            met_dir=config.metDir,
-            cmaq_dir=config.CMAQdir,
+            ctm_dir=config.ctm_dir,
+            met_dir=config.met_dir,
+            cmaq_dir=config.cmaq_dir,
             simulation_name=config.run,
-            mech=config.mechCMAQ,
+            mech=config.mech_cmaq,
             grid_names=grid_names,
             mcip_suffix=appl,
             scripts=scripts,
-            force_update=config.forceUpdateICandBC,
+            force_update=config.force_update,
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
         template_icon_files = prepare_template_icon_files(
             date=dates[0],
             domains=config.domains,
-            ctm_dir=config.ctmDir,
-            met_dir=config.metDir,
-            cmaq_dir=config.CMAQdir,
+            ctm_dir=config.ctm_dir,
+            met_dir=config.met_dir,
+            cmaq_dir=config.cmaq_dir,
             simulation_name=config.run,
-            mech=config.mechCMAQ,
+            mech=config.mech_cmaq,
             grid_names=grid_names,
             mcip_suffix=appl,
             scripts=scripts,
-            force_update=config.forceUpdateICandBC,
+            force_update=config.force_update,
         )
         # use the template initial and boundary condition concentration
         # files and populate them with values from CAMS output
@@ -127,15 +122,15 @@ def setup_for_cmaq(config: CMAQConfig):
             dates,
             config.domains,
             config.mech,
-            config.inputCAMSFile,
+            config.input_cams_file,
             template_icon_files=template_icon_files,
             template_bcon_files=template_bcon_files,
-            met_dir=config.metDir,
-            ctm_dir=config.ctmDir,
+            met_dir=config.met_dir,
+            ctm_dir=config.ctm_dir,
             grid_names=grid_names,
             mcip_suffix=appl,
-            force_update=config.forceUpdateICandBC,
-            bias_correct=config.CAMSToCmaqBiasCorrect,
+            force_update=config.force_update,
+            bias_correct=config.cams_to_cmaq_bias,
         )
 
 

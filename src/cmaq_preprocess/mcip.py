@@ -32,8 +32,6 @@ import subprocess
 import tempfile
 from shutil import copyfile
 
-import netCDF4
-
 from cmaq_preprocess.utils import replace_and_write
 
 
@@ -58,7 +56,6 @@ def run_mcip(
     truelat2=None,
     wrfRunName=None,
     doArchiveWrf=False,
-    add_qsnow=False,
 ):
     """Function to run MCIP from python
 
@@ -95,15 +92,15 @@ def run_mcip(
     for idate, date in enumerate(dates):
         yyyymmdd_dashed = date.strftime("%Y-%m-%d")
         ##
-        parent_mcipdir = f"{metDir}/{yyyymmdd_dashed}"
+        parent_mcip_dir = f"{metDir}/{yyyymmdd_dashed}"
         ## create output destination
-        if not os.path.exists(parent_mcipdir):
-            os.mkdir(parent_mcipdir)
+        if not os.path.exists(parent_mcip_dir):
+            os.mkdir(parent_mcip_dir)
         for idomain, domain in enumerate(domains):
-            mcipDir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
+            mcip_dir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
             ## create output destination
-            if not os.path.exists(mcipDir):
-                os.mkdir(mcipDir)
+            if not os.path.exists(mcip_dir):
+                os.mkdir(mcip_dir)
 
     for idate, date in enumerate(dates):
         print("date =", date)
@@ -112,18 +109,18 @@ def run_mcip(
         for idom, dom in enumerate(domains):
             print("\tdom =", dom)
             ##
-            mcipDir = f"{metDir}/{yyyymmdd_dashed}/{dom}"
+            mcip_dir = f"{metDir}/{yyyymmdd_dashed}/{dom}"
             ##
             times = [date + datetime.timedelta(hours=h) for h in range(25)]
             WRFfiles = [
                 os.path.join(wrfDir, yyyymmddhh, to_wrf_filename(dom, time)) for time in times
             ]
-            outPaths = [f"{mcipDir}/{os.path.basename(WRFfile)}" for WRFfile in WRFfiles]
+            outPaths = [f"{mcip_dir}/{os.path.basename(WRFfile)}" for WRFfile in WRFfiles]
             for src, dst in zip(WRFfiles, outPaths):
                 if not os.path.exists(src):
                     raise AssertionError(f"WRF output {src} not found")
                 copyfile(src, dst)
-                ## print 1. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
+                ## print 1. # WRF files =',len([f for f in os.listdir(mcip_dir) if f.startswith('wrfout_')])
 
             if fix_simulation_start_date:
                 print("\t\tFix up SIMULATION_START_DATE attribute with ncatted")
@@ -142,20 +139,6 @@ def run_mcip(
                         print("stderr = " + str(stderr))
                         raise RuntimeError("Error from atted...")
 
-            if add_qsnow:
-                print("\t\tAdd an artificial variable ('QSNOW') to the WRFOUT files")
-                wrfstrttime = date.strftime("%Y-%m-%d_%H:%M:%S")
-                for outPath in outPaths:
-                    nc = netCDF4.Dataset(outPath, "a")
-                    nc.createVariable(
-                        "QSNOW",
-                        "f4",
-                        ("Time", "bottom_top", "south_north", "west_east"),
-                        zlib=True,
-                    )
-                    nc.variables["QSNOW"][:] = 0.0
-                    nc.close()
-
             if fix_truelat2 and (truelat2 is not None):
                 print("\t\tFix up TRUELAT2 attribute with ncatted")
                 for outPath in outPaths:
@@ -171,16 +154,16 @@ def run_mcip(
                         print("stdout = " + stdout)
                         print("stderr = " + stderr)
                         raise RuntimeError("Error from atted...")
-                    ## print '3. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
+                    ## print '3. # WRF files =',len([f for f in os.listdir(mcip_dir) if f.startswith('wrfout_')])
 
             ##
             print("\t\tCreate temporary run.mcip script")
             ## pdb.set_trace()
             # {}/{}'.format(wrfDir,date.strftime('%Y%m%d%H'))---by Sougol
             subs = [
-                ["set DataPath   = TEMPLATE", f"set DataPath   = {mcipDir}"],
-                ["set InMetDir   = TEMPLATE", f"set InMetDir   = {mcipDir}"],
-                ["set OutDir     = TEMPLATE", f"set OutDir     = {mcipDir}"],
+                ["set DataPath   = TEMPLATE", f"set DataPath   = {mcip_dir}"],
+                ["set InMetDir   = TEMPLATE", f"set InMetDir   = {mcip_dir}"],
+                ["set OutDir     = TEMPLATE", f"set OutDir     = {mcip_dir}"],
                 [
                     "set InMetFiles = ( TEMPLATE )",
                     "set InMetFiles = ( {} )".format(" ".join(outPaths)),
@@ -213,7 +196,7 @@ def run_mcip(
                 ["set ProgDir    = TEMPLATE", f"set ProgDir    = {ProgDir}"],
             ]
             ##
-            tmpRunMcipPath = f"{mcipDir}/run.mcip.{dom}.csh"
+            tmpRunMcipPath = f"{mcip_dir}/run.mcip.{dom}.csh"
             replace_and_write(
                 lines=scripts["mcipRun"]["lines"],
                 out_file=tmpRunMcipPath,
@@ -222,20 +205,20 @@ def run_mcip(
                 make_executable=True,
             )
             ##
-            ## print '4. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
+            ## print '4. # WRF files =',len([f for f in os.listdir(mcip_dir) if f.startswith('wrfout_')])
             command = tmpRunMcipPath
             commandList = command.split(" ")
             print("\t\t\t" + command)
             ## delete any existing files
-            for metfile in glob.glob(f"{mcipDir}/MET*"):
+            for metfile in glob.glob(f"{mcip_dir}/MET*"):
                 print("rm", metfile)
                 os.remove(metfile)
 
-            for gridfile in glob.glob(f"{mcipDir}/GRID*"):
+            for gridfile in glob.glob(f"{mcip_dir}/GRID*"):
                 print("rm", gridfile)
                 os.remove(gridfile)
 
-            ## print '5. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
+            ## print '5. # WRF files =',len([f for f in os.listdir(mcip_dir) if f.startswith('wrfout_')])
             ##
             print("\t\tRun temporary run.mcip script")
             p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -249,7 +232,7 @@ def run_mcip(
             for outPath in outPaths:
                 os.unlink(outPath)
             if compressWithNco:
-                for metfile in glob.glob(f"{mcipDir}/MET*_*"):
+                for metfile in glob.glob(f"{mcip_dir}/MET*_*"):
                     print(f"\t\tCompress {metfile} with ncks")
                     command = f"ncks -4 -L4 -O {metfile} {metfile}"
                     print("\t\t\t" + command)
@@ -264,7 +247,7 @@ def run_mcip(
                         print("stderr = " + str(stderr))
                         raise RuntimeError("Error from ncks...")
 
-                for gridfile in glob.glob(f"{mcipDir}/GRID*_*"):
+                for gridfile in glob.glob(f"{mcip_dir}/GRID*_*"):
                     print(f"\t\tCompress {gridfile} with ncks")
                     command = f"ncks -4 -L4 -O {gridfile} {gridfile}"
                     print("\t\t\t" + command)
@@ -280,7 +263,7 @@ def run_mcip(
                         raise RuntimeError("Error from ncks...")
 
             if doArchiveWrf and (wrfRunName is not None) and False:
-                print(f"\t\tChecking MCIP output in folder {mcipDir}")
+                print(f"\t\tChecking MCIP output in folder {mcip_dir}")
                 ## double check that all the files MCIP files are present before archiving the WRF files
                 filetypes = [
                     "GRIDBDY2D",
@@ -292,9 +275,9 @@ def run_mcip(
                     "METDOT3D",
                 ]
                 for filetype in filetypes:
-                    matches = glob.glob(f"{mcipDir}/{filetype}_*")
+                    matches = glob.glob(f"{mcip_dir}/{filetype}_*")
                     if len(matches) != 1:
-                        raise RuntimeError(f"{filetype} file not found in folder {mcipDir} ... ")
+                        raise RuntimeError(f"{filetype} file not found in folder {mcip_dir} ... ")
                 ##
                 thisWRFdir = f"{wrfDir}/{yyyymmddhh}"
                 os.chdir(thisWRFdir)

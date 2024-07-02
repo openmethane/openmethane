@@ -243,7 +243,7 @@ def interpolate_from_cams_to_cmaq_grid(
         do_ICs = idate == 0
         for idom, dom in enumerate(doms):
             grid = grid_names[idom]
-            mcipdir = f"{met_dir}/{yyyymmdd_dashed}/{dom}"
+            mcip_dir = f"{met_dir}/{yyyymmdd_dashed}/{dom}"
             chemdir = f"{ctm_dir}/{yyyymmdd_dashed}/{dom}"
 
             ## check that the output directory exists - if not, create it
@@ -254,11 +254,11 @@ def interpolate_from_cams_to_cmaq_grid(
             if not (do_ICs or do_BCs):
                 continue
 
-            croFile = f"{mcipdir}/GRIDCRO2D_{mcip_suffix[idom]}"
-            dotFile = f"{mcipdir}/GRIDDOT2D_{mcip_suffix[idom]}"
-            bdyFile = f"{mcipdir}/GRIDBDY2D_{mcip_suffix[idom]}"
-            metFile = f"{mcipdir}/METCRO3D_{mcip_suffix[idom]}"
-            srfFile = f"{mcipdir}/METCRO2D_{mcip_suffix[idom]}"
+            croFile = f"{mcip_dir}/GRIDCRO2D_{mcip_suffix[idom]}"
+            dotFile = f"{mcip_dir}/GRIDDOT2D_{mcip_suffix[idom]}"
+            bdyFile = f"{mcip_dir}/GRIDBDY2D_{mcip_suffix[idom]}"
+            metFile = f"{mcip_dir}/METCRO3D_{mcip_suffix[idom]}"
+            srfFile = f"{mcip_dir}/METCRO2D_{mcip_suffix[idom]}"
             outBCON = f"{chemdir}/BCON.{dom}.{grid}.{mech}.nc"
             outICON = f"{chemdir}/ICON.{dom}.{grid}.{mech}.nc"
             template_icon_file = template_icon_files[idom]

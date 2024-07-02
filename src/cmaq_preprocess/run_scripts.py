@@ -48,7 +48,7 @@ def prepare_template_bcon_files(
     outputFiles = [""] * ndom
     inputType = "profile"
     for idomain, domain in enumerate(domains):
-        mcipdir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
+        mcip_dir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
         grid = grid_names[idomain]
         outfile = f"template_bcon_profile_{mech}_{domain}.nc"
         outpath = f"{ctm_dir}/{outfile}"
@@ -75,11 +75,11 @@ def prepare_template_bcon_files(
             ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {grid}"],
             [
                 "setenv GRIDDESC TEMPLATE/GRIDDESC",
-                f"setenv GRIDDESC {mcipdir}/GRIDDESC",
+                f"setenv GRIDDESC {mcip_dir}/GRIDDESC",
             ],
             [
                 "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
-                f"setenv LAYER_FILE {mcipdir}/METCRO3D_{mcip_suffix[idomain]}",
+                f"setenv LAYER_FILE {mcip_dir}/METCRO3D_{mcip_suffix[idomain]}",
             ],
             ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
             ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
@@ -149,7 +149,7 @@ def prepare_template_icon_files(
     outputFiles = [""] * ndom
     inputType = "profile"
     for idomain, domain in enumerate(domains):
-        mcipdir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
+        mcip_dir = f"{met_dir}/{yyyymmdd_dashed}/{domain}"
         grid = grid_names[idomain]
         outfile = f"template_icon_profile_{mech}_{domain}.nc"
         outpath = f"{ctm_dir}/{outfile}"
@@ -176,11 +176,11 @@ def prepare_template_icon_files(
             ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {grid}"],
             [
                 "setenv GRIDDESC TEMPLATE/GRIDDESC",
-                f"setenv GRIDDESC {mcipdir}/GRIDDESC",
+                f"setenv GRIDDESC {mcip_dir}/GRIDDESC",
             ],
             [
                 "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
-                f"setenv LAYER_FILE {mcipdir}/METCRO3D_{mcip_suffix[idomain]}",
+                f"setenv LAYER_FILE {mcip_dir}/METCRO3D_{mcip_suffix[idomain]}",
             ],
             ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
             ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],

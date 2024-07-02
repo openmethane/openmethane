@@ -1,40 +1,32 @@
 {
-  "CMAQdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/",
-  "MCIPdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src",
-  "templateDir" : "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess",
-  "metDir": "/scratch/q90/pjr563/openmethane-beta/mcip/",
-  "ctmDir": "/scratch/q90/pjr563/openmethane-beta/cmaq/",
-  "wrfDir": "/scratch/q90/pjr563/openmethane-beta/wrf/aust10km",
-  "geoDir": "/home/563/pjr563/openmethane-beta/setup_wrf/templates/aust10km/",
-  "inputCAMSFile": "/scratch/q90/pjr563/tmp/levtype_pl.nc",
-  "sufadj": "output_newMet",
+  "cmaq_dir": "/home/563/sa6589/CMAQv5.0.2_notpollen/",
+  "mcip_dir": "/home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src",
+  "met_dir": "/scratch/q90/pjr563/openmethane-beta/mcip/",
+  "ctm_dir": "/scratch/q90/pjr563/openmethane-beta/cmaq/",
+  "wrf_dir": "/scratch/q90/pjr563/openmethane-beta/wrf/aust10km",
+  "geo_dir": "/home/563/pjr563/openmethane-beta/setup_wrf/templates/aust10km/",
+  "input_cams_file": "/scratch/q90/pjr563/tmp/levtype_pl.nc",
   "domains": [
     "d01"
   ],
   "run": "openmethane",
-  "startDate": "2022-07-22 00:00:00 UTC",
-  "endDate": "2022-07-22 00:00:00 UTC",
-  "nhoursPerRun": 24,
-  "printFreqHours": 1,
+  "start_date": "2022-07-22 00:00:00 UTC",
+  "end_date": "2022-07-22 00:00:00 UTC",
+  "n_hours_per_run": 24,
+  "print_freq_hours": 1,
   "mech": "CH4only",
-  "mechCMAQ": "CH4only",
-  "prepareICandBC": "True",
-  "prepareRunScripts": "True",
-  "add_qsnow": "False",
-  "forceUpdateMcip": "False",
-  "forceUpdateICandBC": "True",
-  "forceUpdateRunScripts": "True",
-  "scenarioTag": [
+  "mech_cmaq": "CH4only",
+  "prepare_ic_and_bc": true,
+  "force_update": true,
+  "scenario_tag": [
     "220701_aust-test"
   ],
-  "mapProjName": [
+  "map_projection_name": [
     "LamCon_34S_150E"
   ],
-  "gridName": [
+  "grid_name": [
     "openmethane"
   ],
-  "doCompress": "True",
-  "compressScript": "/home/563/ns0890/runCMAQ/Melb_Sch01/find_and_compress_netcdf3_to_netcdf4",
   "scripts": {
     "mcipRun": {
       "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.mcip"
@@ -46,6 +38,5 @@
       "path": "/home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.icon"
     }
   },
-  "cctmExec": "ADJOINT_FWD",
-  "CAMSToCmaqBiasCorrect": 0.06700000000000017
+  "cams_to_cmaq_bias": 0.06700000000000017
 }
