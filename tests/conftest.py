@@ -27,9 +27,12 @@ def test_data_dir(root_dir) -> Path:
     return root_dir / "tests" / "test-data"
 
 
-def _clean_attrs(attrs: dict) -> dict:
+def _clean_attrs(attrs: dict,
+                 excluded_fields: tuple[str, ...] = ("WDATE", "WTIME")) -> dict:
     clean = {}
     for key, value in attrs.items():
+        if key in excluded_fields :
+            continue
         if hasattr(value, "item"):
             try:
                 clean[key] = value.item()
