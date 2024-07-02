@@ -98,7 +98,7 @@ tstep:
 - 1
 - 0
 - 0
-use_jobfs: true
+use_jobfs: false
 va_rhoj_chk: /opt/project/data/run-cmaq/chkpnt/VA_RHOJ_CHK.<YYYYMMDD>.nc
 vadv_chk: /opt/project/data/run-cmaq/chkpnt/VADV_CHK.<YYYYMMDD>.nc
 vdiff_chk: /opt/project/data/run-cmaq/chkpnt/VDIFF_CHK.<YYYYMMDD>.nc
