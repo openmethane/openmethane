@@ -140,7 +140,7 @@ jobs:
         run: |
           make fetch-domains
           docker run --rm \
-            -v ${{ github.workspace }}:/opt/openmethane/ \
+            -v ${{ github.workspace }}:/opt/project/ \
             -e TARGET=docker-test \
             -e CDSAPI_KEY=$CDSAPI_KEY \
             -e CDSAPI_URL=$CDSAPI_URL \
