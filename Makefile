@@ -49,12 +49,12 @@ run: build clean  ## Run the test domain in the docker container using the bundl
 		bash scripts/run-all.sh
 
 .PHONY: test
-test:  ## Run the tests
+test:  ## Run the tests (this has to be done inside of docker)
 	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)  --force-regen
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
 
 # Processing steps
 .PHONY: prepare-templates
