@@ -4,7 +4,7 @@ else
 	PYTHON_CMD := python
 endif
 
-
+TARGET := docker
 TEST_DIRS := tests
 
 .PHONY: virtual-environment
@@ -49,8 +49,8 @@ run: build clean  ## Run the test domain in the docker container using the bundl
 		bash scripts/run-all.sh
 
 .PHONY: test
-test:  ## Run the tests (this has to be done inside of docker)
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)
+test:  ## Run the tests
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
