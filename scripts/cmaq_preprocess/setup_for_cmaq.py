@@ -17,9 +17,9 @@ import click
 
 from cmaq_preprocess import utils
 from cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
+from cmaq_preprocess.cmaq_config import CMAQConfig, load_cmaq_config
 from cmaq_preprocess.mcip import run_mcip
 from cmaq_preprocess.mcip_preparation import check_input_met_and_output_folders, get_mcip_grid_names
-from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_cmaq_config
 from cmaq_preprocess.run_scripts import prepare_template_bcon_files, prepare_template_icon_files
 
 

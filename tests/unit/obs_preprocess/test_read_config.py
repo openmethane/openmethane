@@ -4,15 +4,8 @@ import os
 import pytest
 from attrs import asdict
 
-from cmaq_preprocess.config_read_functions import (
-    boolean_converter,
-    load_json,
-    process_date_string,
-)
-from cmaq_preprocess.read_config_cmaq import (
-    create_cmaq_config_object,
-    load_cmaq_config,
-)
+from cmaq_preprocess.cmaq_config import create_cmaq_config_object, load_cmaq_config
+from cmaq_preprocess.config_read_functions import boolean_converter, load_json, process_date_string
 
 
 @pytest.fixture
