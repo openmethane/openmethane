@@ -66,20 +66,16 @@ def setup_for_cmaq(config: CMAQConfig):
         run_mcip(
             dates=dates,
             domains=config.domains,
-            metDir=config.met_dir,
-            wrfDir=config.wrf_dir,
-            geoDir=config.geo_dir,
-            ProgDir=config.mcip_dir,
-            APPL=config.scenario_tag,
-            CoordName=config.map_projection_name,
-            GridName=config.grid_name,
+            met_dir=config.met_dir,
+            wrf_dir=config.wrf_dir,
+            geo_dir=config.geo_dir,
+            mcip_executable_dir=config.mcip_dir,
+            scenario_tag=config.scenario_tag,
+            map_projection_name=config.map_projection_name,
+            grid_name=config.grid_name,
             scripts=scripts,
-            compressWithNco=True,
+            compress_with_nco=True,
             fix_simulation_start_date=True,
-            fix_truelat2=False,
-            truelat2=None,
-            wrfRunName=None,
-            doArchiveWrf=False,
         )
 
     # extract some parameters about the MCIP setup

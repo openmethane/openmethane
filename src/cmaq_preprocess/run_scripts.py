@@ -164,7 +164,7 @@ def prepare_template_icon_files(
         ## adjust ICON script
         outIconFile = f"{ctm_dir}/run.icon"
         ##
-        subsIcon = [
+        subs_icon = [
             [
                 "source TEMPLATE/config.cmaq",
                 f"source {cmaq_dir}/scripts/config.cmaq",
@@ -187,7 +187,7 @@ def prepare_template_icon_files(
         ]
         ##
         print(f"Prepare ICON script for domain = {domain}")
-        replace_and_write(scripts["iconRun"]["lines"], outIconFile, subsIcon)
+        replace_and_write(scripts["iconRun"]["lines"], outIconFile, subs_icon)
         os.chmod(outIconFile, 0o0744)
         ##
         print("Run ICON")

@@ -112,7 +112,7 @@ def load_scripts(scripts):
 def replace_and_write(
     lines: list[str],
     out_file: str,
-    substitutions: list[tuple[str, str]],
+    substitutions: list[tuple[str, str] | list[str]],
     strict: bool = True,
     make_executable: bool = False,
 ):
