@@ -9,7 +9,9 @@ set -Eeuo pipefail
 # Configuration environment variables
 SKIP_TROPOMI_DOWNLOAD=${SKIP_TROPOMI_DOWNLOAD:-}
 TROPOMI_DIR='data/tropomi'
-TARGET=${TARGET:-docker}
+export TARGET=${TARGET:-docker}
+export START_DATE=${START_DATE:-2022-07-22}
+export END_DATE=${END_DATE:-2022-07-22}
 
 echo "Running for target: $TARGET"
 
@@ -23,8 +25,8 @@ if [[ -z "${SKIP_TROPOMI_DOWNLOAD}" ]]; then
 
   python scripts/sat_data/fetch.py \
     -c scripts/sat_data/config.austtest.json \
-    -s 2022-07-22 \
-    -e 2022-07-22 \
+    -s ${START_DATE} \
+    -e ${END_DATE}T23:59:59 \
     $TROPOMI_DIR.nc
 else
   echo "Skipping TROPOMI download"
