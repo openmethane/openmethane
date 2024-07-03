@@ -89,30 +89,17 @@ def runMCIP(
     ndoms = len(domains)
     nMinsPerInterval = [60] * ndoms
 
-    if not os.path.exists(metDir):
-        os.mkdir(metDir)
-    ##
-    for idate, date in enumerate(dates):
-        yyyymmdd_dashed = date.strftime("%Y-%m-%d")
-        ##
-        parent_mcipdir = f"{metDir}/{yyyymmdd_dashed}"
-        ## create output destination
-        if not os.path.exists(parent_mcipdir):
-            os.mkdir(parent_mcipdir)
-        for idomain, domain in enumerate(domains):
-            mcipDir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
-            ## create output destination
-            if not os.path.exists(mcipDir):
-                os.mkdir(mcipDir)
-
     for idate, date in enumerate(dates):
         print("date =", date)
         yyyymmddhh = date.strftime("%Y%m%d%H")
         yyyymmdd_dashed = date.strftime("%Y-%m-%d")
+
         for idom, dom in enumerate(domains):
             print("\tdom =", dom)
+
             ##
-            mcipDir = f"{metDir}/{yyyymmdd_dashed}/{dom}"
+            mcipDir = os.path.join(metDir, yyyymmdd_dashed, dom)
+            os.makedirs(mcipDir, exist_ok=True)
             ##
             times = [date + datetime.timedelta(hours=h) for h in range(25)]
             WRFfiles = [

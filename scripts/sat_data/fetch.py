@@ -196,17 +196,14 @@ def fetch_data(config_file, start, end, output):
     # Use the requests library to submit the HTTP_Services URLs and write out the results.
     print("\nHTTP_services output:")
 
-    # make directory to store outputs if it doesn't already exist
     os.makedirs(output, exist_ok=True)
 
     start_str = start.strftime("%Y-%m-%dT%H%M")
     end_str = end.strftime("%Y-%m-%dT%H%M")
     boxString = "_".join(str(x) for x in config["box"])
     outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
-    isExist = os.path.exists(outDirName)
 
-    if not isExist:
-        os.mkdir(outDirName)
+    os.makedirs(outDirName, exist_ok=True)
 
     # empty output directory if necessary
     for filename in os.listdir(outDirName):

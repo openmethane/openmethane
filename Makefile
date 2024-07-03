@@ -43,6 +43,7 @@ start: build  ## Start the docker container locally
 run: build clean  ## Run the test domain in the docker container using the bundled test-data
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
+		-v ~/.cdsapirc:/root/.cdsapirc \
 		-e CMAQ_PREPROCESS_CONFIG_FILE=config/cmaq_preprocess/config.docker.test.json \
 		-e PRIOR_PATH=/opt/project/tests/test-data/prior/out-om-domain-info.nc \
 		openmethane \
