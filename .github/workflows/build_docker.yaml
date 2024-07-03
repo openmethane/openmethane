@@ -179,8 +179,9 @@ jobs:
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
-          # Uses the local checked-in WRF test data
+          # Uses the local checked-in WRF and prior data
           CMAQ_PREPROCESS_CONFIG_FILE: config/cmaq_preprocess/config.docker.test.json
+          PRIOR_PATH: "/opt/project/tests/test-data/prior/out-om-domain-info.nc"
 
   # Tag the latest image if running on the main branch
   # TODO: Handle tagged builds
