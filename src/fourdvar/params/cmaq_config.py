@@ -13,16 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import logging
 import os
 
 from fourdvar.params._env import env
 from fourdvar.params.root_path_defn import store_path
 
+logger = logging.getLogger(__name__)
+
 # notes: the patterns <YYYYMMDD>, <YYYYDDD> & <YYYY-MM-DD> will be replaced
 # with the year, month and day of the current model run
 
-use_jobfs = False
+use_jobfs = env.bool("USE_JOBFS", False)
 
 # No. of processors per column
 npcol = env.int("NUM_PROC_COLS", 1)  # pert
@@ -107,8 +109,8 @@ mcip_output_path = env.str("MCIP_OUTPUT_PATH")
 if use_jobfs is True:
     chk_path = os.environ.get("PBS_JOBFS", None)
     if chk_path is None:
-        msg = "cannot find PBS_JOBFS, use_jobfs can only be run with qsub."
-        raise ValueError(msg)
+        logger.warning("cannot find PBS_JOBFS, use_jobfs can only be run with qsub.")
+        chk_path = os.path.join(cmaq_base, "chkpnt")
 else:
     chk_path = os.path.join(cmaq_base, "chkpnt")
 
@@ -182,7 +184,7 @@ irr2_file = os.path.join(output_path, "IRR_2.<YYYYMMDD>.nc")
 irr3_file = os.path.join(output_path, "IRR_3.<YYYYMMDD>.nc")
 rj1_file = os.path.join(output_path, "RJ_1.<YYYYMMDD>.nc")
 rj2_file = os.path.join(output_path, "RJ_2.<YYYYMMDD>.nc")
-conc_sense_file = os.path.join(output_path, "LGRID.bwd_COonly.<YYYYMMDD>.nc")
+conc_sense_file = os.path.join(output_path, "LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 emis_sense_file = os.path.join(output_path, "EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 emis_scale_sense_file = os.path.join(output_path, "EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 

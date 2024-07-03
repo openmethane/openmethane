@@ -18,6 +18,9 @@
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef import ObservationData
 
+ppm2ppb = 1e3
+convFac = ppm2ppb
+
 
 def obs_operator(model_output):
     """application: simulate set of observations from output of the forward model
@@ -36,7 +39,7 @@ def obs_operator(model_output):
                     step, lay, row, col, spc = coord[1:]
                     conc = var_dict[spc][step, lay, row, col]
                     #     val_list[i] += (weight * conc * ObservationData.ref_profile[i][lay]) #dot product
-                    val_list[i] += weight * conc
+                    val_list[i] += convFac * weight * conc
             #     denom += weight*(ObservationData.ref_profile[i][lay])**2
             # val_list[i] /= denom
     # val_list = [ v/ObservationData.alpha_scale[i] for i,v in enumerate(val_list) ]

@@ -17,7 +17,7 @@ cmd_preamble: ''
 cmd_shell: /bin/csh
 conc_file: /opt/project/data/run-cmaq/output/CONC.<YYYYMMDD>.nc
 conc_out_lays: template
-conc_sense_file: /opt/project/data/run-cmaq/output/LGRID.bwd_COonly.<YYYYMMDD>.nc
+conc_sense_file: /opt/project/data/run-cmaq/output/LGRID.bwd_CH4only.<YYYYMMDD>.nc
 conc_spcs: CH4
 cpl_chk: /opt/project/data/run-cmaq/chkpnt/CPL_CHK.<YYYYMMDD>.nc
 curdir: /path/to/curdir
@@ -107,7 +107,7 @@ wetdep2_file: /opt/project/data/run-cmaq/output/WETDEP2.<YYYYMMDD>.nc
 wipeout_bwd_list:
 - /opt/project/data/run-cmaq/output/bwd_CH4_only.<YYYYMMDD>.log
 - /opt/project/data/run-cmaq/output/XFIRST.bwd.<YYYYMMDD>
-- /opt/project/data/run-cmaq/output/LGRID.bwd_COonly.<YYYYMMDD>.nc
+- /opt/project/data/run-cmaq/output/LGRID.bwd_CH4only.<YYYYMMDD>.nc
 - /opt/project/data/run-cmaq/output/EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc
 - /opt/project/data/run-cmaq/output/EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc
 - /opt/project/data/run-cmaq/output/bwd_stdout.log

@@ -88,8 +88,25 @@ def load_list(filepath):
     with gzip.GzipFile(fpath, "rb") as f:
         while eof is False:
             try:
-                element = pickle.load(f, encoding="latin1")  # Sougol
+                element = pickle.load(f, encoding="latin1")  # noqa: S301
                 obj_list.append(element)
             except EOFError:
                 eof = True
     return obj_list
+
+
+# modified from code in stack exchange
+def iterPickle(filepath):
+    """create iterator for gzip'd pickle file.
+    lazy alternative to load_list
+    usage:
+    iterator = iterPickle( filepath)
+    for i in iterator: ..."""
+    fpath = os.path.realpath(filepath)
+
+    with gzip.GzipFile(fpath) as f:
+        while True:
+            try:
+                yield pickle.load(f)  # noqa: S301
+            except EOFError:
+                break

@@ -16,6 +16,7 @@
 
 import os
 
+import fourdvar.datadef as d
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
@@ -93,6 +94,41 @@ class SensitivityData(FourDVarData):
             source = record["actual"]
             dest = os.path.join(save_path, record["archive"])
             ncf.copy_compress(source, dest)
+
+    @classmethod
+    def create_from_ModelInputData(cls):
+        """
+        Create an instance of SensitivityData where sensitivities are ModelInputData emissions.
+
+        Used for sum-of-squares cost function gradient.
+
+        Returns
+        -------
+        SensitivityData
+            An instance of SensitivityData where the sensitivities are the emissions from
+            ModelInputData.
+
+        """
+        destDict = get_filedict(cls.__name__)
+        srcDict = get_filedict(d.ModelInputData.__name__)
+        concKeys = set(destDict.keys()) - set(srcDict.keys())
+        for k in concKeys:
+            ncf.create_from_template(
+                destDict[k]["template"],
+                destDict[k]["actual"],
+                date=destDict[k]["date"],
+                overwrite=True,
+            )
+
+        for k in srcDict.keys():
+            ncf.create_from_template(
+                destDict[k]["template"],
+                destDict[k]["actual"],
+                var_change=ncf.get_variable(srcDict[k]["actual"], ["CH4"]),
+                date=destDict[k]["date"],
+                overwrite=True,
+            )
+        return cls()
 
     @classmethod
     def load_from_archive(cls, dirname):

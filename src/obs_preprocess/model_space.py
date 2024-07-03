@@ -126,17 +126,23 @@ class ModelSpace:
         ycent = float(self.gridmeta["YCENT"])
         proj_str = "+proj=lcc +lat_1={0} +lat_2={1} +lat_0={3} +lon_0={2} +a={4} +b={4}"
         self.proj = pyproj.Proj(proj_str.format(alp, bet, gam, ycent, earth_rad))
-        # generate quick lat/lon limits for first pass obs filter
-        ll_lon, ll_lat = self.proj(xoffset, yoffset, inverse=True)
-        ur_lon, ur_lat = self.proj(xoffset + xspace.sum(), yoffset + yspace.sum(), inverse=True)
-        self.lat_bounds = (
-            min(ll_lat, ur_lat),
-            max(ll_lat, ur_lat),
+        # first generate edges
+        xEdge = (
+            self.gridmeta["XCELL"] * np.arange(self.ncol + 1)
+            + xoffset
+            - 0.5 * self.gridmeta["XCELL"]
         )
-        self.lon_bounds = (
-            min(ll_lon, ur_lon),
-            max(ll_lon, ur_lon),
+        yEdge = (
+            self.gridmeta["YCELL"] * np.arange(self.nrow + 1)
+            + yoffset
+            - 0.5 * self.gridmeta["YCELL"]
         )
+        # stack them to make 2d grids
+        xCorners = np.repeat(xEdge[np.newaxis, :], self.nrow + 1, axis=0)
+        yCorners = np.repeat(yEdge[:, np.newaxis], self.ncol + 1, axis=1)
+        lonCorners, latCorners = self.proj(xCorners, yCorners, inverse=True)
+        self.lat_bounds = (latCorners.min(), latCorners.max())
+        self.lon_bounds = (lonCorners.min(), lonCorners.max())
 
     def valid_coord(self, coord):
         """Return True if a coord is within the grid."""

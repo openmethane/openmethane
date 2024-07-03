@@ -23,7 +23,7 @@ from fourdvar.params import archive_defn
 from fourdvar.util import archive_handle
 
 # If true restart_script uses last iteration in archive
-restart_from_last = False
+restart_from_last = True
 
 # If restart_from_last = False provide restart number (integer)
 restart_number = 0
