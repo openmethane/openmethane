@@ -15,10 +15,14 @@ echo "Running for target: $TARGET using config file: $CONFIG_FILE"
 
 START_DATE=2022-07-22
 
-python scripts/cmaq_preprocess/download_cams_input.py \
+if [[ -z "${SKIP_CAMS_DOWNLOAD}" ]]; then
+  python scripts/cmaq_preprocess/download_cams_input.py \
     -s ${START_DATE} \
     -e ${START_DATE} \
     data/cams/cams_eac4_methane.nc
+else
+  echo "Skipping CAMS download"
+fi
 
 echo "Preparing CMAQ input files"
 python scripts/cmaq_preprocess/setup_for_cmaq.py -c $CONFIG_FILE
