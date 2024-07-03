@@ -1,12 +1,12 @@
 {
   "CMAQdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/",
   "MCIPdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src",
-  "templateDir" : "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess",
-  "metDir": "/scratch/q90/pjr563/openmethane-beta/mcip/",
-  "ctmDir": "/scratch/q90/pjr563/openmethane-beta/cmaq/",
-  "wrfDir": "/scratch/q90/pjr563/openmethane-beta/wrf/aust10km",
-  "geoDir": "/home/563/pjr563/openmethane-beta/setup_wrf/templates/aust10km/",
-  "inputCAMSFile": "/scratch/q90/pjr563/tmp/levtype_pl.nc",
+  "templateDir" : "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess",
+  "metDir": "/scratch/q90/pjr563/openmethane-test/mcip/",
+  "ctmDir": "/scratch/q90/pjr563/openmethane-test/cmaq/",
+  "wrfDir": "/home/563/pjr563/openmethane-test/openmethane/tests/test-data/wrf/aust-test",
+  "geoDir": "/home/563/pjr563/openmethane-test/openmethane/data/domains/aust-test/",
+  "inputCAMSFile": "/scratch/q90/pjr563/openmethane-test/cams/cams_eac4_methane.nc",
   "sufadj": "output_newMet",
   "domains": [
     "d01"
@@ -37,19 +37,19 @@
   "compressScript": "/home/563/ns0890/runCMAQ/Melb_Sch01/find_and_compress_netcdf3_to_netcdf4",
   "scripts": {
     "mcipRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.mcip"
+      "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/run.mcip"
     },
     "bconRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.bcon"
+      "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/run.bcon"
     },
     "iconRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.icon"
+      "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/run.icon"
     },
     "cctmRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.cctm"
+      "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/run.cctm"
     },
     "cmaqRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/runCMAQ.sh"
+      "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/runCMAQ.sh"
     }
   },
   "cctmExec": "ADJOINT_FWD",
