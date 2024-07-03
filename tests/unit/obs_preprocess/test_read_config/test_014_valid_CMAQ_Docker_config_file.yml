@@ -43,4 +43,4 @@ scripts:
 startDate: 2022-07-22 00:00:00+00:00
 sufadj: output_newMet
 templateDir: /opt/project/templates/cmaq_preprocess
-wrfDir: /opt/project/data/runs/aust-test
+wrfDir: /opt/openmethane/setup-wrf/data/runs/aust-test
