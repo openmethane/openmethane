@@ -27,7 +27,7 @@ if [[ -z "${SKIP_TROPOMI_DOWNLOAD}" ]]; then
     -c scripts/sat_data/config.austtest.json \
     -s ${START_DATE} \
     -e ${END_DATE}T23:59:59 \
-    $TROPOMI_DIR.nc
+    $TROPOMI_DIR
 else
   echo "Skipping TROPOMI download"
 fi
