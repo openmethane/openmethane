@@ -4,7 +4,7 @@
     "templateDir" : "/opt/project/templates/cmaq_preprocess",
     "metDir" : "/opt/project/data/mcip/",
     "ctmDir" : "/opt/project/data/cmaq/",
-    "wrfDir" : "/opt/projects/tests/test-data/wrf/aust-test",
+    "wrfDir" : "/opt/project/tests/test-data/wrf/aust-test",
     "geoDir" : "/opt/project/data/domains/aust-test/",
     "inputCAMSFile" : "/opt/project/data/cams/cams_eac4_methane.nc",
     "sufadj" : "output_newMet",
