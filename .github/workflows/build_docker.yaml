@@ -170,10 +170,8 @@ jobs:
     steps:
       - name: Run e2e test
         run: |
-          pwd
           cd /opt/project
           make fetch-domains
-          tree /opt/project/data
           bash scripts/run-all.sh
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
