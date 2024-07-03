@@ -4,7 +4,6 @@ else
 	PYTHON_CMD := python
 endif
 
-TARGET := docker
 TEST_DIRS := tests
 
 .PHONY: virtual-environment
@@ -56,11 +55,11 @@ fetch-domains:  ## Fetch the domain data from the server
 
 .PHONY: test
 test:  ## Run the tests
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
+	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
+	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
 
 # Processing steps
 .PHONY: prepare-templates

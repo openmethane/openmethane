@@ -16,20 +16,26 @@ ROOT="$DIR/../.."
 SETUP_WRF_ROOT="$ROOT/../setup-wrf"
 OPENMETHANE_PRIOR_ROOT="$ROOT/../openmethane-prior"
 TARGET_DATE="2022-07-22"
+WRF_DATE="2022072200"
 
 
 # Copy the prior from openmethane-prior
 cp $OPENMETHANE_PRIOR_ROOT/outputs/out-om-domain-info.nc $DIR/prior/
 
-# Copy the BC/IC from CMAQ
+# Copy the WRF data from setup-wrf
+rm -rf $DIR/wrf/
+mkdir -p $DIR/wrf/aust-test/${WRF_DATE}
+cp -r $SETUP_WRF_ROOT/data/wrf/aust-test/${WRF_DATE} $DIR/wrf/aust-test/${WRF_DATE}
+
+# Copy the BC/IC from cmap_preprocess
 rm -rf $DIR/cmaq/
 mkdir -p $DIR/cmaq
-cp -r $SETUP_WRF_ROOT/data/cmaq/template_* $DIR/cmaq/
+cp -r $ROOT/data/cmaq/template_* $DIR/cmaq/
 
-# Copy the Met data from WRF
+# Copy the MCIP data from cmap_preprocess
 rm -rf $DIR/mcip/
 mkdir -p $DIR/mcip
-cp -r $SETUP_WRF_ROOT/data/mcip/$TARGET_DATE $DIR/mcip/$TARGET_DATE
+cp -r $ROOT/data/mcip/$TARGET_DATE $DIR/mcip/$TARGET_DATE
 
 echo "Data copied"
 echo "Current directory sizes:"

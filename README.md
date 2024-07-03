@@ -66,7 +66,12 @@ This target is useful for testing and development.
 
 To run your first test case you will need to:
 
-1: Run the following scripts (in listed order):
+1: Run the cmaq preprocessing script (`scripts/cmaq_preprocess/run-cmaq-preprocess.sh`) to generate the
+	necessary input files for the adjoint model. This script will run the following scripts in order:
+ - `scripts/cmaq_preprocess/download_cams_input.py`
+	Downloads the CAMS data for the specified date range and region
+ - `scripts/cmaq_preprocess/setup_for_cmaq.py`
+	Runs MCIP, ICON and BCON to generate the input date files for the CMAQ adjoint
  - `scripts/cmaq_preprocess/make_emis_template.py`
 	Create the emission template file from the prior estimate
  - `scripts/cmaq_preprocess/make_template.py`

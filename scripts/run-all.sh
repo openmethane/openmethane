@@ -9,8 +9,8 @@ set -Eeuo pipefail
 
 echo "Running for target: $TARGET"
 
-echo "Preparing template files"
-make prepare-templates
+echo "Run the CMAQ preprocessing step"
+bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 TROPOMI_DIR='data/tropomi'
 

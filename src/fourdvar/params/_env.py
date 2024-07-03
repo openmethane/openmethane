@@ -2,7 +2,11 @@
 Setup environment variables handling
 """
 
+import logging
+
 from environs import Env
+
+logger = logging.getLogger(__name__)
 
 
 def create_env():
@@ -18,6 +22,7 @@ def create_env():
     # Load environment variables from a file
     target_env = env.str("TARGET", "nci")
 
+    logger.info("Loading environment variables from .env.%s", target_env)
     env.read_env(f".env.{target_env}", verbose=True, override=True)
     return env
 
