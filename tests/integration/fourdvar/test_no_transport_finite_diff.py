@@ -33,7 +33,7 @@ import fourdvar.util.netcdf_handle as ncf
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn
 
-spcs_list = ["CO2"]  # species to perturb within CMAQ.
+spcs_list = ["CH4"]  # species to perturb within CMAQ.
 tsec = 3600.0  # seconds per timestep, DO NOT MODIFY
 
 archive_defn.experiment = "tmp_finite_diff_test"
@@ -223,6 +223,18 @@ def finite_diff(scale):
         force_score += sum([(c_diff[s] * force[s]).sum() for s in spcs_list])
 
     return sense_score, force_score
+
+
+def test_no_transport_finite_diff(target_environment):
+    target_environment("docker")
+
+    sense, force = finite_diff(scale=1.0)
+    print(40 * "-")
+    print(f"sensitivity dot perturbation = {sense}")
+    print(f"forcing dot conc_change = {force}")
+    print(f"abs difference = {abs(sense - force)}")
+    print(f"rel difference = {2.0 * abs(sense - force) / (sense + force)}")
+    print(40 * "-")
 
 
 if __name__ == "__main__":

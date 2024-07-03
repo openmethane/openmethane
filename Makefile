@@ -4,8 +4,8 @@ else
 	PYTHON_CMD := python
 endif
 
-
-TEST_DIRS := tests/unit tests/integration/cmaq_preprocess tests/integration/sat_data
+TARGET := docker
+TEST_DIRS := tests
 
 .PHONY: virtual-environment
 virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
@@ -25,34 +25,40 @@ ruff-fixes:  # Run ruff on the project
 
 .PHONY: clean
 clean:  ## remove generated temporary files
-	rm -r data
+	find data ! -path "data/tropomi*" -delete
 
 .PHONY: build
 build:  ## Build the docker container locally
 	docker build --platform=linux/amd64 -t openmethane .
 
-.PHONY: run
-run: build  ## Run the docker container locally
-	# Requires local clones of setup_wrf and openmethane-prior
+.PHONY: start
+start: build  ## Start the docker container locally
+	# Requires local clones of setup-wrf and openmethane-prior
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
-		-v $(PWD)/../setup_wrf:/opt/openmethane/setup_wrf \
+		-v $(PWD)/../setup-wrf:/opt/openmethane/setup-wrf \
 		-v $(PWD)/../openmethane-prior:/opt/openmethane/openmethane-prior \
 		openmethane
 
+.PHONY: run
+run: build clean  ## Run the test domain in the docker container using the bundled test-data
+	docker run --rm -it \
+		-v $(PWD):/opt/project \
+		-e TARGET=docker-test \
+		openmethane \
+		bash scripts/run-all.sh
+
 .PHONY: test
 test:  ## Run the tests
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)  --force-regen
-
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
 
 # Processing steps
-
 .PHONY: prepare-templates
-prepare-templates:  ## Preprare the template files for a CMAQ run
+prepare-templates:  ## Prepare the template files for a CMAQ run
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_emis_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_prior.py

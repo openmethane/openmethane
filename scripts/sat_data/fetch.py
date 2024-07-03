@@ -199,9 +199,8 @@ def fetch_data(config_file, start, end, output):
     # make directory to store outputs if it doesn't already exist
     os.makedirs(output, exist_ok=True)
 
-    # TODO: change to ISO format
-    start_str = start.strftime("%Y%m%d-%H-%M-%S")
-    end_str = end.strftime("%Y%m%d-%H-%M-%S")
+    start_str = start.strftime("%Y-%m-%dT%H%M")
+    end_str = end.strftime("%Y-%m-%dT%H%M")
     boxString = "_".join(str(x) for x in config["box"])
     outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
     isExist = os.path.exists(outDirName)

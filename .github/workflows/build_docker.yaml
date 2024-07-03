@@ -28,7 +28,6 @@ jobs:
       packages: write
 
     outputs:
-      imageid: ${{ steps.build.outputs.imageid }}
       digest: ${{ steps.build.outputs.digest }}
 
     # Builds and pushes the image
@@ -121,6 +120,7 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/opt/openmethane/ \
+            -e TARGET=docker-test \
             -e CDSAPI_KEY=$CDSAPI_KEY \
             -e CDSAPI_URL=$CDSAPI_URL \
             -e EARTHDATA_USERNAME=$EARTHDATA_USERNAME \

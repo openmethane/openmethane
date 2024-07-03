@@ -102,7 +102,7 @@ class ModelSpace:
         self.nlay = self.gridmeta["NLAYS"]
         self.spcs = self.gridmeta["VAR-LIST"].split()
         tsec = tosec(self.gridmeta["TSTEP"])
-        assert daysec % tsec == 0, f"invalid TSTEP in {ncf_path}"
+        assert daysec % tsec == 0, f"invalid TSTEP in {METCRO3D}"
         self.nstep = (daysec // tsec) + 1
         self.max_height = layer_height[self.nlay]
 
@@ -124,6 +124,7 @@ class ModelSpace:
         bet = float(self.gridmeta["P_BET"])
         gam = float(self.gridmeta["P_GAM"])
         ycent = float(self.gridmeta["YCENT"])
+        # TODO: Verify that is what WRF thinks that the proj string is
         proj_str = "+proj=lcc +lat_1={0} +lat_2={1} +lat_0={3} +lon_0={2} +a={4} +b={4}"
         self.proj = pyproj.Proj(proj_str.format(alp, bet, gam, ycent, earth_rad))
         # first generate edges

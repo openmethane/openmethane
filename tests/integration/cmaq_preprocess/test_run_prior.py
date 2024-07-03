@@ -14,7 +14,6 @@ def test_make_prior(test_data_dir, tmpdir, compare_dataset, emission_template):
 
     assert ds["emis"].dims == {"TSTEP": 1, "LAY": 1, "ROW": 5, "COL": 5}
 
-    # TODO: Check if this makes sense
-    assert ds["bcon"].dims == {"TSTEP": 0, "BCON": 8}
+    assert ds["bcon"].dims == {"TSTEP": 1, "BCON": 8}
 
     compare_dataset(ds)
