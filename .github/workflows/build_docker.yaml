@@ -181,12 +181,18 @@ jobs:
           # Uses the local checked-in WRF and prior data
           CMAQ_PREPROCESS_CONFIG_FILE: config/cmaq_preprocess/config.docker.test.json
           PRIOR_PATH: "/opt/project/tests/test-data/prior/out-om-domain-info.nc"
+      - name: Upload CMAQ artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: /opt/project/data
 
   # Tag the latest image if running on the main branch
   # TODO: Handle tagged builds
   tag-latest-image:
     runs-on: ubuntu-latest
-    needs: [ test-integration , test-unit ]
+    needs: [ test-integration , test-unit, test-e2e ]
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: read

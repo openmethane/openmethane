@@ -92,7 +92,10 @@ def _reload_params():
 def target_environment(monkeypatch):
     initial_env = dict(os.environ)
 
-    def run(target: str, home: str = "{HOME}") -> None:
+    def run(target: str, home: str = "{HOME}", clear: bool = True) -> None:
+        if clear:
+            os.environ.clear()
+
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
@@ -100,6 +103,7 @@ def target_environment(monkeypatch):
 
     yield run
 
+    # Reset environment to match the initial environment
     os.environ.clear()
     os.environ.update(initial_env)
 

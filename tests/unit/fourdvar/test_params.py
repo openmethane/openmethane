@@ -1,3 +1,4 @@
+import datetime
 import os.path
 
 import pytest
@@ -101,6 +102,24 @@ def test_data_access(data_regression, target_environment, target):
             ],
         )
     )
+
+
+def test_overrides(target_environment):
+    target = "nci"
+
+    target_environment(target)
+
+    assert date_defn.end_date == datetime.date(2022, 7, 30)
+
+    os.environ.clear()
+    os.environ["END_DATE"] = (
+        "2024-01-01"  # This value will take precedence over the value in .env.nci
+    )
+
+    # Reload the params, but don't clear the environment first which would negate the line above
+    target_environment(target, clear=False)
+
+    assert date_defn.end_date == datetime.date(2024, 1, 1)
 
 
 @targets
