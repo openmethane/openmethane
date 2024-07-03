@@ -31,15 +31,15 @@ scenarioTag:
 - 220701_aust-test
 scripts:
   bconRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.bcon
+    path: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.bcon
   cctmRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.cctm
+    path: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.cctm
   cmaqRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/runCMAQ.sh
+    path: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/runCMAQ.sh
   iconRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.icon
+    path: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.icon
   mcipRun:
-    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.mcip
+    path: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.mcip
 startDate: 2022-07-22 00:00:00+00:00
 sufadj: output_newMet
 templateDir: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess
