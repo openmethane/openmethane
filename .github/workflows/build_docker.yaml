@@ -168,11 +168,10 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.github_token }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       - name: Run e2e test
         run: |
           make fetch-domains
+          tree /opt/project/data
           bash scripts/run-all.sh
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
