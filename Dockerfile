@@ -59,7 +59,7 @@ ENV LD_LIBRARY_PATH="/opt/venv/lib:${LD_LIBRARY_PATH}"
 ENV TARGET=docker
 
 RUN apt-get update && \
-    apt-get install -y csh make nano jq && \
+    apt-get install -y csh make nano jq curl && \
     rm -rf /var/lib/apt/lists/*
 
 # /opt/project is chosen because pycharm will automatically mount to this directory
