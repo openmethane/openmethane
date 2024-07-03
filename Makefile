@@ -40,7 +40,8 @@ start: build  ## Start the docker container locally
 		openmethane
 
 .PHONY: run
-run: build clean  ## Run the test domain in the docker container using the bundled test-data
+run: build clean fetch-domains  ## Run the test domain in the docker container using the bundled test-data
+	# This requires a valid `~/.cdsapirc` file
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
 		-v ~/.cdsapirc:/root/.cdsapirc \
