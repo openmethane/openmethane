@@ -116,10 +116,31 @@ jobs:
       - name: Pull built docker image
         run: |
           docker pull ${{ env.IMAGE_ID }}
-      - name: Run pytests
+          # Ensure that the data directory exists and is writable
+          mkdir data
+      - name: Cache CAMS data
+        id: cache-cams
+        uses: actions/cache@v4
+        with:
+          path: data/inputs
+          key: cams
+      - name: Download CAMS input data
+        if: steps.cache-cams.outputs.cache-hit != 'true'
         run: |
+          # This can take a few minutes as the CAMS data is stored on tape
           docker run --rm \
-            -v ${{ github.workspace }}:/opt/openmethane/ \
+            -v ${{ github.workspace }}:/opt/project \
+            -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
+            ${{ env.IMAGE_ID }} \
+            python scripts/cmaq_preprocess/download_cams_input.py \
+            -s 2022-07-01 \
+            -e 2022-07-01 \
+            data/cams/cams_eac4_methane.nc
+      - name: Run pytest
+        run: |
+          make fetch-domains
+          docker run --rm \
+            -v ${{ github.workspace }}:/opt/project/ \
             -e TARGET=docker-test \
             -e CDSAPI_KEY=$CDSAPI_KEY \
             -e CDSAPI_URL=$CDSAPI_URL \

@@ -1,0 +1,46 @@
+CAMSToCmaqBiasCorrect: 0.06700000000000017
+CMAQdir: /home/563/sa6589/CMAQv5.0.2_notpollen/
+MCIPdir: /home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src
+add_qsnow: false
+cctmExec: ADJOINT_FWD
+compressScript: /home/563/ns0890/runCMAQ/Melb_Sch01/find_and_compress_netcdf3_to_netcdf4
+ctmDir: /scratch/q90/pjr563/openmethane-beta/cmaq/
+doCompress: 'True'
+domains:
+- d01
+endDate: 2022-07-22 00:00:00+00:00
+forceUpdateICandBC:
+- true
+forceUpdateMcip: false
+forceUpdateRunScripts: true
+geoDir: /home/563/pjr563/openmethane-beta/setup_wrf/templates/aust10km/
+gridName:
+- openmethane
+inputCAMSFile: /scratch/q90/pjr563/tmp/levtype_pl.nc
+mapProjName:
+- LamCon_34S_150E
+mech: CH4only
+mechCMAQ: CH4only
+metDir: /scratch/q90/pjr563/openmethane-beta/mcip/
+nhoursPerRun: 24
+prepareICandBC: true
+prepareRunScripts: true
+printFreqHours: 1
+run: openmethane
+scenarioTag:
+- 220701_aust-test
+scripts:
+  bconRun:
+    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.bcon
+  cctmRun:
+    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.cctm
+  cmaqRun:
+    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/runCMAQ.sh
+  iconRun:
+    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.icon
+  mcipRun:
+    path: /home/563/pjr563/openmethane-beta/setup_wrf/openmethane/templates/cmaq_preprocess/run.mcip
+startDate: 2022-07-22 00:00:00+00:00
+sufadj: output_newMet
+templateDir: /home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess
+wrfDir: /scratch/q90/pjr563/openmethane-beta/wrf/aust10km

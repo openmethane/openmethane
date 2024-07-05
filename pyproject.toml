@@ -26,6 +26,8 @@ environs = "^11.0.0"
 xarray = "^2024.5.0"
 xarray-datatree = "^0.0.14"
 click = "^8.1.7"
+cdsapi = "^0.7.0"
+attrs = "^23.2.0"
 
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.2.1"

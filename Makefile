@@ -48,6 +48,12 @@ run: build clean  ## Run the test domain in the docker container using the bundl
 		openmethane \
 		bash scripts/run-all.sh
 
+.PHONY: fetch-domains
+fetch-domains:  ## Fetch the domain data from the server
+	mkdir -p data/domains/aust10km data/domains/aust-test
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/geo_em.d01.nc
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/geo_em.d01.nc
+
 .PHONY: test
 test:  ## Run the tests
 	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar

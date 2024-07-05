@@ -1,0 +1,90 @@
+attrs:
+  EXEC_ID: 'BCON_CH4only_Linux6_x86_64gfort_profile_CH4only                                 '
+  FILEDESC: 'BCON output file BNDY_CONC_1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '
+  FTYPE: 2
+  GDNAM: 'openmethane     '
+  GDTYP: 2
+  IOAPI_VERSION: ''
+  NCO: netCDF Operators version 5.2.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco,
+    Citation = 10.1016/j.envsoft.2008.03.004)
+  NCOLS: 5
+  NLAYS: 32
+  NROWS: 5
+  NTHIK: 1
+  NVARS: 1
+  P_ALP: -40.0
+  P_BET: -15.0
+  P_GAM: 133.302
+  SDATE: -635
+  STIME: 0
+  TSTEP: 0
+  UPNAM: 'OPN_BC_FILE     '
+  VAR-LIST: 'CH4             '
+  VGLVLS:
+  - 1.0
+  - 0.9938145279884338
+  - 0.9859505295753479
+  - 0.9760141968727112
+  - 0.9635574817657471
+  - 0.9480931758880615
+  - 0.9291238188743591
+  - 0.9061911702156067
+  - 0.8789424300193787
+  - 0.8472079634666443
+  - 0.8110777735710144
+  - 0.7709489464759827
+  - 0.7275254130363464
+  - 0.6817554831504822
+  - 0.6345035433769226
+  - 0.5860304832458496
+  - 0.5366501212120056
+  - 0.48673006892204285
+  - 0.436688095331192
+  - 0.38698771595954895
+  - 0.33812758326530457
+  - 0.29062968492507935
+  - 0.24502260982990265
+  - 0.20182164013385773
+  - 0.1615062803030014
+  - 0.12705372273921967
+  - 0.09814422577619553
+  - 0.0738859623670578
+  - 0.05353061482310295
+  - 0.036450259387493134
+  - 0.022117899730801582
+  - 0.010091492906212807
+  - 0.0
+  VGTOP: 5000.0
+  VGTYP: 7
+  XCELL: 10000.0
+  XCENT: 133.302
+  XORIG: 1511422.625
+  YCELL: 10000.0
+  YCENT: -27.5
+  YORIG: 385760.438
+coords: {}
+dims:
+  DATE-TIME: 2
+  LAY: 32
+  PERIM: 24
+  TSTEP: 1
+  VAR: 1
+variables:
+  CH4:
+    attrs:
+      long_name: 'CH4             '
+      units: 'ppmV            '
+      var_desc: 'Variable CH4                                                                    '
+    dims:
+    - TSTEP
+    - LAY
+    - PERIM
+  TFLAG:
+    attrs:
+      long_name: 'TFLAG           '
+      units: <YYYYDDD,HHMMSS>
+      var_desc: 'Timestep-valid flags:  (1) YYYYDDD or (2) HHMMSS                                '
+    dims:
+    - TSTEP
+    - VAR
+    - DATE-TIME

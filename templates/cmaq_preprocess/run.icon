@@ -1,0 +1,121 @@
+#!/bin/csh -f
+
+# ======================= ICONv5.1 Run Script ========================
+# Usage: run.icon >&! icon_V5.log &                                   
+#
+# To report problems or request help with this script/program:         
+#             http://www.cmascenter.org
+# ==================================================================== 
+
+#> Source the config.cmaq file to set the run environment
+ source TEMPLATE/config.cmaq
+
+#> Check that M3DATA is set:
+# if ( ! -e $M3DATA ) then
+#    echo "   $M3DATA path does not exist"
+#    exit 1
+# endif
+# echo " "; echo " Input data path, M3DATA set to $M3DATA"; echo " "
+
+# =====================================================================
+#> ICON Configuration Options
+#
+# ICON can be run in one of two modes:                                     
+#     1) use default profile inputs (IC = profile)
+#     2) use CMAQ CTM concentration files for nested runs (IC = m3conc)     
+# =====================================================================
+
+ set IC = TEMPLATE      #> either profile or m3conc 
+ set DATE = TEMPLATE    #> only needed for nested runs
+
+ set APPL     = CH4only
+ set CFG      = TEMPLATE
+ set MECH     = TEMPLATE
+ set EXEC     = ICON_${APPL}_${EXEC_ID}_${IC}_${MECH}
+
+#> Set the working directory:
+ set BASE     = $M3HOME/scripts/icon
+ set BLD      = ${BASE}/BLD_$APPL
+
+ cd $BASE; date; set timestamp; echo " "; set echo
+
+#> Horizontal grid definition 
+ setenv GRID_NAME TEMPLATE           #> check GRIDDESC file for GRID_NAME options
+ setenv GRIDDESC TEMPLATE/GRIDDESC    #> grid description file 
+ setenv IOAPI_ISPH 20                     #> GCTP spheroid, use 20 for WRF-based modeling
+
+#> Vertical layer definition
+ setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE #>METCRO3D file from MCIP
+
+#> I/O Controls
+ setenv IOAPI_LOG_WRITE F     #> turn on excess WRITE3 logging [ options: T | F ]
+ setenv IOAPI_OFFSET_64 NO    #> support large timestep records (>2GB/timestep record) [ options: YES | NONO ]
+ setenv EXECUTION_ID $EXEC    #> define the model execution id
+
+# =====================================================================
+#> Input/Output Directories
+# =====================================================================
+
+ setenv OUTDIR TEMPLATE       #> output file directory
+ setenv OUTFILE TEMPLATE      #> output file name
+
+# =====================================================================
+#> Input Files
+#  
+#  Profile Mode (IC = profile)
+#     IC_PROFILE = static/default IC profiles 
+#  Nesting mode (IC = m3conc)
+#     CTM_CONC_1 = the CTM concentration file for the coarse domain          
+#     MET_CRO_3D_CRS = the MET_CRO_3D met file for the coarse domain
+#                  only set if  or if the vertical grid type is   
+#                  changed between nests                                     
+#     MET_CRO_3D_FIN = the MET_CRO_3D met file for the inner, nested, domain 
+#                  only set if the vertical grid type is changed between  
+#                  nests                                                     
+#                                                                            
+# NOTE: SDATE (yyyyddd) and STIME (hhmmss) must always be set           
+# =====================================================================
+
+ if ( $IC == profile ) then
+    setenv IC_PROFILE   ${BLD}/ic_profile_CH4only.dat
+ endif
+ 
+ if ( $IC == m3conc ) then 
+    setenv CTM_CONC_1 TEMPLATE
+    setenv MET_CRO_3D_CRS TEMPLATE
+    setenv MET_CRO_3D_FIN TEMPLATE
+    setenv SDATE           ${DATE}
+    setenv STIME           000000
+ endif
+
+# =====================================================================
+#> Output Files
+# =====================================================================
+
+
+ if ( $IC == profile ) then
+    setenv INIT_CONC_1    "$OUTDIR/$OUTFILE -v"
+    endif
+ if ( $IC == m3conc ) then 
+    set DATE = 2011182  # July 1, 2011
+    setenv INIT_CONC_1    "$OUTDIR/$OUTFILE -v"
+ endif
+
+#>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#> species defn
+ setenv gc_matrix_nml ${BLD}/GC_$MECH.nml
+ setenv ae_matrix_nml ${BLD}/AE_$MECH.nml
+ setenv nr_matrix_nml ${BLD}/NR_$MECH.nml
+ setenv tr_matrix_nml ${BLD}/Species_Table_TR_0.nml
+ 
+ if ( ! -d "$OUTDIR" ) mkdir -p $OUTDIR
+
+ ls -l $BLD/$EXEC; size $BLD/$EXEC
+# unlimit
+# limit
+
+#> Executable call:
+ time $BLD/$EXEC
+
+ exit() 
