@@ -4,7 +4,6 @@ else
 	PYTHON_CMD := python
 endif
 
-TARGET := docker
 TEST_DIRS := tests
 
 .PHONY: virtual-environment
@@ -41,10 +40,13 @@ start: build  ## Start the docker container locally
 		openmethane
 
 .PHONY: run
-run: build clean  ## Run the test domain in the docker container using the bundled test-data
+run: build clean fetch-domains  ## Run the test domain in the docker container using the bundled test-data
+	# This requires a valid `~/.cdsapirc` file
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
-		-e TARGET=docker-test \
+		-v ~/.cdsapirc:/root/.cdsapirc \
+		-e CMAQ_PREPROCESS_CONFIG_FILE=config/cmaq_preprocess/config.docker.test.json \
+		-e PRIOR_PATH=/opt/project/tests/test-data/prior/out-om-domain-info.nc \
 		openmethane \
 		bash scripts/run-all.sh
 
@@ -56,11 +58,11 @@ fetch-domains:  ## Fetch the domain data from the server
 
 .PHONY: test
 test:  ## Run the tests
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
+	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
+	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
 
 # Processing steps
 .PHONY: prepare-templates

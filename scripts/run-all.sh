@@ -1,28 +1,35 @@
 #!/usr/bin/env bash
 # Runs the required steps to run CMAQ in the docker container
 #
-# This is assumed to run from the root directory
-# and the required tropomi data has been downloaded into `data/tropomi`
+# This is assumed to run from the root directory.
 #
 
 set -Eeuo pipefail
 
+# Configuration environment variables
+SKIP_TROPOMI_DOWNLOAD=${SKIP_TROPOMI_DOWNLOAD:-}
+TROPOMI_DIR='data/tropomi'
+export TARGET=${TARGET:-docker}
+export START_DATE=${START_DATE:-2022-07-22}
+export END_DATE=${END_DATE:-2022-07-22}
+
 echo "Running for target: $TARGET"
 
-echo "Preparing template files"
-make prepare-templates
+echo "Run the CMAQ preprocessing step"
+bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
-TROPOMI_DIR='data/tropomi'
-
-tropomi_files=$(find $TROPOMI_DIR -type f | wc -l)
-if [[ $tropomi_files -eq 0 ]]; then
-  echo "No TROPOMI files found in $TROPOMI_DIR. Downloading"
+echo "Downloading TROPOMI data for domain"
+# Skip the TROPOMI download if the variable is set to anything other than an empty string
+if [[ -z "${SKIP_TROPOMI_DOWNLOAD}" ]]; then
+  mkdir -p $TROPOMI_DIR
 
   python scripts/sat_data/fetch.py \
     -c scripts/sat_data/config.austtest.json \
-    -s 2022-07-22 \
-    -e 2022-07-22 \
+    -s ${START_DATE} \
+    -e ${END_DATE}T23:59:59 \
     $TROPOMI_DIR
+else
+  echo "Skipping TROPOMI download"
 fi
 
 echo "Preprocessing observations"

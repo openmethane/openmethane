@@ -24,16 +24,12 @@ def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
         True if all the required MCIP files are present, False if not
     """
     allMcipFilesFound = True
-    if not os.path.exists(ctmDir):
-        os.mkdir(ctmDir)
+
+    os.makedirs(ctmDir, exist_ok=True)
     ##
     for idate, date in enumerate(dates):
         yyyymmdd_dashed = date.strftime("%Y-%m-%d")
-        ##
-        parent_chemdir = f"{ctmDir}/{yyyymmdd_dashed}"
         ## create output destination
-        if not os.path.exists(parent_chemdir):
-            os.mkdir(parent_chemdir)
         for idomain, domain in enumerate(domains):
             mcipdir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
             chemdir = f"{ctmDir}/{yyyymmdd_dashed}/{domain}"
@@ -42,8 +38,8 @@ def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
                 allMcipFilesFound = False
                 return allMcipFilesFound
             ## create output destination
-            if not os.path.exists(chemdir):
-                os.mkdir(chemdir)
+            os.makedirs(chemdir, exist_ok=True)
+
             ## check that the MCIP GRIDDESC file is present
             griddescFilePath = f"{mcipdir}/GRIDDESC"
             if not os.path.exists(griddescFilePath):
