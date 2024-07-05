@@ -251,6 +251,9 @@ pyrightconfig.json
 
 # Custom Ignores
 
+# Temporary files
+*~
+
 # Baseline data
 baseline_data/*.tif
 baseline_data/*.csv
