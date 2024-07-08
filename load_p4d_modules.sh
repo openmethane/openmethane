@@ -15,3 +15,4 @@ module load nco
 #python-stuff
 module load python3/3.11.7
 [[ ":$PATH:" != *":$HOME/poetry/bin:"* ]] && export PATH="$HOME/poetry/bin:${PATH}"
+source $(poetry env info --path)/bin/activate
