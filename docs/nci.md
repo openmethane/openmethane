@@ -16,6 +16,7 @@ The project can be cloned from github to the NCI filesystem using:
 
 ```shell
 git clone git@github.com:openmethane/openmethane.git
+cd openmethane
 ```
 
 The configuration includes some references to the location of where the code has been cloned.
