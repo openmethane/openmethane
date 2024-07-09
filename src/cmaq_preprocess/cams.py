@@ -62,7 +62,7 @@ def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, P, ne
                 ix, iy = near_interior[irow, icol, :]
                 out_interior[:, irow, icol] = varin[Iz, ix, iy]
     else:
-        warnings.warning(
+        warnings.warn(
             f"Species {mzspec} was not found in input CAMS file "
             f"-- contributions from this variable will be zero..."
         )
@@ -101,7 +101,7 @@ def extract_and_interpolate_boundary(
             ## for iCMtime, iMZtime in enumerate(iMZtime_for_each_CMtime):
             out_boundary[iCMtime, :, iperim] = varin[Iz, ix, iy]
     else:
-        warnings.warning(
+        warnings.warn(
             f"Species {mzspec} was not found in input CAMS file "
             f"-- contributions from this variable will be zero..."
         )
@@ -377,7 +377,7 @@ def interpolateFromCAMSToCmaqGrid(
                     if all(dtime < 0.0):
                         imin = numpy.argmin(numpy.abs(dtime))
                         iMZtime_for_each_CMtime[itime] = imin
-                        warnings.warning(
+                        warnings.warn(
                             "All dates were negative for date {}, using nearest match: {}".format(
                                 date.strftime("%Y-%m-%d %H:%M:%S"),
                                 MZdates[imin].strftime("%Y-%m-%d %H:%M:%S"),
@@ -414,7 +414,7 @@ def interpolateFromCAMSToCmaqGrid(
                 for spec in ALL_CM_SPEC:
                     if do_ICs:
                         if spec not in list(ncouti.variables.keys()):
-                            warnings.warning(
+                            warnings.warn(
                                 f"Species {spec} was not found in template CMAQ IC file -- creating blank variable..."
                             )
                             isnetcdf4 = ncouti.data_model == "NETCDF4"
@@ -430,7 +430,7 @@ def interpolateFromCAMSToCmaqGrid(
                         ncouti.variables[spec][:] = 0.0
                     if do_BCs:
                         if spec not in list(ncoutb.variables.keys()):
-                            warnings.warning(
+                            warnings.warn(
                                 f"Species {spec} was not found in template CMAQ BC file -- creating blank variable..."
                             )
                             isnetcdf4 = ncoutb.data_model == "NETCDF4"

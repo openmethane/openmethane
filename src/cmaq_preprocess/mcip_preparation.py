@@ -34,7 +34,7 @@ def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
             mcipdir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
             chemdir = f"{ctmDir}/{yyyymmdd_dashed}/{domain}"
             if not os.path.exists(mcipdir):
-                warnings.warning(f"MCIP output directory not found at {mcipdir} ... ")
+                warnings.warn(f"MCIP output directory not found at {mcipdir} ... ")
                 allMcipFilesFound = False
                 return allMcipFilesFound
             ## create output destination
@@ -43,7 +43,7 @@ def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
             ## check that the MCIP GRIDDESC file is present
             griddescFilePath = f"{mcipdir}/GRIDDESC"
             if not os.path.exists(griddescFilePath):
-                warnings.warning(f"GRIDDESC file not found at {griddescFilePath} ... ")
+                warnings.warn(f"GRIDDESC file not found at {griddescFilePath} ... ")
                 allMcipFilesFound = False
                 return allMcipFilesFound
             ## check that the other MCIP output files are present
@@ -59,7 +59,7 @@ def checkInputMetAndOutputFolders(ctmDir, metDir, dates, domains):
             for filetype in filetypes:
                 matches = glob.glob(f"{mcipdir}/{filetype}_*")
                 if len(matches) == 0:
-                    warnings.warning(f"{filetype} file not found in folder {mcipdir} ... ")
+                    warnings.warn(f"{filetype} file not found in folder {mcipdir} ... ")
                     allMcipFilesFound = False
                     return allMcipFilesFound
                 elif len(matches) > 1:
@@ -166,7 +166,7 @@ def checkWrfMcipDomainSizes(metDir, date, domains, wrfDir=None):
                     f"No files matched the pattern WRFOUT_{domain}_* in folder {mcipdir}, and no alternative WRF directory was provided..."
                 )
             elif len(matches) > 1:
-                warnings.warning(
+                warnings.warn(
                     f"Multiple files match the pattern WRFOUT_{domain}_* in folder {mcipdir}, using file {matches[0]}"
                 )
             else:
@@ -176,7 +176,7 @@ def checkWrfMcipDomainSizes(metDir, date, domains, wrfDir=None):
                         f"No files matched the pattern WRFOUT_{domain}_* the folders {mcipdir} and {wrfDir} ..."
                     )
                 elif len(matches) > 1:
-                    warnings.warning(
+                    warnings.warn(
                         f"Multiple files match the pattern WRFOUT_{domain}_* in folder {wrfDir}, using file {matches[0]}"
                     )
         ##
@@ -199,7 +199,7 @@ def checkWrfMcipDomainSizes(metDir, date, domains, wrfDir=None):
             minidx = numpy.argmin(dists)
             mindist = dists.min()
             if mindist > 0.5:
-                warnings.warning(
+                warnings.warn(
                     f"Distance between grid-points was {mindist} km for domain {domain}"
                 )
             icorn[i], jcorn[i] = numpy.unravel_index(minidx, wrfLat.shape)
