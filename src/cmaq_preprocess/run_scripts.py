@@ -17,7 +17,7 @@ def prepareTemplateBconFiles(
     GridNames,
     mcipsuffix,
     scripts,
-    forceUpdate,
+    forceUpdate: bool,
 ):
     """Prepare template BC files using BCON
 
@@ -123,7 +123,7 @@ def prepareTemplateIconFiles(
     GridNames,
     mcipsuffix,
     scripts,
-    forceUpdate,
+    forceUpdate: bool,
 ):
     """Prepare template IC files using ICON
 

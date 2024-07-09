@@ -48,6 +48,8 @@ def test_007_parse_boolean_keys():
         "test_key_10": "no",
         "test_key_11": "True",
         "test_key_12": "False",
+        "test_key_13": True,
+        "test_key_14": False,
     }
 
     expected = {
@@ -63,6 +65,8 @@ def test_007_parse_boolean_keys():
         "test_key_10": False,
         "test_key_11": True,
         "test_key_12": False,
+        "test_key_13": True,
+        "test_key_14": False,
     }
 
     out = {k: boolean_converter(v) for k, v in config.items()}
@@ -100,7 +104,6 @@ def cmaq_config_dict():
     return {
         "CMAQdir": "/opt/cmaq/CMAQv5.0.2_notpollen/",
         "MCIPdir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
-        "templateDir": "/opt/project/templateRunScripts",
         "metDir": "/opt/project/data/mcip/",
         "ctmDir": "/opt/project/data/cmaq/",
         "wrfDir": "/opt/project/data/runs/aust-test",
@@ -110,13 +113,9 @@ def cmaq_config_dict():
         "run": "openmethane",
         "startDate": "2022-07-01 00:00:00 UTC",
         "endDate": "2022-07-01 00:00:00 UTC",
-        "nhoursPerRun": 24,
-        "printFreqHours": 1,
         "mech": "CH4only",
-        "mechCMAQ": "CH4only",
-        "prepareICandBC": "True",
-        "forceUpdateMcip": "False",
-        "forceUpdateICandBC": "True",
+        "prepareICandBC": True,
+        "forceUpdate": True,
         "scenarioTag": ["220701_aust-test"],
         "mapProjName": ["LamCon_34S_150E"],
         "gridName": ["openmethane"],
@@ -125,7 +124,6 @@ def cmaq_config_dict():
             "bconRun": {"path": "/opt/project/templateRunScripts/run.bcon"},
             "iconRun": {"path": "/opt/project/templateRunScripts/run.icon"},
         },
-        "cctmExec": "ADJOINT_FWD",
         "CAMSToCmaqBiasCorrect": 0.06700000000000017,
     }
 
@@ -147,20 +145,16 @@ def cmaq_config_dict():
     ],
     ids=lambda test_id: test_id,
 )
-def test_015_mechCMAQ_validator(value, expected_exception, test_id, cmaq_config_dict):
-    cmaq_config_dict["mechCMAQ"] = value
+def test_015_mech_validator(value, expected_exception, test_id, cmaq_config_dict):
+    cmaq_config_dict["mech"] = value
 
     if expected_exception:
-        with pytest.raises(expected_exception) as exc_info:
+        match = "Configuration value for mech must be one of"
+        with pytest.raises(expected_exception, match=match):
             create_cmaq_config_object(cmaq_config_dict)
-        assert "Configuration value for mechCMAQ must be one of" in str(
-            exc_info.value
-        ), f"Test Failed: {test_id}"
     else:
-        try:
-            create_cmaq_config_object(cmaq_config_dict)
-        except ValueError as e:
-            pytest.fail(f"Unexpected ValueError raised for {test_id}: {e}")
+        config = create_cmaq_config_object(cmaq_config_dict)
+        assert config is not None
 
 
 @pytest.mark.parametrize(
@@ -271,7 +265,7 @@ def test_018_scripts_validator_error_cases(
             {
                 "more_complex": "content",
                 "int": 1,
-                "nested_dict": {"nested": "dict", "bool": "True"},
+                "nested_dict": {"nested": "dict", "bool": True},
             },
             id="more_complex_content",
         ),

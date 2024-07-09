@@ -59,7 +59,7 @@ def setup_for_cmaq(config: CMAQConfig):
     )
     print("\t... done")
 
-    if (not mcip_output_found) or config.forceUpdateMcip:
+    if (not mcip_output_found) or config.forceUpdate:
         runMCIP(
             dates=dates,
             domains=config.domains,
@@ -75,12 +75,10 @@ def setup_for_cmaq(config: CMAQConfig):
             fix_simulation_start_date=True,
             fix_truelat2=False,
             truelat2=None,
-            wrfRunName=None,
-            doArchiveWrf=False,
         )
 
     # extract some parameters about the MCIP setup
-    CoordNames, GridNames, APPL = getMcipGridNames(config.metDir, dates, config.domains)
+    coord_names, grid_names, mcip_suffix = getMcipGridNames(config.metDir, dates, config.domains)
 
     if config.prepareICandBC:
         # prepare the template boundary condition concentration files
@@ -92,11 +90,11 @@ def setup_for_cmaq(config: CMAQConfig):
             metDir=config.metDir,
             CMAQdir=config.CMAQdir,
             CFG=config.run,
-            mech=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            mech=config.mech,
+            GridNames=grid_names,
+            mcipsuffix=mcip_suffix,
             scripts=scripts,
-            forceUpdate=config.forceUpdateICandBC,
+            forceUpdate=config.forceUpdate,
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
@@ -107,11 +105,11 @@ def setup_for_cmaq(config: CMAQConfig):
             metDir=config.metDir,
             CMAQdir=config.CMAQdir,
             CFG=config.run,
-            mech=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            mech=config.mech,
+            GridNames=grid_names,
+            mcipsuffix=mcip_suffix,
             scripts=scripts,
-            forceUpdate=config.forceUpdateICandBC,
+            forceUpdate=config.forceUpdate,
         )
         # use the template initial and boundary condition concentration
         # files and populate them with values from MOZART output
@@ -124,9 +122,9 @@ def setup_for_cmaq(config: CMAQConfig):
             templateBconFiles,
             config.metDir,
             config.ctmDir,
-            GridNames,
-            mcipsuffix=APPL,
-            forceUpdate=config.forceUpdateICandBC,
+            grid_names,
+            mcipsuffix=mcip_suffix,
+            forceUpdate=config.forceUpdate,
             bias_correct=config.CAMSToCmaqBiasCorrect,
         )
 

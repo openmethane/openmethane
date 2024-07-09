@@ -1,7 +1,6 @@
 {
   "CMAQdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/",
   "MCIPdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src",
-  "templateDir" : "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess",
   "metDir": "/scratch/q90/pjr563/openmethane-test/mcip/",
   "ctmDir": "/scratch/q90/pjr563/openmethane-test/cmaq/",
   "wrfDir": "/home/563/pjr563/openmethane-test/openmethane/tests/test-data/wrf/aust-test",
@@ -13,13 +12,9 @@
   "run": "openmethane",
   "startDate": "2022-07-22 00:00:00 UTC",
   "endDate": "2022-07-22 00:00:00 UTC",
-  "nhoursPerRun": 24,
-  "printFreqHours": 1,
   "mech": "CH4only",
-  "mechCMAQ": "CH4only",
-  "prepareICandBC": "True",
-  "forceUpdateMcip": "False",
-  "forceUpdateICandBC": "True",
+  "prepareICandBC": true,
+  "forceUpdate": true,
   "scenarioTag": [
     "220701_aust-test"
   ],
@@ -40,6 +35,5 @@
       "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/run.icon"
     }
   },
-  "cctmExec": "ADJOINT_FWD",
   "CAMSToCmaqBiasCorrect": 0.06700000000000017
 }

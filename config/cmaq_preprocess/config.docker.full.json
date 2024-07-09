@@ -1,7 +1,6 @@
 {
     "CMAQdir" : "/opt/cmaq/CMAQv5.0.2_notpollen/",
     "MCIPdir" : "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
-    "templateDir" : "/opt/project/templates/cmaq_preprocess",
     "metDir" : "/opt/project/data/mcip/",
     "ctmDir" : "/opt/project/data/cmaq/",
     "wrfDir" : "/opt/openmethane/setup-wrf/data/runs/aust-10km",
@@ -11,13 +10,9 @@
     "run" : "openmethane",
     "startDate" : "2022-07-22 00:00:00 UTC",
     "endDate" : "2022-07-22 00:00:00 UTC",
-    "nhoursPerRun" : 24,
-    "printFreqHours" : 1,
     "mech" : "CH4only",
-    "mechCMAQ" : "CH4only",
-    "prepareICandBC" : "True",
-    "forceUpdateMcip" : "False",
-    "forceUpdateICandBC" : "True",
+    "prepareICandBC" : true,
+    "forceUpdate" : false,
     "scenarioTag" : ["220701_aust-10km"],
     "mapProjName" : ["LamCon_34S_150E"],
     "gridName" : ["openmethane"],
@@ -26,6 +21,5 @@
         "bconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.bcon"},
         "iconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.icon"}
     },
-    "cctmExec" : "ADJOINT_FWD",
     "CAMSToCmaqBiasCorrect" : 0.06700000000000017
 }
