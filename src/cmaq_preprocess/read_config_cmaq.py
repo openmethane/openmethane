@@ -41,9 +41,6 @@ class CMAQConfig:
     """directory containing geo_em.* files"""
     inputCAMSFile: str
     """Filepath to CAMS file."""
-    sufadj: str
-    """this is added by sougol to match the name of the folder created by
-     running adj executable."""
     domains: list[str]
     """which domains should be run?"""
     run: str
@@ -95,17 +92,11 @@ class CMAQConfig:
 
     prepareICandBC: bool = field(converter=boolean_converter)
     """prepare the initial and boundary conditions from global CAMS output"""
-    prepareRunScripts: bool = field(converter=boolean_converter)
-    """prepare the run scripts"""
-    add_qsnow: bool = field(converter=boolean_converter)
-    """MCIP option: add the 'QSNOW' variable to the WRFOUT files before running MCIP"""
     forceUpdateMcip: bool = field(converter=boolean_converter)
     """MCIP option: force the update of the MCIP files"""
     forceUpdateICandBC: tuple[bool] = field(converter=boolean_tuple)
     """MCIP option: force an update of the initial
     and boundary conditions from global MOZART output"""
-    forceUpdateRunScripts: bool = field(converter=boolean_converter)
-    """MCIP option: force an update to the run scripts"""
     scenarioTag: list[str] = field()
     """MCIP option: scenario tag. 16-character maximum"""
 
@@ -132,10 +123,6 @@ class CMAQConfig:
         if not isinstance(value, list):
             raise ValueError(f"Configuration value for {attribute.name} must be a list")
 
-    doCompress: str
-    """compress the output from netCDF3 to netCDF4 during the CMAQ run"""
-    compressScript: str
-    """script to find and compress netCDF3 to netCDF4"""
     scripts: dict[str, dict[str, str]] = field()
     """This is a dictionary with paths to each of the run-scripts. Elements of 
     the dictionary should themselves be dictionaries, with the key 'path' and 
@@ -144,12 +131,15 @@ class CMAQConfig:
     mcipRun - MCIP run script
     bconRun - BCON run script
     iconRun - ICON run script
-    cctmRun - CCTM run script
-    cmaqRun - main CMAQ run script"""
+    """
 
     @scripts.validator
     def check_scripts(self, attribute, value):
-        expected_keys = ["mcipRun", "bconRun", "iconRun", "cctmRun", "cmaqRun"]
+        expected_keys = [
+            "mcipRun",
+            "bconRun",
+            "iconRun",
+        ]
         if sorted(list(value.keys())) != sorted(expected_keys):
             raise ValueError(f"{attribute.name} must have the keys {expected_keys}")
         for key in value:
@@ -158,8 +148,6 @@ class CMAQConfig:
                     f"{key} in configuration value {attribute.name} must have the key 'path'"
                 )
 
-    cctmExec: str
-    # TODO: Add description for cctmExec?
     CAMSToCmaqBiasCorrect: float
     """Pre-set is (1.838 - 1.771)"""
     # TODO: Add description for CAMSToCmaqBiasCorrect?

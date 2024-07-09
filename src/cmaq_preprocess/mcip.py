@@ -32,8 +32,6 @@ import subprocess
 import tempfile
 from shutil import copyfile
 
-import netCDF4
-
 from cmaq_preprocess.utils import replace_and_write
 
 
@@ -58,7 +56,6 @@ def runMCIP(
     truelat2=None,
     wrfRunName=None,
     doArchiveWrf=False,
-    add_qsnow=False,
 ):
     """Function to run MCIP from python
 
@@ -128,20 +125,6 @@ def runMCIP(
                         print("stdout = " + str(stdout))
                         print("stderr = " + str(stderr))
                         raise RuntimeError("Error from atted...")
-
-            if add_qsnow:
-                print("\t\tAdd an artificial variable ('QSNOW') to the WRFOUT files")
-                wrfstrttime = date.strftime("%Y-%m-%d_%H:%M:%S")
-                for outPath in outPaths:
-                    nc = netCDF4.Dataset(outPath, "a")
-                    nc.createVariable(
-                        "QSNOW",
-                        "f4",
-                        ("Time", "bottom_top", "south_north", "west_east"),
-                        zlib=True,
-                    )
-                    nc.variables["QSNOW"][:] = 0.0
-                    nc.close()
 
             if fix_truelat2 and (truelat2 is not None):
                 print("\t\tFix up TRUELAT2 attribute with ncatted")

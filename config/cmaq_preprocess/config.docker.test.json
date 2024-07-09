@@ -7,7 +7,6 @@
     "wrfDir" : "/opt/project/tests/test-data/wrf/aust-test",
     "geoDir" : "/opt/project/data/domains/aust-test/",
     "inputCAMSFile" : "/opt/project/data/cams/cams_eac4_methane.nc",
-    "sufadj" : "output_newMet",
     "domains" : ["d01"],
     "run" : "openmethane",
     "startDate" : "2022-07-22 00:00:00 UTC",
@@ -17,22 +16,15 @@
     "mech" : "CH4only",
     "mechCMAQ" : "CH4only",
     "prepareICandBC" : "True",
-    "prepareRunScripts" : "True",
-    "add_qsnow" : "False",
     "forceUpdateMcip" : "False",
     "forceUpdateICandBC" : "True",
-    "forceUpdateRunScripts" : "True",
     "scenarioTag" : ["220701_aust-test"],
     "mapProjName" : ["LamCon_34S_150E"],
     "gridName" : ["openmethane"],
-    "doCompress" : "True",
-    "compressScript" : "/opt/project/nccopy_compress_output.sh",
     "scripts" : {
         "mcipRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.mcip"},
         "bconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.bcon"},
-        "iconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.icon"},
-        "cctmRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.cctm"},
-        "cmaqRun" : {"path" : "/opt/project/templates/cmaq_preprocess/runCMAQ.sh"}
+        "iconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.icon"}
     },
     "cctmExec" : "ADJOINT_FWD",
     "CAMSToCmaqBiasCorrect" : 0.06700000000000017
