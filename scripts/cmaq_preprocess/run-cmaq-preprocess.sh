@@ -11,6 +11,7 @@ set -Eeuo pipefail
 export TARGET=${TARGET:-docker}
 export START_DATE=${START_DATE:-2022-07-22}
 export END_DATE=${END_DATE:-2022-07-22}
+export STORE_DIR=${STORE_DIR:-data}
 
 CONFIG_FILE=${CMAQ_PREPROCESS_CONFIG_FILE:-config/cmaq_preprocess/config.docker.json}
 SKIP_CAMS_DOWNLOAD=${SKIP_CAMS_DOWNLOAD:-}
@@ -22,7 +23,7 @@ if [[ -z "${SKIP_CAMS_DOWNLOAD}" ]]; then
   python scripts/cmaq_preprocess/download_cams_input.py \
     -s "${START_DATE}" \
     -e "${END_DATE}" \
-    data/cams/cams_eac4_methane.nc
+    "${STORE_DIR}/cams/cams_eac4_methane.nc"
 else
   echo "Skipping CAMS download"
 fi
@@ -38,7 +39,6 @@ python scripts/cmaq_preprocess/make_prior.py
 
 echo "Complete"
 
-
 echo "Listing directory contents"
-tree data/cmaq
-tree data/mcip
+tree "${STORE_DIR}/cmaq"
+tree "${STORE_DIR}/mcip"
