@@ -31,17 +31,17 @@ def _run_grad_step():
     # TODO: Assert results
 
     physical = d.PhysicalData.from_file(prior_file)
-    unknown = transform(physical, d.UnknownData)
+    transform(physical, d.UnknownData)
     # physical.emis['CH4'][...] = 0.
     # physical.emis['CH4'][0,0,56,152]=1.
     modelInput = transform(physical, d.ModelInputData)
-    priInput = modelInput.get_vector()
+    modelInput.get_vector()
     # test=d.ModelInputData.load_from_vector_template( priInput)
     # initCost = modelInput.sum_squares()
 
     # sensitivity = d.SensitivityData.create_from_ModelInputData()
     modelOutput = transform(modelInput, d.ModelOutputData)
-    priOutput = modelOutput.get_vector()
+    modelOutput.get_vector()
     observed = d.ObservationData.from_file(obs_file)
     # simul = d.ObservationData.from_file( simulFile )
     # modelInput.archive('/scratch/q90/cm5310/plotting/model_input')
@@ -61,7 +61,7 @@ def _run_grad_step():
     w_residual = d.ObservationData.error_weight(residual)
     adj_forcing = transform(w_residual, d.AdjointForcingData)
     sensitivity = transform(adj_forcing, d.SensitivityData)
-    sensVec = sensitivity.get_vector()
+    sensitivity.get_vector()
     phys_sense = transform(sensitivity, d.PhysicalAdjointData)
     un_gradient = transform(phys_sense, d.UnknownData)
 
@@ -76,9 +76,9 @@ def _run_grad_step():
     pert_unknown = d.UnknownData(prior_vector + dx)
     pert_physical = transform(pert_unknown, d.PhysicalData)
     pert_model_input = transform(pert_physical, d.ModelInputData)
-    pertInput = pert_model_input.get_vector()
+    pert_model_input.get_vector()
     pert_model_output = transform(pert_model_input, d.ModelOutputData)
-    pertOutput = pert_model_output.get_vector()
+    pert_model_output.get_vector()
     # pertCost=pert_model_output.sum_squares()
     pert_simul = transform(pert_model_output, d.ObservationData)
     pertObsCost = (

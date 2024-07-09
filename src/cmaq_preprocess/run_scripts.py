@@ -32,7 +32,7 @@ def prepareTemplateBconFiles(
         GridNames: list of MCIP map projection names (one per domain)
         mcipsuffix: Suffix for the MCIP output files
         scripts: dictionary of scripts, including an entry with the key 'bconRun'
-        forceUpdate: Boolean (True/False) for whether we should update the output if it already exists
+        forceUpdate: If True, update the output even if it already exists
 
     Returns:
         list of the template BCON files (one per domain)
@@ -40,7 +40,6 @@ def prepareTemplateBconFiles(
 
     ##
     yyyyjjj = date.strftime("%Y%j")
-    # yyyymmdd = date.strftime("%Y%m%d")
     yyyymmdd_dashed = date.strftime("%Y-%m-%d")
     ##
     ndom = len(domains)
@@ -50,7 +49,7 @@ def prepareTemplateBconFiles(
         mcipdir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
         grid = GridNames[idomain]
         outfile = f"template_bcon_profile_{mech}_{domain}.nc"
-        outpath = f"{ctmDir}/{outfile}"
+        outpath = os.path.join(ctmDir, outfile)
         outputFiles[idomain] = outpath
         if os.path.exists(outpath):
             if forceUpdate:
@@ -60,7 +59,7 @@ def prepareTemplateBconFiles(
                 continue
         ##
         ## adjust BCON script
-        outBconFile = f"{ctmDir}/run.bcon"
+        outBconFile = os.path.join(ctmDir, "run.bcon")
         ##
         subsBcon = [
             [
@@ -93,21 +92,18 @@ def prepareTemplateBconFiles(
         process = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (output, err) = process.communicate()
         exit_code = process.wait()
-        try:
-            if output.decode().find("Program  BCON completed successfully") < 0:
-                print(outBconFile)
-                print("exit_code = ", exit_code)
-                print("err =", err.decode())
-                print("output =", output.decode())
-                raise RuntimeError("failure in bcon")
-        except Exception:
-            raise
-        ##
+
+        if output.decode().find("Program  BCON completed successfully") < 0:
+            print(outBconFile)
+            print("exit_code = ", exit_code)
+            print("err =", err.decode())
+            print("output =", output.decode())
+            raise RuntimeError("failure in bcon")
+
         print("Compress the output file")
         filename = f"{ctmDir}/{outfile}"
         compress_nc_file(filename)
         outputFiles[idomain] = filename
-    ##
 
     return outputFiles
 
@@ -138,14 +134,13 @@ def prepareTemplateIconFiles(
         GridNames: list of MCIP map projection names (one per domain)
         mcipsuffix: Suffix for the MCIP output files
         scripts: dictionary of scripts, including an entry with the key 'iconRun'
-        forceUpdate: Boolean (True/False) for whether we should update the output if it already exists
+        forceUpdate: If True, update the output even if it already exists
 
     Returns:
         list of the template ICON files (one per domain)
     """
     ##
     yyyyjjj = date.strftime("%Y%j")
-    # yyyymmdd = date.strftime("%Y%m%d")
     yyyymmdd_dashed = date.strftime("%Y-%m-%d")
 
     ndom = len(domains)
@@ -155,7 +150,7 @@ def prepareTemplateIconFiles(
         mcipdir = f"{metDir}/{yyyymmdd_dashed}/{domain}"
         grid = GridNames[idomain]
         outfile = f"template_icon_profile_{mech}_{domain}.nc"
-        outpath = f"{ctmDir}/{outfile}"
+        outpath = os.path.join(ctmDir, outfile)
         outputFiles[idomain] = outpath
         if os.path.exists(outpath):
             if forceUpdate:
@@ -165,8 +160,8 @@ def prepareTemplateIconFiles(
                 continue
         ##
         ## adjust ICON script
-        outIconFile = f"{ctmDir}/run.icon"
-        ##
+        outIconFile = os.path.join(ctmDir, "run.icon")
+
         subsIcon = [
             [
                 "source TEMPLATE/config.cmaq",

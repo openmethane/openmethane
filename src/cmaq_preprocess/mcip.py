@@ -29,7 +29,6 @@ import datetime
 import glob
 import os
 import subprocess
-import tempfile
 from shutil import copyfile
 
 from cmaq_preprocess.utils import replace_and_write
@@ -78,9 +77,6 @@ def runMCIP(
 
     #########
 
-    tmpfl = tempfile.mktemp(suffix=".tar")
-    cwd = os.getcwd()
-
     ndoms = len(domains)
     nMinsPerInterval = [60] * ndoms
 
@@ -105,13 +101,15 @@ def runMCIP(
                 if not os.path.exists(src):
                     raise AssertionError(f"WRF output {src} not found")
                 copyfile(src, dst)
-                ## print 1. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
 
             if fix_simulation_start_date:
                 print("\t\tFix up SIMULATION_START_DATE attribute with ncatted")
                 wrfstrttime = date.strftime("%Y-%m-%d_%H:%M:%S")
                 for outPath in outPaths:
-                    command = f"ncatted -O -a SIMULATION_START_DATE,global,m,c,{wrfstrttime} {outPath} {outPath}"
+                    command = (
+                        f"ncatted -O -a SIMULATION_START_DATE,global,m,c,"
+                        f"{wrfstrttime} {outPath} {outPath}"
+                    )
                     print("\t\t\t" + command)
                     commandList = command.split(" ")
                     ##
@@ -139,12 +137,9 @@ def runMCIP(
                         print("stdout = " + stdout)
                         print("stderr = " + stderr)
                         raise RuntimeError("Error from atted...")
-                    ## print '3. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
 
             ##
             print("\t\tCreate temporary run.mcip script")
-            ## pdb.set_trace()
-            # {}/{}'.format(wrfDir,date.strftime('%Y%m%d%H'))---by Sougol
             subs = [
                 ["set DataPath   = TEMPLATE", f"set DataPath   = {mcipDir}"],
                 ["set InMetDir   = TEMPLATE", f"set InMetDir   = {mcipDir}"],
@@ -189,8 +184,7 @@ def runMCIP(
                 strict=False,
                 makeExecutable=True,
             )
-            ##
-            ## print '4. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
+
             command = tmpRunMcipPath
             commandList = command.split(" ")
             print("\t\t\t" + command)
@@ -203,8 +197,6 @@ def runMCIP(
                 print("rm", gridfile)
                 os.remove(gridfile)
 
-            ## print '5. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
-            ##
             print("\t\tRun temporary run.mcip script")
             p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()

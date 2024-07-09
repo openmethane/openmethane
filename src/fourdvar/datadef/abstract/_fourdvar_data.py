@@ -49,13 +49,13 @@ class FourDVarData:
         file_data = get_filedict(cls.__name__)
 
         # first set up dimensions for reshaping vector
-        record = list(file_data.values())[0]["actual"]
+        record = next(iter(file_data.values()))["actual"]
         varList = ncf.get_attr(record, "VAR-LIST")
         vars = varList.split()
         if len(vars) > 1:
             raise ValueError("only works for one variable")
         var_shape = ncf.get_variable(record, vars[0]).shape
-        vector_shape = (len(file_data),) + var_shape
+        vector_shape = (len(file_data), *var_shape)
         vector_reshape = vector.reshape(vector_shape)
         for i, record in enumerate(file_data.values()):
             for var in vars:

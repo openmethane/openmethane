@@ -21,7 +21,8 @@ def match_two_sorted_arrays(arr1, arr2):
         arr2: A sorted 1D numpy array
 
     Returns:
-        result: numpy integer array with the same dimensions as array arr2, with each element containing the index of arr1 that provides the *closest* match to the given entry in arr2
+        result: numpy integer array with the same dimensions as array arr2, with each element
+        containing the index of arr1 that provides the *closest* match to the given entry in arr2
     """
     result = numpy.zeros(arr2.shape, dtype=int)
     for i, v in enumerate(arr2):
@@ -48,24 +49,24 @@ def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, P, ne
     Returns:
         out_interior: Gridded CAMS concentrations interpolated to the CMAQ grid
     """
-    #
     out_interior = numpy.zeros((lens["LAY"], LON.shape[0], LON.shape[1]), dtype=numpy.float32)
-    #
+
     if mzspec in list(ncin.variables.keys()):
         varin = ncin.variables[mzspec][iMZtime, :, :, :]
-        #
+
         convFac = moleMass["air"] / moleMass[mzspec] * 1e6  # converting from kg/kg to VMR in ppmv
         varin = varin * convFac  ## convert from VMR to PPMV
-        #
+
         for irow in range(LON.shape[0]):
             for icol in range(LON.shape[1]):
                 ix, iy = near_interior[irow, icol, :]
                 out_interior[:, irow, icol] = varin[Iz, ix, iy]
     else:
         warnings.warn(
-            f"Species {mzspec} was not found in input CAMS file -- contributions from this variable will be zero..."
+            f"Species {mzspec} was not found in input CAMS file "
+            f"-- contributions from this variable will be zero..."
         )
-    #
+
     return out_interior
 
 
@@ -87,28 +88,23 @@ def extract_and_interpolate_boundary(
     Returns:
         out_boundary: Gridded CAMS concentrations interpolated to the CMAQ boundary grid points
     """
-    #
     iCMtime = 0
     iMZtime = iMZtime_for_each_CMtime[iCMtime]
-    #
     ntime = 1
     out_boundary = numpy.zeros((ntime, lens["LAY"], LONP.shape[0]), dtype=numpy.float32)
-    #
     if mzspec in list(ncin.variables.keys()):
         varin = ncin.variables[mzspec][iMZtime, :, :, :]
-        #
         convFac = moleMass["air"] / moleMass[mzspec] * 1e6  # converting from kg/kg to VMR in ppmv
         varin = varin * convFac  ## convert from VMR to PPMV
-        #
         for iperim in range(LONP.shape[0]):
             ix, iy = near_boundary[iperim, :]
             ## for iCMtime, iMZtime in enumerate(iMZtime_for_each_CMtime):
             out_boundary[iCMtime, :, iperim] = varin[Iz, ix, iy]
     else:
         warnings.warn(
-            f"Species {mzspec} was not found in input CAMS file -- contributions from this variable will be zero..."
+            f"Species {mzspec} was not found in input CAMS file "
+            f"-- contributions from this variable will be zero..."
         )
-    #
     return out_boundary
 
 
@@ -187,7 +183,7 @@ def interpolateFromCAMSToCmaqGrid(
     ctmDir,
     GridNames,
     mcipsuffix,
-    forceUpdate,
+    forceUpdate: bool,
     bias_correct=0.0,
     defaultSpec="O3",
 ):
@@ -204,8 +200,9 @@ def interpolateFromCAMSToCmaqGrid(
         ctmDir: base directory for the CCTM inputs and outputs
         GridNames: list of MCIP map projection names (one per domain)
         mcipsuffix: Suffix for the MCIP output files
-        forceUpdate: Boolean (True/False) for whether we should update the output if it already exists
-        defaultSpec: A species that is known to exist in the CAMS files (defaults to 'O3'), used for checking dimension information
+        forceUpdate: If True, update the output even if it already exists
+        defaultSpec: A species that is known to exist in the CAMS files (defaults to 'O3'),
+            used for checking dimension information
 
     Returns:
         Nothing
@@ -311,10 +308,8 @@ def interpolateFromCAMSToCmaqGrid(
                 LONP = ncbdy.variables["LON"][:].squeeze()
                 sigma = ncmet.getncattr("VGLVLS")
                 mtop = ncmet.getncattr("VGTOP")
-                #
                 base_MZ_time = datetime.datetime(1900, 1, 1, 0, 0, 0)  # epoch
                 MZdates = [base_MZ_time + datetime.timedelta(hours=int(t)) for t in ncin["time"][:]]
-                #
                 latmz = ncin.variables["latitude"][:].squeeze()
                 lonmz = ncin.variables["longitude"][:].squeeze()
                 PSURF = ncsrf.variables["PRSFC"][:].squeeze()

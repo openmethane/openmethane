@@ -144,9 +144,9 @@ def fetch_data(config_file, start, end, output):
         print("Job status: %s (%d%c complete)" % (status, percent, "%"))
 
     if response["result"]["Status"] == "Succeeded":
-        print("Job Finished:  %s" % response["result"]["message"])
+        print("Job Finished:  {}".format(response["result"]["message"]))
     else:
-        print("Job Failed: %s" % response["fault"]["code"])
+        print("Job Failed: {}".format(response["fault"]["code"]))
         sys.exit(1)
 
     # Construct JSON WSP request for API method: GetResult
