@@ -13,7 +13,7 @@ forceUpdateICandBC:
 - true
 forceUpdateMcip: false
 forceUpdateRunScripts: true
-geoDir: /opt/project/data/domains/aust-test/
+geoDir: /opt/project/data/domains/aust-test/v1.0.0/
 gridName:
 - openmethane
 inputCAMSFile: /opt/project/data/cams/cams_eac4_methane.nc

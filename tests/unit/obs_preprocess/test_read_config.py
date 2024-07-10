@@ -104,7 +104,7 @@ def cmaq_config_dict():
         "metDir": "/opt/project/data/mcip/",
         "ctmDir": "/opt/project/data/cmaq/",
         "wrfDir": "/opt/project/data/runs/aust-test",
-        "geoDir": "/opt/project/domains/aust-test/",
+        "geoDir": "/opt/project/domains/aust-test/v1.0.0/",
         "inputCAMSFile": "/opt/project/data/inputs/cams_eac4_methane.nc",
         "sufadj": "output_newMet",
         "domains": ["d01"],

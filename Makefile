@@ -51,10 +51,16 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 		bash scripts/run-all.sh
 
 .PHONY: fetch-domains
-fetch-domains:  ## Fetch the domain data from the server
-	mkdir -p data/domains/aust10km data/domains/aust-test
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/geo_em.d01.nc
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/geo_em.d01.nc
+fetch-domains:  ## Fetch the latest WRF geometry domain data from setup-wrf
+	mkdir -p data/domains/aust10km/v1.0.0 data/domains/aust-test/v1.0.0
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1.0.0/geo_em.d01.nc
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/v1.0.0/geo_em.d01.nc
+
+.PHONY: sync-domains-from-cf
+sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
+	aws s3 sync s3://openmethane-prior/domains data/domains \
+		  --endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com \
+		  --profile cf-om-prior-r2
 
 .PHONY: test
 test:  ## Run the tests
