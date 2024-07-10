@@ -163,6 +163,8 @@ class CMAQConfig:
     CAMSToCmaqBiasCorrect: float
     """Pre-set is (1.838 - 1.771)"""
     # TODO: Add description for CAMSToCmaqBiasCorrect?
+    boundary_trim: int = 5
+    """Number of grid cells to trim from the boundary of the domain"""
 
 
 def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfig:

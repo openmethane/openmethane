@@ -221,7 +221,7 @@ set MKGRID = T
 
 
 # TESTING: needs to be smaller otherwise no domain would remain
-set BTRIM = 1
+set BTRIM = TEMPLATE
 
 #-----------------------------------------------------------------------
 # Define MCIP subset domain.  (Only used if BTRIM = -1.  Otherwise,

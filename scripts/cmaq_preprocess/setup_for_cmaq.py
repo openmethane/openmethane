@@ -81,6 +81,7 @@ def setup_for_cmaq(config: CMAQConfig):
             wrfRunName=None,
             doArchiveWrf=False,
             add_qsnow=config.add_qsnow,
+            boundary_trim=config.boundary_trim,
         )
 
     # extract some parameters about the MCIP setup
