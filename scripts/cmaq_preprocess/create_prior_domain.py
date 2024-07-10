@@ -40,6 +40,8 @@ import pathlib
 import click
 import xarray as xr
 
+root_dir = pathlib.Path(__file__).parents[2]
+
 
 def create_domain_info(
     geometry_file: pathlib.Path,
@@ -123,7 +125,25 @@ def validate_mcip_path(required_content: str):
     return validator
 
 
-@click.command()
+def clean_directories(geometry_directory, output_directory, name, version):
+    if geometry_directory is None:
+        geometry_directory = root_dir / "data" / "domains" / name / version
+    else:
+        geometry_directory = pathlib.Path(geometry_directory)
+
+    if output_directory is None:
+        output_directory = geometry_directory
+    else:
+        output_directory = pathlib.Path(output_directory)
+
+    if not geometry_directory.exists():
+        raise click.BadParameter(
+            f"WRF geometry for domain {name}@{version} does not exist. Check {geometry_directory}"
+        )
+    return geometry_directory, output_directory
+
+
+@click.command(name="create_prior_domain")
 @click.option(
     "--name",
     type=str,
@@ -156,39 +176,49 @@ def validate_mcip_path(required_content: str):
     required=True,
     help="Path to the GRIDDOT2D file for the domain",
 )
+@click.option(
+    "--geometry-directory",
+    help="Override the geometry directory. Assumes that there is a `geo_em.d{domain_index:02}.nc`"
+    " file present in the directory",
+    default=None,
+    type=click.Path(dir_okay=True, file_okay=False),
+)
+@click.option(
+    "--output-directory",
+    help="Override the output directory",
+    default=None,
+    type=click.Path(dir_okay=True, file_okay=False),
+)
 def main(
     name: str,
     version: str,
     domain_index: int,
     cross: pathlib.Path,
     dot: pathlib.Path,
+    geometry_directory: str | None,
+    output_directory: str | None,
 ):
     """
     Generate domain file for use by the prior
 
-    This assumes that the WRF domain has been fetched and is present in `data/domains
+    This assumes that the WRF domain has been fetched and is present in `data/domains`
     """
 
     if not version.startswith("v"):
         raise click.BadParameter("Version should not start with v")
 
-    output_path = pathlib.Path("data/domains") / name / version
-
-    if not output_path.exists():
-        raise click.BadParameter(
-            f"WRF geometry for domain {name}@{version} does not exist. Check {output_path}"
-        )
-
-    geometry_path = output_path / f"geo_em.d{domain_index:02}.nc"
-
-    filename = f"prior_domain_{name}_{version}.d{domain_index:02}.nc"
+    geometry_directory, output_directory = clean_directories(
+        geometry_directory, output_directory, name, version
+    )
 
     domain = create_domain_info(
-        geometry_file=geometry_path,
+        geometry_file=geometry_directory / f"geo_em.d{domain_index:02}.nc",
         cross_file=pathlib.Path(cross),
         dot_file=pathlib.Path(dot),
     )
-    write_domain_info(domain, output_path / filename)
+
+    filename = f"prior_domain_{name}_{version}.d{domain_index:02}.nc"
+    write_domain_info(domain, output_directory / filename)
 
 
 if __name__ == "__main__":
