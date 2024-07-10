@@ -58,6 +58,7 @@ fetch-domains:  ## Fetch the latest WRF geometry domain data from setup-wrf
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
+	# This requires CloudFlare credentials
 	aws s3 sync s3://openmethane-prior/domains data/domains \
 		  --endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com \
 		  --profile cf-om-prior-r2

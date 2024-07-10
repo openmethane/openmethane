@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Upload domain information to the CloudFlare bucket
 #
-# This is assumed to run from the root directory
+# This is assumed to run from the root directory.
+# This requires credentials for the Bucket.
 #
 
 set -Eeuo pipefail
