@@ -2,6 +2,7 @@ CAMSToCmaqBiasCorrect: 0.06700000000000017
 CMAQdir: /opt/cmaq/CMAQv5.0.2_notpollen/
 MCIPdir: /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
 add_qsnow: false
+boundary_trim: 1
 cctmExec: ADJOINT_FWD
 compressScript: /opt/project/nccopy_compress_output.sh
 ctmDir: /opt/project/data/cmaq/
