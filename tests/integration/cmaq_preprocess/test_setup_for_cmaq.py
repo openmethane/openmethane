@@ -65,6 +65,7 @@ def test_setup_for_cmaq(
         basename=f"{request.node.name}_griddesc",
     )
 
+    # Run script regression
     file_regression.check(
         open(mcip_run_dir / "run.mcip.d01.csh").read(),
         basename=f"{request.node.name}_run_mcip",
@@ -73,11 +74,23 @@ def test_setup_for_cmaq(
         open(mcip_run_dir / "namelist.mcip").read(),
         basename=f"{request.node.name}_namelist",
     )
+    file_regression.check(
+        open(cmaq_dir / "run.bcon").read(),
+        basename=f"{request.node.name}_run_bcon",
+    )
+    file_regression.check(
+        open(cmaq_dir / "run.icon").read(),
+        basename=f"{request.node.name}_run_icon",
+    )
 
     # Compare the structure of a select set of files
     compare_dataset(
         cmaq_dir / "template_bcon_profile_CH4only_d01.nc",
         basename=f"{request.node.name}_bcon",
+    )
+    compare_dataset(
+        cmaq_dir / "template_icon_profile_CH4only_d01.nc",
+        basename=f"{request.node.name}_icon",
     )
     compare_dataset(
         mcip_run_dir / "METCRO3D_220701_aust-test",
