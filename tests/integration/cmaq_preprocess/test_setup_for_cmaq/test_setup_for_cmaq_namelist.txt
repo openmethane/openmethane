@@ -27,7 +27,7 @@
                "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T2200Z.nc",
                "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T2300Z.nc",
                "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-23T0000Z.nc",
-  file_ter   = "/opt/project/data/domains/aust-test/v1.0.0//geo_em.d01.nc"
+  file_ter   = "/opt/project/data/domains/aust-test//geo_em.d01.nc"
   makegrid   = .T.
  &END
 
