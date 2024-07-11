@@ -1,0 +1,69 @@
+attrs:
+  DX: 10000.0
+  DY: 10000.0
+  MOAD_CEN_LAT: -22.837989807128906
+  STAND_LON: 133.302001953125
+  TRUELAT1: -15.0
+  TRUELAT2: -40.0
+  XCELL: 10000.0
+  XCENT: 133.302001953125
+  XORIG: 1511422.625
+  YCELL: 10000.0
+  YCENT: -27.5
+  YORIG: 385760.4375
+coords: {}
+dims:
+  COL: 5
+  COL_D: 6
+  LAY: 1
+  ROW: 5
+  ROW_D: 6
+  TSTEP: 1
+variables:
+  LANDMASK:
+    attrs:
+      long_name: 'LWMASK          '
+      units: 'CATEGORY        '
+      var_desc: 'land-water mask (1=land, 0=water)                                               '
+    dims:
+    - TSTEP
+    - ROW
+    - COL
+  LAT:
+    attrs:
+      long_name: 'LAT             '
+      units: 'DEGREES         '
+      var_desc: 'latitude (south negative)                                                       '
+    dims:
+    - TSTEP
+    - ROW
+    - COL
+  LATD:
+    attrs:
+      long_name: 'LATD            '
+      units: 'DEGREES         '
+      var_desc: 'latitude (south negative) -- dot point                                          '
+    dims:
+    - TSTEP
+    - LAY
+    - ROW_D
+    - COL_D
+  LON:
+    attrs:
+      long_name: 'LON             '
+      units: 'DEGREES         '
+      var_desc: 'longitude (west negative)                                                       '
+    dims:
+    - TSTEP
+    - ROW
+    - COL
+  LOND:
+    attrs:
+      long_name: 'LOND            '
+      units: 'DEGREES         '
+      var_desc: 'longitude (west negative) -- dot point                                          '
+    dims:
+    - TSTEP
+    - LAY
+    - ROW_D
+    - COL_D

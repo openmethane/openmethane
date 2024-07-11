@@ -75,6 +75,7 @@ def setup_for_cmaq(config: CMAQConfig):
             fix_simulation_start_date=True,
             fix_truelat2=False,
             truelat2=None,
+            boundary_trim=config.boundary_trim,
         )
 
     # extract some parameters about the MCIP setup

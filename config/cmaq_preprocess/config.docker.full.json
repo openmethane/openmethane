@@ -21,5 +21,6 @@
         "bconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.bcon"},
         "iconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.icon"}
     },
-    "CAMSToCmaqBiasCorrect" : 0.06700000000000017
+    "CAMSToCmaqBiasCorrect" : 0.06700000000000017,
+    "boundary_trim": 5
 }

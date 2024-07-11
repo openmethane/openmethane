@@ -39,6 +39,7 @@ def test_setup_for_cmaq(
 
     cmaq_dir = Path(tmpdir / "cmaq")
     mcip_dir = Path(tmpdir / "mcip")
+    mcip_run_dir = mcip_dir / "2022-07-22" / "d01"
 
     # Override some settings
     config.metDir = str(mcip_dir)
@@ -51,8 +52,8 @@ def test_setup_for_cmaq(
     assert (cmaq_dir / "template_bcon_profile_CH4only_d01.nc").exists()
     assert (cmaq_dir / "template_icon_profile_CH4only_d01.nc").exists()
 
-    assert (mcip_dir / "2022-07-22" / "d01" / "METCRO2D_220701_aust-test").exists()
-    assert (mcip_dir / "2022-07-22" / "d01" / "METCRO3D_220701_aust-test").exists()
+    assert (mcip_run_dir / "METCRO2D_220701_aust-test").exists()
+    assert (mcip_run_dir / "METCRO3D_220701_aust-test").exists()
 
     # Compare the generated list of files
     data_regression.check(_get_filelisting(cmaq_dir), basename=f"{request.node.name}_cmaq_files")
@@ -60,8 +61,26 @@ def test_setup_for_cmaq(
 
     # Check the grid definition
     file_regression.check(
-        open(mcip_dir / "2022-07-22" / "d01" / "GRIDDESC").read(),
+        open(mcip_run_dir / "GRIDDESC").read(),
         basename=f"{request.node.name}_griddesc",
+    )
+
+    # Run script regression
+    file_regression.check(
+        open(mcip_run_dir / "run.mcip.d01.csh").read(),
+        basename=f"{request.node.name}_run_mcip",
+    )
+    file_regression.check(
+        open(mcip_run_dir / "namelist.mcip").read(),
+        basename=f"{request.node.name}_namelist",
+    )
+    file_regression.check(
+        open(cmaq_dir / "run.bcon").read(),
+        basename=f"{request.node.name}_run_bcon",
+    )
+    file_regression.check(
+        open(cmaq_dir / "run.icon").read(),
+        basename=f"{request.node.name}_run_icon",
     )
 
     # Compare the structure of a select set of files
@@ -70,6 +89,10 @@ def test_setup_for_cmaq(
         basename=f"{request.node.name}_bcon",
     )
     compare_dataset(
-        mcip_dir / "2022-07-22" / "d01" / "METCRO3D_220701_aust-test",
+        cmaq_dir / "template_icon_profile_CH4only_d01.nc",
+        basename=f"{request.node.name}_icon",
+    )
+    compare_dataset(
+        mcip_run_dir / "METCRO3D_220701_aust-test",
         basename=f"{request.node.name}_metcro3d",
     )

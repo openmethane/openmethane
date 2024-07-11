@@ -4,7 +4,7 @@
   "metDir": "/scratch/q90/pjr563/openmethane-test/mcip/",
   "ctmDir": "/scratch/q90/pjr563/openmethane-test/cmaq/",
   "wrfDir": "/home/563/pjr563/openmethane-test/openmethane/tests/test-data/wrf/aust-test",
-  "geoDir": "/home/563/pjr563/openmethane-test/openmethane/data/domains/aust-test/",
+  "geoDir": "/home/563/pjr563/openmethane-test/openmethane/data/domains/aust-test/v1.0.0/",
   "inputCAMSFile": "/scratch/q90/pjr563/openmethane-test/cams/cams_eac4_methane.nc",
   "domains": [
     "d01"
@@ -35,5 +35,6 @@
       "path": "/home/563/pjr563/openmethane-test/openmethane/templates/cmaq_preprocess/run.icon"
     }
   },
-  "CAMSToCmaqBiasCorrect": 0.06700000000000017
+  "CAMSToCmaqBiasCorrect": 0.06700000000000017,
+  "boundary_trim": 1
 }

@@ -4,7 +4,7 @@
     "metDir" : "/opt/project/data/mcip/",
     "ctmDir" : "/opt/project/data/cmaq/",
     "wrfDir" : "/opt/openmethane/setup-wrf/data/runs/aust-test",
-    "geoDir" : "/opt/project/data/domains/aust-test/",
+    "geoDir" : "/opt/project/data/domains/aust-test/v1.0.0/",
     "inputCAMSFile" : "/opt/project/data/cams/cams_eac4_methane.nc",
     "domains" : ["d01"],
     "run" : "openmethane",
@@ -21,5 +21,6 @@
         "bconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.bcon"},
         "iconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.icon"}
     },
-    "CAMSToCmaqBiasCorrect" : 0.06700000000000017
+    "CAMSToCmaqBiasCorrect" : 0.06700000000000017,
+    "boundary_trim": 1
 }

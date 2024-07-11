@@ -1,0 +1,122 @@
+#!/bin/csh -f
+# ======================= BCONv5.1 Run Script ======================== 
+# Usage: run.bcon >&! bcon.D502a.log &                                  
+#
+# To report problems or request help with this script/program:        
+#             http://www.cmascenter.org
+# ==================================================================== 
+
+#> Source the config.cmaq file to set the run environment
+ source /opt/cmaq/CMAQv5.0.2_notpollen//scripts/config.cmaq
+
+#> Check that M3DATA is set:
+# if ( ! -e $M3DATA ) then
+#    echo "   $M3DATA path does not exist"
+#    exit 1
+# endif
+# echo " "; echo " Input data path, M3DATA set to $M3DATA"; echo " "
+
+# =====================================================================
+#> BCON Configuration Options
+#
+# BCON can be run in one of two modes:                                     
+#     1) use default profile inputs (BC = profile)
+#     2) use CMAQ CTM concentration files for nested runs (BC = m3conc)     
+# =====================================================================
+
+ set BC = profile      #> either profile or m3conc
+ set DATE = 2022203    #> only needed for nested runs
+
+ set APPL     = CH4only
+ set CFG      = openmethane
+ set MECH     = CH4only
+ set EXEC     = BCON_${APPL}_${EXEC_ID}_${BC}_${MECH}
+#> Set the working directory
+ set BASE     = $M3HOME/scripts/bcon
+ set BLD      = ${BASE}/BLD_$APPL
+
+ cd $BASE; date; set timestamp; echo " "; set echo
+
+#> Horizontal grid definition 
+ setenv GRID_NAME openmethane           #> check GRIDDESC file for GRID_NAME options
+ setenv GRIDDESC /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/GRIDDESC    #> grid description file 
+ setenv IOAPI_ISPH 20                     #> GCTP spheroid, use 20 for WRF-based modeling
+
+#> Vertical layer definition
+ setenv LAYER_FILE /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/METCRO3D_220701_aust-test #>METCRO3D file from MCIP
+
+#> I/O Controls
+ setenv IOAPI_LOG_WRITE F     #> turn on excess WRITE3 logging [ options: T | F ]
+ setenv IOAPI_OFFSET_64 NO    #> support large timestep records (>2GB/timestep record) [ options: YES | NO ]
+ setenv EXECUTION_ID $EXEC    #> define the model execution id
+
+# =====================================================================
+#> Input/Output Directories
+# =====================================================================
+
+ setenv OUTDIR /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/cmaq       #> output file directory
+ setenv OUTFILE template_bcon_profile_CH4only_d01.nc      #> output file name
+
+# =====================================================================
+#> Input Files
+#  
+#  Profile Mode (BC = profile)
+#     BC_PROFILE = static/default BC profiles 
+#  Nesting mode (BC = m3conc)
+#     CTM_CONC_1 = the CTM concentration file for the coarse domain          
+#     MET_CRO_3D_CRS = the MET_CRO_3D met file for the coarse domain
+#                  only set if  or if the vertical grid type is   
+#                  changed between nests                                     
+#     MET_CRO_3D_FIN = the MET_CRO_3D met file for the inner, nested, domain 
+#                  only set if the vertical grid type is changed between  
+#                  nests                                                     
+#                                                                            
+# NOTE: If SDATE (yyyyddd), STIME (hhmmss) and RUNLEN (hhmmss) are not set,  
+#       these variables will be set from the input CTM_CONC_1 file           
+# =====================================================================
+ 
+ if ( $BC == profile ) then
+    setenv BC_PROFILE    ${BLD}/bc_profile_CH4only.dat ## /home/563/ns0890/programs/CMAQv5.0.2_notpollen/models/BCON/prof_data/CH4only/bc_profile_CH4only.dat
+ endif
+
+ if ( $BC == m3conc ) then 
+    setenv CTM_CONC_1 TEMPLATE
+    setenv MET_CRO_3D_CRS TEMPLATE
+    setenv MET_CRO_3D_FIN TEMPLATE
+    setenv SDATE           ${DATE}
+    setenv STIME           000000
+    setenv RUNLEN          240000
+ endif
+
+# =====================================================================
+#> Output Files
+# =====================================================================
+ 
+ if ( $BC == profile ) then
+    setenv BNDY_CONC_1    "${OUTDIR}/${OUTFILE} -v"
+ endif
+ if ( $BC == m3conc ) then 
+    setenv BNDY_CONC_1    "${OUTDIR}/${OUTFILE} -v"
+ endif
+ if ( -e ${OUTDIR}/${OUTFILE} ) then
+    rm ${OUTDIR}/${OUTFILE}
+ endif
+
+#>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#> species defn
+ setenv gc_matrix_nml ${BLD}/GC_$MECH.nml
+ setenv ae_matrix_nml ${BLD}/AE_$MECH.nml
+ setenv nr_matrix_nml ${BLD}/NR_$MECH.nml
+ setenv tr_matrix_nml ${BLD}/Species_Table_TR_0.nml
+ 
+ if ( ! -d "$OUTDIR" ) mkdir -p $OUTDIR
+
+ ls -l $BLD/$EXEC; size $BLD/$EXEC
+# unlimit
+# limit
+
+#> Executable call:
+ time $BLD/$EXEC
+
+ exit() 

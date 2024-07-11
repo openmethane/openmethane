@@ -53,6 +53,7 @@ def runMCIP(
     fix_simulation_start_date=True,
     fix_truelat2=False,
     truelat2=None,
+    boundary_trim: int = 5,
 ):
     """Function to run MCIP from python
 
@@ -69,6 +70,11 @@ def runMCIP(
         scripts: dictionary of scripts, including an entry with the key 'mcipRun'
         compressWithNco: True/False - compress output using ncks?
         fix_simulation_start_date: True/False - adjust the SIMULATION_START_DATE attribute in wrfout files?
+        boundary_trim
+            Number of meteorology "boundary" points to remove on each of four horizontal sides
+            of the MCIP domain.
+
+            See `templates/run.mcip` for a description of the `BTRIM` variable.
 
     Returns:
         Nothing
@@ -174,6 +180,7 @@ def runMCIP(
                     f"set GridName   = {GridName[idom]}",
                 ],
                 ["set ProgDir    = TEMPLATE", f"set ProgDir    = {ProgDir}"],
+                ["set BTRIM = TEMPLATE", f"set BTRIM = {boundary_trim}"],
             ]
             ##
             tmpRunMcipPath = f"{mcipDir}/run.mcip.{dom}.csh"
