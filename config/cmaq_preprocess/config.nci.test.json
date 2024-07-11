@@ -53,5 +53,6 @@
     }
   },
   "cctmExec": "ADJOINT_FWD",
-  "CAMSToCmaqBiasCorrect": 0.06700000000000017
+  "CAMSToCmaqBiasCorrect": 0.06700000000000017,
+  "boundary_trim": 1
 }

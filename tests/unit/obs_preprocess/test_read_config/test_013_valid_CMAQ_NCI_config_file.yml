@@ -2,6 +2,7 @@ CAMSToCmaqBiasCorrect: 0.06700000000000017
 CMAQdir: /home/563/sa6589/CMAQv5.0.2_notpollen/
 MCIPdir: /home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src
 add_qsnow: false
+boundary_trim: 5
 cctmExec: ADJOINT_FWD
 compressScript: /home/563/ns0890/runCMAQ/Melb_Sch01/find_and_compress_netcdf3_to_netcdf4
 ctmDir: /scratch/q90/pjr563/openmethane-beta/cmaq/
