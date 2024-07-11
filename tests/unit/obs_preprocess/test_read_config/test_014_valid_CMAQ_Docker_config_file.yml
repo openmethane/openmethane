@@ -1,8 +1,8 @@
 CAMSToCmaqBiasCorrect: 0.06700000000000017
 CMAQdir: /opt/cmaq/CMAQv5.0.2_notpollen/
 MCIPdir: /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
-ctmDir: /opt/project/data/cmaq/
 boundary_trim: 1
+ctmDir: /opt/project/data/cmaq/
 domains:
 - d01
 endDate: 2022-07-22 00:00:00+00:00

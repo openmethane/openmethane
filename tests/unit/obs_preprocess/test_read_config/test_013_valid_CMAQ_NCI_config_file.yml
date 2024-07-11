@@ -1,8 +1,8 @@
 CAMSToCmaqBiasCorrect: 0.06700000000000017
 CMAQdir: /home/563/sa6589/CMAQv5.0.2_notpollen/
 MCIPdir: /home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src
-ctmDir: /scratch/q90/pjr563/openmethane-beta/cmaq/
 boundary_trim: 5
+ctmDir: /scratch/q90/pjr563/openmethane-beta/cmaq/
 domains:
 - d01
 endDate: 2022-07-22 00:00:00+00:00
