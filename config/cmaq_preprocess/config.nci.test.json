@@ -5,7 +5,7 @@
   "metDir": "/scratch/q90/pjr563/openmethane-test/mcip/",
   "ctmDir": "/scratch/q90/pjr563/openmethane-test/cmaq/",
   "wrfDir": "/home/563/pjr563/openmethane-test/openmethane/tests/test-data/wrf/aust-test",
-  "geoDir": "/home/563/pjr563/openmethane-test/openmethane/data/domains/aust-test/",
+  "geoDir": "/home/563/pjr563/openmethane-test/openmethane/data/domains/aust-test/v1.0.0/",
   "inputCAMSFile": "/scratch/q90/pjr563/openmethane-test/cams/cams_eac4_methane.nc",
   "sufadj": "output_newMet",
   "domains": [
