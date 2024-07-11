@@ -37,6 +37,7 @@ start: build  ## Start the docker container locally
 		-v $(PWD):/opt/project \
 		-v $(PWD)/../setup-wrf:/opt/openmethane/setup-wrf \
 		-v $(PWD)/../openmethane-prior:/opt/openmethane/openmethane-prior \
+		-v ~/.cdsapirc:/root/.cdsapirc \
 		openmethane
 
 .PHONY: run
