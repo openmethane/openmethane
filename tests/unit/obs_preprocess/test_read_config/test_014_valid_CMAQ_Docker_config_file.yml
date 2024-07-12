@@ -1,19 +1,12 @@
 CAMSToCmaqBiasCorrect: 0.06700000000000017
 CMAQdir: /opt/cmaq/CMAQv5.0.2_notpollen/
 MCIPdir: /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
-add_qsnow: false
 boundary_trim: 1
-cctmExec: ADJOINT_FWD
-compressScript: /opt/project/nccopy_compress_output.sh
 ctmDir: /opt/project/data/cmaq/
-doCompress: 'True'
 domains:
 - d01
 endDate: 2022-07-22 00:00:00+00:00
-forceUpdateICandBC:
-- true
-forceUpdateMcip: false
-forceUpdateRunScripts: true
+forceUpdate: true
 geoDir: /opt/project/data/domains/aust-test/v1.0.0/
 gridName:
 - openmethane
@@ -21,27 +14,17 @@ inputCAMSFile: /opt/project/data/cams/cams_eac4_methane.nc
 mapProjName:
 - LamCon_34S_150E
 mech: CH4only
-mechCMAQ: CH4only
 metDir: /opt/project/data/mcip/
-nhoursPerRun: 24
 prepareICandBC: true
-prepareRunScripts: true
-printFreqHours: 1
 run: openmethane
 scenarioTag:
 - 220701_aust-test
 scripts:
   bconRun:
     path: /opt/project/templates/cmaq_preprocess/run.bcon
-  cctmRun:
-    path: /opt/project/templates/cmaq_preprocess/run.cctm
-  cmaqRun:
-    path: /opt/project/templates/cmaq_preprocess/runCMAQ.sh
   iconRun:
     path: /opt/project/templates/cmaq_preprocess/run.icon
   mcipRun:
     path: /opt/project/templates/cmaq_preprocess/run.mcip
 startDate: 2022-07-22 00:00:00+00:00
-sufadj: output_newMet
-templateDir: /opt/project/templates/cmaq_preprocess
 wrfDir: /opt/openmethane/setup-wrf/data/runs/aust-test

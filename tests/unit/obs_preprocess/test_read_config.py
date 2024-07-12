@@ -48,6 +48,8 @@ def test_007_parse_boolean_keys():
         "test_key_10": "no",
         "test_key_11": "True",
         "test_key_12": "False",
+        "test_key_13": True,
+        "test_key_14": False,
     }
 
     expected = {
@@ -63,6 +65,8 @@ def test_007_parse_boolean_keys():
         "test_key_10": False,
         "test_key_11": True,
         "test_key_12": False,
+        "test_key_13": True,
+        "test_key_14": False,
     }
 
     out = {k: boolean_converter(v) for k, v in config.items()}
@@ -100,40 +104,26 @@ def cmaq_config_dict():
     return {
         "CMAQdir": "/opt/cmaq/CMAQv5.0.2_notpollen/",
         "MCIPdir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
-        "templateDir": "/opt/project/templateRunScripts",
         "metDir": "/opt/project/data/mcip/",
         "ctmDir": "/opt/project/data/cmaq/",
         "wrfDir": "/opt/project/data/runs/aust-test",
         "geoDir": "/opt/project/domains/aust-test/v1.0.0/",
         "inputCAMSFile": "/opt/project/data/inputs/cams_eac4_methane.nc",
-        "sufadj": "output_newMet",
         "domains": ["d01"],
         "run": "openmethane",
         "startDate": "2022-07-01 00:00:00 UTC",
         "endDate": "2022-07-01 00:00:00 UTC",
-        "nhoursPerRun": 24,
-        "printFreqHours": 1,
         "mech": "CH4only",
-        "mechCMAQ": "CH4only",
-        "prepareICandBC": "True",
-        "prepareRunScripts": "True",
-        "add_qsnow": "False",
-        "forceUpdateMcip": "False",
-        "forceUpdateICandBC": "True",
-        "forceUpdateRunScripts": "True",
+        "prepareICandBC": True,
+        "forceUpdate": True,
         "scenarioTag": ["220701_aust-test"],
         "mapProjName": ["LamCon_34S_150E"],
         "gridName": ["openmethane"],
-        "doCompress": "True",
-        "compressScript": "/opt/project/nccopy_compress_output.sh",
         "scripts": {
             "mcipRun": {"path": "/opt/project/templateRunScripts/run.mcip"},
             "bconRun": {"path": "/opt/project/templateRunScripts/run.bcon"},
             "iconRun": {"path": "/opt/project/templateRunScripts/run.icon"},
-            "cctmRun": {"path": "/opt/project/templateRunScripts/run.cctm"},
-            "cmaqRun": {"path": "/opt/project/templateRunScripts/runCMAQ.sh"},
         },
-        "cctmExec": "ADJOINT_FWD",
         "CAMSToCmaqBiasCorrect": 0.06700000000000017,
     }
 
@@ -155,20 +145,16 @@ def cmaq_config_dict():
     ],
     ids=lambda test_id: test_id,
 )
-def test_015_mechCMAQ_validator(value, expected_exception, test_id, cmaq_config_dict):
-    cmaq_config_dict["mechCMAQ"] = value
+def test_015_mech_validator(value, expected_exception, test_id, cmaq_config_dict):
+    cmaq_config_dict["mech"] = value
 
     if expected_exception:
-        with pytest.raises(expected_exception) as exc_info:
+        match = "Configuration value for mech must be one of"
+        with pytest.raises(expected_exception, match=match):
             create_cmaq_config_object(cmaq_config_dict)
-        assert "Configuration value for mechCMAQ must be one of" in str(
-            exc_info.value
-        ), f"Test Failed: {test_id}"
     else:
-        try:
-            create_cmaq_config_object(cmaq_config_dict)
-        except ValueError as e:
-            pytest.fail(f"Unexpected ValueError raised for {test_id}: {e}")
+        config = create_cmaq_config_object(cmaq_config_dict)
+        assert config is not None
 
 
 @pytest.mark.parametrize(
@@ -207,8 +193,6 @@ def test_016_validators_more_than_16_characters(attribute, value, error_string, 
                 "mcipRun": {"path": "some/path"},
                 "bconRun": {"path": "some/path"},
                 "iconRun": {"path": "some/path"},
-                "cctmRun": {"path": "some/path"},
-                "cmaqRun": {"path": "some/path"},
             },
             "all_keys_present",
         ),
@@ -217,8 +201,6 @@ def test_016_validators_more_than_16_characters(attribute, value, error_string, 
                 "mcipRun": {"path": "unique/path1"},
                 "bconRun": {"path": "unique/path2"},
                 "iconRun": {"path": "unique/path3"},
-                "cctmRun": {"path": "unique/path4"},
-                "cmaqRun": {"path": "unique/path5"},
             },
             "unique_paths_for_all",
         ),
@@ -238,7 +220,7 @@ def test_017_scripts_validator(input_value, test_id, cmaq_config_dict):
     "input_value, expected_exception_message, test_id",
     [
         (
-            {"mcipRun": {}, "bconRun": {}, "iconRun": {}, "cctmRun": {}, "cmaqRun": {}},
+            {"mcipRun": {}, "bconRun": {}, "iconRun": {}},
             "mcipRun in configuration value scripts must have the key 'path'",
             "missing_path_in_all",
         ),
@@ -247,20 +229,18 @@ def test_017_scripts_validator(input_value, test_id, cmaq_config_dict):
                 "mcipRun": {"path": "some/path"},
                 "bconRun": {"path": "some/path"},
                 "iconRun": {},
-                "cctmRun": {"path": "some/path"},
-                "cmaqRun": {"path": "some/path"},
             },
             "iconRun in configuration value scripts must have the key 'path'",
             "missing_path_in_one",
         ),
         (
             {"mcipRun": {"path": "some/path"}},
-            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun', 'cctmRun', 'cmaqRun']",
+            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun']",
             "missing_keys",
         ),
         (
             {},
-            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun', 'cctmRun', 'cmaqRun']",
+            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun']",
             "empty_dict",
         ),
     ],
@@ -285,7 +265,7 @@ def test_018_scripts_validator_error_cases(
             {
                 "more_complex": "content",
                 "int": 1,
-                "nested_dict": {"nested": "dict", "bool": "True"},
+                "nested_dict": {"nested": "dict", "bool": True},
             },
             id="more_complex_content",
         ),

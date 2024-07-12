@@ -13,12 +13,11 @@ Assumes that the user has a valid ADS account and has set up the necessary crede
 in `~/.cdsapirc`.
 """
 
+from datetime import datetime
+from pathlib import Path
+
 import cdsapi
 import click
-
-from pathlib import Path
-from datetime import datetime
-
 
 DATETIME_FORMAT = "%Y-%m-%d"
 

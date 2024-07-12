@@ -296,7 +296,7 @@ class PhysicalAbstractData(FourDVarData):
                 if name in par_mutable:
                     # parameter is mutable, affect applied globally
                     msg = f"Any change to PhysicalAbstractData.{name} is applied globally!"
-                    logger.warn(msg)
+                    logger.warning(msg)
                 else:
                     msg = f"cannot change PhysicalAbstractData.{name}"
                     assert np.array_equal(old_val, val), msg

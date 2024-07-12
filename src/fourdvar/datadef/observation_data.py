@@ -162,7 +162,7 @@ class ObservationData(FourDVarData):
         else:
             is_lite = False
         if cls.grid_attr is not None:
-            logger.warn("Overwriting ObservationData.grid_attr")
+            logger.warning("Overwriting ObservationData.grid_attr")
         cls.grid_attr = domain
         cls.check_grid()
         msg = "obs data does not match params date"
@@ -180,7 +180,7 @@ class ObservationData(FourDVarData):
         coord = [odict.pop("lite_coord", None) for odict in obs_list]
         if None in coord:
             assert is_lite is False, "Missing coordinate data."
-            logger.warn(
+            logger.warning(
                 "Missing lite_coord data. Setting to coord with largest weight in weight_grid"
             )
             for i, _ in enumerate(obs_list):
@@ -197,26 +197,26 @@ class ObservationData(FourDVarData):
                     coord[i] = max_weight[1]
 
         if cls.length is not None:
-            logger.warn("Overwriting ObservationData.length")
+            logger.warning("Overwriting ObservationData.length")
         cls.length = len(obs_list)
         if cls.uncertainty is not None:
-            logger.warn("Overwriting ObservationData.uncertainty")
+            logger.warning("Overwriting ObservationData.uncertainty")
         cls.uncertainty = unc
         if cls.alpha_scale is not None:
-            logger.warn("Overwriting ObservationData.alpha_scale")
+            logger.warning("Overwriting ObservationData.alpha_scale")
         # cls.alpha_scale = alp
         if cls.ref_profile is not None:
-            logger.warn("Overwriting ObservationData.ref_profile")
+            logger.warning("Overwriting ObservationData.ref_profile")
         # cls.ref_profile = ref
         if cls.lite_coord is not None:
-            logger.warn("Overwriting ObservationData.lite_coord")
+            logger.warning("Overwriting ObservationData.lite_coord")
         cls.lite_coord = coord
         if cls.misc_meta is not None:
-            logger.warn("Overwriting ObservationData.misc_meta")
+            logger.warning("Overwriting ObservationData.misc_meta")
         cls.misc_meta = obs_list
         if is_lite is False:
             if cls.weight_grid is not None:
-                logger.warn("Overwriting ObservationData.weight_grid")
+                logger.warning("Overwriting ObservationData.weight_grid")
             cls.weight_grid = weight
 
         if is_lite is True:
@@ -227,7 +227,7 @@ class ObservationData(FourDVarData):
                 spcs = set(str(coord[-1]) for coord in w.keys())
                 all_spcs = all_spcs.union(spcs)
         if cls.spcs is not None:
-            logger.warn("Overwriting ObservationData.spcs")
+            logger.warning("Overwriting ObservationData.spcs")
         cls.spcs = sorted(list(all_spcs))
 
         if is_lite is False:
@@ -238,7 +238,7 @@ class ObservationData(FourDVarData):
                 for d in dates:
                     ind_by_date[d].append(i)
             if cls.ind_by_date is not None:
-                logger.warn("Overwriting ObservationData.ind_by_date")
+                logger.warning("Overwriting ObservationData.ind_by_date")
             cls.ind_by_date = ind_by_date
 
         return cls(val, is_lite=is_lite)

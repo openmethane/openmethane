@@ -1,29 +1,20 @@
 {
   "CMAQdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/",
   "MCIPdir": "/home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src",
-  "templateDir" : "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess",
   "metDir": "/scratch/q90/pjr563/openmethane-beta/mcip/",
   "ctmDir": "/scratch/q90/pjr563/openmethane-beta/cmaq/",
   "wrfDir": "/scratch/q90/pjr563/openmethane-beta/wrf/aust10km",
   "geoDir": "/home/563/pjr563/openmethane-beta/setup_wrf/templates/aust10km/",
   "inputCAMSFile": "/scratch/q90/pjr563/tmp/levtype_pl.nc",
-  "sufadj": "output_newMet",
   "domains": [
     "d01"
   ],
   "run": "openmethane",
   "startDate": "2022-07-22 00:00:00 UTC",
   "endDate": "2022-07-22 00:00:00 UTC",
-  "nhoursPerRun": 24,
-  "printFreqHours": 1,
   "mech": "CH4only",
-  "mechCMAQ": "CH4only",
-  "prepareICandBC": "True",
-  "prepareRunScripts": "True",
-  "add_qsnow": "False",
-  "forceUpdateMcip": "False",
-  "forceUpdateICandBC": "True",
-  "forceUpdateRunScripts": "True",
+  "prepareICandBC": true,
+  "forceUpdate": false,
   "scenarioTag": [
     "220701_aust-test"
   ],
@@ -33,8 +24,6 @@
   "gridName": [
     "openmethane"
   ],
-  "doCompress": "True",
-  "compressScript": "/home/563/ns0890/runCMAQ/Melb_Sch01/find_and_compress_netcdf3_to_netcdf4",
   "scripts": {
     "mcipRun": {
       "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.mcip"
@@ -44,15 +33,8 @@
     },
     "iconRun": {
       "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.icon"
-    },
-    "cctmRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/run.cctm"
-    },
-    "cmaqRun": {
-      "path": "/home/563/pjr563/openmethane-beta/openmethane/templates/cmaq_preprocess/runCMAQ.sh"
     }
   },
-  "cctmExec": "ADJOINT_FWD",
   "CAMSToCmaqBiasCorrect": 0.06700000000000017,
   "boundary_trim": 5
 }

@@ -24,9 +24,6 @@ from cmaq_preprocess.mcip_preparation import (
 )
 from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_cmaq_config
 from cmaq_preprocess.run_scripts import (
-    prepareBconRunScripts,
-    prepareCctmRunScripts,
-    prepareMainRunScript,
     prepareTemplateBconFiles,
     prepareTemplateIconFiles,
 )
@@ -62,7 +59,7 @@ def setup_for_cmaq(config: CMAQConfig):
     )
     print("\t... done")
 
-    if (not mcip_output_found) or config.forceUpdateMcip:
+    if (not mcip_output_found) or config.forceUpdate:
         runMCIP(
             dates=dates,
             domains=config.domains,
@@ -78,14 +75,11 @@ def setup_for_cmaq(config: CMAQConfig):
             fix_simulation_start_date=True,
             fix_truelat2=False,
             truelat2=None,
-            wrfRunName=None,
-            doArchiveWrf=False,
-            add_qsnow=config.add_qsnow,
             boundary_trim=config.boundary_trim,
         )
 
     # extract some parameters about the MCIP setup
-    CoordNames, GridNames, APPL = getMcipGridNames(config.metDir, dates, config.domains)
+    coord_names, grid_names, mcip_suffix = getMcipGridNames(config.metDir, dates, config.domains)
 
     if config.prepareICandBC:
         # prepare the template boundary condition concentration files
@@ -97,11 +91,11 @@ def setup_for_cmaq(config: CMAQConfig):
             metDir=config.metDir,
             CMAQdir=config.CMAQdir,
             CFG=config.run,
-            mech=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            mech=config.mech,
+            GridNames=grid_names,
+            mcipsuffix=mcip_suffix,
             scripts=scripts,
-            forceUpdate=config.forceUpdateICandBC,
+            forceUpdate=config.forceUpdate,
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
@@ -112,11 +106,11 @@ def setup_for_cmaq(config: CMAQConfig):
             metDir=config.metDir,
             CMAQdir=config.CMAQdir,
             CFG=config.run,
-            mech=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
+            mech=config.mech,
+            GridNames=grid_names,
+            mcipsuffix=mcip_suffix,
             scripts=scripts,
-            forceUpdate=config.forceUpdateICandBC,
+            forceUpdate=config.forceUpdate,
         )
         # use the template initial and boundary condition concentration
         # files and populate them with values from MOZART output
@@ -129,60 +123,10 @@ def setup_for_cmaq(config: CMAQConfig):
             templateBconFiles,
             config.metDir,
             config.ctmDir,
-            GridNames,
-            mcipsuffix=APPL,
-            forceUpdate=config.forceUpdateICandBC,
+            grid_names,
+            mcipsuffix=mcip_suffix,
+            forceUpdate=config.forceUpdate,
             bias_correct=config.CAMSToCmaqBiasCorrect,
-        )
-
-    if config.prepareRunScripts:
-        print("Prepare ICON, BCON and CCTM run scripts")
-        # prepare the scripts for CCTM
-        prepareCctmRunScripts(
-            dates=dates,
-            domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
-            CFG=config.run,
-            mech=config.mech,
-            mechCMAQ=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
-            scripts=scripts,
-            EXEC=config.cctmExec,
-            SZpath=config.ctmDir,
-            nhours=config.nhoursPerRun,
-            printFreqHours=config.printFreqHours,
-            forceUpdate=config.forceUpdateRunScripts,
-        )
-        # prepare the scripts for BCON
-        prepareBconRunScripts(
-            sufadjname=config.sufadj,
-            dates=dates,
-            domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
-            CFG=config.run,
-            mech=config.mech,
-            mechCMAQ=config.mechCMAQ,
-            GridNames=GridNames,
-            mcipsuffix=APPL,
-            scripts=scripts,
-            forceUpdate=config.forceUpdateRunScripts,
-        )
-        # prepare the main run script
-        prepareMainRunScript(
-            dates=dates,
-            domains=config.domains,
-            ctmDir=config.ctmDir,
-            CMAQdir=config.CMAQdir,
-            scripts=scripts,
-            doCompress=config.doCompress,
-            compressScript=config.compressScript,
-            run=config.run,
-            forceUpdate=config.forceUpdateRunScripts,
         )
 
 

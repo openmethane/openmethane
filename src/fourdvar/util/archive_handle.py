@@ -55,9 +55,9 @@ def setup():
                 path = os.path.join(defn.archive_path, template.replace("<I>", str(i)))
                 unique = not os.path.isdir(path)
                 i += 1
-            logger.warn(f"moved archive to {path}")
+            logger.warning(f"moved archive to {path}")
         else:
-            logger.warn("deleted old archive.")
+            logger.warning("deleted old archive.")
     archive_path = path
     file_handle.empty_dir(archive_path)
     if defn.desc_name != "":

@@ -38,9 +38,9 @@ def runner():
     archive_defn.experiment = "pert_pert_test"
     archive_defn.description = """This is a pert-pert test.
     A "true" prior is assumed and a "true" set of observations calculated from it.
-    A normally distributed perturbation is applied to both the true-prior and the true-obs based of 
+    A normally distributed perturbation is applied to both the true-prior and the true-obs based of
     their respected uncertainties.
-    The perturbed prior and perturbed observations are then run through the minimizer to test its 
+    The perturbed prior and perturbed observations are then run through the minimizer to test its
     ability to converge to the expected cost value of n/2 (where n is the number of observations).
     """
 
@@ -51,14 +51,14 @@ def runner():
     obs_pert_archive = "obs_pert.pic.gz"
 
     phys_true = user.get_background()
-    obs_orig = user.get_observed()
+    user.get_observed()
     model_input = transform(phys_true, d.ModelInputData)
     model_output = transform(model_input, d.ModelOutputData)
     obs_true = transform(model_output, d.ObservationData)
 
     o_val = obs_true.get_vector()
     o_unc = np.array(d.ObservationData.uncertainty)
-    obs_pert = d.ObservationData(np.random.normal(o_val, o_unc))
+    d.ObservationData(np.random.normal(o_val, o_unc))
 
     unk = transform(phys_true, d.UnknownData)
     unk_pert = d.UnknownData(np.random.normal(unk.get_vector(), 1.0) * 0.0)

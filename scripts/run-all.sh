@@ -44,4 +44,4 @@ python runscript.py
 
 echo "Complete"
 
-tree data/archive_Pert
+tree ${STORE_DIR}/archive_Pert

@@ -199,7 +199,9 @@ def checkWrfMcipDomainSizes(metDir, date, domains, wrfDir=None):
             minidx = numpy.argmin(dists)
             mindist = dists.min()
             if mindist > 0.5:
-                warnings.warn(f"Distance between grid-points was {mindist} km for domain {domain}")
+                warnings.warn(
+                    f"Distance between grid-points was {mindist} km for domain {domain}"
+                )
             icorn[i], jcorn[i] = numpy.unravel_index(minidx, wrfLat.shape)
         if (
             icorn[0] != icorn[1]

@@ -29,10 +29,7 @@ import datetime
 import glob
 import os
 import subprocess
-import tempfile
 from shutil import copyfile
-
-import netCDF4
 
 from cmaq_preprocess.utils import replace_and_write
 
@@ -56,9 +53,6 @@ def runMCIP(
     fix_simulation_start_date=True,
     fix_truelat2=False,
     truelat2=None,
-    wrfRunName=None,
-    doArchiveWrf=False,
-    add_qsnow=False,
     boundary_trim: int = 5,
 ):
     """Function to run MCIP from python
@@ -89,9 +83,6 @@ def runMCIP(
 
     #########
 
-    tmpfl = tempfile.mktemp(suffix=".tar")
-    cwd = os.getcwd()
-
     ndoms = len(domains)
     nMinsPerInterval = [60] * ndoms
 
@@ -116,13 +107,15 @@ def runMCIP(
                 if not os.path.exists(src):
                     raise AssertionError(f"WRF output {src} not found")
                 copyfile(src, dst)
-                ## print 1. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
 
             if fix_simulation_start_date:
                 print("\t\tFix up SIMULATION_START_DATE attribute with ncatted")
                 wrfstrttime = date.strftime("%Y-%m-%d_%H:%M:%S")
                 for outPath in outPaths:
-                    command = f"ncatted -O -a SIMULATION_START_DATE,global,m,c,{wrfstrttime} {outPath} {outPath}"
+                    command = (
+                        f"ncatted -O -a SIMULATION_START_DATE,global,m,c,"
+                        f"{wrfstrttime} {outPath} {outPath}"
+                    )
                     print("\t\t\t" + command)
                     commandList = command.split(" ")
                     ##
@@ -134,20 +127,6 @@ def runMCIP(
                         print("stdout = " + str(stdout))
                         print("stderr = " + str(stderr))
                         raise RuntimeError("Error from atted...")
-
-            if add_qsnow:
-                print("\t\tAdd an artificial variable ('QSNOW') to the WRFOUT files")
-                wrfstrttime = date.strftime("%Y-%m-%d_%H:%M:%S")
-                for outPath in outPaths:
-                    nc = netCDF4.Dataset(outPath, "a")
-                    nc.createVariable(
-                        "QSNOW",
-                        "f4",
-                        ("Time", "bottom_top", "south_north", "west_east"),
-                        zlib=True,
-                    )
-                    nc.variables["QSNOW"][:] = 0.0
-                    nc.close()
 
             if fix_truelat2 and (truelat2 is not None):
                 print("\t\tFix up TRUELAT2 attribute with ncatted")
@@ -164,12 +143,9 @@ def runMCIP(
                         print("stdout = " + stdout)
                         print("stderr = " + stderr)
                         raise RuntimeError("Error from atted...")
-                    ## print '3. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
 
             ##
             print("\t\tCreate temporary run.mcip script")
-            ## pdb.set_trace()
-            # {}/{}'.format(wrfDir,date.strftime('%Y%m%d%H'))---by Sougol
             subs = [
                 ["set DataPath   = TEMPLATE", f"set DataPath   = {mcipDir}"],
                 ["set InMetDir   = TEMPLATE", f"set InMetDir   = {mcipDir}"],
@@ -215,8 +191,7 @@ def runMCIP(
                 strict=False,
                 makeExecutable=True,
             )
-            ##
-            ## print '4. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
+
             command = tmpRunMcipPath
             commandList = command.split(" ")
             print("\t\t\t" + command)
@@ -229,8 +204,6 @@ def runMCIP(
                 print("rm", gridfile)
                 os.remove(gridfile)
 
-            ## print '5. # WRF files =',len([f for f in os.listdir(mcipDir) if f.startswith('wrfout_')])
-            ##
             print("\t\tRun temporary run.mcip script")
             p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
@@ -272,79 +245,3 @@ def runMCIP(
                         print("stdout = " + str(stdout))
                         print("stderr = " + str(stderr))
                         raise RuntimeError("Error from ncks...")
-
-            if doArchiveWrf and (wrfRunName is not None) and False:
-                print(f"\t\tChecking MCIP output in folder {mcipDir}")
-                ## double check that all the files MCIP files are present before archiving the WRF files
-                filetypes = [
-                    "GRIDBDY2D",
-                    "GRIDCRO2D",
-                    "GRIDDOT2D",
-                    "METBDY3D",
-                    "METCRO2D",
-                    "METCRO3D",
-                    "METDOT3D",
-                ]
-                for filetype in filetypes:
-                    matches = glob.glob(f"{mcipDir}/{filetype}_*")
-                    if len(matches) != 1:
-                        raise RuntimeError(f"{filetype} file not found in folder {mcipDir} ... ")
-                ##
-                thisWRFdir = f"{wrfDir}/{yyyymmddhh}"
-                os.chdir(thisWRFdir)
-                ##
-                wrfouts = glob.glob(f"WRFOUT_{dom}_*")
-                ##
-                command = "tar -cvf {} {}".format(tmpfl, " ".join(wrfouts))
-                print("\t\t\t" + command)
-                commandList = command.split(" ")
-                p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = p.communicate()
-                if len(stderr) > 0:
-                    print("stdout = " + stdout)
-                    print("stderr = " + stderr)
-                    raise RuntimeError("Error from tar...")
-                ##
-                command = f"mdss mkdir ns0890/data/WRF/{wrfRunName}/"
-                print("\t\t\t" + command)
-                commandList = command.split(" ")
-                p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = p.communicate()
-                if len(stderr) > 0:
-                    print("stdout = " + stdout)
-                    print("stderr = " + stderr)
-                    raise RuntimeError("Error from mdss...")
-                ##
-                command = (
-                    f"mdss put {tmpfl} ns0890/data/WRF/{wrfRunName}/WRFOUT_{yyyymmddhh}_{dom}.tar"
-                )
-                print("\t\t\t" + command)
-                commandList = command.split(" ")
-                p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = p.communicate()
-                if len(stderr) > 0:
-                    print("stdout = " + stdout)
-                    print("stderr = " + stderr)
-                    raise RuntimeError("Error from mdss...")
-                ##
-                command = f"rm -f {tmpfl}"
-                print("\t\t\t" + command)
-                commandList = command.split(" ")
-                p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = p.communicate()
-                if len(stderr) > 0:
-                    print("stdout = " + stdout)
-                    print("stderr = " + stderr)
-                    raise RuntimeError("Error from rm...")
-                ##
-                command = "rm {}".format(" ".join(wrfouts))
-                print("\t\t\t" + command)
-                commandList = command.split(" ")
-                p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = p.communicate()
-                if len(stderr) > 0:
-                    print("stdout = " + stdout)
-                    print("stderr = " + stderr)
-                    raise RuntimeError("Error from rm...")
-                ##
-                os.chdir(cwd)
