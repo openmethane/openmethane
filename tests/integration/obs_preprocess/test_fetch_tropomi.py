@@ -4,16 +4,16 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
-from scripts.sat_data import fetch
+from scripts.obs_preprocess import fetch_tropomi
 
 
 def test_fetch(tmpdir, root_dir):
     runner = CliRunner()
     result = runner.invoke(
-        fetch.fetch_data,
+        fetch_tropomi.fetch_data,
         [
             "-c",
-            str(root_dir / "scripts" / "sat_data" / "config.austtest.json"),
+            str(root_dir / "config" / "obs_preprocess" / "config.austtest.json"),
             "-s",
             "2022-07-01",
             "-e",
@@ -41,14 +41,14 @@ def test_fetch_missing_creds(monkeypatch, env_var):
     if expected_cred_file.exists():
         os.remove(expected_cred_file)
 
-    fetch.create_session()
+    fetch_tropomi.create_session()
 
     assert expected_cred_file.exists()
 
     monkeypatch.delenv(env_var)
 
     # Still works if the ~/.netrc file exists
-    fetch.create_session()
+    fetch_tropomi.create_session()
 
     # Exception is raised if the ~/.netrc file is removed and env variables aren't available
     os.remove(expected_cred_file)
@@ -56,4 +56,4 @@ def test_fetch_missing_creds(monkeypatch, env_var):
         click.ClickException,
         match="EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing",
     ):
-        fetch.create_session()
+        fetch_tropomi.create_session()

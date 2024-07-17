@@ -26,8 +26,6 @@ from fourdvar import logging
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn
 
-# TODO: Check if this is needed
-
 
 def runner():
     # This is the main function that is called by the test

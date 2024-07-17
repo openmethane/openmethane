@@ -148,7 +148,7 @@ jobs:
             -e EARTHDATA_USERNAME=$EARTHDATA_USERNAME \
             -e EARTHDATA_PASSWORD=$EARTHDATA_PASSWORD \
             ${{ env.IMAGE_ID }} \
-            python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/sat_data
+            python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
@@ -272,7 +272,6 @@ jobs:
       - name: Tag and push docker image to Amazon ECR
         run: |
           TAGS="${{ steps.meta.outputs.tags }}"
-          echo $TAGS
           
           IFS=$'\n'
           for tag in $TAGS; do

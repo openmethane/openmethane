@@ -1,0 +1,16 @@
+- type
+- value
+- uncertainty
+- time
+- qa_value
+- latitude_corners
+- longitude_corners
+- latitude_center
+- longitude_center
+- ref_profile
+- model_pweight
+- obs_kernel
+- model_vis
+- alpha_scale
+- weight_grid
+- lite_coord

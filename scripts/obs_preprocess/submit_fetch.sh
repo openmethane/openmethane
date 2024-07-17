@@ -1,6 +1,6 @@
 #!/bin/bash
 # """
-# submit.sh
+# submit_fetch.sh
 #
 #
 # Copyright 2023 Superpower Institute.
@@ -26,7 +26,7 @@
 #PBS -l wd
 module use /g/data3/hh5/public/modules
 module load conda/analysis3
-python3 fetch.py \
-  --config-file config.json \
+python3 fetch_tropomi.py \
+  --config-file ../../config/obs_preprocess/config.json \
   --start-date 2022-07-01 \
   --end-date 2022-07-30

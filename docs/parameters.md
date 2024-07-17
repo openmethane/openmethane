@@ -30,11 +30,15 @@ the environment variable is not defined.
 
 ## EarthData Login
 
-The `fetch.py` script requires an EarthData login to download the TropOMI data
+The `scripts/obs_preprocess/fetch_tropomi.py` script requires an EarthData login to download the TropOMI data
 with permission to access the GES DISC data archive.
 A tutorial for creating an account and accepting the licence agreements is available
 [here](https://disc.gsfc.nasa.gov/earthdata-login).
 
 Once you have a login, 
 the `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables can added to the `.env` file.
-These will be used by the `fetch.py` script to authenticate with the GES DISC data archive.
+These will be used by the `fetch_tropomi.py` script to authenticate with the GES DISC data archive.
+
+## CAMS Login
+ TODO
+ Used to fetch CAMS data during the cmaq_preprocess step

@@ -70,7 +70,7 @@ test:  ## Run the tests
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/sat_data --force-regen
+	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/obs_preprocess --force-regen
 
 # Processing steps
 .PHONY: prepare-templates
