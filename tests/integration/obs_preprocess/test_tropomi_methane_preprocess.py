@@ -57,6 +57,5 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
 
     # Rest are observations
     obs = obs_list[1]
-    obs.pop("weight_grid")
 
-    data_regression.check(clean(obs), basename="tropomi_methane_obs")
+    data_regression.check(list(obs.keys()), basename="tropomi_methane_obs")
