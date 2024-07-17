@@ -10,7 +10,7 @@ set -Eeuo pipefail
 SKIP_TROPOMI_DOWNLOAD=${SKIP_TROPOMI_DOWNLOAD:-}
 STORE_DIR=${STORE_DIR:-data}
 TROPOMI_DIR="${STORE_DIR}/tropomi"
-TROPOMI_FETCH_CONFIG_FILE=${TROPOMI_FETCH_CONFIG_FILE:-scripts/sat_data/config.austtest.json}
+TROPOMI_FETCH_CONFIG_FILE=${TROPOMI_FETCH_CONFIG_FILE:-config/obs_preprocess/config.austtest.json}
 
 export TARGET=${TARGET:-docker}
 export START_DATE=${START_DATE:-2022-07-22}
@@ -26,7 +26,7 @@ echo "Downloading TROPOMI data for domain"
 if [[ -z "${SKIP_TROPOMI_DOWNLOAD}" ]]; then
   mkdir -p $TROPOMI_DIR
 
-  python scripts/sat_data/fetch.py \
+  python scripts/obs_preprocess/fetch_tropomi.py \
     -c ${TROPOMI_FETCH_CONFIG_FILE} \
     -s ${START_DATE} \
     -e ${END_DATE}T23:59:59 \

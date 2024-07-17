@@ -82,7 +82,7 @@ To run your first test case you will need to:
 	includes modifiable parameters at the start of the file with descriptions.
 
 2: fetch the TropOMI data:
- - `scripts/sat_data/fetch.py -c scripts/sat_data/config.{grid}.json -s {start_date} -e {end_date} {output_dir}`
+ - `scripts/obs_preprocess/fetch_tropomi.py -c config/obs_preprocess/config.{grid}.json -s {start_date} -e {end_date} {output_dir}`
 	Downloads the TropOMI data for the specified date range and region.
 	Requires a EarthData login. See the script for more details about how to set this up.
  
