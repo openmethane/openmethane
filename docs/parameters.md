@@ -10,7 +10,7 @@ The following environment variables are configurable:
 | STORE_PATH       | str               | Full path to the branch-specific data       |                                            |
 | EXPERIMENT       | str               | Name of the experiment being run            | 202207_test                                |
 | GRID_NAME        | str               | Name of the grid being used                 | openmethane                                |
-| PRIOR_PATH       | str               | Path to the concentration prior file        | N/A                                        |
+| PRIOR_FILE       | str               | Path to the concentration prior file        | N/A                                        |
 | MCIP_OUTPUT_PATH | str               | Path to the root MCIP directory             | N/A                                        |
 | ICON_FILE        | str               | Path to ICON file generated in setup-wrf    | N/A                                        |
 | BCON_FILE        | str               | Path to BCON file generated in setup-wrf    | N/A                                        |

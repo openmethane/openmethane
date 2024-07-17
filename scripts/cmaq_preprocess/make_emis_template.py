@@ -22,7 +22,7 @@ import netCDF4 as nc
 import numpy as np
 from numpy.typing import NDArray
 
-from fourdvar.params import cmaq_config, template_defn
+from fourdvar.params import cmaq_config, input_defn, template_defn
 from fourdvar.util.date_handle import replace_date
 
 KG_TO_G = 1000.0  # conversion from kg to g
@@ -225,7 +225,7 @@ def make_emissions_templates(prior_filename: str, metcro_template: str, emis_tem
 
 if __name__ == "__main__":
     make_emissions_templates(
-        prior_filename=template_defn.prior_path,
+        prior_filename=input_defn.prior_file,
         metcro_template=cmaq_config.met_cro_3d,
         emis_template=template_defn.emis,
     )
