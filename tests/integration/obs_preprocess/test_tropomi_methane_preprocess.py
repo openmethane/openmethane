@@ -22,7 +22,11 @@ def clean(value):
         value = [clean(item) for item in value]
 
     if isinstance(value, float):
-        value = round(value, 3)
+        if value > 1e10 or value < 1e-10:
+            # Use scientific notation for large/small numbers
+            value = float(f"{value:.3g}")
+        else:
+            value = round(value, 3)
     return value
 
 
