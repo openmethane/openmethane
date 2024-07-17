@@ -1,6 +1,6 @@
 #!/bin/bash
 # """
-# submit.sh
+# submit_fetch.sh
 #
 #
 # Copyright 2023 Superpower Institute.
