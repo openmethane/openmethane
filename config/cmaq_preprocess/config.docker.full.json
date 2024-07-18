@@ -12,7 +12,7 @@
     "endDate" : "2022-07-22 00:00:00 UTC",
     "mech" : "CH4only",
     "prepareICandBC" : true,
-    "forceUpdate" : false,
+    "forceUpdate" : true,
     "scenarioTag" : ["220701_aust-10km"],
     "mapProjName" : ["LamCon_34S_150E"],
     "gridName" : ["openmethane"],
