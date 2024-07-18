@@ -15,7 +15,7 @@
     "forceUpdate" : true,
     "scenarioTag" : ["om-aust10km"],
     "mapProjName" : ["LamCon_34S_150E"],
-    "gridName" : ["aust10km-v1_0_0-d01"],
+    "gridName" : ["aust10km-v1-d1"],
     "scripts" : {
         "mcipRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.mcip"},
         "bconRun" : {"path" : "/opt/project/templates/cmaq_preprocess/run.bcon"},
