@@ -3,7 +3,7 @@
     "MCIPdir" : "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
     "metDir" : "/opt/project/data/mcip/",
     "ctmDir" : "/opt/project/data/cmaq/",
-    "wrfDir" : "/opt/openmethane/setup-wrf/data/runs/aust-10km",
+    "wrfDir" : "/opt/project/data/runs/aust-10km",
     "geoDir" : "/opt/project/data/domains/aust-10km/",
     "inputCAMSFile" : "/opt/project/data/cams/cams_eac4_methane.nc",
     "domains" : ["d01"],
