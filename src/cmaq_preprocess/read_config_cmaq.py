@@ -27,9 +27,9 @@ class CMAQConfig:
      eg metDir/2016-11-29/d03"""
     ctmDir: str
     """
-    Base directory for the CCTM inputs and outputs. 
-    
-    same convention for the CMAQ output as for the MCIP output, except with ctmDir"""
+    Base directory for the CCTM inputs and outputs.
+
+    Same convention for the CMAQ output as for the MCIP output, except with ctmDir"""
     wrfDir: str
     """directory containing wrfout_* files, convention for WRF output,
      is wrfDir/2016112900/wrfout_d03_*"""

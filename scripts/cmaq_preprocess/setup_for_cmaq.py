@@ -14,6 +14,7 @@
 import datetime
 
 import click
+import prettyprinter
 
 from cmaq_preprocess import utils
 from cmaq_preprocess.cams import interpolateFromCAMSToCmaqGrid
@@ -28,6 +29,8 @@ from cmaq_preprocess.run_scripts import (
     prepareTemplateIconFiles,
 )
 
+prettyprinter.install_extras(["attrs"])
+
 
 @click.command()
 @click.option(
@@ -38,6 +41,9 @@ from cmaq_preprocess.run_scripts import (
 )
 def main(config_file: str):
     config = load_cmaq_config(config_file)
+
+    print("Configuration:")
+    prettyprinter.cpprint(config)
 
     setup_for_cmaq(config)
 
