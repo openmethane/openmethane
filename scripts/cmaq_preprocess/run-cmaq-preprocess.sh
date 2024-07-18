@@ -32,9 +32,6 @@ fi
 echo "Preparing CMAQ input files"
 python scripts/cmaq_preprocess/setup_for_cmaq.py -c $CONFIG_FILE
 
-ls /opt/project/data/mcip/d01/*
-ls /opt/project/data/cmaq/*
-
 echo "Preparing template files"
 # These depend on CMAQ params and the value of the TARGET env variable
 python scripts/cmaq_preprocess/make_emis_template.py
