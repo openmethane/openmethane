@@ -33,7 +33,7 @@ Instructions on how to do this can be found [here](https://docs.github.com/en/pa
 Once you have logged into the GitHub Container Registry, you can build the docker image with:
 
 ```shell
-	make build
+make build
 ```
 
 ## Configuration
@@ -110,7 +110,7 @@ There are artifacts from these repos that are required to be run before running 
 The docker container can be built and run with:
 
 ```shell
-	make start
+make start
 ```
 
 This will drop you into a shell in the docker container.
@@ -118,7 +118,7 @@ From here you can run the scripts in the order above,
 or use the following script to run the scripts in the correct order:
 
 ```shell
-	bash scripts/run-all.sh
+bash scripts/run-all.sh
 ```
 
 ### PyCharm

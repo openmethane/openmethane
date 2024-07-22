@@ -10,6 +10,8 @@ Some example WRF data for the `aust-test` domain is available in the `tests/test
 
 ## download_cams_input
 
+Download Methane chemistry data from CAMS on pressure levels.
+
 ## setup_for_cmaq
 
 The `scripts/cmaq_preprocess/setup_for_cmaq.py` script generates the required configuration
@@ -32,5 +34,20 @@ there should be results in the `data/mcip` and `data/cmaq` directory.
 
 
 ## make_emis_template
+
+Create emissions template files for CMAQ using the OpenMethane prior data
+
 ## make_template
+
+The `make_template` script 
+- copies a template emissions file into the input directory
+- defines CMAQ filenames for first day of model run
+- prepares CMAQ run directories
+- redefines any `cmaq_config` variables dependent on template files
+- generates sample files by running 1 day of CMAQ (forward & backward)
+- makes force file with same attr as conc and all data zeroed
+- creates template for conc, force & sense files
+- cleans up files created by cmaq
+
 ## make_prior
+Create a dataset containing the initial assumption about emissions
