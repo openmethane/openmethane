@@ -20,7 +20,6 @@
 
 export TARGET=${TARGET:-docker}
 export START_DATE=${START_DATE:-2022-07-22}
-export END_DATE=${END_DATE:-2022-07-22} # Only running a single day
 
 
 python scripts/obs_preprocess/tropomi_methane_preprocess.py \
