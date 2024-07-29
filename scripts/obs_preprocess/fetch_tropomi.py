@@ -75,20 +75,13 @@ def get_http_data(body: dict[str, Any], session: requests.Session):
     "-c",
     "--config-file",
     help="Path to configuration file",
-    default="config.json",
+    default="config/obs_preprocess/config.json",
     type=click.File(),
 )
 @click.option(
     "-s",
     "--start",
     help="Datetime of start of the period to fetch",
-    type=click.DateTime(),
-    required=True,
-)
-@click.option(
-    "-e",
-    "--end",
-    help="Datetime of end of the period to fetch",
     type=click.DateTime(),
     required=True,
 )
@@ -109,7 +102,7 @@ def fetch_data(config_file, start, end, output):
     config = json.load(config_file)
     session = create_session()
 
-    initData = {
+    init_data = {
         "methodname": "subset",
         "args": {
             "box": config["box"],
@@ -125,7 +118,9 @@ def fetch_data(config_file, start, end, output):
         "version": "1.0",
     }
 
-    response = get_http_data(initData, session)
+    print(f"Submitting request to the API: {init_data}")
+
+    response = get_http_data(init_data, session)
     myJobId = response["result"]["jobId"]
 
     # Construct JSON WSP request for API method: GetStatus
