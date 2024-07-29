@@ -28,10 +28,9 @@ endfor
 import datetime
 import glob
 import os
-import subprocess
 from shutil import copyfile
 
-from cmaq_preprocess.utils import replace_and_write
+from cmaq_preprocess.utils import compress_nc_file, replace_and_write, run_command
 
 
 def to_wrf_filename(domain: str, time: datetime.datetime) -> str:
@@ -117,32 +116,25 @@ def runMCIP(
                         f"{wrfstrttime} {outPath} {outPath}"
                     )
                     print("\t\t\t" + command)
-                    commandList = command.split(" ")
+                    command_list = command.split(" ")
                     ##
-                    p = subprocess.Popen(
-                        commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                    )
-                    stdout, stderr = p.communicate()
+
+                    stdout, stderr = run_command(command_list, verbose=True)
                     if len(stderr) > 0:
-                        print("stdout = " + str(stdout))
-                        print("stderr = " + str(stderr))
-                        raise RuntimeError("Error from atted...")
+                        raise RuntimeError("Error from ncatted...")
 
             if fix_truelat2 and (truelat2 is not None):
                 print("\t\tFix up TRUELAT2 attribute with ncatted")
                 for outPath in outPaths:
                     command = f"ncatted -O -a TRUELAT2,global,m,f,{truelat2} {outPath} {outPath}"
                     print("\t\t\t" + command)
-                    commandList = command.split(" ")
+                    command_list = command.split(" ")
                     ##
-                    p = subprocess.Popen(
-                        commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                    )
-                    stdout, stderr = p.communicate()
+                    stdout, stderr = run_command(command_list, verbose=True)
                     if len(stderr) > 0:
                         print("stdout = " + stdout)
                         print("stderr = " + stderr)
-                        raise RuntimeError("Error from atted...")
+                        raise RuntimeError("Error from ncatted...")
 
             ##
             print("\t\tCreate temporary run.mcip script")
@@ -193,7 +185,7 @@ def runMCIP(
             )
 
             command = tmpRunMcipPath
-            commandList = command.split(" ")
+            command_list = command.split(" ")
             print("\t\t\t" + command)
             ## delete any existing files
             for metfile in glob.glob(f"{mcipDir}/MET*"):
@@ -205,43 +197,17 @@ def runMCIP(
                 os.remove(gridfile)
 
             print("\t\tRun temporary run.mcip script")
-            p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            if stdout.split(b"\n")[-2] != b"NORMAL TERMINATION":
-                print("stdout = " + str(stdout.decode()))
-                print("stderr = " + str(stderr.decode()))
+            stdout, stderr = run_command(command_list, verbose=True)
+            if stdout.split("\n")[-2] != b"NORMAL TERMINATION":
                 raise RuntimeError("Error from run.mcip ...")
             ##
 
             for outPath in outPaths:
                 os.unlink(outPath)
             if compressWithNco:
-                for metfile in glob.glob(f"{mcipDir}/MET*_*"):
-                    print(f"\t\tCompress {metfile} with ncks")
-                    command = f"ncks -4 -L4 -O {metfile} {metfile}"
-                    print("\t\t\t" + command)
-                    commandList = command.split(" ")
-                    ##
-                    p = subprocess.Popen(
-                        commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                    )
-                    stdout, stderr = p.communicate()
-                    if len(stderr) > 0:
-                        print("stdout = " + str(stdout))
-                        print("stderr = " + str(stderr))
-                        raise RuntimeError("Error from ncks...")
+                files_to_compress = glob.glob(os.path.join(mcipDir, "MET*_*")) + glob.glob(
+                    os.path.join(mcipDir, "GRID*_*")
+                )
 
-                for gridfile in glob.glob(f"{mcipDir}/GRID*_*"):
-                    print(f"\t\tCompress {gridfile} with ncks")
-                    command = f"ncks -4 -L4 -O {gridfile} {gridfile}"
-                    print("\t\t\t" + command)
-                    commandList = command.split(" ")
-                    ##
-                    p = subprocess.Popen(
-                        commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                    )
-                    stdout, stderr = p.communicate()
-                    if len(stderr) > 0:
-                        print("stdout = " + str(stdout))
-                        print("stderr = " + str(stderr))
-                        raise RuntimeError("Error from ncks...")
+                for fname in files_to_compress:
+                    compress_nc_file(fname)

@@ -2,6 +2,7 @@
 
 import copy
 import os
+import pathlib
 import subprocess
 
 import numpy
@@ -50,7 +51,7 @@ def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
     return d
 
 
-def compress_nc_file(filename: str, ppc: int | None = None) -> None:
+def compress_nc_file(filename: str | pathlib.Path, ppc: int | None = None) -> None:
     """Compress a netCDF3 file to netCDF4 using ncks
 
     Args:
@@ -76,11 +77,11 @@ def compress_nc_file(filename: str, ppc: int | None = None) -> None:
         else:
             ppcText = f"--ppc default={ppc}"
             command_list = [command_list[0]] + ppcText.split(" ") + command_list[1:]
-    p = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # noqa: S603
-    stdout, stderr = p.communicate()
+
+    stdout, stderr = run_command(command_list)
     if len(stderr) > 0 or len(stdout) > 0:
-        print("stdout = " + stdout.decode())
-        print("stderr = " + stderr.decode())
+        print("stdout = " + stdout)
+        print("stderr = " + stderr)
         raise RuntimeError("Error from ncks...")
 
 
@@ -142,3 +143,28 @@ def replace_and_write(lines, outfile, substitutions, strict=True, makeExecutable
     f.close()
     if makeExecutable:
         os.chmod(outfile, 0o0744)
+
+
+def run_command(
+    command_list: list[str], log_prefix: str | None = None, verbose: bool = False
+) -> tuple[str, str]:
+    if verbose:
+        print("Running command: " + " ".join(command_list))
+
+    p = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    stdout = stdout.decode()
+    stderr = stderr.decode()
+
+    if log_prefix:
+        with open(f"{log_prefix}.stdout", "w") as f:
+            f.write(stdout)
+        with open(f"{log_prefix}.stderr", "w") as f:
+            f.write(stderr)
+
+    if verbose:
+        print(f"Exited with: {p.returncode} ")
+        print(f"stdout: {stdout}")
+        print(f"stderr: {stderr}")
+
+    return stdout, stderr
