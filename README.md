@@ -127,9 +127,10 @@ or use the following script to run the scripts in the correct order:
 ```shell
 bash scripts/run-all.sh
 ```
-
-
 ### Download all domain data from the Cloudflar
+
+When 
+
 ```bash
 make sync-domains-from-cf
 ```
