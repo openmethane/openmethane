@@ -22,7 +22,7 @@ You will need to obtain these from another source.
 The docker container containing CMAQ, the adjoint model and the python dependencies can be built locally.
 This is the recommended way to run the code.
 The required CMAQ docker image is built via the [openmethane/docker-cmaq](https://github.com/openmethane/docker-cmaq)
-repository is hosted as a private image at [ghcr.io/openmethane/cmaq](https://ghcr.io/openmethane/cmaq).
+repository and is hosted as a private image at [ghcr.io/openmethane/cmaq](https://ghcr.io/openmethane/cmaq).
 Since the image is not public,
 you will need to authenticate with the GitHub Container Registry ([https://ghcr.io](https://ghcr.io)) before building the image.
 
@@ -129,7 +129,9 @@ bash scripts/run-all.sh
 ```
 ### Download all domain data from the Cloudflar
 
-When 
+The `scripts/upload-domains.sh` script checks if the local directory domain is 
+synchronised with the target directory domain. If the local is not up to date
+it is neccessary to download all domain data from the Cloudflare bucket with:
 
 ```bash
 make sync-domains-from-cf
