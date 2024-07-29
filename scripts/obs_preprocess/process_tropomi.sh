@@ -23,4 +23,4 @@ export START_DATE=${START_DATE:-2022-07-22}
 
 
 python scripts/obs_preprocess/tropomi_methane_preprocess.py \
-      --source "/opt/project/data/tropomi/$START_DATE/**/*.nc"
+      --source "/opt/project/data/tropomi/$START_DATE/**/*.nc4"
