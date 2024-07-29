@@ -117,10 +117,11 @@ def runMCIP(
                     )
                     print("\t\t\t" + command)
                     command_list = command.split(" ")
-                    ##
 
-                    stdout, stderr = run_command(command_list, verbose=True)
+                    stdout, stderr = run_command(command_list, verbose=False)
                     if len(stderr) > 0:
+                        print("stdout = " + stdout)
+                        print("stderr = " + stderr)
                         raise RuntimeError("Error from ncatted...")
 
             if fix_truelat2 and (truelat2 is not None):
@@ -130,7 +131,7 @@ def runMCIP(
                     print("\t\t\t" + command)
                     command_list = command.split(" ")
                     ##
-                    stdout, stderr = run_command(command_list, verbose=True)
+                    stdout, stderr = run_command(command_list, verbose=False)
                     if len(stderr) > 0:
                         print("stdout = " + stdout)
                         print("stderr = " + stderr)
@@ -198,7 +199,7 @@ def runMCIP(
 
             print("\t\tRun temporary run.mcip script")
             stdout, stderr = run_command(command_list, verbose=True)
-            if stdout.split("\n")[-2] != b"NORMAL TERMINATION":
+            if stdout.split("\n")[-2] != "NORMAL TERMINATION":
                 raise RuntimeError("Error from run.mcip ...")
             ##
 
