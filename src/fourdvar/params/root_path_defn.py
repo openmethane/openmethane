@@ -20,7 +20,7 @@ Common path definitions
 These definitions are used in other parameter definitions.
 """
 
-from ._env import env
+from fourdvar.env import env
 
 # full path to the branch-specific data
 store_path = env.str("STORE_PATH")

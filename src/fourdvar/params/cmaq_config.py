@@ -16,7 +16,7 @@
 import logging
 import os
 
-from fourdvar.params._env import env
+from fourdvar.env import env
 from fourdvar.params.root_path_defn import store_path
 
 logger = logging.getLogger(__name__)

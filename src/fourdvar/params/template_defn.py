@@ -16,9 +16,8 @@
 
 import os
 
+from fourdvar.env import env
 from fourdvar.params.root_path_defn import store_path
-
-from ._env import env
 
 template_path = os.path.join(store_path, "templates")
 

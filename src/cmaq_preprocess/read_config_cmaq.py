@@ -4,7 +4,8 @@ import typing
 
 import attrs.validators
 from attrs import define, field, frozen
-from environs import Env
+
+from fourdvar.env import create_env
 
 
 def validate_end_date(instance, attribute, value):
@@ -202,10 +203,8 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
     -------
         Application configuration
     """
-    env = Env(
-        expand_vars=True,
-    )
-    env.read_env(verbose=True)
+    # Loads the .env file as determined by TARGET
+    env = create_env()
 
     root_dir = env.path("ROOT_DIR", pathlib.Path(__file__).parents[2])
 

@@ -179,7 +179,7 @@ jobs:
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           # Uses the local checked-in WRF and prior data
-          CMAQ_PREPROCESS_CONFIG_FILE: config/cmaq_preprocess/config.docker.test.json
+          TARGET: docker-test
           PRIOR_FILE: "/opt/project/tests/test-data/prior/out-om-domain-info.nc"
       - name: Upload CMAQ artifacts
         if: ${{ always() }}

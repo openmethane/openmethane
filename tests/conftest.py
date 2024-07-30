@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import xarray as xr
 
+from fourdvar import env
 from fourdvar.params import (
-    _env,
     archive_defn,
     cmaq_config,
     data_access,
@@ -78,7 +78,7 @@ def compare_dataset(data_regression):
 
 
 def _reload_params():
-    reload(_env)
+    reload(env)
     reload(root_path_defn)
     reload(input_defn)
     reload(date_defn)
@@ -102,6 +102,7 @@ def target_environment(monkeypatch):
         monkeypatch.setenv("TARGET", target)
 
         _reload_params()
+
     yield run
 
     # Reset environment to match the initial environment
