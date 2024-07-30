@@ -19,13 +19,20 @@ The daily workflow requires three Docker images that are based on
 the three repositories described above. The images are loaded from 
 the AWS Elastic Container Registry (ECR). 
 
-The AWS batch jobs `wrf-run`, `prior-generate` and `cmaq_preprocess-fetch_domains`
-are run in the parallel `Preprocess.
-* `wrf-run` runs `scripts/run-wrf.sh` setup-wrf
+The `preprocess` step runs the following three AWS batch job in parallel:
+* `wrf-run` runs `scripts/run-wrf.sh` in setup-wrf
 * `prior-generate` runs `scripts/run.sh` in openmethane-prior
-* `cmaq_preprocess-fetch_domains` runs `make fetch-domains` in `openmethane`
+* `obs_preprocess-fetch_tropomi` pulls satellite data of methane emissions for the respective day.
 
-There is an error handler that directs to the `Notify Error` state in case of any error.
+The following jobs are then carried out in sequence:
+
+* `cmaq_preprocess-run` takes WRF data and generates template files and an initial guess.
+* `obs_preprocess-process_tropomi` generates an observation dataset from the tropomi input.
+* `fourdvar-daily` generates a set of simulated observation - what the satellite 
+should have seen.
+* There is an error handler that directs to the `Notify Error` state in case of any error.
+
+
 
 
 
