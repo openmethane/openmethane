@@ -91,7 +91,10 @@ def run_mcip(
         mcip_dir = nested_dir(domain, date, met_dir)
         os.makedirs(mcip_dir, exist_ok=True)
         ##
-        times: list[datetime.datetime] = [date + datetime.timedelta(hours=h) for h in range(25)]
+        times: list[datetime.datetime] = [
+            datetime.datetime(date.year, date.month, date.day) + datetime.timedelta(hours=h)
+            for h in range(25)
+        ]
         wrf_files = [
             os.path.join(wrf_dir, yyyymmddhh, to_wrf_filename(domain.id, time)) for time in times
         ]
