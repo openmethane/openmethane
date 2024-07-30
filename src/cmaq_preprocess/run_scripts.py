@@ -3,6 +3,7 @@
 import datetime
 import os
 import pathlib
+from typing import Literal
 
 from cmaq_preprocess.utils import compress_nc_file, replace_and_write, run_command
 
@@ -73,17 +74,24 @@ def prepare_template_bcon_files(
             ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
             ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
         ]
+        out_data_path = ctm_dir / outfile
+
+        if out_data_path.exists():
+            if forceUpdate:
+                ## ICON/BCON do not like it if the destination file exits
+                os.remove(out_data_path)
+            else:
+                raise FileExistsError(
+                    f"Existing file {out_data_path} found, use forceUpdate to overwrite"
+                )
 
         output_files.append(
             _run(
                 "bcon",
-                outfile,
-                ctm_dir,
-                domain,
+                out_data_path,
                 scripts["bconRun"]["lines"],
                 subs_bcon,
                 log_prefix="bcon-template",
-                force_update=forceUpdate,
             )
         )
 
@@ -158,16 +166,24 @@ def prepare_template_icon_files(
             ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
         ]
 
+        out_data_path = ctm_dir / outfile
+
+        if out_data_path.exists():
+            if forceUpdate:
+                ## ICON/BCON do not like it if the destination file exits
+                os.remove(out_data_path)
+            else:
+                raise FileExistsError(
+                    f"Existing file {out_data_path} found, use forceUpdate to overwrite"
+                )
+
         output_files.append(
             _run(
                 "icon",
-                outfile,
-                ctm_dir,
-                domain,
+                out_data_path,
                 scripts["iconRun"]["lines"],
                 subs_icon,
                 log_prefix="icon-template",
-                force_update=forceUpdate,
             )
         )
 
@@ -175,43 +191,40 @@ def prepare_template_icon_files(
 
 
 def _run(
-    executable: str,
-    output_filename: str,
-    ctm_dir: pathlib.Path,
-    domain: str,
+    executable: Literal["bcon", "icon"],
+    out_data_path: pathlib.Path,
     input_script: list[str],
     substitutions: list[list[str]],
     log_prefix: str | None = None,
-    force_update: bool = False,
 ):
     """
     Run BCON/ICON
 
-    Substo
+    Substitutes the values in the input script and runs the shell script.
+
     Parameters
     ----------
     executable
-    output_filename
-    ctm_dir
-    domain
+        Name of the executable. Could be either icon or bcon
+    out_data_path
+        Path to the output file that will be generated as part of this run
+
+        The run script will be created in the same directory.
     input_script
+        Collection of lines in the input script
     substitutions
+        List of substitutions to make in the input script
     log_prefix
-    force_update
+        Prefix to use for the log file
 
     Returns
     -------
-
+        Output file
     """
-    out_data_path = ctm_dir / output_filename
 
-    if out_data_path.exists() and force_update:
-        ## BCON does not like it if the destination file exits
-        os.remove(out_data_path)
+    out_run_path = out_data_path.parent / f"run.{executable}"
 
-    out_run_path = ctm_dir / f"run.{executable}"
-    ##
-    print(f"Prepare BCON script for domain = {domain}")
+    print(f"Prepare {executable} script")
     replace_and_write(input_script, out_run_path, substitutions)
     os.chmod(out_run_path, 0o0744)
 
