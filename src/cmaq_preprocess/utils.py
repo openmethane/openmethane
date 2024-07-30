@@ -1,11 +1,14 @@
 """Utility functions used by a number of different functions"""
 
 import copy
+import datetime
 import os
 import pathlib
 import subprocess
 
 import numpy
+
+from cmaq_preprocess.read_config_cmaq import Domain
 
 
 def deg2rad(deg):
@@ -168,3 +171,24 @@ def run_command(
         print(f"stderr: {stderr}")
 
     return stdout, stderr
+
+
+def nested_dir(domain: Domain, date: datetime.datetime, root_dir: pathlib.Path) -> pathlib.Path:
+    """
+    Get the nested directory for a given domain and date
+
+    Parameters
+    ----------
+    domain
+        Domain of interest
+    date
+        Date of interest
+    root_dir
+        Root directory for the nested directory
+
+    Returns
+    -------
+        Nested path inside root_dir
+
+    """
+    return root_dir / date.strftime("%Y-%m-%d") / domain.id

@@ -5,189 +5,156 @@ import os
 import pathlib
 from typing import Literal
 
-from cmaq_preprocess.utils import compress_nc_file, replace_and_write, run_command
+from cmaq_preprocess.read_config_cmaq import Domain
+from cmaq_preprocess.utils import compress_nc_file, nested_dir, replace_and_write, run_command
 
 
 def prepare_template_bcon_files(
     date: datetime.datetime,
-    domains: list[str],
-    ctm_dir: str,
-    met_dir: str,
-    cmaq_dir: str,
-    CFG: str,
+    domain: Domain,
+    ctm_dir: pathlib.Path,
+    met_dir: pathlib.Path,
+    cmaq_dir: pathlib.Path,
     mech: str,
-    GridNames: list[str],
-    mcipsuffix: list[str],
     scripts,
     forceUpdate: bool,
-) -> list[pathlib.Path]:
+) -> pathlib.Path:
     """Prepare template BC files using BCON
 
     Args:
-        dates: the dates in question (list of datetime objects)
-        domains: list of which domains should be run?
+        date: Date to generate the template for
+        domain: Domain to generate the template for
         ctm_dir: base directory for the CCTM inputs and outputs
         met_dir: base directory for the MCIP output
         cmaq_dir: base directory for the CMAQ model
-        CFG: name of the simulation, appears in some filenames
         mech: name of chemical mechanism to appear in filenames
-        GridNames: list of MCIP map projection names (one per domain)
-        mcipsuffix: Suffix for the MCIP output files
         scripts: dictionary of scripts, including an entry with the key 'bconRun'
         forceUpdate: If True, update the output even if it already exists
 
     Returns:
         list of the template BCON files (one per domain)
     """
-    met_dir = pathlib.Path(met_dir)
-    ctm_dir = pathlib.Path(ctm_dir)
-
     yyyyjjj = date.strftime("%Y%j")
-    yyyymmdd_dashed = date.strftime("%Y-%m-%d")
 
-    output_files = []
     input_type = "profile"
 
-    for idomain, domain in enumerate(domains):
-        mcipdir = met_dir / yyyymmdd_dashed / domain
-        grid = GridNames[idomain]
-        outfile = f"template_bcon_profile_{mech}_{domain}.nc"
+    mcipdir = nested_dir(domain, date, met_dir)
+    outfile = f"template_bcon_profile_{mech}_{domain.id}.nc"
 
-        subs_bcon = [
-            [
-                "source TEMPLATE/config.cmaq",
-                f"source {cmaq_dir}/scripts/config.cmaq",
-            ],
-            ["set BC = TEMPLATE", f"set BC = {input_type}"],
-            ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
-            ["set CFG      = TEMPLATE", f"set CFG      = {CFG}"],
-            ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
-            ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {grid}"],
-            [
-                "setenv GRIDDESC TEMPLATE/GRIDDESC",
-                f"setenv GRIDDESC {mcipdir}/GRIDDESC",
-            ],
-            [
-                "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
-                f"setenv LAYER_FILE {mcipdir}/METCRO3D_{mcipsuffix[idomain]}",
-            ],
-            ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
-            ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
-        ]
-        out_data_path = ctm_dir / outfile
+    subs_bcon = [
+        [
+            "source TEMPLATE/config.cmaq",
+            f'source {cmaq_dir/ "scripts" / "config.cmaq"}',
+        ],
+        ["set BC = TEMPLATE", f"set BC = {input_type}"],
+        ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
+        ["set CFG      = TEMPLATE", f"set CFG      = {domain.scenario_tag}"],
+        ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
+        ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.name}"],
+        [
+            "setenv GRIDDESC TEMPLATE/GRIDDESC",
+            f"setenv GRIDDESC {mcipdir}/GRIDDESC",
+        ],
+        [
+            "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
+            f"setenv LAYER_FILE {mcipdir}/METCRO3D_{domain.scenario_tag}",
+        ],
+        ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
+        ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
+    ]
+    out_data_path = ctm_dir / outfile
 
-        if out_data_path.exists():
-            if forceUpdate:
-                ## ICON/BCON do not like it if the destination file exits
-                os.remove(out_data_path)
-            else:
-                raise FileExistsError(
-                    f"Existing file {out_data_path} found, use forceUpdate to overwrite"
-                )
-
-        output_files.append(
-            _run(
-                "bcon",
-                out_data_path,
-                scripts["bconRun"]["lines"],
-                subs_bcon,
-                log_prefix="bcon-template",
+    if out_data_path.exists():
+        if forceUpdate:
+            ## ICON/BCON do not like it if the destination file exits
+            os.remove(out_data_path)
+        else:
+            raise FileExistsError(
+                f"Existing file {out_data_path} found, use forceUpdate to overwrite"
             )
-        )
 
-    return output_files
+    return _run(
+        "bcon",
+        out_data_path,
+        scripts["bconRun"]["lines"],
+        subs_bcon,
+        log_prefix="bcon-template",
+    )
 
 
 def prepare_template_icon_files(
     date: datetime.datetime,
-    domains: list[str],
-    ctm_dir: str,
-    met_dir: str,
-    cmaq_dir: str,
-    CFG: str,
+    domain: Domain,
+    ctm_dir: pathlib.Path,
+    met_dir: pathlib.Path,
+    cmaq_dir: pathlib.Path,
     mech: str,
-    GridNames: list[str],
-    mcipsuffix: list[str],
     scripts,
     forceUpdate: bool,
-) -> list[pathlib.Path]:
+) -> pathlib.Path:
     """Prepare template IC files using ICON
 
     Args:
-        dates: the dates in question (list of datetime objects)
-        domains: list of which domains should be run?
+        date: Date to generate the template for
+        domain: Domain to generate the template for
         ctm_dir: base directory for the CCTM inputs and outputs
         met_dir: base directory for the MCIP output
         cmaq_dir: base directory for the CMAQ model
-        CFG: name of the simulation, appears in some filenames
         mech: name of chemical mechanism to appear in filenames
-        GridNames: list of MCIP map projection names (one per domain)
-        mcipsuffix: Suffix for the MCIP output files
         scripts: dictionary of scripts, including an entry with the key 'iconRun'
         forceUpdate: If True, update the output even if it already exists
 
     Returns:
         list of the template ICON files (one per domain)
     """
-    met_dir = pathlib.Path(met_dir)
-    ctm_dir = pathlib.Path(ctm_dir)
 
     yyyyjjj = date.strftime("%Y%j")
-    yyyymmdd_dashed = date.strftime("%Y-%m-%d")
 
-    output_files = []
+    mcip_dir = nested_dir(domain, date, met_dir)
 
-    for idomain, domain in enumerate(domains):
-        mcip_dir = met_dir / yyyymmdd_dashed / domain
-        grid = GridNames[idomain]
+    input_type = "profile"
+    outfile = f"template_icon_profile_{mech}_{domain.id}.nc"
 
-        input_type = "profile"
-        outfile = f"template_icon_profile_{mech}_{domain}.nc"
+    subs_icon = [
+        [
+            "source TEMPLATE/config.cmaq",
+            f'source {cmaq_dir/ "scripts" / "config.cmaq"}',
+        ],
+        ["set IC = TEMPLATE", f"set IC = {input_type}"],
+        ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
+        ["set CFG      = TEMPLATE", f"set CFG      = {domain.scenario_tag}"],
+        ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
+        ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.name}"],
+        [
+            "setenv GRIDDESC TEMPLATE/GRIDDESC",
+            f"setenv GRIDDESC {mcip_dir}/GRIDDESC",
+        ],
+        [
+            "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
+            f"setenv LAYER_FILE {mcip_dir}/METCRO3D_{domain.scenario_tag}",
+        ],
+        ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
+        ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
+    ]
 
-        subs_icon = [
-            [
-                "source TEMPLATE/config.cmaq",
-                f"source {cmaq_dir}/scripts/config.cmaq",
-            ],
-            ["set IC = TEMPLATE", f"set IC = {input_type}"],
-            ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
-            ["set CFG      = TEMPLATE", f"set CFG      = {CFG}"],
-            ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
-            ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {grid}"],
-            [
-                "setenv GRIDDESC TEMPLATE/GRIDDESC",
-                f"setenv GRIDDESC {mcip_dir}/GRIDDESC",
-            ],
-            [
-                "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
-                f"setenv LAYER_FILE {mcip_dir}/METCRO3D_{mcipsuffix[idomain]}",
-            ],
-            ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
-            ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
-        ]
+    out_data_path = ctm_dir / outfile
 
-        out_data_path = ctm_dir / outfile
-
-        if out_data_path.exists():
-            if forceUpdate:
-                ## ICON/BCON do not like it if the destination file exits
-                os.remove(out_data_path)
-            else:
-                raise FileExistsError(
-                    f"Existing file {out_data_path} found, use forceUpdate to overwrite"
-                )
-
-        output_files.append(
-            _run(
-                "icon",
-                out_data_path,
-                scripts["iconRun"]["lines"],
-                subs_icon,
-                log_prefix="icon-template",
+    if out_data_path.exists():
+        if forceUpdate:
+            ## ICON/BCON do not like it if the destination file exits
+            os.remove(out_data_path)
+        else:
+            raise FileExistsError(
+                f"Existing file {out_data_path} found, use forceUpdate to overwrite"
             )
-        )
 
-    return output_files
+    return _run(
+        "icon",
+        out_data_path,
+        scripts["iconRun"]["lines"],
+        subs_icon,
+        log_prefix="icon-template",
+    )
 
 
 def _run(

@@ -42,9 +42,9 @@ def test_setup_for_cmaq(
     mcip_run_dir = mcip_dir / "2022-07-22" / "d01"
 
     # Override some settings
-    config.metDir = str(mcip_dir)
-    config.ctmDir = str(cmaq_dir)
-    config.wrfDir = str(wrf_run.parent)
+    config.met_dir = mcip_dir
+    config.ctm_dir = cmaq_dir
+    config.wrf_dir = wrf_run.parent
 
     # Run the CMAQ preprocessing scripts
     setup_for_cmaq.setup_for_cmaq(config)

@@ -1,0 +1,26 @@
+boundary_trim: 5
+cams_to_cmaq_bias: 0.06700000000000017
+cmaq_source_dir: /home/563/sa6589/CMAQv5.0.2_notpollen
+ctm_dir: /home/563/pjr563/openmethane-test/openmethane/tests/test-data/cmaq
+domain:
+  index: 1
+  map_projection: LamCon_34S_150E
+  name: aust-test
+  version: v1
+end_date: 2022-07-22
+force_update: true
+geo_dir: /scratch/q90/pjr563/openmethane-test/data/domains/aust-test/v1
+input_cams_file: /scratch/q90/pjr563/openmethane-test/data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+mcip_source_dir: /home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src
+mech: CH4only
+met_dir: /home/563/pjr563/openmethane-test/openmethane/tests/test-data/mcip
+prepare_ic_and_bc: true
+scripts:
+  bconRun:
+    path: /opt/project/templates/cmaq_preprocess/run.bcon
+  iconRun:
+    path: /opt/project/templates/cmaq_preprocess/run.icon
+  mcipRun:
+    path: /opt/project/templates/cmaq_preprocess/run.mcip
+start_date: 2022-07-22
+wrf_dir: /home/563/pjr563/openmethane-test/openmethane/tests/test-data/wrf/aust-test

@@ -38,7 +38,7 @@
  cd $BASE; date; set timestamp; echo " "; set echo
 
 #> Horizontal grid definition 
- setenv GRID_NAME openmethane           #> check GRIDDESC file for GRID_NAME options
+ setenv GRID_NAME aust-test           #> check GRIDDESC file for GRID_NAME options
  setenv GRIDDESC /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/GRIDDESC    #> grid description file 
  setenv IOAPI_ISPH 20                     #> GCTP spheroid, use 20 for WRF-based modeling
 

@@ -1,0 +1,26 @@
+boundary_trim: 5
+cams_to_cmaq_bias: 0.06700000000000017
+cmaq_source_dir: /opt/cmaq/CMAQv5.0.2_notpollen
+ctm_dir: /opt/project/data/cmaq
+domain:
+  index: 1
+  map_projection: LamCon_34S_150E
+  name: aust-test
+  version: v1
+end_date: 2022-07-22
+force_update: true
+geo_dir: /opt/project/data/domains/aust-test/v1
+input_cams_file: /opt/project/data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+mcip_source_dir: /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
+mech: CH4only
+met_dir: /opt/project/data/mcip
+prepare_ic_and_bc: true
+scripts:
+  bconRun:
+    path: /opt/project/templates/cmaq_preprocess/run.bcon
+  iconRun:
+    path: /opt/project/templates/cmaq_preprocess/run.icon
+  mcipRun:
+    path: /opt/project/templates/cmaq_preprocess/run.mcip
+start_date: 2022-07-22
+wrf_dir: /opt/project/data/wrf/aust-test

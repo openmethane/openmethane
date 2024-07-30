@@ -14,10 +14,9 @@ export START_DATE=${START_DATE:-2022-07-22}
 export END_DATE=${END_DATE:-2022-07-22}
 export STORE_DIR=${STORE_DIR:-data}
 
-CONFIG_FILE=${CMAQ_PREPROCESS_CONFIG_FILE:-config/cmaq_preprocess/config.docker.json}
 SKIP_CAMS_DOWNLOAD=${SKIP_CAMS_DOWNLOAD:-}
 
-echo "Running for target: $TARGET using config file: $CONFIG_FILE"
+echo "Running for target: $TARGET"
 
 # Skip the CAMS download if the variable is set to anything other than an empty string
 if [[ -z "${SKIP_CAMS_DOWNLOAD}" ]]; then

@@ -16,13 +16,12 @@ import datetime
 import click
 
 from cmaq_preprocess import utils
-from cmaq_preprocess.cams import interpolateFromCAMSToCmaqGrid
-from cmaq_preprocess.mcip import runMCIP
+from cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
+from cmaq_preprocess.mcip import run_mcip
 from cmaq_preprocess.mcip_preparation import (
-    checkInputMetAndOutputFolders,
-    getMcipGridNames,
+    check_input_met_and_output_folders,
 )
-from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_cmaq_config
+from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_config_from_env
 from cmaq_preprocess.run_scripts import (
     prepare_template_bcon_files,
     prepare_template_icon_files,
@@ -30,103 +29,84 @@ from cmaq_preprocess.run_scripts import (
 
 
 @click.command()
-@click.option(
-    "-c",
-    "--config-file",
-    type=click.Path(exists=True),
-    default="config/cmaq_preprocess/config.docker.json",
-)
-def main(config_file: str):
-    config = load_cmaq_config(config_file)
+def main():
+    config = load_config_from_env()
 
     setup_for_cmaq(config)
 
 
 def setup_for_cmaq(config: CMAQConfig):
     # define date range
-    ndates = (config.endDate - config.startDate).days + 1
-    dates = [config.startDate + datetime.timedelta(days=d) for d in range(ndates)]
+    ndates = (config.end_date - config.start_date).days + 1
+    dates = [config.start_date + datetime.timedelta(days=d) for d in range(ndates)]
 
     # read in the template run-scripts
     scripts = utils.load_scripts(scripts=config.scripts)
 
     # create output destinations, if need be:
-    print(
-        "Check that input meteorology files are provided and create output destinations (if need be)"
+    print("Check that input meteorology files are provided and create output destinations")
+    mcip_output_found = check_input_met_and_output_folders(
+        config.ctm_dir, config.met_dir, dates, config.domain
     )
-    mcip_output_found = checkInputMetAndOutputFolders(
-        config.ctmDir, config.metDir, dates, config.domains
-    )
+    if mcip_output_found:
+        print("Existing MCIP output found")
+
     print("\t... done")
 
-    if (not mcip_output_found) or config.forceUpdate:
-        runMCIP(
+    if (not mcip_output_found) or config.force_update:
+        run_mcip(
             dates=dates,
-            domains=config.domains,
-            metDir=config.metDir,
-            wrfDir=config.wrfDir,
-            geoDir=config.geoDir,
-            ProgDir=config.MCIPdir,
-            APPL=config.scenarioTag,
-            CoordName=config.mapProjName,
-            GridName=config.gridName,
+            domain=config.domain,
+            met_dir=config.met_dir,
+            wrf_dir=config.wrf_dir,
+            geo_dir=config.geo_dir,
+            mcip_executable_dir=config.mcip_source_dir,
             scripts=scripts,
-            compressWithNco=True,
+            compress_output=True,
             fix_simulation_start_date=True,
             fix_truelat2=False,
             truelat2=None,
             boundary_trim=config.boundary_trim,
         )
 
-    # extract some parameters about the MCIP setup
-    coord_names, grid_names, mcip_suffix = getMcipGridNames(config.metDir, dates, config.domains)
-
-    if config.prepareICandBC:
+    if config.prepare_ic_and_bc:
         # prepare the template boundary condition concentration files
         # from profiles using BCON
         template_bcon_files = prepare_template_bcon_files(
             date=dates[0],
-            domains=config.domains,
-            ctm_dir=config.ctmDir,
-            met_dir=config.metDir,
-            cmaq_dir=config.CMAQdir,
-            CFG=config.run,
+            domain=config.domain,
+            ctm_dir=config.ctm_dir,
+            met_dir=config.met_dir,
+            cmaq_dir=config.cmaq_source_dir,
             mech=config.mech,
-            GridNames=grid_names,
-            mcipsuffix=mcip_suffix,
             scripts=scripts,
-            forceUpdate=config.forceUpdate,
+            forceUpdate=config.force_update,
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
         template_icon_files = prepare_template_icon_files(
             date=dates[0],
-            domains=config.domains,
-            ctm_dir=config.ctmDir,
-            met_dir=config.metDir,
-            cmaq_dir=config.CMAQdir,
-            CFG=config.run,
+            domain=config.domain,
+            ctm_dir=config.ctm_dir,
+            met_dir=config.met_dir,
+            cmaq_dir=config.cmaq_source_dir,
             mech=config.mech,
-            GridNames=grid_names,
-            mcipsuffix=mcip_suffix,
             scripts=scripts,
-            forceUpdate=config.forceUpdate,
+            forceUpdate=config.force_update,
         )
         # use the template initial and boundary condition concentration
         # files and populate them with values from MOZART output
-        interpolateFromCAMSToCmaqGrid(
-            dates,
-            config.domains,
-            config.mech,
-            config.inputCAMSFile,
-            template_icon_files,
-            template_bcon_files,
-            config.metDir,
-            config.ctmDir,
-            grid_names,
-            mcipsuffix=mcip_suffix,
-            forceUpdate=config.forceUpdate,
-            bias_correct=config.CAMSToCmaqBiasCorrect,
+        interpolate_from_cams_to_cmaq_grid(
+            dates=dates,
+            domain=config.domain,
+            mech=config.mech,
+            input_cams_file=config.input_cams_file,
+            template_icon_file=template_icon_files,
+            template_bcon_file=template_bcon_files,
+            met_dir=config.met_dir,
+            ctm_dir=config.ctm_dir,
+            force_update=config.force_update,
+            bias_correct=config.cams_to_cmaq_bias_correct,
         )
 
 

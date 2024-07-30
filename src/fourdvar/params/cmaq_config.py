@@ -104,7 +104,7 @@ tstep = [1, 0, 0]  # output timestep [hours, minutes, seconds]
 
 cmaq_base = os.path.join(store_path, "run-cmaq")
 output_path = os.path.join(cmaq_base, "output")
-mcip_output_path = env.str("MCIP_OUTPUT_PATH")
+mcip_output_path = env.str("MET_DIR")
 
 if use_jobfs is True:
     chk_path = os.environ.get("PBS_JOBFS", None)
@@ -120,7 +120,7 @@ jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
 emis_path = os.path.join(cmaq_base, "emissions")
 # horizontal grid definition file
 griddesc = os.path.join(mcip_grid_path, "GRIDDESC")
-gridname = env.str("GRID_NAME", "openmethane")
+gridname = env.str("DOMAIN_NAME", "openmethane")
 # gridname = 'W'
 
 # logfile

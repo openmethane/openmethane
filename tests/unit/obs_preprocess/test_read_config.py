@@ -1,28 +1,26 @@
 import json
-import os
+import pathlib
 
 import pytest
 from attrs import asdict
+from pytest_regressions.data_regression import RegressionYamlDumper
 
-from cmaq_preprocess.config_read_functions import (
-    boolean_converter,
-    load_json,
-    process_date_string,
-)
+from cmaq_preprocess.config_read_functions import load_json
 from cmaq_preprocess.read_config_cmaq import (
     create_cmaq_config_object,
-    load_cmaq_config,
+    load_config_from_env,
 )
 
 
-@pytest.fixture
-def config_path_cmaq_nci(root_dir):
-    return os.path.join(root_dir, "config/cmaq_preprocess/config.nci.json")
+# Add support for dumping paths to YAML
+def path_representer(dumper, obj):
+    return dumper.represent_scalar("tag:yaml.org,2002:str", str(obj))
 
 
-@pytest.fixture
-def config_path_cmaq_docker(root_dir):
-    return os.path.join(root_dir, "config/cmaq_preprocess/config.docker.json")
+RegressionYamlDumper.add_representer(
+    type(pathlib.Path()),
+    path_representer,
+)
 
 
 # Define a fixture for creating and deleting a temporary config file
@@ -34,69 +32,13 @@ def temp_config_file(tmp_path, request):
     return str(temp_file)
 
 
-def test_007_parse_boolean_keys():
-    config = {
-        "test_key_1": "t",
-        "test_key_2": "1",
-        "test_key_3": "true",
-        "test_key_4": "y",
-        "test_key_5": "yes",
-        "test_key_6": "false",
-        "test_key_7": "0",
-        "test_key_8": "f",
-        "test_key_9": "n",
-        "test_key_10": "no",
-        "test_key_11": "True",
-        "test_key_12": "False",
-        "test_key_13": True,
-        "test_key_14": False,
-    }
+@pytest.mark.parametrize("target", ["nci", "docker", "nci-test", "docker-test"])
+def test_013_valid_config_file(target, data_regression, target_environment):
+    target_environment(target)
 
-    expected = {
-        "test_key_1": True,
-        "test_key_2": True,
-        "test_key_3": True,
-        "test_key_4": True,
-        "test_key_5": True,
-        "test_key_6": False,
-        "test_key_7": False,
-        "test_key_8": False,
-        "test_key_9": False,
-        "test_key_10": False,
-        "test_key_11": True,
-        "test_key_12": False,
-        "test_key_13": True,
-        "test_key_14": False,
-    }
-
-    out = {k: boolean_converter(v) for k, v in config.items()}
-
-    assert out == expected
-
-
-@pytest.mark.parametrize(
-    "datestring, expected",
-    [
-        pytest.param("2024-01-01 00:00:00 UTC", "2024-01-01 00:00:00+00:00", id="UTC time zone"),
-        pytest.param("2024-01-01 00:00:00", "2024-01-01 00:00:00+00:00", id="no time zone"),
-    ],
-)
-def test_008_process_date_string(datestring, expected):
-    out = process_date_string(datestring)
-
-    assert str(out) == expected
-
-
-def test_013_valid_CMAQ_NCI_config_file(config_path_cmaq_nci, data_regression):
-    cmaq_config = load_cmaq_config(config_path_cmaq_nci)
+    cmaq_config = load_config_from_env()
     data = asdict(cmaq_config)
-    data_regression.check(data)
-
-
-def test_014_valid_CMAQ_Docker_config_file(data_regression, config_path_cmaq_docker):
-    cmaq_config = load_cmaq_config(config_path_cmaq_docker)
-    data = asdict(cmaq_config)
-    data_regression.check(data)
+    data_regression.check(data, basename=f"config_{target}")
 
 
 @pytest.fixture
@@ -298,9 +240,9 @@ def test_020_validator_endDate_after_startDate(startDate, endDate, test_id, cmaq
 
     cmaq_config_obj = create_cmaq_config_object(cmaq_config_dict)
 
-    assert cmaq_config_obj.startDate
+    assert cmaq_config_obj.start_date
 
-    assert cmaq_config_obj.endDate
+    assert cmaq_config_obj.end_date
 
 
 # Error cases
