@@ -24,8 +24,8 @@ from cmaq_preprocess.mcip_preparation import (
 )
 from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_cmaq_config
 from cmaq_preprocess.run_scripts import (
-    prepareTemplateBconFiles,
-    prepareTemplateIconFiles,
+    prepare_template_bcon_files,
+    prepare_template_icon_files,
 )
 
 
@@ -84,12 +84,12 @@ def setup_for_cmaq(config: CMAQConfig):
     if config.prepareICandBC:
         # prepare the template boundary condition concentration files
         # from profiles using BCON
-        templateBconFiles = prepareTemplateBconFiles(
+        template_bcon_files = prepare_template_bcon_files(
             date=dates[0],
             domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
+            ctm_dir=config.ctmDir,
+            met_dir=config.metDir,
+            cmaq_dir=config.CMAQdir,
             CFG=config.run,
             mech=config.mech,
             GridNames=grid_names,
@@ -99,12 +99,12 @@ def setup_for_cmaq(config: CMAQConfig):
         )
         # prepare the template initial condition concentration files
         # from profiles using ICON
-        templateIconFiles = prepareTemplateIconFiles(
+        template_icon_files = prepare_template_icon_files(
             date=dates[0],
             domains=config.domains,
-            ctmDir=config.ctmDir,
-            metDir=config.metDir,
-            CMAQdir=config.CMAQdir,
+            ctm_dir=config.ctmDir,
+            met_dir=config.metDir,
+            cmaq_dir=config.CMAQdir,
             CFG=config.run,
             mech=config.mech,
             GridNames=grid_names,
@@ -119,8 +119,8 @@ def setup_for_cmaq(config: CMAQConfig):
             config.domains,
             config.mech,
             config.inputCAMSFile,
-            templateIconFiles,
-            templateBconFiles,
+            template_icon_files,
+            template_bcon_files,
             config.metDir,
             config.ctmDir,
             grid_names,
