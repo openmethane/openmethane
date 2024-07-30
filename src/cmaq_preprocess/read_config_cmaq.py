@@ -2,34 +2,38 @@ import datetime
 import pathlib
 import typing
 
-import attr.validators
+import attrs.validators
 from attrs import define, field, frozen
 from environs import Env
 
-from cmaq_preprocess.config_read_functions import (
-    load_json,
-)
+
+def validate_end_date(instance, attribute, value):
+    if value < instance.start_date:
+        raise ValueError("End date must be after start date.")
+
+
+def process_date_string(value) -> datetime.date:
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    elif isinstance(value, datetime.date):
+        return value
+    elif isinstance(value, str):
+        return datetime.date.fromisoformat(value)
+    else:
+        raise TypeError(f"Cannot process {value} as a date. {type(value)}")
 
 
 @frozen
 class Domain:
     index: int
-    name: str = field(validator=attr.validators.max_len(16))
+    name: str = field(validator=attrs.validators.max_len(16))
     version: str
-    map_projection: str = field(validator=attr.validators.max_len(16))
-    """
-    MCIP option: Map projection name.
-    """
+    map_projection: str = field(validator=attrs.validators.max_len(16))
+    mcip_suffix: str = field(validator=attrs.validators.max_len(16))
 
     @property
     def id(self):
         return f"d{self.index:02}"
-
-    @property
-    def scenario_tag(self):
-        tag = f"{self.name}_{self.version}"
-        if len(tag) > 16:
-            raise ValueError("16-character maximum length for scenario tag")
 
 
 @define
@@ -63,23 +67,27 @@ class CMAQConfig:
 
     This file can be downloaded using `scripts/cmaq_preprocess/download_cams_input.py`.
     """
-    start_date: datetime.datetime
+    start_date: datetime.date = field(
+        converter=process_date_string,
+        validator=attrs.validators.instance_of(datetime.date),
+    )
     """
     Start of the first day
 
     Use ISO8061 formatted dates, e.g. 2022-07-22. All runs start at 00:00:00 UTC.
     """
-    end_date: datetime.datetime = field()
+    end_date: datetime.date = field(
+        converter=process_date_string,
+        validator=[
+            attrs.validators.instance_of(datetime.date),
+            validate_end_date,
+        ],
+    )
     """
     Last date to run
 
     Use ISO8061 formatted dates, e.g. 2022-07-22. All runs start at 00:00:00 UTC.
     """
-
-    @end_date.validator
-    def check_end_date(self, attribute, value):
-        if value < self.start_date:
-            raise ValueError("End date must be after start date.")
 
     domain: Domain
     """
@@ -151,8 +159,12 @@ class CMAQConfig:
 
     Pre-set is (1.838 - 1.771)
     """
-    boundary_trim: int = 5
-    """Number of grid cells to trim from the boundary of the domain"""
+    boundary_trim: int
+    """
+    Number of grid cells to trim from the boundary of the domain
+
+    5 is a good start for larger domains.
+    """
 
 
 def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfig:
@@ -169,26 +181,15 @@ def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfi
     CMAQConfig
         An instance of CMAQConfig initialized with the provided configuration.
     """
-    return CMAQConfig(**config)
+    domain = Domain(
+        index=config.pop("domain_index", 1),
+        name=config.pop("domain_name"),
+        version=config.pop("domain_version"),
+        map_projection=config.pop("domain_map_projection", "LamCon_34S_150E"),
+        mcip_suffix=config.pop("domain_mcip_suffix", "aust-test_v1"),
+    )
 
-
-def load_cmaq_config(filepath: str) -> CMAQConfig:
-    """
-    Load a CMAQ configuration from a JSON file and create a CMAQConfig object.
-
-    Parameters
-    ----------
-    filepath
-        The path to the JSON file containing the CMAQ configuration.
-
-    Returns
-    -------
-    CMAQConfig
-        An instance of CMAQConfig initialized with the loaded configuration.
-    """
-    config = load_json(filepath)
-
-    return create_cmaq_config_object(config)
+    return CMAQConfig(domain=domain, **config)
 
 
 def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
@@ -212,7 +213,8 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         index=env.int("DOMAIN_INDEX", 1),
         name=env.str("DOMAIN_NAME"),
         version=env.str("DOMAIN_VERSION"),
-        map_projection=env.str("MAP_PROJECTION", "LamCon_34S_150E"),
+        map_projection=env.str("DOMAIN_MAP_PROJECTION", "LamCon_34S_150E"),
+        mcip_suffix=env.str("DOMAIN_MCIP_SUFFIX", "LamCon_34S_150E"),
     )
 
     options = dict(

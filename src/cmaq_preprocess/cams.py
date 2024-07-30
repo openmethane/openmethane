@@ -10,7 +10,7 @@ import netCDF4
 import numpy
 
 from cmaq_preprocess.read_config_cmaq import Domain
-from cmaq_preprocess.utils import getDistanceFromLatLonInKm, nested_dir
+from cmaq_preprocess.utils import get_distance_from_lat_lon_in_km, nested_dir
 
 moleMass = {"air": 28.96, "ch4_c": 16}
 
@@ -175,7 +175,7 @@ def print_boundary_variable(cmspec, out_boundary, factor):
 
 
 def interpolate_from_cams_to_cmaq_grid(
-    dates: list[datetime.datetime],
+    dates: list[datetime.date],
     domain: Domain,
     mech: str,
     input_cams_file: pathlib.Path,
@@ -245,7 +245,7 @@ def interpolate_from_cams_to_cmaq_grid(
         if not (do_ICs or do_BCs):
             continue
 
-        mcip_suffix = domain.scenario_tag
+        mcip_suffix = domain.mcip_suffix
         croFile = mcip_dir / f"GRIDCRO2D_{mcip_suffix}"
         dotFile = mcip_dir / f"GRIDDOT2D_{mcip_suffix}"
         bdyFile = mcip_dir / f"GRIDBDY2D_{mcip_suffix}"
@@ -323,7 +323,7 @@ def interpolate_from_cams_to_cmaq_grid(
                 )
                 for i in range(ntimemod)
             ]
-            itimes = numpy.where([t.date() == date.date() for t in timesmod])[0]
+            itimes = numpy.where([t.date() == date for t in timesmod])[0]
             itime0 = itimes[0]
             itime1 = itimes[-1] + 2
             timesmod = timesmod[itime0:itime1]
@@ -347,7 +347,7 @@ def interpolate_from_cams_to_cmaq_grid(
 
             for irow in range(LON.shape[0]):
                 for icol in range(LON.shape[1]):
-                    dists = getDistanceFromLatLonInKm(
+                    dists = get_distance_from_lat_lon_in_km(
                         LAT[irow, icol], LON[irow, icol], LATMZ, LONMZ
                     )
                     minidx = numpy.argmin(dists)
@@ -356,7 +356,7 @@ def interpolate_from_cams_to_cmaq_grid(
                     near_interior[irow, icol, 1] = iy
 
             for iperim in range(LONP.shape[0]):
-                dists = getDistanceFromLatLonInKm(LATP[iperim], LONP[iperim], LATMZ, LONMZ)
+                dists = get_distance_from_lat_lon_in_km(LATP[iperim], LONP[iperim], LATMZ, LONMZ)
                 minidx = numpy.argmin(dists)
                 ix, iy = numpy.unravel_index(minidx, LONMZ.shape)
                 near_boundary[iperim, 0] = ix

@@ -5,6 +5,7 @@ ctm_dir: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq'
 domain:
   index: 1
   map_projection: LamCon_34S_150E
+  mcip_suffix: aust10km_v1
   name: aust10km
   version: v1
 end_date: 2022-07-22

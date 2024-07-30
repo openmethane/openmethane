@@ -10,7 +10,7 @@ from cmaq_preprocess.utils import nested_dir
 
 
 def check_input_met_and_output_folders(
-    ctm_dir: pathlib.Path, met_dir: pathlib.Path, dates: list[datetime.datetime], domain: Domain
+    ctm_dir: pathlib.Path, met_dir: pathlib.Path, dates: list[datetime.date], domain: Domain
 ) -> bool:
     """
     Check that MCIP inputs are present, and create directories for CCTM input/output if need be

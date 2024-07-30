@@ -131,7 +131,7 @@ def run_mcip(
                 "set INTVL      = TEMPLATE",
                 f"set INTVL      = {60}",
             ],
-            ["set APPL       = TEMPLATE", f"set APPL       = {domain.scenario_tag}"],
+            ["set APPL       = TEMPLATE", f"set APPL       = {domain.mcip_suffix}"],
             [
                 "set CoordName  = TEMPLATE",
                 f"set CoordName  = {domain.map_projection}",

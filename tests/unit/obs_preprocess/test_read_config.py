@@ -1,3 +1,4 @@
+import datetime
 import json
 import pathlib
 
@@ -44,29 +45,28 @@ def test_013_valid_config_file(target, data_regression, target_environment):
 @pytest.fixture
 def cmaq_config_dict():
     return {
-        "CMAQdir": "/opt/cmaq/CMAQv5.0.2_notpollen/",
-        "MCIPdir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
-        "metDir": "/opt/project/data/mcip/",
-        "ctmDir": "/opt/project/data/cmaq/",
-        "wrfDir": "/opt/project/data/runs/aust-test",
-        "geoDir": "/opt/project/domains/aust-test/v1.0.0/",
-        "inputCAMSFile": "/opt/project/data/inputs/cams_eac4_methane.nc",
-        "domains": ["d01"],
-        "run": "openmethane",
-        "startDate": "2022-07-01 00:00:00 UTC",
-        "endDate": "2022-07-01 00:00:00 UTC",
+        "cmaq_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/",
+        "mcip_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
+        "met_dir": "/opt/project/data/mcip/",
+        "ctm_dir": "/opt/project/data/cmaq/",
+        "wrf_dir": "/opt/project/data/runs/aust-test",
+        "geo_dir": "/opt/project/domains/aust-test/v1.0.0/",
+        "input_cams_file": "/opt/project/data/inputs/cams_eac4_methane.nc",
+        "start_date": "2022-07-01",
+        "end_date": "2022-07-01",
         "mech": "CH4only",
-        "prepareICandBC": True,
-        "forceUpdate": True,
-        "scenarioTag": ["220701_aust-test"],
-        "mapProjName": ["LamCon_34S_150E"],
-        "gridName": ["openmethane"],
+        "prepare_ic_and_bc": True,
+        "force_update": True,
         "scripts": {
             "mcipRun": {"path": "/opt/project/templateRunScripts/run.mcip"},
             "bconRun": {"path": "/opt/project/templateRunScripts/run.bcon"},
             "iconRun": {"path": "/opt/project/templateRunScripts/run.icon"},
         },
-        "CAMSToCmaqBiasCorrect": 0.06700000000000017,
+        "cams_to_cmaq_bias": 0.06700000000000017,
+        "boundary_trim": 5,
+        "domain_name": "aust-test",
+        "domain_version": "v1",
+        "domain_mcip_suffix": "aust-test_v1",
     }
 
 
@@ -99,31 +99,12 @@ def test_015_mech_validator(value, expected_exception, test_id, cmaq_config_dict
         assert config is not None
 
 
-@pytest.mark.parametrize(
-    "attribute, value, error_string",
-    [
-        pytest.param(
-            "scenarioTag",
-            ["more_than_16_characters_long"],
-            "16-character maximum length for configuration value",
-            id="scenarioTag_more_than_16_characters_long",
-        ),
-        pytest.param("scenarioTag", "not_a_list", "must be a list", id="scenarioTag_not_a_list"),
-        pytest.param(
-            "gridName",
-            ["more_than_16_characters_long"],
-            "16-character maximum length for configuration value ",
-            id="gridName_more_than_16_characters_long",
-        ),
-        pytest.param("gridName", "not_a_list", "must be a list", id="gridName_not_a_list"),
-    ],
-)
-def test_016_validators_more_than_16_characters(attribute, value, error_string, cmaq_config_dict):
-    cmaq_config_dict[attribute] = value
+@pytest.mark.parametrize("attribute", ["map_projection", "name", "mcip_suffix"])
+def test_016_domain_validators_more_than_16_characters(attribute, cmaq_config_dict):
+    cmaq_config_dict[f"domain_{attribute}"] = "a_string_longer_than_16_characters"
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match=f"Length of '{attribute}' must be <= 16"):
         create_cmaq_config_object(cmaq_config_dict)
-    assert error_string in str(exc_info.value)
 
 
 # Parametrized test for happy path scenarios
@@ -226,53 +207,51 @@ def test_019_read_cmaq_json_config(test_input, expected, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "startDate, endDate, test_id",
+    "start_date, end_date, test_id",
     [
-        ("2022-07-01 00:00:00 UTC", "2022-07-01 00:00:00 UTC", "test_same_day"),
-        ("2022-07-01 00:00:00 UTC", "2022-07-02 00:00:00 UTC", "test_next_day"),
-        ("2022-07-01 00:00:00 UTC", "2023-07-01 00:00:00 UTC", "test_next_year"),
+        ("2022-07-01", "2022-07-01", "test_same_day"),
+        ("2022-07-01", "2022-07-02", "test_next_day"),
+        ("2022-07-01", "2023-07-01", "test_next_year"),
     ],
     ids=lambda test_id: test_id,
 )
-def test_020_validator_endDate_after_startDate(startDate, endDate, test_id, cmaq_config_dict):
-    cmaq_config_dict["startDate"] = startDate
-    cmaq_config_dict["endDate"] = endDate
+def test_020_validator_end_date_after_start_date(start_date, end_date, test_id, cmaq_config_dict):
+    cmaq_config_dict["start_date"] = start_date
+    cmaq_config_dict["end_date"] = end_date
 
     cmaq_config_obj = create_cmaq_config_object(cmaq_config_dict)
 
-    assert cmaq_config_obj.start_date
-
-    assert cmaq_config_obj.end_date
+    assert isinstance(cmaq_config_obj.start_date, datetime.date)
+    assert isinstance(cmaq_config_obj.end_date, datetime.date)
 
 
 # Error cases
 @pytest.mark.parametrize(
-    "startDate, endDate, test_id",
+    "start_date, end_date, test_id",
     [
         (
-            "2022-07-02 00:00:00 UTC",
-            "2022-07-01 00:00:00 UTC",
+            "2022-07-02",
+            "2022-07-01",
             "test_error_previous_day",
         ),
         (
-            "2022-08-01 00:00:00 UTC",
-            "2022-07-02 00:00:00 UTC",
+            "2022-08-01",
+            "2022-07-02",
             "test_error_previous_month",
         ),
         (
-            "2024-07-01 00:00:00 UTC",
-            "2023-07-01 00:00:00 UTC",
+            "2024-07-01",
+            "2023-07-01",
             "test_error_previous_year",
         ),
     ],
     ids=lambda test_id: test_id,
 )
-def test_021_validator_endDate_after_startDate_errors(
-    startDate, endDate, test_id, cmaq_config_dict
+def test_021_validator_end_date_after_start_date_errors(
+    start_date, end_date, test_id, cmaq_config_dict
 ):
-    cmaq_config_dict["startDate"] = startDate
-    cmaq_config_dict["endDate"] = endDate
+    cmaq_config_dict["start_date"] = start_date
+    cmaq_config_dict["end_date"] = end_date
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="End date must be after start date."):
         create_cmaq_config_object(cmaq_config_dict)
-    assert str(exc_info.value) == "End date must be after start date.", f"{test_id} failed."

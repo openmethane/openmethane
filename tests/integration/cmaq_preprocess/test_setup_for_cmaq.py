@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from scripts.cmaq_preprocess import setup_for_cmaq
 
-from cmaq_preprocess.read_config_cmaq import load_cmaq_config
+from cmaq_preprocess.read_config_cmaq import load_config_from_env
 
 
 @pytest.fixture
@@ -34,17 +34,19 @@ def test_setup_for_cmaq(
     request,
     data_regression,
     compare_dataset,
+    target_environment,
 ):
-    config = load_cmaq_config(os.path.join(root_dir, "config/cmaq_preprocess/config.docker.json"))
-
     cmaq_dir = Path(tmpdir / "cmaq")
     mcip_dir = Path(tmpdir / "mcip")
     mcip_run_dir = mcip_dir / "2022-07-22" / "d01"
 
     # Override some settings
-    config.met_dir = mcip_dir
-    config.ctm_dir = cmaq_dir
-    config.wrf_dir = wrf_run.parent
+    target_environment("docker-test")
+    config = load_config_from_env(
+        met_dir=mcip_dir,
+        ctm_dir=cmaq_dir,
+        wrf_dir=wrf_run.parent,
+    )
 
     # Run the CMAQ preprocessing scripts
     setup_for_cmaq.setup_for_cmaq(config)

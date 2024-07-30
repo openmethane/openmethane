@@ -5,6 +5,7 @@ ctm_dir: /opt/project/tests/test-data/cmaq
 domain:
   index: 1
   map_projection: LamCon_34S_150E
+  mcip_suffix: aust-test_v1
   name: aust-test
   version: v1
 end_date: 2022-07-22

@@ -10,7 +10,7 @@ from cmaq_preprocess.utils import compress_nc_file, nested_dir, replace_and_writ
 
 
 def prepare_template_bcon_files(
-    date: datetime.datetime,
+    date: datetime.date,
     domain: Domain,
     ctm_dir: pathlib.Path,
     met_dir: pathlib.Path,
@@ -48,7 +48,7 @@ def prepare_template_bcon_files(
         ],
         ["set BC = TEMPLATE", f"set BC = {input_type}"],
         ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
-        ["set CFG      = TEMPLATE", f"set CFG      = {domain.scenario_tag}"],
+        ["set CFG      = TEMPLATE", f"set CFG      = {domain.mcip_suffix}"],
         ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
         ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.name}"],
         [
@@ -57,7 +57,7 @@ def prepare_template_bcon_files(
         ],
         [
             "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
-            f"setenv LAYER_FILE {mcipdir}/METCRO3D_{domain.scenario_tag}",
+            f"setenv LAYER_FILE {mcipdir}/METCRO3D_{domain.mcip_suffix}",
         ],
         ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
         ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
@@ -83,7 +83,7 @@ def prepare_template_bcon_files(
 
 
 def prepare_template_icon_files(
-    date: datetime.datetime,
+    date: datetime.date,
     domain: Domain,
     ctm_dir: pathlib.Path,
     met_dir: pathlib.Path,
@@ -122,7 +122,7 @@ def prepare_template_icon_files(
         ],
         ["set IC = TEMPLATE", f"set IC = {input_type}"],
         ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
-        ["set CFG      = TEMPLATE", f"set CFG      = {domain.scenario_tag}"],
+        ["set CFG      = TEMPLATE", f"set CFG      = {domain.mcip_suffix}"],
         ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
         ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.name}"],
         [
@@ -131,7 +131,7 @@ def prepare_template_icon_files(
         ],
         [
             "setenv LAYER_FILE TEMPLATE/METCRO3D_TEMPLATE",
-            f"setenv LAYER_FILE {mcip_dir}/METCRO3D_{domain.scenario_tag}",
+            f"setenv LAYER_FILE {mcip_dir}/METCRO3D_{domain.mcip_suffix}",
         ],
         ["setenv OUTDIR TEMPLATE", f"setenv OUTDIR {ctm_dir}"],
         ["setenv OUTFILE TEMPLATE", f"setenv OUTFILE {outfile}"],
