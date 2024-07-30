@@ -35,4 +35,4 @@ icon = os.path.join(template_path, "record", "icon_record.nc")
 diurnal = os.path.join(template_path, "diurnal.nc")
 
 # Path to the pre-calculated prior
-prior_path = env.path("PRIOR_PATH")
+prior_file = env.path("PRIOR_FILE")
