@@ -53,7 +53,7 @@ def check_input_met_and_output_folders(
             "METDOT3D",
         ]
         for filetype in mcip_files:
-            matches = mcipdir.glob(f"{filetype}_*")
+            matches = sorted(mcipdir.glob(f"{filetype}_*"))
             if len(matches) == 0:
                 warnings.warn(f"{filetype} file not found in folder {mcipdir} ... ")
                 return False
