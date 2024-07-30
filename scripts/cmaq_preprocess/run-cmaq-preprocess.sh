@@ -8,17 +8,15 @@
 set -Eeuo pipefail
 set -x
 
+source scripts/helpers.sh
+
 # Configuration environment variables
+
+prepareEnvironment
+
 export TARGET=${TARGET:-docker}
 
 SKIP_CAMS_DOWNLOAD=${SKIP_CAMS_DOWNLOAD:-}
-
-echo "Running for target: $TARGET"
-
-echo "Reading .env.${TARGET} file (not overwriting exisiting environment variables)"
-current_env=$(declare -p -x)
-source ".env.$TARGET"
-eval "$current_env"
 
 echo "Environment:"
 env
