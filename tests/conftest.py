@@ -96,7 +96,8 @@ def target_environment(monkeypatch):
         if clear:
             os.environ.clear()
 
-        monkeypatch.setenv("PATH", initial_env["PATH"])
+        if "PATH" in initial_env:
+            monkeypatch.setenv("PATH", initial_env["PATH"])
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
