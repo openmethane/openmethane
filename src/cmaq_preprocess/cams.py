@@ -217,8 +217,8 @@ def interpolate_from_cams_to_cmaq_grid(
             chem_dir = nested_dir(domain, date, ctm_dir)
             do_BCs = domain.index == 1
 
-            outBCON = chem_dir / f"{chem_dir}/BCON.{domain.id}.{domain.name}.{mech}.nc"
-            outICON = chem_dir / f"{chem_dir}/ICON.{domain.id}.{domain.name}.{mech}.nc"
+            outBCON = chem_dir / f"{chem_dir}/BCON.{domain.id}.{domain.mcip_suffix}.{mech}.nc"
+            outICON = chem_dir / f"{chem_dir}/ICON.{domain.id}.{domain.mcip_suffix}.{mech}.nc"
             ##
             if do_BCs and (not os.path.exists(outBCON)):
                 all_files_exist = False
@@ -235,7 +235,7 @@ def interpolate_from_cams_to_cmaq_grid(
         do_ICs = idate == 0
 
         mcip_dir = nested_dir(domain, date, met_dir)
-        chem_dir = nested_dir(domain, date, domain.id)
+        chem_dir = nested_dir(domain, date, ctm_dir)
 
         ## check that the output directory exists - if not, create it
         os.makedirs(chem_dir, exist_ok=True)
@@ -251,8 +251,8 @@ def interpolate_from_cams_to_cmaq_grid(
         bdyFile = mcip_dir / f"GRIDBDY2D_{mcip_suffix}"
         metFile = mcip_dir / f"METCRO3D_{mcip_suffix}"
         srfFile = mcip_dir / f"METCRO2D_{mcip_suffix}"
-        outBCON = chem_dir / f"BCON.{domain.id}.{domain.name}.{mech}.nc"
-        outICON = chem_dir / f"ICON.{domain.id}.{domain.name}.{mech}.nc"
+        outBCON = chem_dir / f"BCON.{domain.id}.{domain.mcip_suffix}.{mech}.nc"
+        outICON = chem_dir / f"ICON.{domain.id}.{domain.mcip_suffix}.{mech}.nc"
 
         if do_BCs:
             if os.path.exists(outBCON):
