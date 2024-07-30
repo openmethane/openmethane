@@ -40,34 +40,36 @@ def to_wrf_filename(domain: str, time: datetime.datetime) -> str:
 
 
 def run_mcip(
-    dates,
+    dates: list[datetime.date],
     domain: Domain,
     met_dir: pathlib.Path,
     wrf_dir: pathlib.Path,
     geo_dir: pathlib.Path,
-    mcip_executable_dir: pathlib.Path,
+    mcip_source_dir: pathlib.Path,
     scripts,
-    compress_output=True,
-    fix_simulation_start_date=True,
-    fix_truelat2=False,
-    truelat2=None,
+    compress_output: bool = True,
+    fix_simulation_start_date: bool = True,
+    truelat2: float | None = None,
     boundary_trim: int = 5,
 ):
-    """Function to run MCIP from python
+    """
+    Run MCIP from python
+
+    MCIP extracts the meteorology data from WRF
+    and processes it into a format that can be read by CMAQ.
 
     Args:
         dates: array of dates to process
-        domains: list of which domains should be run?
+        domain: Domain of interest
         met_dir: base directory for the MCIP output
         wrf_dir: directory containing wrfout_* files
         geo_dir: directory containing geo_em.* files
-        mcip_executable_dir: directory containing the MCIP executable
-        APPL: scenario tag (for MCIP). 16-character maximum. list: one per domain
-        CoordName: Map projection name (for MCIP). 16-character maximum. list: one per domain
-        GridName: Grid name (for MCIP). 16-character maximum. list: one per domain
+        mcip_source_dir: directory containing the MCIP executable
         scripts: dictionary of scripts, including an entry with the key 'mcipRun'
-        compress_output: True/False - compress output using ncks?
-        fix_simulation_start_date: True/False - adjust the SIMULATION_START_DATE attribute in wrfout files?
+        compress_output: Compress output using ncks?
+        fix_simulation_start_date:  Adjust the SIMULATION_START_DATE attribute in wrfout files?
+        truelat2: If not None, modify the value of truelat2 in the WRF output
+            TODO: JL: Check if this is needed anymore
         boundary_trim
             Number of meteorology "boundary" points to remove on each of four horizontal sides
             of the MCIP domain.
@@ -89,11 +91,17 @@ def run_mcip(
         mcip_dir = nested_dir(domain, date, met_dir)
         os.makedirs(mcip_dir, exist_ok=True)
         ##
-        times = [date + datetime.timedelta(hours=h) for h in range(25)]
+        times: list[datetime.datetime] = [date + datetime.timedelta(hours=h) for h in range(25)]
         wrf_files = [
             os.path.join(wrf_dir, yyyymmddhh, to_wrf_filename(domain.id, time)) for time in times
         ]
-        out_paths = [mcip_dir / os.path.basename(WRFfile) for WRFfile in wrf_files]
+
+        # This has to be of type list[str] because of how it is used in the substitution
+        out_paths = [str(mcip_dir / os.path.basename(WRFfile)) for WRFfile in wrf_files]
+
+        if len(out_paths) == 0:
+            raise FileNotFoundError(f"No WRF output found in {wrf_dir / yyyymmddhh}")
+
         for src, dst in zip(wrf_files, out_paths):
             if not os.path.exists(src):
                 raise AssertionError(f"WRF output {src} not found")
@@ -102,7 +110,7 @@ def run_mcip(
         if fix_simulation_start_date:
             fix_wrf_start_dates(out_paths, date)
 
-        if fix_truelat2 and (truelat2 is not None):
+        if truelat2 is not None:
             fix_true_lat(out_paths, truelat2)
 
         ##
@@ -140,7 +148,7 @@ def run_mcip(
                 "set GridName   = TEMPLATE",
                 f"set GridName   = {domain.name}",
             ],
-            ["set ProgDir    = TEMPLATE", f"set ProgDir    = {mcip_executable_dir}"],
+            ["set ProgDir    = TEMPLATE", f"set ProgDir    = {mcip_source_dir}"],
             ["set BTRIM = TEMPLATE", f"set BTRIM = {boundary_trim}"],
         ]
         ##
@@ -166,9 +174,14 @@ def run_mcip(
             os.remove(gridfile)
 
         print("\t\tRun temporary run.mcip script")
-        stdout, stderr = run_command(command_list, verbose=True)
-        if stdout.split("\n")[-2] != "NORMAL TERMINATION":
-            raise RuntimeError("Error from run.mcip ...")
+        try:
+            stdout, stderr = run_command(command_list, verbose=True)
+            if stdout.split("\n")[-2] != "NORMAL TERMINATION":
+                raise RuntimeError("Error from run.mcip ...")
+        except Exception:
+            with open(tmpRunMcipPath) as fh:
+                print(fh.read())
+            raise
         ##
 
         for outPath in out_paths:
@@ -182,21 +195,18 @@ def run_mcip(
                 compress_nc_file(fname)
 
 
-def fix_true_lat(out_paths, truelat2):
+def fix_true_lat(out_paths: list[str], truelat2: float):
     print("\t\tFix up TRUELAT2 attribute with ncatted")
     for outPath in out_paths:
         command = f"ncatted -O -a TRUELAT2,global,m,f,{truelat2} {outPath} {outPath}"
-        print("\t\t\t" + command)
         command_list = command.split(" ")
         ##
-        stdout, stderr = run_command(command_list, verbose=False)
+        stdout, stderr = run_command(command_list, verbose=True)
         if len(stderr) > 0:
-            print("stdout = " + stdout)
-            print("stderr = " + stderr)
             raise RuntimeError("Error from ncatted...")
 
 
-def fix_wrf_start_dates(out_paths, date):
+def fix_wrf_start_dates(out_paths: list[str], date: datetime.date):
     print("\t\tFix up SIMULATION_START_DATE attribute with ncatted")
     wrf_start_time = date.strftime("%Y-%m-%d_%H:%M:%S")
     for outPath in out_paths:
@@ -204,11 +214,8 @@ def fix_wrf_start_dates(out_paths, date):
             f"ncatted -O -a SIMULATION_START_DATE,global,m,c,"
             f"{wrf_start_time} {outPath} {outPath}"
         )
-        print("\t\t\t" + command)
         command_list = command.split(" ")
 
-        stdout, stderr = run_command(command_list, verbose=False)
+        stdout, stderr = run_command(command_list, verbose=True)
         if len(stderr) > 0:
-            print("stdout = " + stdout)
-            print("stderr = " + stderr)
             raise RuntimeError("Error from ncatted...")

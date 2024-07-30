@@ -96,11 +96,11 @@ def target_environment(monkeypatch):
         if clear:
             os.environ.clear()
 
+        monkeypatch.setenv("PATH", initial_env["PATH"])
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
         _reload_params()
-
     yield run
 
     # Reset environment to match the initial environment

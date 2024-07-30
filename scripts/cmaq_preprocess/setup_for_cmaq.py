@@ -60,11 +60,10 @@ def setup_for_cmaq(config: CMAQConfig):
             met_dir=config.met_dir,
             wrf_dir=config.wrf_dir,
             geo_dir=config.geo_dir,
-            mcip_executable_dir=config.mcip_source_dir,
+            mcip_source_dir=config.mcip_source_dir,
             scripts=scripts,
             compress_output=True,
             fix_simulation_start_date=True,
-            fix_truelat2=False,
             truelat2=None,
             boundary_trim=config.boundary_trim,
         )
