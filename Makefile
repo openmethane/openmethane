@@ -46,8 +46,6 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
 		-v ~/.cdsapirc:/root/.cdsapirc \
-		-e CMAQ_PREPROCESS_CONFIG_FILE=config/cmaq_preprocess/config.docker.test.json \
-		-e PRIOR_FILE=/opt/project/tests/test-data/prior/out-om-domain-info.nc \
 		openmethane \
 		bash scripts/run-all.sh
 
