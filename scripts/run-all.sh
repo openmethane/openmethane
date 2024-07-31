@@ -17,7 +17,7 @@ bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 echo "Downloading TROPOMI data for domain"
 SKIP_TROPOMI_DOWNLOAD=${SKIP_TROPOMI_DOWNLOAD:-}
-TROPOMI_DIR="${STORE_DIR}/tropomi"
+TROPOMI_DIR="${STORE_PATH}/tropomi"
 TROPOMI_FETCH_CONFIG_FILE=${TROPOMI_FETCH_CONFIG_FILE:-config/obs_preprocess/config.austtest.json}
 
 # Skip the TROPOMI download if the variable is set to anything other than an empty string
@@ -42,4 +42,4 @@ python runscript.py
 
 echo "Complete"
 
-tree ${STORE_DIR}/archive_Pert
+tree ${STORE_PATH}/archive_Pert
