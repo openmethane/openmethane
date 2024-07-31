@@ -190,6 +190,7 @@ def _run(
     """
 
     out_run_path = out_data_path.parent / f"run.{executable}"
+    out_run_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"Prepare {executable} script")
     replace_and_write(input_script, out_run_path, substitutions)
