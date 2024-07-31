@@ -149,7 +149,7 @@ def run_mcip(
             ],
             [
                 "set GridName   = TEMPLATE",
-                f"set GridName   = {domain.name}",
+                f"set GridName   = {domain.mcip_suffix}",
             ],
             ["set ProgDir    = TEMPLATE", f"set ProgDir    = {mcip_source_dir}"],
             ["set BTRIM = TEMPLATE", f"set BTRIM = {boundary_trim}"],

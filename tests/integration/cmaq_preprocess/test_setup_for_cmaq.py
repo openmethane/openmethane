@@ -54,8 +54,8 @@ def test_setup_for_cmaq(
     assert (cmaq_dir / "template_bcon_profile_CH4only_d01.nc").exists()
     assert (cmaq_dir / "template_icon_profile_CH4only_d01.nc").exists()
 
-    assert (mcip_run_dir / "METCRO2D_220701_aust-test").exists()
-    assert (mcip_run_dir / "METCRO3D_220701_aust-test").exists()
+    assert (mcip_run_dir / "METCRO2D_aust-test_v1").exists()
+    assert (mcip_run_dir / "METCRO3D_aust-test_v1").exists()
 
     # Compare the generated list of files
     data_regression.check(_get_filelisting(cmaq_dir), basename=f"{request.node.name}_cmaq_files")
@@ -95,6 +95,6 @@ def test_setup_for_cmaq(
         basename=f"{request.node.name}_icon",
     )
     compare_dataset(
-        mcip_run_dir / "METCRO3D_220701_aust-test",
+        mcip_run_dir / "METCRO3D_aust-test_v1",
         basename=f"{request.node.name}_metcro3d",
     )

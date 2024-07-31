@@ -1,7 +1,7 @@
 
  &FILENAMES
   file_gd    = "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/GRIDDESC"
-  file_hdr   = "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/mmheader.220701_aust-test"
+  file_hdr   = "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/mmheader.aust-test_v1"
   file_mm    = "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0000Z.nc",
                "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0100Z.nc",
                "/tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0200Z.nc",

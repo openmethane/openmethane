@@ -46,7 +46,7 @@ fwd_xfirst_file: /opt/project/data/run-cmaq/output/XFIRST.<YYYYMMDD>
 grid_cro_2d: /opt/project/data/mcip/<YYYY-MM-DD>/d01/GRIDCRO2D_aust-test_v1
 grid_dot_2d: /opt/project/data/mcip/<YYYY-MM-DD>/d01/GRIDDOT2D_aust-test_v1
 griddesc: /opt/project/data/mcip/<YYYY-MM-DD>/d01/GRIDDESC
-gridname: aust-test
+gridname: aust-test_v1
 ha_rhoj_chk: /opt/project/data/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc
 hadv_chk: /opt/project/data/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc
 icon_file: /opt/project/data/cmaq/<YYYY-MM-DD>/d01/ICON.d01.aust-test_v1.CH4only.nc

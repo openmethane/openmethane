@@ -119,8 +119,10 @@ mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
 emis_path = os.path.join(cmaq_base, "emissions")
 # horizontal grid definition file
+
+_DOMAIN_MCIP_SUFFIX = env.str("DOMAIN_MCIP_SUFFIX", "openmethane")
 griddesc = os.path.join(mcip_grid_path, "GRIDDESC")
-gridname = env.str("DOMAIN_NAME", "openmethane")
+gridname = _DOMAIN_MCIP_SUFFIX
 # gridname = 'W'
 
 # logfile
@@ -152,10 +154,7 @@ bcon_file = env.str("BCON_FILE")
 emis_file = env.str("EMIS_FILE", os.path.join(emis_path, "emis.<YYYY-MM-DD>.nc"))
 force_file = env.str("FORCE_FILE", os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc"))
 
-
-_DOMAIN_MCIP_SUFFIX = env.str("DOMAIN_MCIP_SUFFIX")
-
-# required met data, use unknown #?????
+# required met data files
 grid_dot_2d = os.path.join(mcip_grid_path, f"GRIDDOT2D_{_DOMAIN_MCIP_SUFFIX}")
 grid_cro_2d = os.path.join(mcip_grid_path, f"GRIDCRO2D_{_DOMAIN_MCIP_SUFFIX}")
 met_cro_2d = os.path.join(mcip_met_path, f"METCRO2D_{_DOMAIN_MCIP_SUFFIX}")

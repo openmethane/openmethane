@@ -136,7 +136,7 @@ jobs:
             python scripts/cmaq_preprocess/download_cams_input.py \
             -s 2022-07-22 \
             -e 2022-07-22 \
-            data/cams/cams_eac4_methane.nc
+            data/cams/cams_eac4_methane_${START_DATE}-${END_DATE}.nc
       - name: Run pytest
         run: |
           make fetch-domains
