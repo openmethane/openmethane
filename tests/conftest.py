@@ -96,12 +96,15 @@ def target_environment(monkeypatch):
         if clear:
             os.environ.clear()
 
-        if "PATH" in initial_env:
-            monkeypatch.setenv("PATH", initial_env["PATH"])
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
         _reload_params()
+
+        # Add back the env variables that weren't added during the reload
+        missing_keys = set(initial_env.keys()) - set(os.environ.keys())
+        for k in missing_keys:
+            os.environ[k] = initial_env[k]
 
     yield run
 

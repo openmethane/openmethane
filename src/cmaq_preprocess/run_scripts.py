@@ -50,7 +50,7 @@ def prepare_template_bcon_files(
         ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
         ["set CFG      = TEMPLATE", f"set CFG      = {domain.mcip_suffix}"],
         ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
-        ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.name}"],
+        ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.mcip_suffix}"],
         [
             "setenv GRIDDESC TEMPLATE/GRIDDESC",
             f"setenv GRIDDESC {mcipdir}/GRIDDESC",
@@ -124,7 +124,7 @@ def prepare_template_icon_files(
         ["set DATE = TEMPLATE", f"set DATE = {yyyyjjj}"],
         ["set CFG      = TEMPLATE", f"set CFG      = {domain.mcip_suffix}"],
         ["set MECH     = TEMPLATE", f"set MECH     = {mech}"],
-        ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.name}"],
+        ["setenv GRID_NAME TEMPLATE", f"setenv GRID_NAME {domain.mcip_suffix}"],
         [
             "setenv GRIDDESC TEMPLATE/GRIDDESC",
             f"setenv GRIDDESC {mcip_dir}/GRIDDESC",
@@ -197,7 +197,9 @@ def _run(
     os.chmod(out_run_path, 0o0744)
 
     print(f"Run {executable}")
-    stdout, stderr = run_command([str(out_run_path)], log_prefix=log_prefix, verbose=True)
+    stdout, stderr = run_command(
+        [str(out_run_path)], log_prefix=str(out_data_path.parent / log_prefix), verbose=True
+    )
 
     if stdout.find(f"Program  {executable.upper()} completed successfully") < 0:
         raise RuntimeError(f"failure in {executable}")

@@ -178,7 +178,9 @@ def run_mcip(
 
         print("\t\tRun temporary run.mcip script")
         try:
-            stdout, stderr = run_command(command_list, verbose=True)
+            stdout, stderr = run_command(
+                command_list, log_prefix=str(mcip_dir / "mcip"), verbose=True
+            )
             if stdout.split("\n")[-2] != "NORMAL TERMINATION":
                 raise RuntimeError("Error from run.mcip ...")
         except Exception:
