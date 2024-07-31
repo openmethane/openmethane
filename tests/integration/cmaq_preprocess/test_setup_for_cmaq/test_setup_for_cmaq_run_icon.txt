@@ -41,11 +41,11 @@
 
 #> Horizontal grid definition 
  setenv GRID_NAME aust-test_v1           #> check GRIDDESC file for GRID_NAME options
- setenv GRIDDESC /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/GRIDDESC    #> grid description file 
+ setenv GRIDDESC /tmp/pytest-of-root/pytest-4/test_setup_for_cmaq0/mcip/2022-07-22/d01/GRIDDESC    #> grid description file 
  setenv IOAPI_ISPH 20                     #> GCTP spheroid, use 20 for WRF-based modeling
 
 #> Vertical layer definition
- setenv LAYER_FILE /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/METCRO3D_aust-test_v1 #>METCRO3D file from MCIP
+ setenv LAYER_FILE /tmp/pytest-of-root/pytest-4/test_setup_for_cmaq0/mcip/2022-07-22/d01/METCRO3D_aust-test_v1 #>METCRO3D file from MCIP
 
 #> I/O Controls
  setenv IOAPI_LOG_WRITE F     #> turn on excess WRITE3 logging [ options: T | F ]
@@ -56,7 +56,7 @@
 #> Input/Output Directories
 # =====================================================================
 
- setenv OUTDIR /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/cmaq       #> output file directory
+ setenv OUTDIR /tmp/pytest-of-root/pytest-4/test_setup_for_cmaq0/cmaq       #> output file directory
  setenv OUTFILE template_icon_profile_CH4only_d01.nc      #> output file name
 
 # =====================================================================

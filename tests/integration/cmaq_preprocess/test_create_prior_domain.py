@@ -69,7 +69,7 @@ def test_run(test_data_dir, root_dir, tmp_path, compare_dataset):
             "--name",
             "aust-test",
             "--version",
-            "v1.0.0",
+            "v1",
             "--dot",
             test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
             "--cross",
@@ -78,9 +78,9 @@ def test_run(test_data_dir, root_dir, tmp_path, compare_dataset):
             tmp_path,
         ],
     )
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
 
-    expected_output = tmp_path / "prior_domain_aust-test_v1.0.0.d01.nc"
+    expected_output = tmp_path / "prior_domain_aust-test_v1.d01.nc"
     assert expected_output.exists()
 
     compare_dataset(expected_output)
