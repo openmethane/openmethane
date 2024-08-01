@@ -1,7 +1,7 @@
 
  &FILENAMES
   file_gd    = "/opt/project/data/mcip//2022-07-22/d01/GRIDDESC"
-  file_hdr   = "/opt/project/data/mcip//2022-07-22/d01/mmheader.220701_aust-test"
+  file_hdr   = "/opt/project/data/mcip//2022-07-22/d01/mmheader.aust-test_v1"
   file_mm    = "/opt/project/data/mcip//2022-07-22/d01/WRFOUT_d01_2022-07-22T0000Z.nc",
                "/opt/project/data/mcip//2022-07-22/d01/WRFOUT_d01_2022-07-22T0100Z.nc",
                "/opt/project/data/mcip//2022-07-22/d01/WRFOUT_d01_2022-07-22T0200Z.nc",

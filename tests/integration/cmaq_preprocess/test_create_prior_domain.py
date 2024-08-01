@@ -42,9 +42,9 @@ def test_mocked_run(mock_clean, mock_create, mock_write, test_data_dir, root_dir
             "--version",
             "v1.0.0",
             "--dot",
-            test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_220701_aust-test",
+            test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
             "--cross",
-            test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_220701_aust-test",
+            test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_aust-test_v1",
         ],
     )
     assert result.exit_code == 0
@@ -52,8 +52,8 @@ def test_mocked_run(mock_clean, mock_create, mock_write, test_data_dir, root_dir
     mock_clean.assert_called_once_with(None, None, "aust-test", "v1.0.0")
     mock_create.assert_called_once_with(
         geometry_file=pathlib.Path("/geom/aust-test/v1.0.0") / "geo_em.d01.nc",
-        cross_file=test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_220701_aust-test",
-        dot_file=test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_220701_aust-test",
+        cross_file=test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_aust-test_v1",
+        dot_file=test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
     )
     mock_write.assert_called_once_with(
         mock_create.return_value,
@@ -69,18 +69,18 @@ def test_run(test_data_dir, root_dir, tmp_path, compare_dataset):
             "--name",
             "aust-test",
             "--version",
-            "v1.0.0",
+            "v1",
             "--dot",
-            test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_220701_aust-test",
+            test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
             "--cross",
-            test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_220701_aust-test",
+            test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_aust-test_v1",
             "--output-directory",
             tmp_path,
         ],
     )
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
 
-    expected_output = tmp_path / "prior_domain_aust-test_v1.0.0.d01.nc"
+    expected_output = tmp_path / "prior_domain_aust-test_v1.d01.nc"
     assert expected_output.exists()
 
     compare_dataset(expected_output)
@@ -96,9 +96,9 @@ def test_bad_version(test_data_dir, root_dir, tmp_path, compare_dataset):
             "--version",
             "1.0.0",
             "--dot",
-            test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_220701_aust-test",
+            test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
             "--cross",
-            test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_220701_aust-test",
+            test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_aust-test_v1",
         ],
     )
     assert result.exit_code == 2

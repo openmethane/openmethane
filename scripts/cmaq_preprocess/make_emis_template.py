@@ -132,7 +132,7 @@ def build_tflag_data(current: datetime.date, shape: tuple[int, int, int]) -> NDA
     return times
 
 
-def make_emissions_templates(prior_filename: str, metcro_template: str, emis_template: str):
+def make_emissions_templates(prior_file: str, metcro_template: str, emis_template: str):
     """
     Create emissions template files for CMAQ using the OpenMethane prior data
 
@@ -142,7 +142,7 @@ def make_emissions_templates(prior_filename: str, metcro_template: str, emis_tem
 
     Parameters
     ----------
-    prior_filename
+    prior_file
         Path to the OpenMethane prior file
     metcro_template
         Path to the CMAQ metcro template file
@@ -153,7 +153,7 @@ def make_emissions_templates(prior_filename: str, metcro_template: str, emis_tem
 
         This may contain a date placeholder that will be replaced with the date of the emissions
     """
-    with nc.Dataset(prior_filename, mode="r") as input:
+    with nc.Dataset(prior_file, mode="r") as input:
         prior_dates = nc.num2date(
             input["date"][:], input["date"].getncattr("units"), only_use_cftime_datetimes=False
         )
@@ -225,7 +225,7 @@ def make_emissions_templates(prior_filename: str, metcro_template: str, emis_tem
 
 if __name__ == "__main__":
     make_emissions_templates(
-        prior_filename=template_defn.prior_path,
+        prior_file=template_defn.prior_file,
         metcro_template=cmaq_config.met_cro_3d,
         emis_template=template_defn.emis,
     )

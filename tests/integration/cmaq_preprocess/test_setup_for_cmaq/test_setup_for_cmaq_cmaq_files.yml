@@ -1,5 +1,9 @@
-- 2022-07-22/d01/BCON.d01.openmethane.CH4only.nc
-- 2022-07-22/d01/ICON.d01.openmethane.CH4only.nc
+- 2022-07-22/d01/BCON.d01.aust-test_v1.CH4only.nc
+- 2022-07-22/d01/ICON.d01.aust-test_v1.CH4only.nc
+- bcon-template.stderr
+- bcon-template.stdout
+- icon-template.stderr
+- icon-template.stdout
 - run.bcon
 - run.icon
 - template_bcon_profile_CH4only_d01.nc

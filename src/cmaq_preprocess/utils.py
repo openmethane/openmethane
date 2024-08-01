@@ -1,11 +1,14 @@
 """Utility functions used by a number of different functions"""
 
 import copy
+import datetime
 import os
 import pathlib
 import subprocess
 
 import numpy
+
+from cmaq_preprocess.read_config_cmaq import Domain
 
 
 def deg2rad(deg):
@@ -22,8 +25,8 @@ def deg2rad(deg):
     return deg * numpy.pi / 180.0
 
 
-def getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2):
-    """Calculate the distance between points based on the latides and longitudes
+def get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2):
+    """Calculate the distance between points based on the latitudes and longitudes
 
     Distances between multiple pairs of points can be calculated, so
     long as point 1 is a one value and point 2 is given as
@@ -168,3 +171,24 @@ def run_command(
         print(f"stderr: {stderr}")
 
     return stdout, stderr
+
+
+def nested_dir(domain: Domain, date: datetime.date, root_dir: pathlib.Path) -> pathlib.Path:
+    """
+    Get the nested directory for a given domain and date
+
+    Parameters
+    ----------
+    domain
+        Domain of interest
+    date
+        Date of interest
+    root_dir
+        Root directory for the nested directory
+
+    Returns
+    -------
+        Nested path inside root_dir
+
+    """
+    return root_dir / date.strftime("%Y-%m-%d") / domain.id

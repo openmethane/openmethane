@@ -72,7 +72,7 @@ def clean_env(env_dict):
         try:
             del os.environ[name]
         except KeyError:
-            logger.warning("environment variable {name} not found")
+            logger.warning(f"environment variable {name} not found")
 
 
 def setup_run():

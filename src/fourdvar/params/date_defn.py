@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from ._env import env
+from fourdvar.env import env
 
 # start date in YYYY-MM-DD format
 start_date = env.date("START_DATE", "2022-07-01")

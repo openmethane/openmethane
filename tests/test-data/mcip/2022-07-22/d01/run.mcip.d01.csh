@@ -114,7 +114,7 @@
 #   WorkDir    = Working Directory for Fortran links and namelist
 #-----------------------------------------------------------------------
 
-set APPL       = 220701_aust-test
+set APPL       = aust-test_v1
 set CoordName  = LamCon_34S_150E    # 16-character maximum
 set GridName   = openmethane         # 16-character maximum
 

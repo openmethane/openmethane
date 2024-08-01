@@ -14,7 +14,6 @@
 source load_p4d_modules.sh
 
 export TARGET=nci-test
-export STORE_DIR=/scratch/q90/pjr563/openmethane-test
-export CMAQ_PREPROCESS_CONFIG_FILE=config/cmaq_preprocess/config.nci.test.json
+export STORE_PATH=/scratch/q90/pjr563/openmethane-test
 
 bash scripts/run-all.sh

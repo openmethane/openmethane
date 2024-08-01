@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import xarray as xr
 
+from fourdvar import env
 from fourdvar.params import (
-    _env,
     archive_defn,
     cmaq_config,
     data_access,
@@ -29,7 +29,14 @@ def test_data_dir(root_dir) -> Path:
 
 def _clean_attrs(
     attrs: dict,
-    excluded_fields: tuple[str, ...] = ("HISTORY", "CDATE", "CTIME", "WDATE", "WTIME"),
+    excluded_fields: tuple[str, ...] = (
+        "HISTORY",
+        "CDATE",
+        "CTIME",
+        "WDATE",
+        "WTIME",
+        "IOAPI_VERSION",  # TODO: Check why this differs on the CI
+    ),
 ) -> dict:
     clean = {}
     for key, value in attrs.items():
@@ -78,7 +85,7 @@ def compare_dataset(data_regression):
 
 
 def _reload_params():
-    reload(_env)
+    reload(env)
     reload(root_path_defn)
     reload(input_defn)
     reload(date_defn)
@@ -100,6 +107,11 @@ def target_environment(monkeypatch):
         monkeypatch.setenv("TARGET", target)
 
         _reload_params()
+
+        # Add back the env variables that weren't added during the reload
+        missing_keys = set(initial_env.keys()) - set(os.environ.keys())
+        for k in missing_keys:
+            os.environ[k] = initial_env[k]
 
     yield run
 

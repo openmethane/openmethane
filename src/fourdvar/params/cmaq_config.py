@@ -16,7 +16,7 @@
 import logging
 import os
 
-from fourdvar.params._env import env
+from fourdvar.env import env
 from fourdvar.params.root_path_defn import store_path
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ tstep = [1, 0, 0]  # output timestep [hours, minutes, seconds]
 
 cmaq_base = os.path.join(store_path, "run-cmaq")
 output_path = os.path.join(cmaq_base, "output")
-mcip_output_path = env.str("MCIP_OUTPUT_PATH")
+mcip_output_path = env.str("MET_DIR")
 
 if use_jobfs is True:
     chk_path = os.environ.get("PBS_JOBFS", None)
@@ -119,8 +119,10 @@ mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
 emis_path = os.path.join(cmaq_base, "emissions")
 # horizontal grid definition file
+
+_DOMAIN_MCIP_SUFFIX = env.str("DOMAIN_MCIP_SUFFIX", "openmethane")
 griddesc = os.path.join(mcip_grid_path, "GRIDDESC")
-gridname = env.str("GRID_NAME", "openmethane")
+gridname = _DOMAIN_MCIP_SUFFIX
 # gridname = 'W'
 
 # logfile
@@ -152,16 +154,13 @@ bcon_file = env.str("BCON_FILE")
 emis_file = env.str("EMIS_FILE", os.path.join(emis_path, "emis.<YYYY-MM-DD>.nc"))
 force_file = env.str("FORCE_FILE", os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc"))
 
-
-_MCIP_DOMAIN = os.environ.get("MCIP_DOMAIN", "2")
-
-# required met data, use unknown #?????
-grid_dot_2d = os.path.join(mcip_grid_path, f"GRIDDOT2D_{_MCIP_DOMAIN}")
-grid_cro_2d = os.path.join(mcip_grid_path, f"GRIDCRO2D_{_MCIP_DOMAIN}")
-met_cro_2d = os.path.join(mcip_met_path, f"METCRO2D_{_MCIP_DOMAIN}")
-met_cro_3d = os.path.join(mcip_met_path, f"METCRO3D_{_MCIP_DOMAIN}")
-met_dot_3d = os.path.join(mcip_met_path, f"METDOT3D_{_MCIP_DOMAIN}")
-met_bdy_3d = os.path.join(mcip_met_path, f"METBDY3D_{_MCIP_DOMAIN}")
+# required met data files
+grid_dot_2d = os.path.join(mcip_grid_path, f"GRIDDOT2D_{_DOMAIN_MCIP_SUFFIX}")
+grid_cro_2d = os.path.join(mcip_grid_path, f"GRIDCRO2D_{_DOMAIN_MCIP_SUFFIX}")
+met_cro_2d = os.path.join(mcip_met_path, f"METCRO2D_{_DOMAIN_MCIP_SUFFIX}")
+met_cro_3d = os.path.join(mcip_met_path, f"METCRO3D_{_DOMAIN_MCIP_SUFFIX}")
+met_dot_3d = os.path.join(mcip_met_path, f"METDOT3D_{_DOMAIN_MCIP_SUFFIX}")
+met_bdy_3d = os.path.join(mcip_met_path, f"METBDY3D_{_DOMAIN_MCIP_SUFFIX}")
 layerfile = met_cro_3d
 depv_trac = met_cro_2d
 xj_data = os.path.join(jproc_path, "JTABLE_<YYYYDDD>")

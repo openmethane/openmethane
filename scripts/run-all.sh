@@ -6,22 +6,20 @@
 
 set -Eeuo pipefail
 
+# Helper utilities
+source scripts/helpers.sh
+
 # Configuration environment variables
-SKIP_TROPOMI_DOWNLOAD=${SKIP_TROPOMI_DOWNLOAD:-}
-STORE_DIR=${STORE_DIR:-data}
-TROPOMI_DIR="${STORE_DIR}/tropomi"
-TROPOMI_FETCH_CONFIG_FILE=${TROPOMI_FETCH_CONFIG_FILE:-config/obs_preprocess/config.austtest.json}
-
-export TARGET=${TARGET:-docker}
-export START_DATE=${START_DATE:-2022-07-22}
-export END_DATE=${END_DATE:-2022-07-22}
-
-echo "Running for target: $TARGET"
+prepareEnvironment
 
 echo "Run the CMAQ preprocessing step"
 bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 echo "Downloading TROPOMI data for domain"
+SKIP_TROPOMI_DOWNLOAD=${SKIP_TROPOMI_DOWNLOAD:-}
+TROPOMI_DIR="${STORE_PATH}/tropomi"
+TROPOMI_FETCH_CONFIG_FILE=${TROPOMI_FETCH_CONFIG_FILE:-config/obs_preprocess/config.austtest.json}
+
 # Skip the TROPOMI download if the variable is set to anything other than an empty string
 if [[ -z "${SKIP_TROPOMI_DOWNLOAD}" ]]; then
   mkdir -p $TROPOMI_DIR
@@ -44,4 +42,4 @@ python runscript.py
 
 echo "Complete"
 
-tree ${STORE_DIR}/archive_Pert
+tree ${STORE_PATH}/archive_Pert

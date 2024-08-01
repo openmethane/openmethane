@@ -46,16 +46,14 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
 		-v ~/.cdsapirc:/root/.cdsapirc \
-		-e CMAQ_PREPROCESS_CONFIG_FILE=config/cmaq_preprocess/config.docker.test.json \
-		-e PRIOR_PATH=/opt/project/tests/test-data/prior/out-om-domain-info.nc \
 		openmethane \
 		bash scripts/run-all.sh
 
 .PHONY: fetch-domains
 fetch-domains:  ## Fetch the latest WRF geometry domain data from setup-wrf
-	mkdir -p data/domains/aust10km/v1.0.0 data/domains/aust-test/v1.0.0
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1.0.0/geo_em.d01.nc
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/v1.0.0/geo_em.d01.nc
+	mkdir -p data/domains/aust10km/v1 data/domains/aust-test/v1
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1/geo_em.d01.nc
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/v1/geo_em.d01.nc
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket

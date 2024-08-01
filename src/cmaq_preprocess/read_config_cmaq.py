@@ -1,12 +1,40 @@
 import datetime
+import pathlib
+import typing
 
-from attrs import define, field
+import attrs.validators
+from attrs import define, field, frozen
 
-from cmaq_preprocess.config_read_functions import (
-    boolean_converter,
-    load_json,
-    process_date_string,
-)
+from fourdvar.env import create_env
+
+
+def validate_end_date(instance, attribute, value):
+    if value < instance.start_date:
+        raise ValueError("End date must be after start date.")
+
+
+def process_date_string(value) -> datetime.date:
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    elif isinstance(value, datetime.date):
+        return value
+    elif isinstance(value, str):
+        return datetime.date.fromisoformat(value)
+    else:
+        raise TypeError(f"Cannot process {value} as a date. {type(value)}")
+
+
+@frozen
+class Domain:
+    index: int
+    name: str = field(validator=attrs.validators.max_len(16))
+    version: str
+    map_projection: str = field(validator=attrs.validators.max_len(16))
+    mcip_suffix: str = field(validator=attrs.validators.max_len(16))
+
+    @property
+    def id(self):
+        return f"d{self.index:02}"
 
 
 @define
@@ -15,44 +43,57 @@ class CMAQConfig:
     Configuration used to generate the CMAQ setup and run scripts.
     """
 
-    CMAQdir: str
+    cmaq_source_dir: pathlib.Path
     """Base directory for the CMAQ model"""
-    MCIPdir: str
+    mcip_source_dir: pathlib.Path
     """Directory containing the MCIP executable"""
-    metDir: str
+    met_dir: pathlib.Path
     """
     Base directory for the MCIP output.
 
     Convention for MCIP output is that we have data organised by day and domain,
      eg metDir/2016-11-29/d03"""
-    ctmDir: str
+    ctm_dir: pathlib.Path
     """
-    Base directory for the CCTM inputs and outputs. 
-    
+    Base directory for the CCTM inputs and outputs.
+
     same convention for the CMAQ output as for the MCIP output, except with ctmDir"""
-    wrfDir: str
+    wrf_dir: pathlib.Path
     """directory containing wrfout_* files, convention for WRF output,
      is wrfDir/2016112900/wrfout_d03_*"""
-    geoDir: str
+    geo_dir: pathlib.Path
     """directory containing geo_em.* files"""
-    inputCAMSFile: str
-    """Filepath to CAMS file."""
-    domains: list[str]
-    """which domains should be run?"""
-    run: str
-    # TODO: Clarify what is meant by *short* - longer!
-    """name of the simulation, appears in some filenames (keep this *short* - longer)"""
-    startDate: datetime.datetime = field(converter=process_date_string)
-    """this is the START of the FIRST day, use the format
-    2022-07-01 00:00:00 UTC (time zone optional)"""
-    endDate: datetime.datetime = field(converter=process_date_string)
-    """this is the START of the LAST day, use the format
-    2022-07-01 00:00:00 UTC (time zone optional)"""
+    input_cams_file: pathlib.Path
+    """Filepath to CAMS file.
 
-    @endDate.validator
-    def check_endDate(self, attribute, value):
-        if value < self.startDate:
-            raise ValueError("End date must be after start date.")
+    This file can be downloaded using `scripts/cmaq_preprocess/download_cams_input.py`.
+    """
+    start_date: datetime.date = field(
+        converter=process_date_string,
+        validator=attrs.validators.instance_of(datetime.date),
+    )
+    """
+    Start of the first day
+
+    Use ISO8061 formatted dates, e.g. 2022-07-22. All runs start at 00:00:00 UTC.
+    """
+    end_date: datetime.date = field(
+        converter=process_date_string,
+        validator=[
+            attrs.validators.instance_of(datetime.date),
+            validate_end_date,
+        ],
+    )
+    """
+    Last date to run
+
+    Use ISO8061 formatted dates, e.g. 2022-07-22. All runs start at 00:00:00 UTC.
+    """
+
+    domain: Domain
+    """
+    Information about the domain
+    """
 
     mech: str = field()
     """name of chemical mechanism to appear in filenames"""
@@ -78,40 +119,14 @@ class CMAQConfig:
                 f"Configuration value for {attribute.name} must be one of {chemical_mechanisms}"
             )
 
-    prepareICandBC: bool = field(converter=boolean_converter)
+    prepare_ic_and_bc: bool
     """prepare the initial and boundary conditions from global CAMS output"""
-    forceUpdate: bool = field(converter=boolean_converter)
+    force_update: bool
     """
     Force the recreation of output
 
     If true, then any existing MCIP, IC and BC output is ignored.
     """
-    scenarioTag: list[str] = field()
-    """MCIP option: scenario tag. 16-character maximum"""
-
-    @scenarioTag.validator
-    def check_scenarioTag(self, attribute, value):
-        if len(value[0]) > 16:
-            raise ValueError(
-                f"16-character maximum length for configuration value {attribute.name}"
-            )
-        if not isinstance(value, list):
-            raise ValueError(f"Configuration value for {attribute.name} must be a list")
-
-    mapProjName: list[str]
-    """MCIP option: Map projection name. """
-    gridName: list[str] = field()
-    """MCIP option: Grid name. 16-character maximum"""
-
-    @gridName.validator
-    def check_gridName(self, attribute, value):
-        if len(value[0]) > 16:
-            raise ValueError(
-                f"16-character maximum length for configuration value {attribute.name}"
-            )
-        if not isinstance(value, list):
-            raise ValueError(f"Configuration value for {attribute.name} must be a list")
-
     scripts: dict[str, dict[str, str]] = field()
     """This is a dictionary with paths to each of the run-scripts. Elements of
     the dictionary should themselves be dictionaries, with the key 'path' and
@@ -137,11 +152,20 @@ class CMAQConfig:
                     f"{key} in configuration value {attribute.name} must have the key 'path'"
                 )
 
-    CAMSToCmaqBiasCorrect: float
-    """Pre-set is (1.838 - 1.771)"""
-    # TODO: Add description for CAMSToCmaqBiasCorrect?
-    boundary_trim: int = 5
-    """Number of grid cells to trim from the boundary of the domain"""
+    cams_to_cmaq_bias: float
+    """
+    Bias between CAMS and CMAQ
+
+    TODO: Create a script to calculate this
+
+    Pre-set is (1.838 - 1.771)
+    """
+    boundary_trim: int
+    """
+    Number of grid cells to trim from the boundary of the domain
+
+    5 is a good start for larger domains.
+    """
 
 
 def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfig:
@@ -158,23 +182,60 @@ def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfi
     CMAQConfig
         An instance of CMAQConfig initialized with the provided configuration.
     """
-    return CMAQConfig(**config)
+    domain = Domain(
+        index=config.pop("domain_index", 1),
+        name=config.pop("domain_name"),
+        version=config.pop("domain_version"),
+        map_projection=config.pop("domain_map_projection", "LamCon_34S_150E"),
+        mcip_suffix=config.pop("domain_mcip_suffix", "aust-test_v1"),
+    )
+
+    return CMAQConfig(domain=domain, **config)
 
 
-def load_cmaq_config(filepath: str) -> CMAQConfig:
+def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
     """
-    Load a CMAQ configuration from a JSON file and create a CMAQConfig object.
+    Load the configuration from the environment variables
 
-    Parameters
-    ----------
-    filepath
-        The path to the JSON file containing the CMAQ configuration.
+    This also loads environment variables from a local `.env` file.
 
     Returns
     -------
-    CMAQConfig
-        An instance of CMAQConfig initialized with the loaded configuration.
+        Application configuration
     """
-    config = load_json(filepath)
+    # Loads the .env file as determined by TARGET
+    env = create_env()
 
-    return create_cmaq_config_object(config)
+    root_dir = env.path("ROOT_DIR", pathlib.Path(__file__).parents[2])
+
+    domain = Domain(
+        index=env.int("DOMAIN_INDEX", 1),
+        name=env.str("DOMAIN_NAME"),
+        version=env.str("DOMAIN_VERSION"),
+        map_projection=env.str("DOMAIN_MAP_PROJECTION", "LamCon_34S_150E"),
+        mcip_suffix=env.str("DOMAIN_MCIP_SUFFIX", "LamCon_34S_150E"),
+    )
+
+    options = dict(
+        prepare_ic_and_bc=True,
+        force_update=True,
+        cmaq_source_dir=env.path("CMAQ_SOURCE_DIR"),
+        mcip_source_dir=env.path("MCIP_SOURCE_DIR"),
+        met_dir=env.path("MET_DIR"),
+        ctm_dir=env.path("CTM_DIR"),
+        wrf_dir=env.path("WRF_DIR"),
+        geo_dir=env.path("GEO_DIR"),
+        input_cams_file=env.path("CAMS_FILE"),
+        start_date=env.date("START_DATE"),
+        end_date=env.date("END_DATE"),
+        mech="CH4only",
+        scripts={
+            "mcipRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.mcip"},
+            "bconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.bcon"},
+            "iconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.icon"},
+        },
+        cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 1.838 - 1.771),
+        boundary_trim=env.int("BOUNDARY_TRIM", 5),
+    )
+
+    return CMAQConfig(domain=domain, **{**options, **overrides})

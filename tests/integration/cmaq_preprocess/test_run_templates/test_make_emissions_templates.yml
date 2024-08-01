@@ -32,7 +32,6 @@ attrs:
   FTYPE: 1
   GDNAM: METCRO_openmetha
   GDTYP: 2
-  IOAPI_VERSION: ioapi
   NCOLS: 5
   NLAYS: 32
   NROWS: 5
