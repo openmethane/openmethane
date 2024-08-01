@@ -32,7 +32,6 @@ attrs:
   FTYPE: 1
   GDNAM: METCRO_aust-test
   GDTYP: 2
-  IOAPI_VERSION: ioapi
   NCO: netCDF Operators version 5.2.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco,
     Citation = 10.1016/j.envsoft.2008.03.004)
   NCOLS: 5

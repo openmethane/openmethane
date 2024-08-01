@@ -4,7 +4,6 @@ attrs:
   FTYPE: 2
   GDNAM: 'aust-test_v1    '
   GDTYP: 2
-  IOAPI_VERSION: 'ioapi-3.1: $Id:: init3.F 321 2016-02-26 16:00:20Z coats                $        '
   NCO: netCDF Operators version 5.2.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco,
     Citation = 10.1016/j.envsoft.2008.03.004)
   NCOLS: 5

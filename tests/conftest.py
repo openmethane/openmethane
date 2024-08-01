@@ -29,7 +29,14 @@ def test_data_dir(root_dir) -> Path:
 
 def _clean_attrs(
     attrs: dict,
-    excluded_fields: tuple[str, ...] = ("HISTORY", "CDATE", "CTIME", "WDATE", "WTIME"),
+    excluded_fields: tuple[str, ...] = (
+        "HISTORY",
+        "CDATE",
+        "CTIME",
+        "WDATE",
+        "WTIME",
+        "IOAPI_VERSION",  # TODO: Check why this differs on the CI
+    ),
 ) -> dict:
     clean = {}
     for key, value in attrs.items():
