@@ -106,6 +106,9 @@ jobs:
           key: cams
       - name: Download CAMS input data
         if: steps.cache-cams.outputs.cache-hit != 'true'
+        env:
+          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
+          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
         run: |
           cd /opt/project
           # This can take a few minutes as the CAMS data is stored on tape
@@ -114,16 +117,17 @@ jobs:
             -e 2022-07-22 \
             data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
       - name: Run pytest
-        run: |
-          cd /opt/project
-          make fetch-domains
-          env
-          python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
+        run: |
+          cd /opt/project
+          make fetch-domains
+          env
+          python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
+
   test-e2e:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -138,10 +142,6 @@ jobs:
         password: ${{ secrets.github_token }}
     steps:
       - name: Run e2e test
-        run: |
-          cd /opt/project
-          make fetch-domains
-          bash scripts/run-all.sh
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
@@ -149,6 +149,11 @@ jobs:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           # Uses the local checked-in WRF and prior data
           TARGET: docker-test
+        run: |
+          cd /opt/project
+          make fetch-domains
+          bash scripts/run-all.sh
+
       - name: Upload CMAQ artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
