@@ -1,6 +1,8 @@
 ifneq (, $(shell command -v poetry))
+	RUN_CMD := poetry run
 	PYTHON_CMD := poetry run python
 else
+	RUN_CMD :=
 	PYTHON_CMD := python
 endif
 
@@ -76,3 +78,7 @@ prepare-templates:  ## Prepare the template files for a CMAQ run
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_emis_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_template.py
 	$(PYTHON_CMD) scripts/cmaq_preprocess/make_prior.py
+
+.PHONY: changelog-draft
+changelog-draft:  ## compile a draft of the next changelog
+	$(RUN_CMD) towncrier build --draft
