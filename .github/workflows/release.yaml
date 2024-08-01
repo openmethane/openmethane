@@ -40,7 +40,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body_path: ".github/release_template.md"
-          token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          token: "${{ secrets.PAT }}"
           draft: true
           files: |
             dist/{{ project_name_python }}-${{ env.PROJECT_VERSION }}-py3-none-any.whl
