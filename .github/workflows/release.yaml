@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  draft-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v4
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Add version to environment
+        run: |
+          poetry install --all-extras
+          PROJECT_VERSION=$(poetry version --short)
+          echo "PROJECT_VERSION=$PROJECT_VERSION" >> $GITHUB_ENV
+      - name: Run tests
+        run: |
+          poetry run pytest -r a -v src tests --doctest-modules
+      - name: Build package
+        run: |
+          poetry build --no-interaction
+      - name: Generate Release Notes
+        run: |
+          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty='format:* %h %s' --no-merges >> ".github/release_template.md"
+      - name: Create Release Draft
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: ".github/release_template.md"
+          token: "${{ secrets.PAT }}"
+          draft: true
+          files: |
+            dist/{{ project_name_python }}-${{ env.PROJECT_VERSION }}-py3-none-any.whl
+            dist/{{ project_name_python }}-${{ env.PROJECT_VERSION }}.tar.gz

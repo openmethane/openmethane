@@ -78,7 +78,8 @@ COPY --from=ghcr.io/openmethane/cmaq:5.0.2 /opt/cmaq /opt/cmaq
 # Install the local package in editable mode
 # Requires scaffolding the src directories
 COPY pyproject.toml poetry.lock README.md ./
-RUN mkdir -p src/fourdvar src/obs_preprocess && touch src/fourdvar/__init__.py src/obs_preprocess/__init__.py
+RUN mkdir -p src/fourdvar src/obs_preprocess src/cmaq_preprocess && \
+    touch src/fourdvar/__init__.py src/obs_preprocess/__init__.py src/cmaq_preprocess/__init__.py
 RUN pip install -e .
 
 # Copy in the rest of the project
