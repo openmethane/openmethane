@@ -35,10 +35,15 @@ Initially we are using the semver versioning scheme of `MAJOR.MINOR.PATCH`:
 This only needs to be run once for each new domain/modification.
 """
 
+import os
 import pathlib
 
 import click
 import xarray as xr
+
+# implicitly loads the .env.{TARGET} file
+from fourdvar.params import cmaq_config, date_defn
+from fourdvar.util.date_handle import replace_date
 
 root_dir = pathlib.Path(__file__).parents[2]
 
@@ -126,10 +131,7 @@ def validate_mcip_path(required_content: str):
 
 
 def clean_directories(geometry_directory, output_directory, name, version):
-    if geometry_directory is None:
-        geometry_directory = root_dir / "data" / "domains" / name / version
-    else:
-        geometry_directory = pathlib.Path(geometry_directory)
+    geometry_directory = pathlib.Path(geometry_directory)
 
     if output_directory is None:
         output_directory = geometry_directory
@@ -149,12 +151,14 @@ def clean_directories(geometry_directory, output_directory, name, version):
     type=str,
     required=True,
     help="Name of the WRF domain",
+    default=lambda: os.environ.get("DOMAIN_NAME"),
 )
 @click.option(
     "--version",
     type=str,
     required=True,
     help="Version identifier of the WRF domain. Must start with v",
+    default=lambda: os.environ.get("DOMAIN_VERSION"),
 )
 @click.option(
     "--domain-index",
@@ -168,6 +172,7 @@ def clean_directories(geometry_directory, output_directory, name, version):
     callback=validate_mcip_path("GRIDCRO2D"),
     required=True,
     help="Path to the GRIDCRO2D file for the domain",
+    default=lambda: replace_date(cmaq_config.grid_cro_2d, date_defn.start_date),
 )
 @click.option(
     "--dot",
@@ -175,13 +180,14 @@ def clean_directories(geometry_directory, output_directory, name, version):
     callback=validate_mcip_path("GRIDDOT2D"),
     required=True,
     help="Path to the GRIDDOT2D file for the domain",
+    default=lambda: replace_date(cmaq_config.grid_dot_2d, date_defn.start_date),
 )
 @click.option(
     "--geometry-directory",
     help="Override the geometry directory. Assumes that there is a `geo_em.d{domain_index:02}.nc`"
     " file present in the directory",
-    default=None,
     type=click.Path(dir_okay=True, file_okay=False),
+    default=lambda: os.environ.get("GEO_DIR"),
 )
 @click.option(
     "--output-directory",
@@ -195,7 +201,7 @@ def main(
     domain_index: int,
     cross: pathlib.Path,
     dot: pathlib.Path,
-    geometry_directory: str | None,
+    geometry_directory: str,
     output_directory: str | None,
 ):
     """

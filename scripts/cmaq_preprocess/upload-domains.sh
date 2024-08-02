@@ -31,7 +31,15 @@ echo $res
 
 if [[ -n "$res" ]]; then
   echo
-  read -p 'Upload (y/N): '  -n 1 -r
+
+  if [[ -z "${FORCE:-}" ]]; then
+    # Prompt for user input if FORCE is empty or not set
+    read -p 'Upload (y/N): '  -n 1 -r
+  else
+    # Force uploading if FORCE variable has non-zero length
+    echo "Forcing upload because FORCE is set"
+    REPLY='y'
+  fi
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Uploading data to $TARGET_DIR"
