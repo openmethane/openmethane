@@ -7,7 +7,7 @@
 
 set -Eeuo pipefail
 
-DOMAIN_DIR="data/domains"
+DOMAIN_DIR=${DOMAIN_DIR:-"data/domains"}
 TARGET_DIR="s3://openmethane-prior/domains"
 
 COMMON_S3_ARGS="--endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com --profile cf-om-prior-r2"
