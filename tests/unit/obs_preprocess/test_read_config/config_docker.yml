@@ -10,7 +10,7 @@ domain:
   version: v1
 end_date: 2022-07-22
 force_update: true
-geo_dir: /opt/project/data/domains/aust-test/v1
+geo_dir: /opt/project/data/wrf/aust-test
 input_cams_file: /opt/project/data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
 mcip_source_dir: /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
 mech: CH4only
