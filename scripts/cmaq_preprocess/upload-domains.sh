@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Upload domain information to the CloudFlare bucket
 #
-# This is assumed to run from the root directory.
-# This requires credentials for the Bucket.
+# This script checks if the local domain data is up to date with the remote S3 bucket.
+# If not, it prompts the user to upload the updated data to the S3 bucket.
+# This requires credentials for the Bucket and is assumed to have been run from the root directory
 #
 
 set -Eeuo pipefail
@@ -13,6 +14,7 @@ source scripts/environment.sh
 GEO_DIR=${GEO_DIR:-"data/domains"}
 TARGET_DIR="s3://openmethane-prior/domains"
 
+# cf-om-prior-r2 profile is the preferred name for the profile
 AWS_PROFILE=${AWS_PROFILE:-cf-om-prior-r2}
 AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
 
