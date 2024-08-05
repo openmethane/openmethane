@@ -128,7 +128,7 @@ def target_environment(monkeypatch):
 
         for key in extra_variables:
             if key in initial_env:
-                monkeypatch.setenv(key, initial_env[key])
+                os.environ[key] = initial_env[key]
 
         # Use some common params to ensure the tests run as expected
         defaults = default_variables.get(target, {})
