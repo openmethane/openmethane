@@ -127,7 +127,7 @@ or use the following script to run the scripts in the correct order:
 ```shell
 bash scripts/run-all.sh
 ```
-### Download all domain data from the Cloudflar
+### Download all domain data from the Cloudflare
 
 The `scripts/upload-domains.sh` script checks if the local directory domain is 
 synchronised with the target directory domain. If the local is not up to date
