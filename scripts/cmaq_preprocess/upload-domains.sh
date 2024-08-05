@@ -6,27 +6,30 @@
 #
 
 set -Eeuo pipefail
+set -x
 
-DOMAIN_DIR=${DOMAIN_DIR:-"data/domains"}
+source scripts/environment.sh
+
+GEO_DIR=${GEO_DIR:-"data/domains"}
 TARGET_DIR="s3://openmethane-prior/domains"
 
 COMMON_S3_ARGS="--endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com --profile cf-om-prior-r2"
 
 echo "Checking if up to date"
-res=$(aws s3 sync $TARGET_DIR $DOMAIN_DIR --dryrun $COMMON_S3_ARGS)
+res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun $COMMON_S3_ARGS)
 
 if [[ -n "$res" ]]; then
   echo $res
   echo
-  echo "Local $DOMAIN_DIR is not up to date with $TARGET_DIR"
+  echo "Local $GEO_DIR is not up to date with $TARGET_DIR"
   echo "Run 'make sync-domains-from-cf'"
   exit 1
 else
-  echo "Local $DOMAIN_DIR is up to date with $TARGET_DIR"
+  echo "Local $GEO_DIR is up to date with $TARGET_DIR"
 fi
 
 echo "Result from a dryrun"
-res=$(aws s3 sync $DOMAIN_DIR $TARGET_DIR --dryrun $COMMON_S3_ARGS)
+res=$(aws s3 sync $GEO_DIR $TARGET_DIR --dryrun $COMMON_S3_ARGS)
 echo $res
 
 if [[ -n "$res" ]]; then
@@ -43,7 +46,7 @@ if [[ -n "$res" ]]; then
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Uploading data to $TARGET_DIR"
-      aws s3 sync $DOMAIN_DIR $TARGET_DIR $COMMON_S3_ARGS
+      aws s3 sync $GEO_DIR $TARGET_DIR $COMMON_S3_ARGS
   else
     echo "Aborted"
     exit 1
