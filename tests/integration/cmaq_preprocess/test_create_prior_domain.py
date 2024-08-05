@@ -7,10 +7,12 @@ from scripts.cmaq_preprocess.create_prior_domain import clean_directories
 from scripts.cmaq_preprocess.create_prior_domain import main as create_prior_domain
 
 
-def test_empty():
+def test_empty(monkeypatch):
+    monkeypatch.delenv("DOMAIN_NAME")
+
     runner = CliRunner()
     result = runner.invoke(create_prior_domain, [])
-    assert result.exit_code == 2
+    assert result.exit_code == 2, result.output
     expected_output = """Usage: create_prior_domain [OPTIONS]
 Try 'create_prior_domain --help' for help.
 """

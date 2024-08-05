@@ -84,8 +84,14 @@ def compare_dataset(data_regression):
     return compare
 
 
-def _reload_params():
+def _reload_params(initial_env: dict[str, str]):
     reload(env)
+
+    # Add back the env variables that weren't added during the reload
+    missing_keys = set(initial_env.keys()) - set(os.environ.keys())
+    for k in missing_keys:
+        os.environ[k] = initial_env[k]
+
     reload(root_path_defn)
     reload(input_defn)
     reload(date_defn)
@@ -106,12 +112,7 @@ def target_environment(monkeypatch):
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
-        _reload_params()
-
-        # Add back the env variables that weren't added during the reload
-        missing_keys = set(initial_env.keys()) - set(os.environ.keys())
-        for k in missing_keys:
-            os.environ[k] = initial_env[k]
+        _reload_params(initial_env)
 
     yield run
 
@@ -119,4 +120,4 @@ def target_environment(monkeypatch):
     os.environ.clear()
     os.environ.update(initial_env)
 
-    _reload_params()
+    _reload_params({})

@@ -37,8 +37,7 @@ start: build  ## Start the docker container locally
 	# Requires local clones of setup-wrf and openmethane-prior
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
-		-v $(PWD)/../setup-wrf:/opt/openmethane/setup-wrf \
-		-v $(PWD)/../openmethane-prior:/opt/openmethane/openmethane-prior \
+		-v $(PWD)/../results:/opt/project/data \
 		-v ~/.cdsapirc:/root/.cdsapirc \
 		openmethane
 
@@ -47,6 +46,7 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 	# This requires a valid `~/.cdsapirc` file
 	docker run --rm -it \
 		-v $(PWD):/opt/project \
+		-v $(PWD)/../results:/opt/project/data \
 		-v ~/.cdsapirc:/root/.cdsapirc \
 		openmethane \
 		bash scripts/run-all.sh
@@ -66,11 +66,11 @@ sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
 
 .PHONY: test
 test:  ## Run the tests
-	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
+	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	TARGET=docker $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/obs_preprocess --force-regen
+	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/obs_preprocess --force-regen
 
 # Processing steps
 .PHONY: prepare-templates
