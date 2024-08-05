@@ -4,8 +4,8 @@ Scripts for running the adjoint of the CMAQ model for methane emissions estimati
 
 ## Getting Started
 
-To get started, you will need to make sure that [poetry](https://python-poetry.org/docs/) 
-and [docker](https://www.docker.com/) is installed if you intend to run this project using containers. 
+To get started, you will need to make sure that [poetry](https://python-poetry.org/docs/) is installed. You will also need to install
+ [docker](https://www.docker.com/), if you intend to run this project using containers. 
 Docker engine version v23 or later is required as this project uses docker `buildkit` features.
 
 OpenMethane can be installed from source into a virtual environment with:
@@ -22,9 +22,9 @@ You will need to obtain these from another source.
 The docker container containing CMAQ, the adjoint model and the python dependencies can be built locally.
 This is the recommended way to run the code.
 The required CMAQ docker image is built via the [openmethane/docker-cmaq](https://github.com/openmethane/docker-cmaq)
-repository and the hosted as a private image at ghcr.io/openmethane/cmaq.
+repository and is hosted as a private image at [ghcr.io/openmethane/cmaq](https://ghcr.io/openmethane/cmaq).
 Since the image is not public,
-you will need to authenticate with the GitHub Container Registry (ghcr.io) before building the image.
+you will need to authenticate with the GitHub Container Registry ([https://ghcr.io](https://ghcr.io)) before building the image.
 
 This can be done using a GitHub personal access token (PAT) with the `read:packages` scope.
 Instructions on how to do this can be found [here](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
@@ -33,7 +33,7 @@ Instructions on how to do this can be found [here](https://docs.github.com/en/pa
 Once you have logged into the GitHub Container Registry, you can build the docker image with:
 
 ```shell
-	make build
+make build
 ```
 
 ## Configuration
@@ -66,6 +66,8 @@ This target is useful for testing and development.
 
 To run your first test case you will need to:
 
+
+
 1: Run the cmaq preprocessing script (`scripts/cmaq_preprocess/run-cmaq-preprocess.sh`) to generate the
 	necessary input files for the adjoint model. This script will run the following scripts in order:
  - `scripts/cmaq_preprocess/download_cams_input.py`
@@ -80,6 +82,11 @@ To run your first test case you will need to:
  - `scripts/cmaq_preprocess/make_prior.py`
 	creates the prior estimate of the fluxes (and initial conditions if input_defn.inc_icon is True)
 	includes modifiable parameters at the start of the file with descriptions.
+
+The last three scripts can also be run with 
+```bash
+make prepare-templates
+```
 
 2: fetch the TropOMI data:
  - `scripts/obs_preprocess/fetch_tropomi.py -c config/obs_preprocess/config.{grid}.json -s {start_date} -e {end_date} {output_dir}`
@@ -110,7 +117,7 @@ There are artifacts from these repos that are required to be run before running 
 The docker container can be built and run with:
 
 ```shell
-	make start
+make start
 ```
 
 This will drop you into a shell in the docker container.
@@ -118,7 +125,16 @@ From here you can run the scripts in the order above,
 or use the following script to run the scripts in the correct order:
 
 ```shell
-	bash scripts/run-all.sh
+bash scripts/run-all.sh
+```
+### Download all domain data from the Cloudflare
+
+The `scripts/upload-domains.sh` script checks if the local directory domain is 
+synchronised with the target directory domain. If the local is not up to date
+it is neccessary to download all domain data from the Cloudflare bucket with:
+
+```bash
+make sync-domains-from-cf
 ```
 
 ### PyCharm
