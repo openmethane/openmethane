@@ -26,7 +26,8 @@ fi
 echo "Preparing CMAQ input files"
 python scripts/cmaq_preprocess/setup_for_cmaq.py
 
-if [[ -z "${SKIP_TEMPLATE_GENERATION}" ]]; then
+# Skip the template generation if SKIP_TEMPLATE_GENERATION is set to anything other than an empty string
+if [[ -n "${SKIP_TEMPLATE_GENERATION}" ]]; then
   echo "Skipping template generation"
   exit 0
 fi
