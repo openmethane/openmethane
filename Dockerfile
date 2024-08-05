@@ -67,7 +67,7 @@ ENV TARGET=docker \
     END_DATE=2022-07-22
 
 RUN apt-get update && \
-    apt-get install -y csh make nano jq curl tree && \
+    apt-get install -y csh make nano jq curl tree awscli && \
     rm -rf /var/lib/apt/lists/*
 
 # /opt/project is chosen because pycharm will automatically mount to this directory
