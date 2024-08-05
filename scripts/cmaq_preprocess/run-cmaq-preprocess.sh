@@ -8,18 +8,9 @@
 set -Eeuo pipefail
 set -x
 
-source scripts/helpers.sh
-
-# Configuration environment variables
-
-prepareEnvironment
-
-export TARGET=${TARGET:-docker}
+source scripts/environment.sh
 
 SKIP_CAMS_DOWNLOAD=${SKIP_CAMS_DOWNLOAD:-}
-
-echo "Environment:"
-env
 
 # Skip the CAMS download if the variable is set to anything other than an empty string
 if [[ -z "${SKIP_CAMS_DOWNLOAD}" ]]; then

@@ -6,11 +6,7 @@
 
 set -Eeuo pipefail
 
-# Helper utilities
-source scripts/helpers.sh
-
-# Configuration environment variables
-prepareEnvironment
+source scripts/environment.sh
 
 echo "Run the CMAQ preprocessing step"
 bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
