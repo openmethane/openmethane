@@ -14,16 +14,17 @@ source scripts/environment.sh
 GEO_DIR=${GEO_DIR:-"data/domains"}
 TARGET_DIR="s3://openmethane-prior/domains"
 
-# cf-om-prior-r2 profile is the preferred name for the profile
-AWS_PROFILE=${AWS_PROFILE:-cf-om-prior-r2}
+# Setup AWS credentials
+# If the AWS_PROFILE is not set, we default to the cf-om-prior-r2 profile
+# Otherwise API keys are required to be set outside of this script (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+export AWS_PROFILE=${AWS_PROFILE:-cf-om-prior-r2}
 if [[ -z "${AWS_PROFILE}" ]]; then
   # We must unset the AWS_PROFILE variable if we want to use IAM api keys
   # https://github.com/boto/botocore/issues/3110
   echo "Not using an AWS_PROFILE"
   unset AWS_PROFILE
 fi
-AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
-
+export AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
 
 echo "Checking if up to date"
 res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun)
@@ -33,7 +34,11 @@ if [[ -n "$res" ]]; then
   echo
   echo "Local $GEO_DIR is not up to date with $TARGET_DIR"
   echo "Run 'make sync-domains-from-cf'"
-  exit 1
+
+  # If FORCE isn't set then exit
+  if [[ -z "${FORCE:-}" ]]; then
+    exit 1
+  fi
 else
   echo "Local $GEO_DIR is up to date with $TARGET_DIR"
 fi
