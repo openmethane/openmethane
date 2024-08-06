@@ -21,6 +21,7 @@ TARGET_DIR="s3://openmethane-prior/domains"
 export AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
 
 echo "Checking if up to date"
+aws configure list
 res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun --debug)
 
 if [[ -n "$res" ]]; then
