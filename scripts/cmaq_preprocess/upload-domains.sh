@@ -24,7 +24,7 @@ R2_ARGUMENTS="--endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudfl
 
 echo "Checking if up to date"
 aws configure list
-res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun --debug ${R2_ARGUMENTS})
+res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun ${R2_ARGUMENTS})
 
 if [[ -n "$res" ]]; then
   echo $res
