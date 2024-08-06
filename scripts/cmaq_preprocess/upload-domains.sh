@@ -22,7 +22,7 @@ export AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarest
 
 echo "Checking if up to date"
 aws configure list
-res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun --debug)
+res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun --debug --endpoint-url "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com")
 
 if [[ -n "$res" ]]; then
   echo $res
@@ -39,7 +39,7 @@ else
 fi
 
 echo "Result from a dryrun"
-res=$(aws s3 sync $GEO_DIR $TARGET_DIR --dryrun)
+res=$(aws s3 sync $GEO_DIR $TARGET_DIR --dryrun --endpoint-url "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com")
 echo $res
 
 if [[ -n "$res" ]]; then
@@ -56,7 +56,7 @@ if [[ -n "$res" ]]; then
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Uploading data to $TARGET_DIR"
-      aws s3 sync $GEO_DIR $TARGET_DIR
+      aws s3 sync $GEO_DIR $TARGET_DIR --endpoint-url "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com"
   else
     echo "Aborted"
     exit 1
