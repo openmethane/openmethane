@@ -20,9 +20,11 @@ TARGET_DIR="s3://openmethane-prior/domains"
 # Otherwise API keys are required to be set outside of this script (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 export AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
 
+R2_ARGUMENTS="--endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com --region apac ${EXTRA_R2_ARGS:-}"
+
 echo "Checking if up to date"
 aws configure list
-res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun --debug --endpoint-url "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com")
+res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun --debug ${R2_ARGUMENTS})
 
 if [[ -n "$res" ]]; then
   echo $res
@@ -39,7 +41,7 @@ else
 fi
 
 echo "Result from a dryrun"
-res=$(aws s3 sync $GEO_DIR $TARGET_DIR --dryrun --endpoint-url "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com")
+res=$(aws s3 sync $GEO_DIR $TARGET_DIR --dryrun ${R2_ARGUMENTS})
 echo $res
 
 if [[ -n "$res" ]]; then
@@ -56,7 +58,7 @@ if [[ -n "$res" ]]; then
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Uploading data to $TARGET_DIR"
-      aws s3 sync $GEO_DIR $TARGET_DIR --endpoint-url "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com"
+      aws s3 sync $GEO_DIR $TARGET_DIR ${R2_ARGUMENTS}
   else
     echo "Aborted"
     exit 1
