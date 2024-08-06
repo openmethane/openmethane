@@ -15,15 +15,9 @@ GEO_DIR=${GEO_DIR:-"data/domains"}
 TARGET_DIR="s3://openmethane-prior/domains"
 
 # Setup AWS credentials
-# If the AWS_PROFILE is not set, we default to the cf-om-prior-r2 profile
+# You may need to set AWS_PROFILE if multiple AWS profiles are used, the common profile name for this
+# application is "cf-om-prior-r2" profile.
 # Otherwise API keys are required to be set outside of this script (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-export AWS_PROFILE=${AWS_PROFILE:-cf-om-prior-r2}
-if [[ -z "${AWS_PROFILE}" || "${AWS_PROFILE}" == "unset" ]]; then
-  # We must unset the AWS_PROFILE variable if we want to use IAM api keys
-  # https://github.com/boto/botocore/issues/3110
-  echo "Not using an AWS_PROFILE"
-  unset AWS_PROFILE
-fi
 export AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
 
 echo "Checking if up to date"
