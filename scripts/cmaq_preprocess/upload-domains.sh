@@ -16,6 +16,12 @@ TARGET_DIR="s3://openmethane-prior/domains"
 
 # cf-om-prior-r2 profile is the preferred name for the profile
 AWS_PROFILE=${AWS_PROFILE:-cf-om-prior-r2}
+if [[ -z "${AWS_PROFILE}" ]]; then
+  # We must unset the AWS_PROFILE variable if we want to use IAM api keys
+  # https://github.com/boto/botocore/issues/3110
+  echo "Not using an AWS_PROFILE"
+  unset AWS_PROFILE
+fi
 AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
 
 
