@@ -50,8 +50,10 @@ jobs:
           images: "${{ env.IMAGE }}"
           tags: |
             type=schedule
+            type=pep440,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main'}}
       - name: Build and push image
         uses: docker/build-push-action@v5
         id: build
@@ -241,6 +243,7 @@ jobs:
           images: "${{ env.ECR_IMAGE }}"
           tags: |
             type=schedule
+            type=pep440,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main'}}
