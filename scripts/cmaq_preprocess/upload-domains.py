@@ -31,7 +31,9 @@ def main():
     if EXTRA_R2_ARGS:
         r2_arguments += shlex.split(EXTRA_R2_ARGS)
 
-    aws_config = subprocess.run(["aws", "configure", "list"], check=True, capture_output=True)
+    aws_config = subprocess.run(
+        ["aws", "configure", "list"], check=True, capture_output=True, text=True
+    )
     logging.debug(f"AWS configuration:\n{aws_config.stdout}")
 
     check_geo_dir_up_to_date(r2_arguments)
@@ -41,7 +43,9 @@ def main():
     if dry_sync_output:
         if ask_upload():
             logging.info(f"Uploading data to {TARGET_DIR=}")
-            subprocess.run(["aws", "s3", "sync", GEO_DIR, TARGET_DIR] + r2_arguments, check=True)
+            subprocess.run(
+                ["aws", "s3", "sync", GEO_DIR, TARGET_DIR] + r2_arguments, check=True, text=True
+            )
             logging.info("Done.")
     else:
         logging.info("Nothing to upload")
@@ -93,4 +97,5 @@ def check_geo_dir_up_to_date(r2_arguments):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main()
