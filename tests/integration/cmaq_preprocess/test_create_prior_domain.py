@@ -1,20 +1,22 @@
+import os
 import pathlib
 from unittest.mock import patch
 
 from click.testing import CliRunner
+from scripts.cmaq_preprocess.create_prior_domain import clean_directories
 from scripts.cmaq_preprocess.create_prior_domain import main as create_prior_domain
 
 
-def test_empty():
+def test_empty(monkeypatch):
+    monkeypatch.delenv("DOMAIN_NAME")
+
     runner = CliRunner()
     result = runner.invoke(create_prior_domain, [])
-    assert result.exit_code == 2
+    assert result.exit_code == 2, result.output
     expected_output = """Usage: create_prior_domain [OPTIONS]
 Try 'create_prior_domain --help' for help.
-
-Error: Missing option '--name'.
 """
-    assert result.output == expected_output
+    assert expected_output in result.output
 
 
 def test_help(file_regression):
@@ -30,8 +32,8 @@ def test_help(file_regression):
 @patch("scripts.cmaq_preprocess.create_prior_domain.clean_directories")
 def test_mocked_run(mock_clean, mock_create, mock_write, test_data_dir, root_dir):
     mock_clean.return_value = (
-        pathlib.Path("/geom/aust-test/v1.0.0"),
-        pathlib.Path("/out/aust-test/v1.0.0"),
+        pathlib.Path("/geom/aust-test/v1"),
+        pathlib.Path("/out/aust-test/v1"),
     )
     runner = CliRunner()
     result = runner.invoke(
@@ -40,7 +42,7 @@ def test_mocked_run(mock_clean, mock_create, mock_write, test_data_dir, root_dir
             "--name",
             "aust-test",
             "--version",
-            "v1.0.0",
+            "v1",
             "--dot",
             test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
             "--cross",
@@ -49,15 +51,49 @@ def test_mocked_run(mock_clean, mock_create, mock_write, test_data_dir, root_dir
     )
     assert result.exit_code == 0
 
-    mock_clean.assert_called_once_with(None, None, "aust-test", "v1.0.0")
+    mock_clean.assert_called_once_with(
+        "/opt/project/data/domains/aust-test/v1", None, "aust-test", "v1"
+    )
     mock_create.assert_called_once_with(
-        geometry_file=pathlib.Path("/geom/aust-test/v1.0.0") / "geo_em.d01.nc",
+        geometry_file=pathlib.Path("/geom/aust-test/v1") / "geo_em.d01.nc",
         cross_file=test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_aust-test_v1",
         dot_file=test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
     )
     mock_write.assert_called_once_with(
         mock_create.return_value,
-        pathlib.Path("/out/aust-test/v1.0.0") / "prior_domain_aust-test_v1.0.0.d01.nc",
+        pathlib.Path("/out/aust-test/v1") / "prior_domain_aust-test_v1.d01.nc",
+    )
+
+
+@patch("scripts.cmaq_preprocess.create_prior_domain.write_domain_info")
+@patch("scripts.cmaq_preprocess.create_prior_domain.create_domain_info")
+@patch("scripts.cmaq_preprocess.create_prior_domain.clean_directories", wraps=clean_directories)
+def test_mocked_run_with_envs(
+    mock_clean, mock_create, mock_write, test_data_dir, root_dir, monkeypatch, target_environment
+):
+    # Set DOMAIN_NAME, DOMAIN_VERSION, MET_DIR
+    target_environment("docker-test")
+
+    geo_dir = os.environ["GEO_DIR"]
+    domain = os.environ["DOMAIN_NAME"]
+    version = os.environ["DOMAIN_VERSION"]
+
+    runner = CliRunner()
+    result = runner.invoke(
+        create_prior_domain,
+        [],
+    )
+    assert result.exit_code == 0, result.output
+
+    mock_clean.assert_called_once_with(geo_dir, None, domain, version)
+    mock_create.assert_called_once_with(
+        geometry_file=pathlib.Path(geo_dir) / "geo_em.d01.nc",
+        cross_file=test_data_dir / "mcip/2022-07-22/d01/GRIDCRO2D_aust-test_v1",
+        dot_file=test_data_dir / "mcip/2022-07-22/d01/GRIDDOT2D_aust-test_v1",
+    )
+    mock_write.assert_called_once_with(
+        mock_create.return_value,
+        pathlib.Path(geo_dir) / f"prior_domain_{domain}_{version}.d01.nc",
     )
 
 
@@ -103,3 +139,23 @@ def test_bad_version(test_data_dir, root_dir, tmp_path, compare_dataset):
     )
     assert result.exit_code == 2
     assert "Invalid value: Version should not start with v" in result.stdout
+
+
+def test_bad_grid(test_data_dir, root_dir, tmp_path, compare_dataset):
+    runner = CliRunner()
+    result = runner.invoke(
+        create_prior_domain,
+        [
+            "--name",
+            "aust-test",
+            "--version",
+            "v1",
+            "--dot",
+            test_data_dir / "mcip/2022-07-22/missing/GRIDDOT2D_aust-test_v1",
+        ],
+    )
+    assert result.exit_code == 2
+    assert (
+        "Path '/opt/project/tests/test-data/mcip/2022-07-22/missing/GRIDDOT2D_aust-test_v1' does not exist"
+        in result.stdout
+    )

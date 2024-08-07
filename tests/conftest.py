@@ -99,6 +99,26 @@ def _reload_params():
 def target_environment(monkeypatch):
     initial_env = dict(os.environ)
 
+    default_variables = {
+        # Docker target requires some additional env variables
+        "docker": {
+            "STORE_PATH": "/opt/project/data",
+            "START_DATE": "2022-07-22",
+            "END_DATE": "2022-07-22",
+            "DOMAIN_NAME": "aust-test",
+            "DOMAIN_VERSION": "v1",
+        }
+    }
+    # Variables not to strip out of the current environment
+    # This isn't an exhaustive list, just some common ones
+    # I'm not certain about the impact on pytest/pycharm
+    extra_variables = [
+        "PATH",
+        "PYTHONPATH",
+        "VIRTUAL_ENV",
+        "LD_LIBRARY_PATH",
+    ]
+
     def run(target: str, home: str = "{HOME}", clear: bool = True) -> None:
         if clear:
             os.environ.clear()
@@ -106,12 +126,15 @@ def target_environment(monkeypatch):
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
-        _reload_params()
+        for key in extra_variables:
+            if key in initial_env:
+                os.environ[key] = initial_env[key]
 
-        # Add back the env variables that weren't added during the reload
-        missing_keys = set(initial_env.keys()) - set(os.environ.keys())
-        for k in missing_keys:
-            os.environ[k] = initial_env[k]
+        # Use some common params to ensure the tests run as expected
+        defaults = default_variables.get(target, {})
+        os.environ.update(defaults)
+
+        _reload_params()
 
     yield run
 

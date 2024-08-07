@@ -56,10 +56,18 @@ ENV VIRTUAL_ENV=/opt/venv \
 
 # Preference the environment libraries over the system libraries
 ENV LD_LIBRARY_PATH="/opt/venv/lib:${LD_LIBRARY_PATH}"
-ENV TARGET=docker
+
+# Setup the environment variables required to run the project
+# These can be overwritten at runtime
+ENV TARGET=docker \
+    STORE_PATH=/opt/project/data \
+    DOMAIN_NAME=aust-test \
+    DOMAIN_VERSION=v1 \
+    START_DATE=2022-07-22 \
+    END_DATE=2022-07-22
 
 RUN apt-get update && \
-    apt-get install -y csh make nano jq curl tree && \
+    apt-get install -y csh make nano jq curl tree awscli && \
     rm -rf /var/lib/apt/lists/*
 
 # /opt/project is chosen because pycharm will automatically mount to this directory

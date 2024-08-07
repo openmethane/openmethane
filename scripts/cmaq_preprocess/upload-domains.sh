@@ -1,41 +1,64 @@
 #!/usr/bin/env bash
 # Upload domain information to the CloudFlare bucket
 #
-# This is assumed to run from the root directory.
-# This requires credentials for the Bucket.
+# This script checks if the local domain data is up to date with the remote S3 bucket.
+# If not, it prompts the user to upload the updated data to the S3 bucket.
+# This requires credentials for the Bucket and is assumed to have been run from the root directory
 #
 
 set -Eeuo pipefail
+set -x
 
-DOMAIN_DIR="data/domains"
+source scripts/environment.sh
+
+GEO_DIR=${GEO_DIR:-"data/domains"}
 TARGET_DIR="s3://openmethane-prior/domains"
 
-COMMON_S3_ARGS="--endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com --profile cf-om-prior-r2"
+# Setup AWS credentials
+# You may need to set AWS_PROFILE if multiple AWS profiles are used, the common profile name for this
+# application is "cf-om-prior-r2" profile.
+# Otherwise API keys are required to be set outside of this script (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+export AWS_ENDPOINT_URL=https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com
+
+R2_ARGUMENTS="--endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com --region apac ${EXTRA_R2_ARGS:-}"
 
 echo "Checking if up to date"
-res=$(aws s3 sync $TARGET_DIR $DOMAIN_DIR --dryrun $COMMON_S3_ARGS)
+aws configure list
+res=$(aws s3 sync $TARGET_DIR $GEO_DIR --dryrun ${R2_ARGUMENTS})
 
 if [[ -n "$res" ]]; then
   echo $res
   echo
-  echo "Local $DOMAIN_DIR is not up to date with $TARGET_DIR"
+  echo "Local $GEO_DIR is not up to date with $TARGET_DIR"
   echo "Run 'make sync-domains-from-cf'"
-  exit 1
+
+  # If FORCE isn't set then exit
+  if [[ -z "${FORCE:-}" ]]; then
+    exit 1
+  fi
 else
-  echo "Local $DOMAIN_DIR is up to date with $TARGET_DIR"
+  echo "Local $GEO_DIR is up to date with $TARGET_DIR"
 fi
 
 echo "Result from a dryrun"
-res=$(aws s3 sync $DOMAIN_DIR $TARGET_DIR --dryrun $COMMON_S3_ARGS)
+res=$(aws s3 sync $GEO_DIR $TARGET_DIR --dryrun ${R2_ARGUMENTS})
 echo $res
 
 if [[ -n "$res" ]]; then
   echo
-  read -p 'Upload (y/N): '  -n 1 -r
+
+  if [[ -z "${FORCE:-}" ]]; then
+    # Prompt for user input if FORCE is empty or not set
+    read -p 'Upload (y/N): '  -n 1 -r
+  else
+    # Force uploading if FORCE variable has non-zero length
+    echo "Forcing upload because FORCE is set"
+    REPLY='y'
+  fi
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Uploading data to $TARGET_DIR"
-      aws s3 sync $DOMAIN_DIR $TARGET_DIR $COMMON_S3_ARGS
+      aws s3 sync $GEO_DIR $TARGET_DIR ${R2_ARGUMENTS}
   else
     echo "Aborted"
     exit 1
