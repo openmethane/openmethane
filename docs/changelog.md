@@ -19,6 +19,78 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+# ## openmethane v0.3.0 (2024-08-07)
+
+### ⚠️ Breaking Changes
+
+- Merge `sat_data` and `obs_preprocess` script directories. ([#33](https://github.com/openmethane/openmethane/pulls/33))
+- Moves to use a common set of environment variables throughout the repository. 
+  This removes the cmaq_preprocess json files in preference to a .env file. 
+  The `TARGET` environment variable is used to load the appropriate environment variable still.
+
+  `setup_for_cmaq` now processes a single domain at a time which simplifies the whole process. 
+  Running nested domains would likely require other changes throughout the codebase. 
+  We now have a clean slate to add that feature if it was needed. ([#42](https://github.com/openmethane/openmethane/pulls/42))
+- Migrates to use the `wrf` directory for the WRF outputs and domains. ([#45](https://github.com/openmethane/openmethane/pulls/45))
+
+### 🆕 Features
+
+- Move prior domain generation to this repository from openmethane-prior.
+
+  Adds scripts to upload the prior domains to the CloudFlare R2 bucket (requires credentials).
+  The domains are uploaded with the naming convention of domains/{name}/{version}/prior_domain_{name}_{version}.d01.nc.
+  These files can then be retrieved by `openmethane-prior` in the same fashion as the input data. ([#31](https://github.com/openmethane/openmethane/pulls/31))
+- Adds a shell script for runnning tropomi ([#39](https://github.com/openmethane/openmethane/pulls/39))
+- Adds towncrier to manage the changelog of the project.
+
+  This is a tool that helps automate the process of updating the changelog.
+  See the documentation for adding changelogs in `changes/README.md`.
+  The changelog is updated by running `towncrier` which is done automatically on tagged releases.
+
+  This PR also adds a GitHub action to automate the process of updating the changelog on tagged releases
+  and for bumping new releases. ([#44](https://github.com/openmethane/openmethane/pulls/44))
+
+### 🎉 Improvements
+
+- Remove unused cmaq preprocessing configuration values.
+
+  Namely:
+
+  * templateDir
+  * sufadj
+  * nhoursPerRun
+  * printFreqHours
+  * mechCMAQ
+  * prepareRunScripts
+  * add_qsnow
+  * forceUpdateMcip
+  * forceUpdateICandBC
+  * forceUpdateRunScipts
+  * doCompress
+  * compressScript
+  * cctmExec
+  * scripts.cctmRun
+  * scripts.cmaqRun
+
+  This also removes the CMAQ run scripts as they were also unused in this particular application and required a bunch of extra configuration.
+
+  The forceUpdateXXX parameters were combined into a single forceUpdate flag.
+
+  ([#29](https://github.com/openmethane/openmethane/pulls/29))
+- Add a parameter to specify the value of BTRIM,
+  which is used to remove cells at the edge of the meteorology grid.
+
+  For the full domain `5` is the default, 
+  but for the 10x10 test grid this would leave no remaining cells so a value of 1 is used. ([#32](https://github.com/openmethane/openmethane/pulls/32))
+- Refactor to use a common function for running subprocesses.
+
+  This improves the logging of subprocesses and allows for easier debugging of issues. ([#41](https://github.com/openmethane/openmethane/pulls/41))
+- Support the use of environment variables instead of command line arguments
+  in `create_prior_domain.py`.
+
+  Improved the flexibility of the upload domains script. ([#45](https://github.com/openmethane/openmethane/pulls/45))
+
+
 ## openmethane 0.2.0 (2024-07-09)
 
 ### ⚠️ Breaking Changes
