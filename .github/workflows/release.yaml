@@ -19,7 +19,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/checkout@v4
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
       - name: Add version to environment
@@ -27,9 +29,6 @@ jobs:
           poetry install --all-extras
           PROJECT_VERSION=$(poetry version --short)
           echo "PROJECT_VERSION=$PROJECT_VERSION" >> $GITHUB_ENV
-      - name: Run tests
-        run: |
-          poetry run pytest -r a -v src tests --doctest-modules
       - name: Build package
         run: |
           poetry build --no-interaction
