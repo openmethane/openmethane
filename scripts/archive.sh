@@ -28,6 +28,7 @@ RUN_TYPE=${RUN_TYPE:-daily}
 # TODO: This could be a python script
 EXECUTION_ID=${EXECUTION_ID:-$(date -u +"%Y-%m-%dT%H%M%SZ00")}
 echo $EXECUTION_ID > $STORE_PATH/execution_id.txt
+env > $STORE_PATH/environment.txt
 
 
 if [[ "$SUCCESS" == "true" ]]; then
