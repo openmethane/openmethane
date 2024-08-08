@@ -33,8 +33,8 @@ def main():
     if EXTRA_R2_ARGS:
         r2_arguments += shlex.split(EXTRA_R2_ARGS)
 
-    aws_config = subprocess.run(
-        ["aws", "configure", "list"],  # noqa: S603, S607
+    aws_config = subprocess.run(  # noqa: S603
+        ["aws", "configure", "list"],  # noqa: S607
         check=True,
         capture_output=True,
         text=True,
@@ -48,11 +48,17 @@ def main():
     if dry_sync_output:
         if ask_upload():
             logging.info(f"Uploading data to {TARGET_DIR=}")
-            subprocess.run(
-                ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, *r2_arguments],  # noqa: S603, S607
-                check=True,
+            sync_result = subprocess.run(
+                ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, *r2_arguments],  # noqa: S607
+                check=False,
                 text=True,
             )
+            # Swallow an exit code of 2 as that still indicates success
+            # This is quite poorly documented by AWS
+            if sync_result.returncode not in [0, 2]:
+                logging.error(f"Failed to upload data to {TARGET_DIR=}")
+                logging.error(f"Error: {sync_result.stderr}")
+                sys.exit(sync_result.returncode)
             logging.info("Done.")
     else:
         logging.info("Nothing to upload")
@@ -69,8 +75,8 @@ def ask_upload():
 
 
 def dry_sync(r2_arguments):
-    dry_sync_to_r2 = subprocess.run(
-        ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, "--dryrun", *r2_arguments],  # noqa: S603, S607
+    dry_sync_to_r2 = subprocess.run(  # noqa: S603
+        ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, "--dryrun", *r2_arguments],  # noqa: S607
         check=False,
         capture_output=True,
     )
@@ -87,8 +93,8 @@ Stderr:
 
 def check_geo_dir_up_to_date(r2_arguments):
     logging.info("Checking if up to date")
-    dry_sync_from_r2 = subprocess.run(
-        ["aws", "s3", "sync", TARGET_DIR, GEO_DIR, "--dryrun", *r2_arguments],  # noqa: S603,S607
+    dry_sync_from_r2 = subprocess.run(  # noqa: S603
+        ["aws", "s3", "sync", TARGET_DIR, GEO_DIR, "--dryrun", *r2_arguments],  # noqa: S607
         check=False,
         capture_output=True,
     )
