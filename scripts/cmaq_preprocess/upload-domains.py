@@ -8,12 +8,14 @@ directory.
 """
 
 import logging
-import os
 import shlex
 import subprocess
 import sys
 
-GEO_DIR = os.environ.get("GEO_DIR", "data/domains")
+# Loads environment using the value of the environment variable "TARGET"
+from fourdvar.env import env
+
+GEO_DIR = env.str("GEO_DIR", "data/domains")
 TARGET_DIR = "s3://openmethane-prior/domains"
 # Setup AWS credentials
 # You may need to set AWS_PROFILE if multiple AWS profiles are used, the common profile
@@ -22,8 +24,8 @@ TARGET_DIR = "s3://openmethane-prior/domains"
 # AWS_SECRET_ACCESS_KEY)
 AWS_ENDPOINT_URL = "https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com"
 AWS_REGION = "apac"
-EXTRA_R2_ARGS = os.environ.get("EXTRA_R2_ARGS", "")
-FORCE = os.environ.get("FORCE", "")
+EXTRA_R2_ARGS = env.str("EXTRA_R2_ARGS", "")
+FORCE = env.bool("FORCE", False)
 
 
 def main():
@@ -32,7 +34,10 @@ def main():
         r2_arguments += shlex.split(EXTRA_R2_ARGS)
 
     aws_config = subprocess.run(
-        ["aws", "configure", "list"], check=True, capture_output=True, text=True
+        ["aws", "configure", "list"],  # noqa: S603, S607
+        check=True,
+        capture_output=True,
+        text=True,
     )
     logging.debug(f"AWS configuration:\n{aws_config.stdout}")
 
@@ -44,7 +49,9 @@ def main():
         if ask_upload():
             logging.info(f"Uploading data to {TARGET_DIR=}")
             subprocess.run(
-                ["aws", "s3", "sync", GEO_DIR, TARGET_DIR] + r2_arguments, check=True, text=True
+                ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, *r2_arguments],  # noqa: S603, S607
+                check=True,
+                text=True,
             )
             logging.info("Done.")
     else:
@@ -63,7 +70,7 @@ def ask_upload():
 
 def dry_sync(r2_arguments):
     dry_sync_to_r2 = subprocess.run(
-        ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, "--dryrun"] + r2_arguments,
+        ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, "--dryrun", *r2_arguments],  # noqa: S603, S607
         check=False,
         capture_output=True,
     )
@@ -81,7 +88,7 @@ Stderr:
 def check_geo_dir_up_to_date(r2_arguments):
     logging.info("Checking if up to date")
     dry_sync_from_r2 = subprocess.run(
-        ["aws", "s3", "sync", TARGET_DIR, GEO_DIR, "--dryrun"] + r2_arguments,
+        ["aws", "s3", "sync", TARGET_DIR, GEO_DIR, "--dryrun", *r2_arguments],  # noqa: S603,S607
         check=False,
         capture_output=True,
     )
@@ -97,5 +104,5 @@ def check_geo_dir_up_to_date(r2_arguments):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=env.str("LOG_LEVEL", "DEBUG"))
     main()
