@@ -13,7 +13,7 @@
 #
 # This will overwrite any existing output with the same domain, run_type and start_date.
 
-set -Eeuo pipefail
+set -Euo pipefail
 set -x
 
 # Helper utilities
@@ -54,7 +54,14 @@ else
 fi
 
 echo "Writing data to ${TARGET_BUCKET}/${PREFIX}"
-aws s3 sync ${STORE_PATH} ${TARGET_BUCKET}/${PREFIX}
+aws s3 sync --no-progress ${STORE_PATH} ${TARGET_BUCKET}/${PREFIX}
+
+if [[ $? -eq 1 ]]; then
+  # We only want to catch an return code of 1 as this is a substantial failure
+  # $? could be 2 if new directories are required
+  echo "Sync failed"
+  exit 1
+fi
 
 # Clean up EFS
 rm -r ${STORE_PATH}
