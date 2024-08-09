@@ -17,6 +17,7 @@ import datetime
 import glob
 import logging
 import os
+import pathlib
 import subprocess
 
 import fourdvar.params.cmaq_config as cfg
@@ -73,6 +74,11 @@ def clean_env(env_dict):
             del os.environ[name]
         except KeyError:
             logger.warning(f"environment variable {name} not found")
+
+
+def log_env(env_dict: dict[str, str], output_file: pathlib.Path):
+    with open(output_file, "w") as fh:
+        fh.writelines([f"{k}={v}\n" for k, v in env_dict.items()])
 
 
 def setup_run():
@@ -206,6 +212,7 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
         env_dict["CTM_XFIRST_IN"] = prev_xfirst
 
     env_dict = parse_env_dict(env_dict, date)
+    log_env(env_dict, pathlib.Path(cfg.cmaq_base) / f"env_fwd_{date.strftime('%Y-%m-%d')}.txt")
     load_env(env_dict)
 
     run_cmd = cfg.cmd_preamble
@@ -234,6 +241,11 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
     if statcode != 0:
         msg = "cmaq fwd failed on {}.".format(date.strftime("%Y%m%d"))
         logger.error(msg)
+
+        logger.debug("CMAQ FWD stdout:")
+        with open(stdout_fname) as stdout_file:
+            logger.debug(stdout_file.read())
+
         raise AssertionError(msg)
 
     clean_env(env_dict)
@@ -291,6 +303,7 @@ def run_bwd_single(date, is_first):
         env_dict["INIT_EM_SF_1"] = prev_scale
 
     env_dict = parse_env_dict(env_dict, date)
+    log_env(env_dict, pathlib.Path(cfg.cmaq_base) / f"env_bwd_{date.strftime('%Y-%m-%d')}.txt")
     load_env(env_dict)
 
     run_cmd = cfg.cmd_preamble
@@ -314,6 +327,11 @@ def run_bwd_single(date, is_first):
     if statcode != 0:
         msg = "cmaq bwd failed on {}.".format(date.strftime("%Y%m%d"))
         logger.error(msg)
+
+        logger.debug("CMAQ BWD stdout:")
+        with open(stdout_fname) as stdout_file:
+            logger.debug(stdout_file.read())
+
         raise AssertionError(msg)
 
     clean_env(env_dict)

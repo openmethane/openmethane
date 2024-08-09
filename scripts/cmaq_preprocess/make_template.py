@@ -40,7 +40,7 @@ def copy_file(src_template: str, dest_template: str, date: datetime.date | None)
     ncf.copy_compress(src, dest)
 
 
-setup_logging()
+setup_logging(verbose=True)
 
 # Copy a template emissions file into the input directory
 emis_file = dt.replace_date(cmaq_config.emis_file, dt.start_date)

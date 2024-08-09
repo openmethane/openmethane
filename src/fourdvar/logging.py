@@ -34,7 +34,7 @@ def setup_logging(verbose: bool = False, reset_logfile: bool = True):
     reset_logfile
         If True, delete the log file if it already exists.
     """
-    to_screen_level = logging.INFO
+    to_screen_level = logging.DEBUG if verbose else logging.INFO
     to_file_level = logging.DEBUG if verbose else logging.INFO
 
     # format strings:
