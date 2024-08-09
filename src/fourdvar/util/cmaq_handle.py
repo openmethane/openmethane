@@ -188,6 +188,7 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
     env_dict["LOGFILE"] = cfg.fwd_logfile
     env_dict["FLOOR_FILE"] = cfg.floor_file
     env_dict["CTM_PROGNAME"] = cfg.fwd_prog
+    env_dict["EXEC_ID"] = "openmethane"
 
     if is_first is True:
         env_dict["INIT_GASC_1"] = cfg.icon_file
@@ -262,6 +263,7 @@ def run_bwd_single(date, is_first):
     env_dict["ADJ_LGRID_EM"] = cfg.emis_sense_file + " -v"
     env_dict["ADJ_LGRID_EM_SF"] = cfg.emis_scale_sense_file + " -v"
     env_dict["ADJ_FORCE"] = cfg.force_file
+    env_dict["EXEC_ID"] = "openmethane"
 
     if cfg.sense_sync is True:
         env_dict["ADJ_LGRID_FREQ"] = "SYNC_STEP"

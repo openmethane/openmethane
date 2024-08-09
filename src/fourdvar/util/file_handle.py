@@ -17,12 +17,13 @@
 import gzip
 import logging
 import os
+import pathlib
 import pickle
 
 logger = logging.getLogger(__name__)
 
 
-def ensure_path(path, inc_file=False):
+def ensure_path(path: str, inc_file: bool = False):
     """Ensures that the input path exists, creating directories as needed.
     input: string (path/to/file), Boolean (see notes)
     output: None.
@@ -30,19 +31,14 @@ def ensure_path(path, inc_file=False):
     notes: if inc_file is True the last element of path is assumed to be a file
     this file is created if it does not exist and is unaltered otherwise
     """
-    path_list = path.split(os.path.sep)
-    # if path starts '/', do so for curpath
-    curpath = "" if path_list[0] != "" else os.path.sep
-    for folder in path_list[:-1]:
-        curpath = os.path.join(curpath, folder)
-        if not os.path.isdir(curpath):
-            os.mkdir(curpath)
-    curpath = os.path.join(curpath, path_list[-1])
+    path = pathlib.Path(path)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
     if inc_file is False:
-        if not os.path.isdir(curpath):
-            os.mkdir(curpath)
-    elif not os.path.isfile(curpath):
-        with open(curpath, "a"):
+        path.mkdir(exist_ok=True)
+    elif not path.is_file():
+        with open(path, "a"):
             pass
 
 

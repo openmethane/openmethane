@@ -81,7 +81,7 @@ COPY --from=builder /opt/venv /opt/venv
 
 # Copy in CMAQ binaries
 # https://github.com/openmethane/docker-cmaq
-COPY --from=ghcr.io/openmethane/cmaq:5.0.2 /opt/cmaq /opt/cmaq
+COPY --from=ghcr.io/openmethane/cmaq:pr-8 /opt/cmaq /opt/cmaq
 
 # Install the local package in editable mode
 # Requires scaffolding the src directories
