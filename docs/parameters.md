@@ -8,7 +8,7 @@ The following environment variables are configurable:
 | DOMAIN_VERSION      | str   | Version of the target domain                                        | v1                                         |
 | DOMAIN_MCIP_SUFFIX  | str   | Suffix for the generated MCIP files                                 | ${DOMAIN_NAME}_${DOMAIN_VERSION}           |
 | START_DATE          | date  | Start date of the run                                               | 2022-07-01                                 |
-| END_DATE            | date  | End date of the run                                                 | 2022-07-30                                 |
+| END_DATE            | date  | End date of the run (inclusive)                                     | 2022-07-30                                 |
 | STORE_PATH          | str   | Full path to the branch-specific data.                              | N/A                                        |          
 | EXPERIMENT          | str   | Name of the experiment being run                                    | 202207_test                                |
 | TEMPLATE_DIR        | str   | Path to the CMAQ template directory                                 | {SOURCE_PATH}/templates                    |

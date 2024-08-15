@@ -6,7 +6,8 @@ so references environment variables that may not be available.
 
 The data is stored in
 ${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}/input/test_obs.pic.gz
-for each day and we need all days between the start and the end date.
+for each day and we need all days between the start and the end date,
+including the end date.
 The data is downloaded to
 ${STORE_PATH}/{DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}/input/test_obs.pic.gz
 """
@@ -27,7 +28,7 @@ END_DATE = env.date("END_DATE")
 
 
 def main():
-    for date in date_range(START_DATE, END_DATE):  # this is exclusive of END_DATE
+    for date in date_range(START_DATE, END_DATE):  # this is inclusive of END_DATE
         path = (
             DOMAIN_NAME,
             "daily",
@@ -47,7 +48,7 @@ def main():
 
 def date_range(start_date: datetime.date, end_date: datetime.date):
     """Like range() but with days."""
-    for n in range((end_date - start_date).days):
+    for n in range((end_date - start_date).days + 1):
         yield start_date + datetime.timedelta(days=n)
 
 

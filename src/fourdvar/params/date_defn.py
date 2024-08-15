@@ -20,4 +20,5 @@ from fourdvar.env import env
 start_date = env.date("START_DATE", "2022-07-01")
 
 # end date in YYYY-MM-DD format
+# This is inclusive (i.e. the simulation runs until midnight on the end date)
 end_date = env.date("END_DATE", "2022-07-30")
