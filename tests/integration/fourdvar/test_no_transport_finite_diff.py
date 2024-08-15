@@ -24,14 +24,12 @@ import os
 import numpy as np
 
 import fourdvar.datadef as d
-import fourdvar.params.cmaq_config as cmaq
-import fourdvar.params.template_defn as template
 import fourdvar.user_driver as user
 import fourdvar.util.archive_handle as archive
 import fourdvar.util.date_handle as dt
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar._transform import transform
-from fourdvar.params import archive_defn
+from fourdvar.params import archive_defn, cmaq_config, date_defn, template_defn
 
 spcs_list = ["CH4"]  # species to perturb within CMAQ.
 tsec = 3600.0  # seconds per timestep, DO NOT MODIFY
@@ -68,7 +66,7 @@ def make_forcing():
     - In the middle of the domain
     - For every species
     """
-    nstep, nlay, nrow, ncol = ncf.get_variable(template.force, spcs_list[0]).shape
+    nstep, nlay, nrow, ncol = ncf.get_variable(template_defn.force, spcs_list[0]).shape
 
     for date in dt.get_datelist():
         force = {
@@ -86,9 +84,9 @@ def make_forcing():
             for arr in force.values():
                 trow, tcol = int(nrow / 3), int(ncol / 3)
                 arr[-2, 0, trow : 2 * trow, tcol : 2 * tcol] = 1.0
-        f_file = dt.replace_date(cmaq.force_file, date)
+        f_file = dt.replace_date(cmaq_config.force_file, date)
         ncf.create_from_template(
-            template.force, f_file, var_change=force, date=date, overwrite=True
+            template_defn.force, f_file, var_change=force, date=date, overwrite=True
         )
     return d.AdjointForcingData()
 
@@ -97,16 +95,18 @@ def fwd_no_transport(model_input):
     """mimic CMAQ_fwd with no transport.
     assumes ALL files have a 1-hour timestep"""
     # get nlays conc
-    c_lay = ncf.get_variable(template.conc, spcs_list[0]).shape[1]
+    c_lay = ncf.get_variable(template_defn.conc, spcs_list[0]).shape[1]
     # get nlays emis
-    e_lay = ncf.get_variable(dt.replace_date(template.emis, dt.start_date), spcs_list[0]).shape[1]
+    e_lay = ncf.get_variable(
+        dt.replace_date(template_defn.emis, date_defn.start_date), spcs_list[0]
+    ).shape[1]
     # get icon for each species
-    icon = ncf.get_variable(cmaq.icon_file, spcs_list)
+    icon = ncf.get_variable(cmaq_config.icon_file, spcs_list)
     # get constants to convert emission units
     mwair = 28.9628
     ppm_scale = 1e6
     kg_scale = 1e-3
-    srcfile = dt.replace_date(cmaq.met_cro_3d, dt.start_date)
+    srcfile = dt.replace_date(cmaq_config.met_cro_3d, date_defn.start_date)
     xcell = ncf.get_attr(srcfile, "XCELL")
     ycell = ncf.get_attr(srcfile, "YCELL")
     lay_sigma = list(ncf.get_attr(srcfile, "VGLVLS"))
@@ -115,9 +115,9 @@ def fwd_no_transport(model_input):
     emis_scale = (ppm_scale * kg_scale * mwair) / (lay_thick * xcell * ycell)  # * RRHOJ
     # run fwd
     for date in dt.get_datelist():
-        conc = ncf.get_variable(template.conc, spcs_list)
-        emis = ncf.get_variable(dt.replace_date(cmaq.emis_file, date), spcs_list)
-        rhoj = ncf.get_variable(dt.replace_date(cmaq.met_cro_3d, date), "DENSA_J")
+        conc = ncf.get_variable(template_defn.conc, spcs_list)
+        emis = ncf.get_variable(dt.replace_date(cmaq_config.emis_file, date), spcs_list)
+        rhoj = ncf.get_variable(dt.replace_date(cmaq_config.met_cro_3d, date), "DENSA_J")
         for spc, c_arr in conc.items():
             c_arr[:, :, :, :] = icon[spc][:, :c_lay, :, :]
             e_arr = emis_scale * emis[spc][:-1, ...]
@@ -126,8 +126,10 @@ def fwd_no_transport(model_input):
             # update icon for next day
             icon[spc] = c_arr[-1:, ...]
         # write conc file
-        c_file = dt.replace_date(cmaq.conc_file, date)
-        ncf.create_from_template(template.conc, c_file, var_change=conc, date=date, overwrite=True)
+        c_file = dt.replace_date(cmaq_config.conc_file, date)
+        ncf.create_from_template(
+            template_defn.conc, c_file, var_change=conc, date=date, overwrite=True
+        )
     return d.ModelOutputData()
 
 
@@ -135,12 +137,12 @@ def bwd_no_transport(adjoint_forcing):
     """mimic CMAQ_bwd with no transport.
     assumes ALL files have a 1-hour timestep"""
     # get nlays for force, sense & sense_emis
-    ncf.get_variable(template.force, spcs_list[0]).shape[1]
-    s_lay = ncf.get_variable(template.sense_conc, spcs_list[0]).shape[1]
-    e_lay = ncf.get_variable(template.sense_emis, spcs_list[0]).shape[1]
+    ncf.get_variable(template_defn.force, spcs_list[0]).shape[1]
+    s_lay = ncf.get_variable(template_defn.sense_conc, spcs_list[0]).shape[1]
+    e_lay = ncf.get_variable(template_defn.sense_emis, spcs_list[0]).shape[1]
 
     # get icon for each species, init as 0.
-    nstep, _, row, col = ncf.get_variable(template.force, spcs_list[0]).shape
+    nstep, _, row, col = ncf.get_variable(template_defn.force, spcs_list[0]).shape
     icon = {
         spc: np.zeros(
             (
@@ -153,7 +155,7 @@ def bwd_no_transport(adjoint_forcing):
     }
 
     for date in dt.get_datelist()[::-1]:
-        force = ncf.get_variable(dt.replace_date(cmaq.force_file, date), spcs_list)
+        force = ncf.get_variable(dt.replace_date(cmaq_config.force_file, date), spcs_list)
         conc = {}
         emis = {}
         for spc in spcs_list:
@@ -165,13 +167,13 @@ def bwd_no_transport(adjoint_forcing):
             conc[spc] = s_arr[:, :s_lay, :, :].copy()
             emis[spc] = s_arr[:, :e_lay, :, :].copy() * float(tsec)
         # write sensitivity files
-        c_file = dt.replace_date(cmaq.conc_sense_file, date)
-        e_file = dt.replace_date(cmaq.emis_sense_file, date)
+        c_file = dt.replace_date(cmaq_config.conc_sense_file, date)
+        e_file = dt.replace_date(cmaq_config.emis_sense_file, date)
         ncf.create_from_template(
-            template.sense_conc, c_file, var_change=conc, date=date, overwrite=True
+            template_defn.sense_conc, c_file, var_change=conc, date=date, overwrite=True
         )
         ncf.create_from_template(
-            template.sense_emis, e_file, var_change=emis, date=date, overwrite=True
+            template_defn.sense_emis, e_file, var_change=emis, date=date, overwrite=True
         )
     return d.SensitivityData()
 

@@ -21,6 +21,7 @@ import numpy as np
 
 import fourdvar.user_driver as user
 import fourdvar.util.date_handle as dt
+from fourdvar.params import date_defn
 
 obs = user.get_observed()
 
@@ -62,7 +63,7 @@ for weight in obs.weight_grid:
     d, t, _, r, c, _ = obs_coord
     coverage[r, c] += 1
     date = datetime.datetime.strptime(str(d), "%Y%m%d").date()
-    obs_step.append((date - dt.start_date).days * nstep + t)
+    obs_step.append((date - date_defn.start_date).days * nstep + t)
 if skipped_obs > 0:
     print("{:} non-surface obs were omitted.")
 

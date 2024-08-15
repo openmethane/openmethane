@@ -14,13 +14,9 @@
 # limitations under the License.
 #
 
-import datetime as dt
+import datetime
 
-import fourdvar.params.date_defn as defn
-
-# TODO: Remove these global values
-start_date = defn.start_date
-end_date = defn.end_date
+from fourdvar.params import date_defn
 
 # map string tags to date conversion functions
 tag_map = {
@@ -30,29 +26,29 @@ tag_map = {
 }
 
 
-def add_days(date, ndays):
-    """Return the the date ndays before/after date.
+def add_days(date: datetime.date, ndays: int) -> datetime.date:
+    """Return the date ndays before/after date.
     input: datetime.date, int (-ve for bwd in time)
     output: datetime.date.
     """
-    return date + dt.timedelta(days=ndays)
+    return date + datetime.timedelta(days=ndays)
 
 
-def get_datelist():
+def get_datelist() -> list[datetime.date]:
     """Get the list of dates which the model runs over.
 
     output: list of datetime.date objects.
 
     notes: require start_date & end_date to already be defined
     """
-    if defn.start_date is None or defn.end_date is None:
+    if date_defn.start_date is None or date_defn.end_date is None:
         raise ValueError("Need to define start_date and end_date.")
-    days = (defn.end_date - defn.start_date).days + 1
-    datelist = [add_days(defn.start_date, i) for i in range(days)]
+    days = (date_defn.end_date - date_defn.start_date).days + 1
+    datelist = [add_days(date_defn.start_date, i) for i in range(days)]
     return datelist
 
 
-def replace_date(src, date):
+def replace_date(src: str, date: datetime.date | datetime.datetime | tuple[int, int, int]) -> str:
     """Replace date tags with date data.
 
     input: string, date representation
@@ -60,13 +56,13 @@ def replace_date(src, date):
 
     notes: date can be a datetime.date, datetime.datetime or a [year,month,day]
     """
-    # force date into type dt.date
-    if isinstance(date, dt.date):
+    # force date into type datetime.date
+    if isinstance(date, datetime.date):
         pass
-    elif isinstance(date, dt.datetime):
+    elif isinstance(date, datetime.datetime):
         date = date.date()
     else:
-        date = dt.date(date[0], date[1], date[2])
+        date = datetime.date(date[0], date[1], date[2])
 
     # replace all date tags
     for tag in tag_map.keys():
@@ -83,8 +79,9 @@ def replace_date(src, date):
     return src
 
 
-def move_tag(src_str, ndays):
+def move_tag(src_str: str, ndays: int | float) -> str:
     """Add a day modifier to a date tag.
+
     input: string, integer
     output: string.
     """
@@ -93,18 +90,4 @@ def move_tag(src_str, ndays):
         if tag in src_str:
             new_tag = f"<{tag[1:-1]}#{modifier}>"
             src_str = src_str.replace(tag, new_tag)
-    return src_str
-
-
-def reset_tag(src_str):
-    """Undo move_tag day modifier.
-    input: string
-    output: string.
-    """
-    for tag in tag_map.keys():
-        mtag = tag[:-1] + "#"
-        while mtag in src_str:
-            tstart = src_str.index(mtag) + len(mtag)
-            tend = src_str.index(">", tstart)
-            src_str = src_str[: tstart - 1] + src_str[tend:]
     return src_str

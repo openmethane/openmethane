@@ -18,9 +18,9 @@ import os
 
 import numpy as np
 
-import fourdvar.params.template_defn as template
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
+from fourdvar.params import template_defn
 from fourdvar.util.archive_handle import get_archive_path
 from fourdvar.util.cmaq_io_files import get_filedict
 from fourdvar.util.file_handle import ensure_path
@@ -74,8 +74,8 @@ class AdjointForcingData(FourDVarData):
         output: { file_label : { spcs : np.ndarray(<zeros>) } }.
         """
         file_labels = get_filedict(cls.__name__).keys()
-        spcs = ncf.get_attr(template.force, "VAR-LIST").split()
-        shape = ncf.get_variable(template.force, spcs[0]).shape
+        spcs = ncf.get_attr(template_defn.force, "VAR-LIST").split()
+        shape = ncf.get_variable(template_defn.force, spcs[0]).shape
         argdict = {}
         for label in file_labels:
             data = {spc: np.zeros(shape) for spc in spcs}
@@ -97,7 +97,7 @@ class AdjointForcingData(FourDVarData):
         msg = "input args incompatible with file list"
         assert set(fdata.keys()) == set(kwargs.keys()), msg
         for label, data in kwargs.items():
-            err_msg = f"{label} data doesn't match template."
+            err_msg = f"{label} data doesn't match template_defn."
             assert ncf.validate(fdata[label]["template"], data), err_msg
 
         for label, record in fdata.items():

@@ -119,7 +119,13 @@ def target_environment(monkeypatch):
         "LD_LIBRARY_PATH",
     ]
 
-    def run(target: str, home: str = "{HOME}", clear: bool = True) -> None:
+    def run(
+        target: str,
+        *,
+        home: str = "{HOME}",
+        clear: bool = True,
+        overrides: dict[str, str] | None = None,
+    ) -> None:
         if clear:
             os.environ.clear()
 
@@ -133,6 +139,7 @@ def target_environment(monkeypatch):
         # Use some common params to ensure the tests run as expected
         defaults = default_variables.get(target, {})
         os.environ.update(defaults)
+        os.environ.update(overrides or {})
 
         _reload_params()
 

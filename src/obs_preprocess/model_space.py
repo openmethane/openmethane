@@ -21,7 +21,7 @@ import numpy as np
 import pyproj
 from netCDF4 import Dataset
 
-from fourdvar.params import cmaq_config, template_defn
+from fourdvar.params import cmaq_config, date_defn, template_defn
 from fourdvar.util import date_handle
 from obs_preprocess.ray_trace import Grid
 
@@ -63,8 +63,8 @@ class ModelSpace:
 
     @classmethod
     def create_from_fourdvar(cls):
-        sdate = date_handle.start_date
-        edate = date_handle.end_date
+        sdate = date_defn.start_date
+        edate = date_defn.end_date
         METCRO3D = date_handle.replace_date(cmaq_config.met_cro_3d, sdate)
         METCRO2D = cmaq_config.met_cro_2d
         CONC = template_defn.conc
