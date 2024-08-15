@@ -18,11 +18,10 @@ import os
 
 import numpy as np
 
-import fourdvar.params.template_defn as template
 import fourdvar.util.date_handle as dt
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
-from fourdvar.params.input_defn import inc_icon
+from fourdvar.params import date_defn, input_defn, template_defn
 from fourdvar.util.archive_handle import get_archive_path
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ class PhysicalAbstractData(FourDVarData):
     bcon_up_lay = None  # bottom layer of upper region of boundary conditions
     bcon_unc = None  # dict of boundary condition uncertainties
 
-    if inc_icon is True:
+    if input_defn.inc_icon is True:
         icon_unc = None  # dict of icon uncertainty values
         # this class variable should be overloaded in children
         icon_units = "NA"  # unit to attach to netCDF archive
@@ -69,7 +68,7 @@ class PhysicalAbstractData(FourDVarData):
         # params must all be set and not None (usally using cls.from_file)
         self.assert_params()
 
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             assert set(icon_dict.keys()) == set(self.spcs), "invalid icon spcs."
             self.icon = {}
 
@@ -79,7 +78,7 @@ class PhysicalAbstractData(FourDVarData):
         self.bcon = {}
 
         for spcs_name in self.spcs:
-            if inc_icon is True:
+            if input_defn.inc_icon is True:
                 icon_data = icon_dict[spcs_name]
                 self.icon[spcs_name] = icon_data
 
@@ -122,15 +121,15 @@ class PhysicalAbstractData(FourDVarData):
             os.remove(save_path)
         # construct netCDF file
         attr_dict = {
-            "SDATE": np.int32(dt.replace_date("<YYYYDDD>", dt.start_date)),
-            "EDATE": np.int32(dt.replace_date("<YYYYDDD>", dt.end_date)),
+            "SDATE": np.int32(dt.replace_date("<YYYYDDD>", date_defn.start_date)),
+            "EDATE": np.int32(dt.replace_date("<YYYYDDD>", date_defn.end_date)),
             "VAR-LIST": "".join([f"{s:<16}" for s in self.spcs]),
         }
         dim_dict = {"ROW": self.nrows, "COL": self.ncols}
 
         root = ncf.create(path=save_path, attr=attr_dict, dim=dim_dict, is_root=True)
 
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             icon_dim = {"SPC": len(self.spcs)}
             icon_scale = np.array([self.icon[s] for s in self.spcs])
             icon_unc = np.array([self.icon_unc[s] for s in self.spcs])
@@ -207,7 +206,7 @@ class PhysicalAbstractData(FourDVarData):
         bcon_up_lay = ncf.get_attr(filename, "UP_LAY", group="bcon")
         tsec_bcon = ncf.get_attr(filename, "TSEC", group="bcon")
 
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             icon_val = ncf.get_variable(filename, "ICON-SCALE", group="icon")
             icon_dict = {s: v for s, v in zip(spcs_list, icon_val)}
             icon_unc_val = ncf.get_variable(filename, "ICON-UNC", group="icon")
@@ -222,9 +221,9 @@ class PhysicalAbstractData(FourDVarData):
 
         # ensure parameters from file are valid
         msg = "invalid start date"
-        assert sdate == dt.replace_date("<YYYYDDD>", dt.start_date), msg
+        assert sdate == dt.replace_date("<YYYYDDD>", date_defn.start_date), msg
         msg = "invalid end date"
-        assert edate == dt.replace_date("<YYYYDDD>", dt.end_date), msg
+        assert edate == dt.replace_date("<YYYYDDD>", date_defn.end_date), msg
 
         emis_shape = [e.shape for e in emis_dict.values()]
         for eshape in emis_shape[1:]:
@@ -235,9 +234,9 @@ class PhysicalAbstractData(FourDVarData):
         estep, elays, erows, ecols = emis_shape[0]
         bstep, bregion = bcon_shape[0]
 
-        if inc_icon is True:
-            icon_lay = ncf.get_attr(template.icon, "NLAYS")
-            sense_lay = ncf.get_attr(template.sense_conc, "NLAYS")
+        if input_defn.inc_icon is True:
+            icon_lay = ncf.get_attr(template_defn.icon, "NLAYS")
+            sense_lay = ncf.get_attr(template_defn.sense_conc, "NLAYS")
             assert icon_lay == sense_lay, "Must get conc sensitivities for all layers"
 
         assert (
@@ -246,7 +245,7 @@ class PhysicalAbstractData(FourDVarData):
         assert len(dt.get_datelist()) == tday_emis * estep, "invalid emission tstep/tday"
         for spc in spcs_list:
             msg = "Uncertainty values are invalid for this data."
-            if inc_icon is True:
+            if input_defn.inc_icon is True:
                 assert icon_unc[spc].shape == icon_dict[spc].shape, msg
                 assert (icon_unc[spc] > 0).all(), msg
             assert emis_unc[spc].shape == emis_dict[spc].shape, msg
@@ -284,7 +283,7 @@ class PhysicalAbstractData(FourDVarData):
             bcon_unc,
         ]
         par_mutable = ["emis_unc", "bcon_unc"]
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             par_name += ["icon_unc"]
             par_val += [icon_unc]
             par_mutable += ["icon_unc"]
@@ -303,7 +302,7 @@ class PhysicalAbstractData(FourDVarData):
             # set this abstract classes attribute, not calling child!
             setattr(PhysicalAbstractData, name, val)
 
-        if inc_icon is False:
+        if input_defn.inc_icon is False:
             icon_dict = None
         return cls(icon_dict, emis_dict, bcon_dict)
 
@@ -329,7 +328,7 @@ class PhysicalAbstractData(FourDVarData):
             "bcon_up_lay",
             "bcon_unc",
         ]
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             par_name += ["icon_unc"]
         for param in par_name:
             msg = f"missing definition for {cls.__name__}.{param}"

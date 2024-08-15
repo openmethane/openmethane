@@ -17,13 +17,11 @@ import itertools
 
 import numpy as np
 
-import fourdvar.params.template_defn as template
 import fourdvar.util.cmaq_handle as cmaq
 import fourdvar.util.date_handle as dt
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef import ModelInputData
-from fourdvar.params.cmaq_config import met_cro_3d
-from fourdvar.params.input_defn import inc_icon
+from fourdvar.params import cmaq_config, date_defn, input_defn, template_defn
 
 unit_key = "units.<YYYYMMDD>"
 unit_convert_bcon = None
@@ -44,7 +42,7 @@ def get_unit_convert_bcon():
     kg_scale = 1e-3
 
     unit_dict = {}
-    efile = dt.replace_date(template.emis, dt.start_date)
+    efile = dt.replace_date(template_defn.emis, date_defn.start_date)
     xcell = ncf.get_attr(efile, "XCELL")
     ycell = ncf.get_attr(efile, "YCELL")
     area = float(xcell * ycell)
@@ -53,7 +51,7 @@ def get_unit_convert_bcon():
     lay_thick = np.array(lay_thick).reshape((1, len(lay_thick), 1, 1))
 
     for date in dt.get_datelist():
-        met_file = dt.replace_date(met_cro_3d, date)
+        met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
         rhoj = ncf.get_variable(met_file, "DENSA_J")[:, : len(lay_thick), ...]
         unit_array = (rhoj * lay_thick * area) / (kg_scale * ppm_scale * mwair)
         day_label = dt.replace_date(unit_key, date)
@@ -72,10 +70,10 @@ def prepare_model(physical_data):
     if unit_convert_bcon is None:
         unit_convert_bcon = get_unit_convert_bcon()
 
-    if inc_icon is True:
+    if input_defn.inc_icon is True:
         model_input_args = {"icon": {}}
         for spcs, icon_scale in physical_data.icon.items():
-            icon_array = ncf.get_variable(template.icon, spcs)
+            icon_array = ncf.get_variable(template_defn.icon, spcs)
             # ModelInput adds array values to template, change icon_scale accordingly
             # model_input_args['icon'][spcs] = (icon_scale-1.)*icon_array
             model_input_args["icon"][spcs] = (icon_scale) * icon_array
@@ -83,7 +81,7 @@ def prepare_model(physical_data):
         model_input_args = {}
 
     # all emis files & spcs for model_input use same NSTEP dimension, get it's size
-    emis_fname = dt.replace_date(template.emis, dt.start_date)
+    emis_fname = dt.replace_date(template_defn.emis, date_defn.start_date)
     m_daysize = ncf.get_variable(emis_fname, physical_data.spcs[0]).shape[0] - 1
     dlist = dt.get_datelist()
     b_daysize = float(physical_data.nstep_bcon) / len(dlist)
@@ -96,7 +94,7 @@ def prepare_model(physical_data):
     for i, date in enumerate(dlist):
         spcs_dict = {}
         estep = int(i // physical_data.tday_emis)
-        emis_fname = dt.replace_date(template.emis, date)
+        emis_fname = dt.replace_date(template_defn.emis, date)
         for spcs_name in physical_data.spcs:
             emis_arr = ncf.get_variable(emis_fname, spcs_name)
             phys_arr = physical_data.emis[spcs_name][estep, ...].reshape((1, 1, nrow, ncol))

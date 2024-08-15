@@ -27,8 +27,7 @@ from netCDF4 import Dataset
 
 import fourdvar.util.file_handle as fh
 from fourdvar import logging
-from fourdvar.params import input_defn
-from fourdvar.util.date_handle import end_date, start_date
+from fourdvar.params import date_defn, input_defn
 from obs_preprocess.model_space import ModelSpace
 from obs_preprocess.obsESA_defn import ObsSRON
 
@@ -134,6 +133,9 @@ def process_file(
     include_filter = np.logical_and.reduce((lat_filter, lon_filter, mask_filter, qa_filter))
 
     epoch = dt.datetime.utcfromtimestamp(0)
+
+    start_date = date_defn.start_date
+    end_date = date_defn.end_date
     sdate = dt.datetime(start_date.year, start_date.month, start_date.day)
     edate = dt.datetime(end_date.year, end_date.month, end_date.day)
     size = include_filter.sum()

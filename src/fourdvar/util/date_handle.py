@@ -18,10 +18,6 @@ import datetime as dt
 
 import fourdvar.params.date_defn as defn
 
-# TODO: Remove these global values
-start_date = defn.start_date
-end_date = defn.end_date
-
 # map string tags to date conversion functions
 tag_map = {
     "<YYYYMMDD>": lambda date: date.strftime("%Y%m%d"),

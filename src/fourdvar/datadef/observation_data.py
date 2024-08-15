@@ -16,15 +16,16 @@
 
 import logging
 import os
+import pathlib
 from copy import deepcopy
 
 import numpy as np
 
-import fourdvar.params.template_defn as template
 import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
+from fourdvar.params import date_defn, template_defn
 from fourdvar.util.archive_handle import get_archive_path
 
 logger = logging.getLogger(__name__)
@@ -90,8 +91,8 @@ class ObservationData(FourDVarData):
         save_path = os.path.join(save_path, name)
 
         domain = deepcopy(self.grid_attr)
-        domain["SDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", dt.start_date))
-        domain["EDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", dt.end_date))
+        domain["SDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", date_defn.start_date))
+        domain["EDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", date_defn.end_date))
         if force_lite is True:
             domain["is_lite"] = True
         else:
@@ -113,7 +114,7 @@ class ObservationData(FourDVarData):
         fh.save_list(archive_list, save_path)
 
     @classmethod
-    def check_grid(cls, other_grid=template.conc):
+    def check_grid(cls, other_grid: pathlib.Path | str):
         """Check that griddata matches other.
         input: string(path/to/conc.ncf) <OR> dict
         output: Boolean.
@@ -164,10 +165,10 @@ class ObservationData(FourDVarData):
         if cls.grid_attr is not None:
             logger.warning("Overwriting ObservationData.grid_attr")
         cls.grid_attr = domain
-        cls.check_grid()
+        cls.check_grid(other_grid=template_defn.conc)
         msg = "obs data does not match params date"
-        assert sdate == np.int32(dt.replace_date("<YYYYMMDD>", dt.start_date)), msg
-        assert edate == np.int32(dt.replace_date("<YYYYMMDD>", dt.end_date)), msg
+        assert sdate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.start_date)), msg
+        assert edate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.end_date)), msg
 
         obs_list = datalist[1:]
         unc = [odict.pop("uncertainty") for odict in obs_list]

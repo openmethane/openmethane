@@ -17,7 +17,7 @@
 import logging
 import os
 
-import fourdvar.params.archive_defn as defn
+from fourdvar.params import archive_defn
 from fourdvar.util import file_handle
 
 logger = logging.getLogger(__name__)
@@ -38,21 +38,21 @@ def setup():
     if finished_setup is True:
         logger.warning("archive setup called again. Ignoring")
         return None
-    path = os.path.join(defn.archive_path, defn.experiment)
+    path = os.path.join(archive_defn.archive_path, archive_defn.experiment)
     if os.path.isdir(path) is True:
         logger.warning(f"{path} already exists.")
-        if defn.overwrite is False:
+        if archive_defn.overwrite is False:
             # need to generate new archive path name
-            extn = defn.extension
+            extn = archive_defn.extension
             if "<E>" not in extn:
                 extn = "<E>" + extn
             if "<I>" not in extn:
                 extn = extn + "<I>"
-            template = extn.replace("<E>", defn.experiment)
+            template = extn.replace("<E>", archive_defn.experiment)
             i = 1
             unique = False
             while unique is False:
-                path = os.path.join(defn.archive_path, template.replace("<I>", str(i)))
+                path = os.path.join(archive_defn.archive_path, template.replace("<I>", str(i)))
                 unique = not os.path.isdir(path)
                 i += 1
             logger.warning(f"moved archive to {path}")
@@ -60,10 +60,10 @@ def setup():
             logger.warning("deleted old archive.")
     archive_path = path
     file_handle.empty_dir(archive_path)
-    if defn.desc_name != "":
+    if archive_defn.desc_name != "":
         # add description to archive as text file.
-        with open(os.path.join(archive_path, defn.desc_name), "w") as desc_file:
-            desc_file.write(defn.description)
+        with open(os.path.join(archive_path, archive_defn.desc_name), "w") as desc_file:
+            desc_file.write(archive_defn.description)
     finished_setup = True
 
 
