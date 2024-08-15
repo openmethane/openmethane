@@ -16,7 +16,7 @@
 
 import datetime
 
-import fourdvar.params.date_defn as defn
+from fourdvar.params import date_defn
 
 # map string tags to date conversion functions
 tag_map = {
@@ -41,10 +41,10 @@ def get_datelist() -> list[datetime.date]:
 
     notes: require start_date & end_date to already be defined
     """
-    if defn.start_date is None or defn.end_date is None:
+    if date_defn.start_date is None or date_defn.end_date is None:
         raise ValueError("Need to define start_date and end_date.")
-    days = (defn.end_date - defn.start_date).days + 1
-    datelist = [add_days(defn.start_date, i) for i in range(days)]
+    days = (date_defn.end_date - date_defn.start_date).days + 1
+    datelist = [add_days(date_defn.start_date, i) for i in range(days)]
     return datelist
 
 
