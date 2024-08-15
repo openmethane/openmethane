@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import glob
 import logging
 import os
 import pathlib
 from copy import deepcopy
+from typing import Any
 
+import attrs
 import numpy as np
 
 import fourdvar.util.date_handle as dt
@@ -29,6 +31,52 @@ from fourdvar.params import date_defn, template_defn
 from fourdvar.util.archive_handle import get_archive_path
 
 logger = logging.getLogger(__name__)
+
+
+@attrs.define
+class ObservationCollection:
+    domain: dict[str, Any]
+    observations: list[dict[str, Any]]
+
+
+def load_observations_from_file(filename: str) -> ObservationCollection:
+    """
+    Loads processed observation data from disk
+
+    Parameters
+    ----------
+    filename
+        A filename to load the data from.
+
+        This can be a glob if more than one file is needed.
+
+    Raises
+    ------
+    FileNotFoundError
+        No valid observations found
+
+    Returns
+    -------
+        A tuple where the first item is a description of the domain
+        and the second is a list of observations where each observation is a dictionary.
+    """
+
+    found_filenames = glob.glob(filename)
+
+    if not len(found_filenames):
+        raise FileNotFoundError(f"No valid observations found matching {filename}")
+
+    file_contents = fh.load_list(found_filenames[0])
+    domain = file_contents[0]
+
+    obs_list = [*file_contents[1:]]
+
+    for fname in found_filenames[1:]:
+        file_contents = fh.load_list(fname)
+        domain = file_contents[0]
+        obs_list.extend(file_contents[1:])
+
+    return ObservationCollection(domain=domain, observations=obs_list)
 
 
 class ObservationData(FourDVarData):
@@ -145,19 +193,19 @@ class ObservationData(FourDVarData):
         return cls(res)
 
     @classmethod
-    def from_file(cls, filename):
+    def from_file(cls, filename: str | pathlib.Path, check_date=False):
         """Create an ObservationData from a file.
         input: user-defined
         output: ObservationData.
 
         eg: observed = datadef.ObservationData.from_file( "saved_obs.data" )
         """
-        datalist = fh.load_list(filename)
 
-        domain = datalist[0]
+        domain, obs_list = load_observations_from_file(filename)
+
         sdate = domain.pop("SDATE")
         edate = domain.pop("EDATE")
-        # edate = 20191130
+
         if "is_lite" in domain.keys():
             is_lite = domain.pop("is_lite")
         else:
@@ -167,10 +215,11 @@ class ObservationData(FourDVarData):
         cls.grid_attr = domain
         cls.check_grid(other_grid=template_defn.conc)
         msg = "obs data does not match params date"
-        assert sdate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.start_date)), msg
-        assert edate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.end_date)), msg
 
-        obs_list = datalist[1:]
+        if check_date:
+            assert sdate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.start_date)), msg
+            assert edate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.end_date)), msg
+
         unc = [odict.pop("uncertainty") for odict in obs_list]
         val = [odict.pop("value") for odict in obs_list]
         # alp = [ odict.pop('alpha_scale') for odict in obs_list ]
