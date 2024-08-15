@@ -118,8 +118,7 @@ def get_store_path(config: Config) -> pathlib.Path:
     return (
         pathlib.Path("/opt/project/data/")
         / config.domain_name
-        / config.start_date_raw
-        / config.execution_id
+        / f"{config.start_date_raw}-{config.execution_id}"
     )
 
 
