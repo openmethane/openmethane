@@ -48,12 +48,18 @@ def load_observations_from_file(
     """
     Loads processed observation data from disk
 
+    Observations that occurred outside the start_date and end_date are dropped.
+
     Parameters
     ----------
     filename
         A filename to load the data from.
 
         This can be a glob if more than one file is needed.
+    start_date
+        Date to start loading observations from (inclusive)
+    end_date
+        Date to stop loading observations from (inclusive)
 
     Raises
     ------
@@ -204,7 +210,7 @@ class ObservationData(FourDVarData):
 
     @classmethod
     def from_file(cls, filename: str | pathlib.Path):
-        """Create an ObservationData from a file.
+        """Create an ObservationData from a filename or globbed file path.
         input: user-defined
         output: ObservationData.
 
