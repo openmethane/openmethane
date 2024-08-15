@@ -76,7 +76,7 @@ def test_template_defn(data_regression, target_environment, target):
         _extract_params(
             template_defn,
             [
-                "template_path",
+                "template_dir",
                 "conc",
                 "force",
                 "sense_emis",

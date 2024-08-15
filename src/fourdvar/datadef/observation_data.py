@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import datetime
+import glob
 import logging
 import os
 import pathlib
 from copy import deepcopy
+from typing import Any
 
+import attrs
 import numpy as np
 
 import fourdvar.util.date_handle as dt
@@ -29,6 +32,67 @@ from fourdvar.params import date_defn, template_defn
 from fourdvar.util.archive_handle import get_archive_path
 
 logger = logging.getLogger(__name__)
+
+
+@attrs.define
+class ObservationCollection:
+    domain: dict[str, Any]
+    observations: list[dict[str, Any]]
+
+
+def load_observations_from_file(
+    filename: str | pathlib.Path,
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> ObservationCollection:
+    """
+    Loads processed observation data from disk
+
+    Observations that occurred outside the start_date and end_date are dropped.
+
+    Parameters
+    ----------
+    filename
+        A filename to load the data from.
+
+        This can be a glob if more than one file is needed.
+    start_date
+        Date to start loading observations from (inclusive)
+    end_date
+        Date to stop loading observations from (inclusive)
+
+    Raises
+    ------
+    FileNotFoundError
+        No valid observations found
+
+    Returns
+    -------
+        A tuple where the first item is a description of the domain
+        and the second is a list of observations where each observation is a dictionary.
+    """
+
+    found_filenames = sorted(glob.glob(str(filename)))
+
+    if not len(found_filenames):
+        raise FileNotFoundError(f"No valid observations files found matching {filename}")
+
+    file_contents = fh.load_list(found_filenames[0])
+    domain = file_contents[0]
+
+    obs_list = [*file_contents[1:]]
+
+    for fname in found_filenames[1:]:
+        file_contents = fh.load_list(fname)
+        obs_list.extend(file_contents[1:])
+
+    # Drop observations outside the date range
+    obs_list = [o for o in obs_list if start_date <= o["time"].date() <= end_date]
+
+    domain["SDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", start_date))
+    domain["EDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", end_date))
+
+    return ObservationCollection(domain=domain, observations=obs_list)
 
 
 class ObservationData(FourDVarData):
@@ -145,46 +209,41 @@ class ObservationData(FourDVarData):
         return cls(res)
 
     @classmethod
-    def from_file(cls, filename):
-        """Create an ObservationData from a file.
+    def from_file(cls, filename: str | pathlib.Path):
+        """Create an ObservationData from a filename or globbed file path.
         input: user-defined
         output: ObservationData.
 
         eg: observed = datadef.ObservationData.from_file( "saved_obs.data" )
         """
-        datalist = fh.load_list(filename)
 
-        domain = datalist[0]
-        sdate = domain.pop("SDATE")
-        edate = domain.pop("EDATE")
-        # edate = 20191130
-        if "is_lite" in domain.keys():
-            is_lite = domain.pop("is_lite")
+        obs = load_observations_from_file(
+            filename, start_date=date_defn.start_date, end_date=date_defn.end_date
+        )
+
+        if "is_lite" in obs.domain.keys():
+            is_lite = obs.domain.pop("is_lite")
         else:
             is_lite = False
         if cls.grid_attr is not None:
             logger.warning("Overwriting ObservationData.grid_attr")
-        cls.grid_attr = domain
+        cls.grid_attr = obs.domain
         cls.check_grid(other_grid=template_defn.conc)
-        msg = "obs data does not match params date"
-        assert sdate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.start_date)), msg
-        assert edate == np.int32(dt.replace_date("<YYYYMMDD>", date_defn.end_date)), msg
 
-        obs_list = datalist[1:]
-        unc = [odict.pop("uncertainty") for odict in obs_list]
-        val = [odict.pop("value") for odict in obs_list]
+        unc = [odict.pop("uncertainty") for odict in obs.observations]
+        val = [odict.pop("value") for odict in obs.observations]
         # alp = [ odict.pop('alpha_scale') for odict in obs_list ]
         # ref = [ odict.pop('ref_profile') for odict in obs_list ]
         if is_lite is False:
-            weight = [odict.pop("weight_grid") for odict in obs_list]
+            weight = [odict.pop("weight_grid") for odict in obs.observations]
         # create default 'lite_coord' if not available
-        coord = [odict.pop("lite_coord", None) for odict in obs_list]
+        coord = [odict.pop("lite_coord", None) for odict in obs.observations]
         if None in coord:
             assert is_lite is False, "Missing coordinate data."
             logger.warning(
                 "Missing lite_coord data. Setting to coord with largest weight in weight_grid"
             )
-            for i, _ in enumerate(obs_list):
+            for i, _ in enumerate(obs.observations):
                 if coord[i] is None:
                     max_weight = max(
                         [
@@ -199,7 +258,7 @@ class ObservationData(FourDVarData):
 
         if cls.length is not None:
             logger.warning("Overwriting ObservationData.length")
-        cls.length = len(obs_list)
+        cls.length = len(obs.observations)
         if cls.uncertainty is not None:
             logger.warning("Overwriting ObservationData.uncertainty")
         cls.uncertainty = unc
@@ -214,7 +273,7 @@ class ObservationData(FourDVarData):
         cls.lite_coord = coord
         if cls.misc_meta is not None:
             logger.warning("Overwriting ObservationData.misc_meta")
-        cls.misc_meta = obs_list
+        cls.misc_meta = obs.observations
         if is_lite is False:
             if cls.weight_grid is not None:
                 logger.warning("Overwriting ObservationData.weight_grid")

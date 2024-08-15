@@ -5,4 +5,4 @@ force: /opt/project/data/templates/force_template.nc
 icon: /opt/project/data/templates/record/icon_record.nc
 sense_conc: /opt/project/data/templates/sense_conc_template.nc
 sense_emis: /opt/project/data/templates/sense_emis_template.nc
-template_path: /opt/project/data/templates
+template_dir: /opt/project/data/templates
