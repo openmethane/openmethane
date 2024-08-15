@@ -266,7 +266,8 @@ baseline_data/*.csv
 data
 
 # Generated during a CMAQ run
-N_SPC_EMIS.dat
+/N_SPC_EMIS.dat
+/CTM_LOG_*
 
 # Environment file with sensitive information
 .env
