@@ -47,7 +47,7 @@ def main():
 
 
 def date_range(start_date: datetime.date, end_date: datetime.date):
-    """Like range() but with days."""
+    """Like range() but with days and inclusive of the end date."""
     for n in range((end_date - start_date).days + 1):
         yield start_date + datetime.timedelta(days=n)
 
