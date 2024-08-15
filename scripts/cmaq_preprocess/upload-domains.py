@@ -33,7 +33,7 @@ def main():
     if EXTRA_R2_ARGS:
         r2_arguments += shlex.split(EXTRA_R2_ARGS)
 
-    aws_config = subprocess.run(  # noqa: S603
+    aws_config = subprocess.run(
         ["aws", "configure", "list"],  # noqa: S607
         check=True,
         capture_output=True,
@@ -75,7 +75,7 @@ def ask_upload():
 
 
 def dry_sync(r2_arguments):
-    dry_sync_to_r2 = subprocess.run(  # noqa: S603
+    dry_sync_to_r2 = subprocess.run(
         ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, "--dryrun", *r2_arguments],  # noqa: S607
         check=False,
         capture_output=True,
@@ -93,7 +93,7 @@ Stderr:
 
 def check_geo_dir_up_to_date(r2_arguments):
     logging.info("Checking if up to date")
-    dry_sync_from_r2 = subprocess.run(  # noqa: S603
+    dry_sync_from_r2 = subprocess.run(
         ["aws", "s3", "sync", TARGET_DIR, GEO_DIR, "--dryrun", *r2_arguments],  # noqa: S607
         check=False,
         capture_output=True,
