@@ -44,7 +44,9 @@ def main():
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
 
+    logging.debug(f"Deleting {store_path}.")
     shutil.rmtree(store_path)
+    logging.debug("Finished successfully")
 
 
 @dataclass
