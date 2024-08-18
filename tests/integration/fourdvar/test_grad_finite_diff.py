@@ -26,7 +26,7 @@ from fourdvar.params import archive_defn
 
 
 def test_fourdvar_grad_finite_diff(target_environment):
-    target_environment("docker")
+    target_environment("docker-test")
 
     _run_grad_finite_diff()
 

@@ -129,7 +129,7 @@ jobs:
           cd /opt/project
           make fetch-domains
           env
-          python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
+          python -m pytest -r a -v tests/integration
 
   test-e2e:
     timeout-minutes: 10

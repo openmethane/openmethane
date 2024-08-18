@@ -22,7 +22,7 @@ from fourdvar.params.input_defn import obs_file, prior_file
 
 
 def test_grad_step(target_environment):
-    target_environment("docker")
+    target_environment("docker-test")
 
     _run_grad_step()
 
