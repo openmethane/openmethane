@@ -129,7 +129,7 @@ jobs:
           cd /opt/project
           make fetch-domains
           env
-          python -m pytest -r a -v tests/integration
+          python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
 
   test-e2e:
     timeout-minutes: 10
@@ -156,6 +156,11 @@ jobs:
           cd /opt/project
           make fetch-domains
           bash scripts/run-all.sh
+      - name: Run four4var integration tests
+        run: |
+          cd /opt/project
+          # This test requires the results from the preprocessing step
+          python -m pytest -r a -v tests/integration/fourdvar
 
       - name: Upload CMAQ artifacts
         if: ${{ always() }}
