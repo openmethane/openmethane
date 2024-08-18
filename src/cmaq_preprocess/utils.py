@@ -185,8 +185,13 @@ def nested_dir(domain: Domain, date: datetime.date, root_dir: pathlib.Path) -> p
     date
         Date of interest
     root_dir
-        Root directory for the nested directory
+        Root directory for the nested directory.
 
+        This can contain the date formatting strings used in the `fourdvar` package.
+
+    See Also
+    --------
+    fourdvar.util.date_handle.replace_date
     Returns
     -------
         Nested path inside root_dir
@@ -195,8 +200,5 @@ def nested_dir(domain: Domain, date: datetime.date, root_dir: pathlib.Path) -> p
 
     # TODO: This whole functions should be replaced with a replace_date
     # and move the nested logic to the configuration
-    return (
-        pathlib.Path(date_handle.replace_date(str(root_dir), date))
-        / date.strftime("%Y-%m-%d")
-        / domain.id
-    )
+    templated_path = root_dir / "<YYYY-MM-DD>" / domain.id
+    return pathlib.Path(date_handle.replace_date(str(templated_path), date))
