@@ -4,12 +4,12 @@ Load previous month's output from the archive for a monthly run.
 This is intended to be run as part of the production deployment
 so references environment variables that may not be available.
 
-The data is stored in
-${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}/input/test_obs.pic.gz
-for each day and we need all days between the start and the end date,
-including the end date.
-The data is downloaded to
-${STORE_PATH}/{DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}/input/test_obs.pic.gz
+This script downloads archived output from a daily run
+for each day between the start and end date (inclusive).
+
+The archived data is stored in the prefix ${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}.
+The script downloads specific directories from that archive,
+into ${STORE_PATH}/${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}.
 """
 
 import datetime
