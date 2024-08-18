@@ -218,7 +218,7 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
 
     options = dict(
         prepare_ic_and_bc=True,
-        force_update=env.bool("FORCE_UPDATE", False),
+        force_update=env.bool("FORCE_UPDATE", True),
         cmaq_source_dir=env.path("CMAQ_SOURCE_DIR"),
         mcip_source_dir=env.path("MCIP_SOURCE_DIR"),
         met_dir=env.path("MET_DIR"),

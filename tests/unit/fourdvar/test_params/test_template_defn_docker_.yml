@@ -1,5 +1,4 @@
 conc: /opt/project/data/templates/conc_template.nc
-diurnal: /opt/project/data/templates/diurnal.nc
 emis: /opt/project/data/templates/record/emis_record_<YYYY-MM-DD>.nc
 force: /opt/project/data/templates/force_template.nc
 icon: /opt/project/data/templates/record/icon_record.nc
