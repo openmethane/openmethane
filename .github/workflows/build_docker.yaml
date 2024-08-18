@@ -160,7 +160,8 @@ jobs:
         run: |
           cd /opt/project
           # This test requires the results from the preprocessing step
-          python -m pytest -r a -v tests/integration/fourdvar
+          # Verbosity is set to A to show all test results
+          python -m pytest -r A -v tests/integration/fourdvar
 
       - name: Upload CMAQ artifacts
         if: ${{ always() }}
