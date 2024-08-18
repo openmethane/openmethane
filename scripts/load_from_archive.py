@@ -29,21 +29,29 @@ END_DATE = env.date("END_DATE")
 
 def main():
     for date in date_range(START_DATE, END_DATE):  # this is inclusive of END_DATE
-        path = (
-            DOMAIN_NAME,
-            "daily",
-            str(date.year),
-            str(date.month),
-            str(date.day),
-            "input",
-            "test_obs.pic.gz",
-        )
-        s3_path = "/".join((TARGET_BUCKET, *path))
-        local_path = STORE_PATH.joinpath(*path)
-        local_path.mkdir(parents=True, exist_ok=True)
+        for path in [
+            [
+                "input",
+                "test_obs.pic.gz",
+            ],
+            ["mcip"],
+        ]:
+            _sync_daily_glob(date, path)
 
-        logging.debug(f"Downloading {s3_path} to {local_path}")
-        subprocess.run(["aws", "s3", "sync", "--no-progress", s3_path, str(local_path)], check=True)
+
+def _sync_daily_glob(date: datetime.date, path: list[str]):
+    daily_prefix = (
+        DOMAIN_NAME,
+        "daily",
+        str(date.year),
+        str(date.month),
+        str(date.day),
+    )
+    s3_path = "/".join((TARGET_BUCKET, *daily_prefix, *path))
+    local_path = STORE_PATH.joinpath(*daily_prefix, *path)
+    local_path.mkdir(parents=True, exist_ok=True)
+    logging.debug(f"Downloading {s3_path} to {local_path}")
+    subprocess.run(["aws", "s3", "sync", "--no-progress", s3_path, str(local_path)], check=True)
 
 
 def date_range(start_date: datetime.date, end_date: datetime.date):

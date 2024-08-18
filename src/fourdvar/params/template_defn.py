@@ -31,7 +31,5 @@ sense_conc = os.path.join(template_dir, "sense_conc_template.nc")
 emis = os.path.join(template_dir, "record", "emis_record_<YYYY-MM-DD>.nc")
 icon = os.path.join(template_dir, "record", "icon_record.nc")
 
-diurnal = os.path.join(template_dir, "diurnal.nc")
-
 # Path to the pre-calculated prior
 prior_file = env.path("PRIOR_FILE")
