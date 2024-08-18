@@ -42,5 +42,5 @@ python scripts/cmaq_preprocess/make_prior.py
 echo "Complete"
 
 echo "Listing directory contents"
-tree "${MET_DIR}"
-tree "${CTM_DIR}"
+tree "${CTM_DIR}" || echo "Cannot list ${CTM_DIR}"
+tree "${MET_DIR}" || echo "Cannot list ${MET_DIR}"
