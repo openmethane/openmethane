@@ -23,6 +23,9 @@ tag_map = {
     "<YYYYMMDD>": lambda date: date.strftime("%Y%m%d"),
     "<YYYYDDD>": lambda date: date.strftime("%Y%j"),
     "<YYYY-MM-DD>": lambda date: date.strftime("%Y-%m-%d"),
+    "<YYYY>": lambda date: date.strftime("%Y"),
+    "<MM>": lambda date: date.strftime("%m"),
+    "<DD>": lambda date: date.strftime("%d"),
 }
 
 

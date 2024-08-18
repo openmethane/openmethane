@@ -9,6 +9,7 @@ import subprocess
 import numpy
 
 from cmaq_preprocess.read_config_cmaq import Domain
+from fourdvar.util import date_handle
 
 
 def deg2rad(deg):
@@ -191,4 +192,11 @@ def nested_dir(domain: Domain, date: datetime.date, root_dir: pathlib.Path) -> p
         Nested path inside root_dir
 
     """
-    return root_dir / date.strftime("%Y-%m-%d") / domain.id
+
+    # TODO: This whole functions should be replaced with a replace_date
+    # and move the nested logic to the configuration
+    return (
+        pathlib.Path(date_handle.replace_date(str(root_dir), date))
+        / date.strftime("%Y-%m-%d")
+        / domain.id
+    )
