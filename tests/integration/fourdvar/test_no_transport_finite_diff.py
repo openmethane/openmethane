@@ -228,7 +228,7 @@ def finite_diff(scale):
 
 
 def test_no_transport_finite_diff(target_environment):
-    target_environment("docker")
+    target_environment("docker-test")
 
     sense, force = finite_diff(scale=1.0)
     print(40 * "-")

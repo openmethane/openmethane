@@ -27,7 +27,7 @@ from fourdvar._transform import transform
 from fourdvar.params import archive_defn
 
 
-def runner():
+def _run_pert_pert():
     # This is the main function that is called by the test
     logger = logging.get_logger(__name__)
     logging.setup_logging()
@@ -96,5 +96,11 @@ def runner():
     main.get_answer()
 
 
+def test_fourdvar_pert_pert(target_environment):
+    # Settings are modified locally so this resets them to the default initially
+    target_environment("docker-test")
+    _run_pert_pert()
+
+
 if __name__ == "__main__":
-    runner()
+    _run_pert_pert()
