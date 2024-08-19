@@ -35,7 +35,7 @@ def main():
     config.dump(store_path=store_path, prefix=prefix)
 
     s3_result = subprocess.run(
-        ("aws", "s3", "sync", "--no-progress", str(store_path), f"{config.target_bucket}/{prefix}"),  # noqa: S603
+        ("aws", "s3", "sync", "--no-progress", str(store_path), f"{config.target_bucket}/{prefix}"),
         check=False,
     )
     if s3_result.returncode == 1:
@@ -129,11 +129,11 @@ def get_prefix(config: Config) -> str:
         return f"{config.domain_name}/failed/{config.execution_id}"
     if config.run_type == "daily":
         return (
-            f"{config.domain_name}/daily/{config.start_date.year}/{config.start_date.month}/"
-            f"{config.start_date.day}"
+            f"{config.domain_name}/daily/{config.start_date.year}/{config.start_date.month:02}/"
+            f"{config.start_date.day:02}"
         )
     elif config.run_type == "monthly":
-        return f"{config.domain_name}/monthly/{config.start_date.year}/{config.start_date.month}"
+        return f"{config.domain_name}/monthly/{config.start_date.year}/{config.start_date.month:02}"
     raise ValueError(f"Unknown config.run_type={config.run_type!r}")
 
 
