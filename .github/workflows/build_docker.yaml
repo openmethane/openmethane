@@ -156,7 +156,7 @@ jobs:
           cd /opt/project
           make fetch-domains
           bash scripts/run-all.sh
-      - name: Run four4var integration tests
+      - name: Run fourdvar integration tests
         run: |
           cd /opt/project
           # This test requires the results from the preprocessing step
