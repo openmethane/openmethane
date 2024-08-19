@@ -43,4 +43,9 @@ echo "Complete"
 
 echo "Listing directory contents"
 tree "${CTM_DIR}" || echo "Cannot list ${CTM_DIR}"
-tree "${MET_DIR}" || echo "Cannot list ${MET_DIR}"
+
+# MET_DIR can contain date strings which need to be replaced by `*` to show all contents
+met_dir_y="${MET_DIR//<YYYY>/*}"
+met_dir_ym="${met_dir_y//<MM>/*}"
+met_dir_ymd="${met_dir_ym//<DD>/*}"
+tree "${met_dir_ymd}" || echo "Cannot list ${MET_DIR} expanded to ${met_dir_ymd}"
