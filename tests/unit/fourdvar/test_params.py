@@ -83,7 +83,6 @@ def test_template_defn(data_regression, target_environment, target):
                 "sense_conc",
                 "emis",
                 "icon",
-                "diurnal",
             ],
         )
     )

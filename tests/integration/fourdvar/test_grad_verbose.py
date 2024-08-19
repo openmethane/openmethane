@@ -30,7 +30,7 @@ from fourdvar.params import archive_defn
 
 def test_fourdvar_grad_verbose(target_environment):
     # Settings are modified locally so this resets them to the default initially
-    target_environment("docker")
+    target_environment("docker-test")
 
     _run_grad_verbose()
 

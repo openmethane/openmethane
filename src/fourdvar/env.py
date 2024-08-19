@@ -28,7 +28,7 @@ def create_env():
     target_env = env.str("TARGET", "nci")
 
     logger.info("Loading environment variables from .env.%s", target_env)
-    env.read_env(f".env.{target_env}", verbose=True)
+    env.read_env(f".env.{target_env}", verbose=True, override=False)
     return env
 
 
