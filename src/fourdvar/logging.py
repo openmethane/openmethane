@@ -20,7 +20,7 @@ import os
 from fourdvar.params.root_path_defn import store_path
 
 
-def setup_logging(verbose: bool = False, reset_logfile: bool = True):
+def setup_logging(verbose: bool = True, reset_logfile: bool = True):
     """
     Setup logging for the project.
 
