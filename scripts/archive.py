@@ -44,8 +44,11 @@ def main():
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
 
-    logging.debug(f"Deleting {store_path}.")
-    shutil.rmtree(store_path)
+    if config.success:
+        logging.debug(f"Deleting {store_path}.")
+        shutil.rmtree(store_path)
+    else:
+        logging.debug(f"Not deleting {store_path} for failed run - clean up manually.")
     logging.debug("Finished successfully")
 
 
