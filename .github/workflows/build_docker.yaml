@@ -152,6 +152,8 @@ jobs:
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           # Uses the local checked-in WRF and prior data
           TARGET: docker-test
+          NUM_PROC_COLS: 1
+          NUM_PROC_ROWS: 2
         run: |
           cd /opt/project
           make fetch-domains
