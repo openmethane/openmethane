@@ -43,7 +43,7 @@ should have seen.
 The monthly workflow uses the meteorology and processed observations from a set of daily workflows
 and runs the adjoint of the CMAQ model to estimate the methane emissions for the month that best match the observations.
 
-The `preprocess` step runs the following three AWS batch job in parallel:
+The `preprocess` step runs the following two AWS batch job in parallel:
 * `prior-generate` runs `scripts/run.sh` in openmethane-prior
 * `archive-load` fetches the MCIP output and Observations from the daily runs that cover the time period of interest.
 
