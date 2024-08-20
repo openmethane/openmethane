@@ -11,6 +11,7 @@ describes where the various input files are located, where the output files shou
 3. The **openmethane** repository processes the output from WRF into a format that CMAQ requires 
 and runs the adjoint of the CMAQ model for methane emissions estimation
 4. **om-infra** describes the AWS resources required to run the daily and monthly workflows.
+
 ## Daily workflow 
 
 The daily workflow is described in the `om-infra` repository using Terraform, which runs 
@@ -31,12 +32,23 @@ The following jobs are then carried out in sequence:
 * `obs_preprocess-process_tropomi` generates an observation dataset from the tropomi input.
 * `fourdvar-daily` generates a set of simulated observation - what the satellite 
 should have seen.
-* There is an error handler that directs to the `Notify Error` state in case of any error.
+* `archive-success` archives the output of the daily workflow to S3.
 
-
-
-
-
-<img src="stepfunctions_graph.svg">
+<img src="images/stepfunctions_graph_daily.svg">
 
 ## Monthly workflow
+
+<img src="images/stepfunctions_graph_monthly.svg">
+
+The monthly workflow uses the meteorology and processed observations from a set of daily workflows
+and runs the adjoint of the CMAQ model to estimate the methane emissions for the month that best match the observations.
+
+The `preprocess` step runs the following two AWS batch job in parallel:
+* `prior-generate` runs `scripts/run.sh` in openmethane-prior
+* `archive-load` fetches the MCIP output and Observations from the daily runs that cover the time period of interest.
+
+The following jobs are then carried out in sequence:
+
+* `cmaq_preprocess-run` generates the required input files for CMAQ from the prior. The MCIP generation step is skipped since the files are already available.
+* `fourdvar-monthly` attempts to iterate the adjoint of the CMAQ model to estimate the methane emissions for the month that best match the observations.
+* `archive-success` archives the output of the monthly workflow to S3.
