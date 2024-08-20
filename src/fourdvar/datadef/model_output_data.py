@@ -111,6 +111,39 @@ class ModelOutputData(FourDVarData):
             ncf.copy_compress(source, dest)
         return cls()
 
+    def get_vector( self):
+        """ concatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
+        filedict = get_filedict( self.__class__.__name__ )
+        result = []
+        for label, record in filedict.items():
+            varList = ncf.get_attr( record['actual'], 'VAR-LIST')
+            vars = varList.split()
+            for v in vars:
+                result.append( ncf.get_variable( record['actual'], v).astype('float64'))
+        return np.array( result).flatten()
+
+    @classmethod
+    def load_from_vector_template ( cls, vector):
+        """ create a record from a templateconcatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
+        filedict = get_filedict( cls.__name__ )
+
+        # first set up dimensions for reshaping vector
+        record = list( filedict.values())[0]
+        varList = ncf.get_attr( record['template'], 'VAR-LIST')
+        vars = varList.split()
+        if len( vars) > 1: raise ValueError('only works for one variable')
+        var_shape =  ncf.get_variable( record['template'], vars[0]).shape
+        vector_shape = (len(filedict),)+var_shape
+        vector_reshape = vector.reshape( vector_shape)
+        for i,record in enumerate(filedict.values()):
+            for var in vars:
+                ncf.create_from_template( record['template'], record['actual'],
+                                          var_change={var:vector_reshape[i,...]}, date=record['date'] )
+        return cls()
+
+    def sum_squares( self): return (self.get_vector()**2).sum()/2.0
+
+
     @classmethod
     def load_from_template(cls):
         """application: return a valid example with values from template.
