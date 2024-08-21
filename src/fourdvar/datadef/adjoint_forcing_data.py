@@ -15,7 +15,7 @@
 #
 
 import os
-
+import numpy as np
 import numpy as np
 
 import fourdvar.util.netcdf_handle as ncf

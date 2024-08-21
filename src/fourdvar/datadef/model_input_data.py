@@ -16,7 +16,7 @@
 """Input class for the fwd model, generated from PhysicalData."""
 
 import os
-
+import numpy as np
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
