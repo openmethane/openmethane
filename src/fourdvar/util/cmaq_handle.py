@@ -227,7 +227,7 @@ def run_cmaq(
         executable="/bin/csh",
         capture_output=True,
         text=True,
-        env=env_dict,
+        env=environment,
         check=False,
     )
     t_elapsed = time.time() - t0
@@ -241,7 +241,7 @@ def run_cmaq(
         msg = f"{executable} failed for {date.strftime('%Y%m%d')}"
         logger.error(msg)
 
-        logger.error(f"environment: {dict(sorted(env_dict.items()))}")
+        logger.error(f"environment: {dict(sorted(environment.items()))}")
         logger.error(f"stdout: {res.stdout}")
         logger.error(f"stderr: {res.stderr}")
 
