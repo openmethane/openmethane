@@ -212,7 +212,7 @@ def run_cmaq(
     # `env_dict` has likely already been cleaned which is why a warning is logged in this case
     for k in list(environment.keys()):
         if environment[k] == "":
-            logger.warning("Empty environment variable found: {k}")
+            logger.warning(f"Empty environment variable found: {k}")
             del environment[k]
 
     t0 = time.time()
@@ -241,7 +241,7 @@ def run_cmaq(
         msg = f"{executable} failed for {date.strftime('%Y%m%d')}"
         logger.error(msg)
 
-        logger.error(f"environment: {env_dict}")
+        logger.error(f"environment: {dict(sorted(env_dict.items()))}")
         logger.error(f"stdout: {res.stdout}")
         logger.error(f"stderr: {res.stderr}")
 
