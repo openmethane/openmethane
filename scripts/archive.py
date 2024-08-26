@@ -10,6 +10,10 @@ depending on the value of $config.run_type.
 If it was unsuccessful, the data is stored in the prefix
 `${DOMAIN_NAME}/failed/${EXECUTION_ID}`
 with the execution ID of the workflow.
+
+For manually started test runs (if successful or not), the data is stored in the prefix
+`tests/${EXECUTION_ID}`
+with the execution ID of the workflow.
 """
 
 import json
@@ -61,6 +65,7 @@ class Config:
     end_date: datetime.date
     run_type: str
     success: bool
+    test: bool
     execution_id: str
 
     @classmethod
@@ -86,6 +91,7 @@ class Config:
         target_bucket = env.str("TARGET_BUCKET")
         run_type = env.str("RUN_TYPE")
         success = env.bool("SUCCESS")
+        test = env.bool("TEST", False)
         execution_id = env.str("EXECUTION_ID")
 
         return cls(
@@ -97,6 +103,7 @@ class Config:
             run_type=run_type,
             success=success,
             execution_id=execution_id,
+            test=test,
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):
@@ -108,6 +115,7 @@ start_date     = {self.start_date}
 end_date       = {self.end_date}
 run_type       = {self.run_type!r}
 success        = {self.success!r}
+test           = {self.test!r}
 execution_id   = {self.execution_id!r}
 store_path     = {store_path}
 prefix         = {prefix!r}
@@ -128,6 +136,8 @@ def get_store_path(config: Config) -> pathlib.Path:
 
 
 def get_prefix(config: Config) -> str:
+    if config.test:
+        return f"tests/{config.execution_id}"
     if not config.success:
         return f"{config.domain_name}/failed/{config.execution_id}"
     if config.run_type == "daily":
