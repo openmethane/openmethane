@@ -1,0 +1,100 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "https://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg xmlns="http://www.w3.org/2000/svg" aria-label="Graph view" width="547" height="542"><g transform="translate(12,19.61328125)"><g class="nodes"><g class="node-container" transform="translate(261.19140625,18.25)"><g class="node anchor"><circle class="shape" x="-15.86328125" y="-8.25" r="25.86328125"/><text class="label"><tspan xml:space="preserve" text-anchor="middle" alignment-baseline="central">Start</tspan></text></g></g><g class="node-container" transform="translate(261.19140625,487.35400199890137)"><g class="node anchor"><circle class="shape" x="-12.17578125" y="-8.25" r="22.17578125"/><text class="label"><tspan xml:space="preserve" text-anchor="middle" alignment-baseline="central">End</tspan></text></g></g><g class="node-container" transform="translate(261.19140625,129.7760009765625)"><g class="node state Parallel Container" aria-label="State Preprocess" data-virtual-tab-id="73" tabindex="0" transform="translate(-261.19140625,-28.2760009765625)"><rect class="shape" rx="5" ry="5" x="0" y="0" width="522.3828125" height="116.552001953125" transform="translate(0,-20)"/><g class="branches" transform="translate(20,40)"><g class="branch" transform="translate(0,0)"><g class="nodes"><g class="node-container" transform="translate(42.16015625,18.25)"><g class="node state Task" aria-label="State wrf-run" data-virtual-tab-id="74" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-34.16015625" y="-18.25" width="84.3203125" height="36.5"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">wrf-run</text><svg class="icon" width="16" height="16" x="29.16015625" y="-8"/></g></g></g><g class="edges"/></g><g class="branch" transform="translate(104.3203125,0)"><g class="nodes"><g class="node-container" transform="translate(64.20703125,18.2760009765625)"><g class="node state Task" aria-label="State prior-generate" data-virtual-tab-id="75" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-56.20703125" y="-18.2760009765625" width="128.4140625" height="36.552001953125"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">prior-generate</text><svg class="icon" width="16" height="16" x="51.20703125" y="-8"/></g></g></g><g class="edges"/></g><g class="branch" transform="translate(252.734375,0)"><g class="nodes"><g class="node-container" transform="translate(114.82421875,18.25)"><g class="node state Task" aria-label="State obs_preprocess-fetch_tropomi" data-virtual-tab-id="76" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-106.82421875" y="-18.25" width="229.6484375" height="36.5"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">obs_preprocess-fetch_tropomi</text><svg class="icon" width="16" height="16" x="101.82421875" y="-8"/></g></g></g><g class="edges"/></g></g><g class="title node state" transform="translate(241.19140625,-40)"><rect class="shape step-status" rx="5" ry="5" x="0" y="0" width="113.0234375" height="40" transform="translate(-36.51171875)"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central" font-weight="600" x="40" y="10" transform="translate(-28)">Preprocess</text><text class="desciption" xml:space="preserve" text-anchor="middle" alignment-baseline="central" x="40" y="30" transform="translate(-20)"/><svg class="icon" width="16" height="16" xml:space="preserve" text-anchor="middle" alignment-baseline="central" x="55.51171875" y="3"/></g><path class="path" marker-end="url(#arrowhead84)" d="M261.191,0L261.191,3.333C261.191,6.667,261.191,13.333,228.02,16.667C194.848,20,128.504,20,95.332,23.333C62.16,26.667,62.16,33.333,62.16,36.667L62.16,40" style="fill: none;"/><defs><marker id="arrowhead84" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><path class="path" marker-end="url(#arrowhead85)" d="M261.191,0L261.191,3.333C261.191,6.667,261.191,13.333,249.081,16.667C236.97,20,212.749,20,200.638,23.333C188.527,26.667,188.527,33.333,188.527,36.667L188.527,40" style="fill: none;"/><defs><marker id="arrowhead85" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><path class="path" marker-end="url(#arrowhead86)" d="M261.191,0L261.191,3.333C261.191,6.667,261.191,13.333,282.253,16.667C303.314,20,345.436,20,366.497,23.333C387.559,26.667,387.559,33.333,387.559,36.667L387.559,40" style="fill: none;"/><defs><marker id="arrowhead86" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs></g></g><g class="node-container" transform="translate(261.19140625,241.302001953125)"><g class="node state Task" aria-label="State cmaq_preprocess-run" data-virtual-tab-id="77" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-78.28515625" y="-18.25" width="172.5703125" height="36.5"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">cmaq_preprocess-run</text><svg class="icon" width="16" height="16" x="73.28515625" y="-8"/></g></g><g class="node-container" transform="translate(261.19140625,425.85400199890137)"><g class="node state Task" aria-label="State archive-success" data-virtual-tab-id="78" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-58.3359375" y="-18.25" width="132.671875" height="36.5"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">archive-success</text><svg class="icon" width="16" height="16" x="53.3359375" y="-8"/></g></g><g class="node-container" transform="translate(261.19140625,302.802001953125)"><g class="node state Task" aria-label="State obs_preprocess-process_tropomi" data-virtual-tab-id="79" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-114.10546875" y="-18.25" width="244.2109375" height="36.5"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">obs_preprocess-process_tropomi</text><svg class="icon" width="16" height="16" x="109.10546875" y="-8"/></g></g><g class="node-container" transform="translate(261.19140625,364.3280019760132)"><g class="node state Task" aria-label="State fourdvar-daily" data-virtual-tab-id="80" tabindex="-1" transform="translate(-8)"><rect class="shape step-status" rx="5" ry="5" x="-55.1328125" y="-18.276000022888184" width="126.265625" height="36.55200004577637"/><text class="label" xml:space="preserve" text-anchor="middle" alignment-baseline="central">fourdvar-daily</text><svg class="icon" width="16" height="16" x="50.1328125" y="-8"/></g></g></g><g class="edges"><g class="edge"><path class="path" marker-end="url(#arrowhead87)" d="M261.191,198.052L261.191,200.135C261.191,202.219,261.191,206.385,261.191,210.552C261.191,214.719,261.191,218.885,261.191,220.969L261.191,223.052" style="fill: none;"/><defs><marker id="arrowhead87" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs></g><g class="edge"><path class="path" marker-end="url(#arrowhead88)" d="M261.191,44.113L261.191,44.928C261.191,45.742,261.191,47.371,261.191,50.269C261.191,53.167,261.191,57.333,261.191,59.417L261.191,61.5" style="fill: none;"/></g><g class="edge"><path class="path" marker-end="url(#arrowhead89)" d="M261.191,444.104L261.191,446.187C261.191,448.271,261.191,452.437,261.191,455.95C261.191,459.462,261.191,462.32,261.191,463.749L261.191,465.178" style="fill: none;"/><defs><marker id="arrowhead89" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs></g><g class="edge"><path class="path" marker-end="url(#arrowhead90)" d="M261.191,259.552L261.191,261.635C261.191,263.719,261.191,267.885,261.191,272.052C261.191,276.219,261.191,280.385,261.191,282.469L261.191,284.552" style="fill: none;"/><defs><marker id="arrowhead90" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs></g><g class="edge"><path class="path" marker-end="url(#arrowhead91)" d="M261.191,382.604L261.191,384.687C261.191,386.771,261.191,390.937,261.191,395.104C261.191,399.271,261.191,403.437,261.191,405.521L261.191,407.604" style="fill: none;"/><defs><marker id="arrowhead91" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs></g><g class="edge"><path class="path" marker-end="url(#arrowhead92)" d="M261.191,321.052L261.191,323.135C261.191,325.219,261.191,329.385,261.191,333.552C261.191,337.719,261.191,341.885,261.191,343.969L261.191,346.052" style="fill: none;"/><defs><marker id="arrowhead92" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs></g></g></g><style xmlns="http://www.w3.org/1999/xhtml">
+  .link &gt; rect {
+    fill: #0073BB;
+  }
+
+  .link .label {
+    fill: #FFFFFF;
+  }
+
+  .node &gt; .shape {
+    stroke: #555555;
+    stroke-width: 0.6px;
+    fill: #FFFFFF;
+  }
+
+  path {
+    stroke: #555;
+    background-color: #555;
+    stroke-width: 1px;
+  }
+
+  .node.state.NotYetStarted &gt; .shape,
+  .node.state.Container &gt; .shape {
+    stroke-dasharray: 5 2;
+  }
+
+  .node.state.FailedState &gt; .shape,
+  rect.legend.FailedState {
+    fill: #DE322F;
+  }
+
+  .node.state.CaughtErrorState &gt; .shape,
+  rect.legend.CaughtErrorState {
+    fill: #FFA500;
+  }
+
+  .node.state.SucceededState &gt; .shape,
+  rect.legend.SucceededState {
+    fill: #2BD62E;
+  }
+
+  .node.state.InProgressState &gt; .shape,
+  rect.legend.InProgressState {
+    fill: #53c9ed;
+  }
+
+  .node.state.CancelledState &gt; .shape,
+  rect.legend.CancelledState {
+    fill: #dddddd;
+  }
+
+  .node.anchor &gt; .shape {
+    fill: #FFDA75;
+  }
+
+  .node.state.hovered:not(.selected):not(.NotYetStarted) &gt; .shape,
+  .node.selected &gt; .shape {
+    stroke: #555555;
+    stroke-width: 2px;
+  }
+
+  .node.state.Container.Failed &gt; .shape {
+    fill: #EE9592;
+  }
+
+  .node.state.Container.CaughtError &gt; .shape {
+    fill: #FFD27F;
+  }
+
+  .node.state.Container.Succeeded &gt; .shape {
+    fill: #91EA9A;
+  }
+
+  .node.state.Container.InProgress &gt; .shape {
+    fill :#A9E4F7;
+  }
+
+  .node.state.Container.Cancelled &gt; .shape {
+    fill: #EEEEEE;
+  }
+
+  marker {
+    fill: #555555;
+  }
+
+  .node.anchor,
+  .node.state.NotYetStarted {
+    cursor: default;
+  }
+
+  .node.state {
+    cursor: default;
+  }
+
+  tspan .label {
+    font-weight: normal;
+    font-size: 12px;
+    text-shadow: none;
+  }
+</style></svg>
