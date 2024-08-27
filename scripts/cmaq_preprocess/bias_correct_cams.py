@@ -12,6 +12,7 @@ from fourdvar.params.input_defn import obs_file
 
 
 def main():
+    """Correct the bias between the ICON mean and the satellite observation mean."""
     config = load_config_from_env()
     chem_dir = utils.nested_dir(config.domain, config.start_date, config.ctm_dir)
     icon_file = (
@@ -22,7 +23,7 @@ def main():
     met_file = met_dir / f"METCRO3D_{config.domain.mcip_suffix}"
     levels = xr.open_dataset(met_file).VGLVLS
     bias = calculate_bias(config, icon_file, levels)
-    print("bias ", bias)
+    print(f"{bias=}")
     correct_icon_bcon(config, "CH4", bias)
 
 
