@@ -11,7 +11,9 @@ from fourdvar.datadef.observation_data import ObservationData
 from fourdvar.params.input_defn import obs_file
 
 
-def mass_weighted_mean(file_name: pathlib.Path, species: str, thickness: float) -> float:
+def mass_weighted_mean(
+    file_name: pathlib.Path, species: str, thickness: np.ndarray[float]
+) -> float:
     """
     returns three-dimensional thickness-weighted mean of species from netcdf file filename
     in ppm
@@ -76,15 +78,21 @@ def main():
     met_dir = utils.nested_dir(config.domain, config.start_date, config.met_dir)
     met_file = met_dir / f"METCRO3D_{config.domain.mcip_suffix}"
     levels = xr.open_dataset(met_file).VGLVLS
-    thickness = levels[:-1] - levels[1:]
-
-    icon_mass_weighted_mean = mass_weighted_mean(icon_file, "CH4", thickness)
-
-    satellite_mean_first_day = earliest_mean(config, obs_file)
-    satellite_mean_first_day /= 1000.0  # ppb to ppm
-    bias = satellite_mean_first_day - icon_mass_weighted_mean
+    bias = calculate_bias(config, icon_file, levels)
     print("bias ", bias)
     correct_icon_bcon(config, "CH4", bias)
+
+
+def calculate_bias(config: CMAQConfig, icon_file: pathlib.Path, levels: np.ndarray[float]) -> float:
+    """Calculates the bias between ICON mean and satellite mean on the first day.
+
+    The bias is returned in units of ppm, with positive numbers meaning the satellite
+    mean is higher."""
+    thickness = levels[:-1] - levels[1:]
+    icon_mass_weighted_mean = mass_weighted_mean(icon_file, "CH4", thickness)
+    satellite_mean_first_day = earliest_mean(config, obs_file)
+    satellite_mean_first_day /= 1000.0  # ppb to ppm
+    return satellite_mean_first_day - icon_mass_weighted_mean
 
 
 if __name__ == "__main__":
