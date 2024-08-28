@@ -16,7 +16,7 @@
 """Input class for the fwd model, generated from PhysicalData."""
 
 import os
-
+import numpy as np
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.util.archive_handle import get_archive_path
@@ -124,6 +124,37 @@ class ModelInputData(FourDVarData):
             dest = record["actual"]
             ncf.copy_compress(source, dest)
         return cls()
+    def get_vector( self):
+        """ concatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
+        file_data = get_filedict( self.__class__.__name__ )
+        result = []
+        for label, record in file_data.items():
+            varList = ncf.get_attr( record['actual'], 'VAR-LIST')
+            vars = varList.split()
+            for v in vars:
+                result.append( ncf.get_variable( record['actual'], v).astype('float64'))
+        return np.array( result).flatten()
+
+    @classmethod
+    def load_from_vector_template ( cls, vector):
+        """ create a record from a templateconcatenated vector of all emissions with names in the varlist atribute from the actual item from each record """
+        file_data = get_filedict( cls.__name__ )
+
+        # first set up dimensions for reshaping vector
+        record = list( file_data.values())[0]['actual']
+        varList = ncf.get_attr( record, 'VAR-LIST')
+        vars = varList.split()
+        if len( vars) > 1: raise ValueError('only works for one variable')
+        var_shape =  ncf.get_variable( record, vars[0]).shape
+        vector_shape = (len(file_data),)+var_shape
+        vector_reshape = vector.reshape( vector_shape)
+        for i,record in enumerate(file_data.values()):
+            for var in vars:
+                ncf.create_from_template( record['template'], record['actual'],
+                                          var_change={var:vector_reshape[i,...]}, date=record['date'] )
+        return cls()
+
+    def sum_squares( self): return (self.get_vector()**2).sum()/2.0
 
     def cleanup(self):
         """application: called when model input is no longer required
