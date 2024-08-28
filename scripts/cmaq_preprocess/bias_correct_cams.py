@@ -1,24 +1,40 @@
 import xarray as xr
 
-from cmaq_preprocess import utils
-from cmaq_preprocess.bias import calculate_bias, correct_icon_bcon
+import fourdvar.params.input_defn
+from cmaq_preprocess.bias import (
+    calculate_bias,
+    correct_icon_bcon,
+    get_bcon_files,
+    get_icon_file,
+    get_met_file,
+)
 from cmaq_preprocess.read_config_cmaq import load_config_from_env
 
 
 def main():
-    """Correct the bias between the ICON mean and the satellite observation mean."""
+    """Correct the bias between the iCon mean and the satellite observation mean."""
     config = load_config_from_env()
-    chem_dir = utils.nested_dir(config.domain, config.start_date, config.ctm_dir)
-    icon_file = (
-        chem_dir
-        / f"{chem_dir}/ICON.{config.domain.id}.{config.domain.mcip_suffix}.{config.mech}.nc"
+    icon_file = get_icon_file(config)
+    bcon_files = get_bcon_files(config)
+    met_file = get_met_file(config)
+
+    levels = xr.open_dataset(met_file).attrs["VGLVLS"]
+    bias = calculate_bias(
+        icon_file=icon_file,
+        obs_file=fourdvar.params.input_defn.obs_file,
+        levels=levels,
+        start_date=config.start_date,
+        end_date=config.end_date,
     )
-    met_dir = utils.nested_dir(config.domain, config.start_date, config.met_dir)
-    met_file = met_dir / f"METCRO3D_{config.domain.mcip_suffix}"
-    levels = xr.open_dataset(met_file).VGLVLS
-    bias = calculate_bias(config, icon_file, levels)
+
     print(f"{bias=}")
-    correct_icon_bcon(config, "CH4", bias)
+
+    correct_icon_bcon(
+        species="CH4",
+        bias=bias,
+        icon_file=icon_file,
+        bcon_files=bcon_files,
+    )
 
 
 if __name__ == "__main__":
