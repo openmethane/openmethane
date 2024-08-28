@@ -18,6 +18,7 @@ import glob
 import logging
 import os
 import subprocess
+import time
 
 import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
@@ -36,42 +37,18 @@ def parse_env_dict(env_dict, date):
     notes: all names and values must be strings
     """
     parsed = {}
+
     for name, value in env_dict.items():
         try:
-            parsed[name] = dt.replace_date(value, date)
+            parsed_value = dt.replace_date(value, date)
+
+            # Remove empty strings from environment which are killing CMAQ multiprocessing
+            if value != "":
+                parsed[name] = parsed_value
         except Exception:
             logger.exception(f"failed parsing {name}: {value}")
             raise
     return parsed
-
-
-def load_env(env_dict) -> None:
-    """Load dictionary into environment variables.
-
-    input: dictionary (envvar_name: value)
-
-    notes: all names and values must be strings
-    """
-    for name, value in env_dict.items():
-        logger.debug(f"setenv {name} = {value}")
-        os.environ[name] = value
-    # now remove empty strings from environment which are killing CMAQ multiprocessing
-    for name, value in os.environ.items():
-        if value == "":
-            del os.environ[name]
-
-
-def clean_env(env_dict):
-    """Remove dictionary keys from environment variables.
-
-    input: dictionary (envvar_name: value)
-    output: None.
-    """
-    for name in env_dict.keys():
-        try:
-            del os.environ[name]
-        except KeyError:
-            logger.warning(f"environment variable {name} not found")
 
 
 def setup_run():
@@ -170,6 +147,114 @@ def setup_run():
     return env_dict
 
 
+def build_cmd(executable: str) -> str:
+    """
+    Creates the command to run the executable.
+
+    If more than one processor is to be used (as determined by the product of `npcol` and `nprow`),
+    `mpirun` will be used to execute the CMAQ binary.
+
+    Parameters
+    ----------
+    executable
+        Binary to be executed
+    """
+    run_cmd = cmaq_config.cmd_preamble
+    if int(cmaq_config.npcol) != 1 or int(cmaq_config.nprow) != 1:
+        # use mpi
+        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
+    run_cmd += executable
+
+    return run_cmd
+
+
+def run_cmaq(
+    executable: str,
+    env_dict: dict[str, str],
+    template_stdout_filename: str,
+    date: datetime.date,
+) -> subprocess.CompletedProcess:
+    """
+    Runs a forward or backward run of CMAQ
+
+    Parameters
+    ----------
+    executable
+        File path of the binary to be executed
+    env_dict
+        Environment variables to be provided to the subprocess
+
+        The current environment will be merged with these additional variables.
+    template_stdout_filename
+        Template for the filename of the stdout log
+    date
+        Date that is being executed
+
+    Raises
+    ------
+    ValueError
+        If the process fails for any reason.
+        In that case, the stdout and the CMAQ log are logged.
+
+    Returns
+    -------
+    Information about the completed process
+    """
+    cmd = build_cmd(executable)
+    logger.debug(f"Running {cmd} for {date.strftime('%Y%m%d')}")
+
+    stdout_filename = dt.replace_date(template_stdout_filename, date)
+    fh.ensure_path(stdout_filename, inc_file=True)
+
+    environment = {**os.environ, **env_dict}
+
+    # This is a workaround for the fact that CMAQ does not handle empty environment variables
+    # `env_dict` has likely already been cleaned which is why a warning is logged in this case
+    for k in list(environment.keys()):
+        if environment[k] == "":
+            logger.warning(f"Empty environment variable found: {k}")
+            del environment[k]
+
+    t0 = time.time()
+
+    # The command is run in the current directory
+    # The environment is set to the values in env_dict
+    # TODO: Evaluate whether the current directory for the subprocess should be the `run-cmaq`
+    # folder instead.
+    res = subprocess.run(
+        cmd,
+        shell=True,
+        executable="/bin/csh",
+        capture_output=True,
+        text=True,
+        env=environment,
+        check=False,
+    )
+    t_elapsed = time.time() - t0
+
+    logger.debug(f"execution completed in {t_elapsed:.3}s")
+
+    with open(stdout_filename, "w") as stdout_fh:
+        stdout_fh.write(res.stdout)
+
+    if res.returncode != 0:
+        msg = f"{executable} failed for {date.strftime('%Y%m%d')}"
+        logger.error(msg)
+
+        logger.error(f"environment: {dict(sorted(environment.items()))}")
+        logger.error(f"stdout: {res.stdout}")
+        logger.error(f"stderr: {res.stderr}")
+
+        if os.path.exists(env_dict["LOGFILE"]):
+            with open(env_dict["LOGFILE"]) as f:
+                logger.error(f"CMAQ log file: {f.read()}")
+        else:
+            logger.error("Log file could not be found")
+
+        raise ValueError(msg)
+    return res
+
+
 def run_fwd_single(date: datetime.date, is_first: bool) -> None:
     """Run cmaq fwd for a single day.
 
@@ -204,37 +289,13 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
         env_dict["CTM_XFIRST_IN"] = prev_xfirst
 
     env_dict = parse_env_dict(env_dict, date)
-    load_env(env_dict)
 
-    run_cmd = cmaq_config.cmd_preamble
-    # print("hello")
-    # print(run_cmd)
-    if int(cmaq_config.npcol) != 1 or int(cmaq_config.nprow) != 1:
-        # use mpi
-        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
-    # print(run_cmd)
-    run_cmd += cmaq_config.fwd_prog
-    # print(run_cmd)
-    stdout_fname = dt.replace_date(cmaq_config.fwd_stdout_log, date)
-    print(stdout_fname)
-    fh.ensure_path(stdout_fname, inc_file=True)
-    with open(stdout_fname, "w") as stdout_file:
-        msg = f"calling external process:\n{cmaq_config.cmd_shell}> {run_cmd}"
-        logger.debug(msg)
-        statcode = subprocess.call(
-            run_cmd,
-            stdout=stdout_file,
-            stderr=subprocess.STDOUT,
-            shell=True,
-            executable=cmaq_config.cmd_shell,
-        )
-        logger.debug("external process finished.")
-    if statcode != 0:
-        msg = "cmaq fwd failed on {}.".format(date.strftime("%Y%m%d"))
-        logger.error(msg)
-        raise AssertionError(msg)
-
-    clean_env(env_dict)
+    run_cmaq(
+        cmaq_config.fwd_prog,
+        env_dict=env_dict,
+        template_stdout_filename=cmaq_config.fwd_stdout_log,
+        date=date,
+    )
 
 
 def run_bwd_single(date, is_first):
@@ -288,32 +349,13 @@ def run_bwd_single(date, is_first):
         env_dict["INIT_EM_SF_1"] = prev_scale
 
     env_dict = parse_env_dict(env_dict, date)
-    load_env(env_dict)
 
-    run_cmd = cmaq_config.cmd_preamble
-    if int(cmaq_config.npcol) != 1 or int(cmaq_config.nprow) != 1:
-        # use mpi
-        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
-    run_cmd += cmaq_config.bwd_prog
-    stdout_fname = dt.replace_date(cmaq_config.bwd_stdout_log, date)
-    fh.ensure_path(stdout_fname, inc_file=True)
-    with open(stdout_fname, "w") as stdout_file:
-        msg = f"calling external process:\n{cmaq_config.cmd_shell}> {run_cmd}"
-        logger.debug(msg)
-        statcode = subprocess.call(
-            run_cmd,
-            stdout=stdout_file,
-            stderr=subprocess.STDOUT,
-            shell=True,
-            executable=cmaq_config.cmd_shell,
-        )
-        logger.debug("external process finished.")
-    if statcode != 0:
-        msg = "cmaq bwd failed on {}.".format(date.strftime("%Y%m%d"))
-        logger.error(msg)
-        raise AssertionError(msg)
-
-    clean_env(env_dict)
+    run_cmaq(
+        cmaq_config.bwd_prog,
+        date=date,
+        template_stdout_filename=cmaq_config.bwd_stdout_log,
+        env_dict=env_dict,
+    )
 
 
 def clear_local_logs():
@@ -354,35 +396,36 @@ def run_bwd():
         clear_local_logs()
 
 
-def wipeout_bwd():
-    """Delete all files created by a bwd run of cmaq.
-    input: None
-    output: None.
+def _cleanup(file_list: list[str]):
+    """
+    Deletes a list of files.
+
+    Each file may contain dates, which are replaced with wildcards before deletion.
+
+    Parameters
+    ----------
+    file_list
+        List of templated files to be deleted
     """
     clear_local_logs()
-    # delete every file in wipeout_bwd_list
+
     all_tags = dt.tag_map.keys()
-    for pat_name in cmaq_config.wipeout_bwd_list:
+    for pat_name in file_list:
+        name = pat_name
+        # Loop over the different date tags and replace them with a wildcard
         for t in all_tags:
-            pat_name = pat_name.replace(t, "*")
-        for fname in glob.glob(pat_name):
+            name = name.replace(t, "*")
+        for fname in glob.glob(name):
             if os.path.isfile(fname):
                 os.remove(fname)
+
+
+def wipeout_bwd():
+    """Delete all files created by a backward run of cmaq."""
+    _cleanup(cmaq_config.wipeout_bwd_list)
 
 
 def wipeout_fwd():
-    """Delete all files created by a run of cmaq.
-    input: None
-    output: None.
-    """
-    clear_local_logs()
-    # cleanup fwd bwd as well
-    wipeout_bwd()
-    # delete every file in wipeout_fwd_list
-    all_tags = dt.tag_map.keys()
-    for pat_name in cmaq_config.wipeout_fwd_list:
-        for t in all_tags:
-            pat_name = pat_name.replace(t, "*")
-        for fname in glob.glob(pat_name):
-            if os.path.isfile(fname):
-                os.remove(fname)
+    """Delete all files created by a forward run of cmaq."""
+
+    _cleanup(cmaq_config.wipeout_fwd_list)
