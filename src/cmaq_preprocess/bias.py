@@ -2,8 +2,8 @@
 and simulations."""
 
 import datetime
-import os
 import pathlib
+import shutil
 
 import numpy as np
 import xarray as xr
@@ -78,7 +78,7 @@ def correct_icon_bcon(
             dss = ds.load()
             dss[species] += bias
             dss.to_netcdf(temp_file_name)
-            os.rename(temp_file_name, file)
+            shutil.move(temp_file_name, file)
 
 
 def calculate_bias(
