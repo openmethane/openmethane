@@ -33,6 +33,9 @@ echo "Preprocessing observations"
 python scripts/obs_preprocess/tropomi_methane_preprocess.py \
   --source $TROPOMI_DIR/*/*.nc4
 
+echo 'bias correcting CAMS input'
+python scripts/cmaq_preprocess/bias_correct_cams.py
+
 echo "Running fourdvar"
 python runscript.py
 
