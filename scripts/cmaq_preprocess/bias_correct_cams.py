@@ -1,81 +1,41 @@
-import os
-import datetime
-import pathlib
-
-import numpy as np
 import xarray as xr
 
-from fourdvar.datadef.observation_data import ObservationData
-from fourdvar.params.input_defn import obs_file
-from cmaq_preprocess import utils
-from cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
-from cmaq_preprocess.mcip import run_mcip
-from cmaq_preprocess.mcip_preparation import (
-    check_input_met_and_output_folders,
+import fourdvar.params.input_defn
+from cmaq_preprocess.bias import (
+    calculate_bias,
+    correct_icon_bcon,
+    get_bcon_files,
+    get_icon_file,
+    get_met_file,
 )
-from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_config_from_env
-from cmaq_preprocess.run_scripts import (
-    prepare_template_bcon_files,
-    prepare_template_icon_files,
+from cmaq_preprocess.read_config_cmaq import load_config_from_env
+
+
+def main():
+    """Correct the bias between the iCon mean and the satellite observation mean."""
+    config = load_config_from_env()
+    icon_file = get_icon_file(config)
+    bcon_files = get_bcon_files(config)
+    met_file = get_met_file(config)
+
+    levels = xr.open_dataset(met_file).attrs["VGLVLS"]
+    bias = calculate_bias(
+        icon_file=icon_file,
+        obs_file=fourdvar.params.input_defn.obs_file,
+        levels=levels,
+        start_date=config.start_date,
+        end_date=config.end_date,
     )
 
-def mass_weighted_mean( file_name: pathlib.Path, species: str, thickness: float) -> float:
-    '''
-        returns three-dimensional thickness-weighted mean of species from netcdf file filename
-        in ppm
-    '''
-    with xr.open_dataset( file_name) as ds:
-        field = ds[species].to_numpy()
-        vertical_integral = np.tensordot( field, thickness, (-3, 0))
-        return vertical_integral.mean()
+    print(f"{bias=}")
 
-def earliest_mean( config: CMAQConfig,
-                   obs_file: pathlib.Path,) -> float:
-    obs = ObservationData.from_file( obs_file)
-    # now find the earliest date with obs and return their mean
-    one_day = datetime.timedelta(days=1)
-    date = config.start_date
-    while date <= config.end_date:
-        date_string = date.strftime('%Y%m%d')
-        if len( obs.ind_by_date[date_string]) > 0:
-            return np.mean( np.array(obs.value)[ obs.ind_by_date[ date_string]])
-        else:
-            date += one_day
-    raise ValueError( 'no valid observations found')
-
-def correct_icon_bcon(config: CMAQConfig,  species: str, bias:  float):
-    chem_dir = utils.nested_dir(config.domain, config.start_date, config.ctm_dir)
-    icon_file = chem_dir / f"{chem_dir}/ICON.{config.domain.id}.{config.domain.mcip_suffix}.{config.mech}.nc"
-    temp_file_name = "temp.nc"
-    bcon_files = []
-    one_day = datetime.timedelta(days=1)
-    date = config.start_date
-    while date <= config.end_date:
-        bcon_dir =     utils.nested_dir(config.domain, date, config.ctm_dir)
-        bcon_file = bcon_dir / f"{bcon_dir}/BCON.{config.domain.id}.{config.domain.mcip_suffix}.{config.mech}.nc"
-        bcon_files.append(bcon_file)
-        date += one_day
-    all_files = bcon_files +[icon_file]
-    for file in all_files:
-        with xr.open_dataset( file) as ds:
-            dss = ds.load() 
-            dss[species] += bias
-            dss.to_netcdf(temp_file_name)
-            os.rename( temp_file_name, file)
+    correct_icon_bcon(
+        species="CH4",
+        bias=bias,
+        icon_file=icon_file,
+        bcon_files=bcon_files,
+    )
 
 
-config = load_config_from_env()
-chem_dir = utils.nested_dir(config.domain, config.start_date, config.ctm_dir)
-icon_file = chem_dir / f"{chem_dir}/ICON.{config.domain.id}.{config.domain.mcip_suffix}.{config.mech}.nc"
-met_dir = utils.nested_dir(config.domain, config.start_date, config.met_dir)
-met_file = met_dir / f"METCRO3D_{config.domain.mcip_suffix}"
-levels = xr.open_dataset( met_file).VGLVLS
-thickness = levels[0:-1] -levels[1:]
-
-icon_mass_weighted_mean = mass_weighted_mean( icon_file, 'CH4', thickness)
-
-satellite_mean_first_day = earliest_mean( config, obs_file)
-satellite_mean_first_day /= 1000. # ppb to ppm
-bias = satellite_mean_first_day - icon_mass_weighted_mean
-print('bias ',bias)
-correct_icon_bcon( config, 'CH4', bias)
+if __name__ == "__main__":
+    main()

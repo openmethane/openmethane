@@ -27,6 +27,11 @@ def test_data_dir(root_dir) -> Path:
     return root_dir / "tests" / "test-data"
 
 
+@pytest.fixture
+def metcro3d_file(test_data_dir, tmpdir):
+    return str(test_data_dir / "mcip" / "2022-07-22" / "d01" / "METCRO3D_aust-test_v1")
+
+
 def _clean_attrs(
     attrs: dict,
     excluded_fields: tuple[str, ...] = (
