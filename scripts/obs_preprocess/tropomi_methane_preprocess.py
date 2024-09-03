@@ -36,6 +36,59 @@ logger = logging.get_logger(__name__)
 
 
 N_CPUS = int(os.environ.get("NCPUS", 1))
+DEFAULT_WS1 = int(os.environ.get("DEFAULT_WS1", 7)) # default recommended by SRON
+DEFAULT_WS2 = int(os.environ.get("DEFAULT_WS2", 100)) # default recommended by SRON
+def destripe_smoothing(data: np.ndarray,
+                       ws1: int = DEFAULT_WS1,
+                       ws2: int = DEFAULT_WS2,
+                       ) -> np.ndarray:
+    """ data = 2D array """
+
+    # get the number of rows
+    n=data.shape[0]
+    # get the number of columns
+    m=data.shape[1]
+
+    back=np.zeros((n,m))*np.nan
+    for i in range(m):
+        # define half window size
+        ws=ws1
+
+        if i<ws:
+            st=0
+            sp=i+ws
+
+        elif m-i<ws:
+            st=i-ws
+            sp=m-1
+        else:
+            st=i-ws
+            sp=i+ws
+
+
+        back[:,i]=np.nanmedian(data[:,st:sp],axis=1)
+
+
+    this=data-back
+
+    stripes=np.zeros((n,m))*np.nan
+    for j in range(n):
+        ws=ws2
+
+        if j<ws:
+            st=0
+            sp=j+ws
+
+        elif n-j<ws:
+            st=j-ws
+            sp=n-1
+        else:
+            st=j-ws
+            sp=j+ws
+
+        stripes[j,:]=np.nanmedian(this[st:sp,:],axis=0)
+
+    return stripes
 
 
 def time_wrapper(
@@ -106,6 +159,7 @@ def process_file(
     pressure_interval = meteo.variables["pressure_interval"][:, :]
     pressure_interval = pressure_interval.reshape(pressure_interval.size)
     ch4 = product.variables["methane_mixing_ratio_bias_corrected"][...]
+    ch4 = destripe_smoothing(ch4)
     ch4_column = ch4.reshape((ch4.size,))
     ch4_precision = product.variables["methane_mixing_ratio_precision"][:]
     ch4_column_precision = ch4_precision.reshape((ch4_precision.size,))
