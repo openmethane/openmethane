@@ -60,6 +60,28 @@ def main():
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
 
+    # if requested, also push a reduced set of results to a second bucket
+    if config.target_bucket_reduced:
+        s3_result_reduced = subprocess.run(
+            ("aws",
+             "s3",
+             "sync",
+             "--no-progress",
+             "--exclude",
+             "*",
+             # you can add more --include flags to include more stuff in the reduced result
+             "--include",
+             "environment.txt",
+             str(store_path),
+             f"{config.target_bucket_reduced}/{prefix}"),
+            check=False,
+        )
+        if s3_result_reduced.returncode == 1:
+            # We only want to catch an return code of 1 as this is a substantial failure
+            # s3_result.returncode could be 2 if new directories are required
+            logging.error("Sync to reduced results target bucket failed with exit code 1")
+            sys.exit(1)
+
     if config.success:
         logging.debug(f"Deleting {store_path}.")
         shutil.rmtree(store_path)
@@ -71,6 +93,7 @@ def main():
 @dataclass
 class Config:
     target_bucket: str
+    target_bucket_reduced: str
     domain_name: str
     start_date_raw: str
     start_date: datetime.date
@@ -102,6 +125,7 @@ class Config:
             domain_name = env.str("DOMAIN_NAME")
 
         target_bucket = env.str("TARGET_BUCKET")
+        target_bucket_reduced = env.str("TARGET_BUCKET_REDUCED", "")
         run_type = env.str("RUN_TYPE")
         success = env.bool("SUCCESS")
         test = env.bool("TEST", False)
@@ -110,6 +134,7 @@ class Config:
 
         return cls(
             target_bucket=target_bucket,
+            target_bucket_reduced=target_bucket_reduced,
             domain_name=domain_name,
             start_date_raw=start_date_raw,
             start_date=start_date,
