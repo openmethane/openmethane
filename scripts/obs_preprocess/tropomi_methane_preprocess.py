@@ -88,7 +88,7 @@ def destripe_smoothing(data: np.ndarray,
 
         stripes[j,:]=np.nanmedian(this[st:sp,:],axis=0)
 
-    return stripes
+    return data -stripes
 
 
 def time_wrapper(
@@ -159,7 +159,7 @@ def process_file(
     pressure_interval = meteo.variables["pressure_interval"][:, :]
     pressure_interval = pressure_interval.reshape(pressure_interval.size)
     ch4 = product.variables["methane_mixing_ratio_bias_corrected"][...]
-    ch4 = destripe_smoothing(ch4)
+    ch4 = destripe_smoothing(ch4.squeeze())
     ch4_column = ch4.reshape((ch4.size,))
     ch4_precision = product.variables["methane_mixing_ratio_precision"][:]
     ch4_column_precision = ch4_precision.reshape((ch4_precision.size,))
