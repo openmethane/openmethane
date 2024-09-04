@@ -22,6 +22,9 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import typing
+
+import boto3
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -37,6 +40,13 @@ def main():
     prefix = get_prefix(config)
 
     config.dump(store_path=store_path, prefix=prefix)
+
+    # If we have a full workflow ARN (which means we're running on AWS), we can fetch
+    # the logs and archive them as well
+    if config.workflow_execution_arn:
+        log_directory = store_path / "logs"
+        log_directory.mkdir(exist_ok=True)
+        dump_workflow_logs(workflow_execution_arn=config.workflow_execution_arn, directory=log_directory)
 
     s3_result = subprocess.run(
         ("aws", "s3", "sync", "--no-progress", str(store_path), f"{config.target_bucket}/{prefix}"),
@@ -67,6 +77,7 @@ class Config:
     success: bool
     test: bool
     execution_id: str
+    workflow_execution_arn: str
 
     @classmethod
     def from_environment(cls):
@@ -93,6 +104,7 @@ class Config:
         success = env.bool("SUCCESS")
         test = env.bool("TEST", False)
         execution_id = env.str("EXECUTION_ID")
+        workflow_execution_arn = env.str("WORKFLOW_EXECUTION_ARN", "")
 
         return cls(
             target_bucket=target_bucket,
@@ -104,6 +116,7 @@ class Config:
             success=success,
             execution_id=execution_id,
             test=test,
+            workflow_execution_arn=workflow_execution_arn
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):
@@ -117,6 +130,7 @@ run_type       = {self.run_type!r}
 success        = {self.success!r}
 test           = {self.test!r}
 execution_id   = {self.execution_id!r}
+workflow_execution_arn = {self.workflow_execution_arn!r}
 store_path     = {store_path}
 prefix         = {prefix!r}
 """)
@@ -148,6 +162,51 @@ def get_prefix(config: Config) -> str:
     elif config.run_type == "monthly":
         return f"{config.domain_name}/monthly/{config.start_date.year}/{config.start_date.month:02}"
     raise ValueError(f"Unknown config.run_type={config.run_type!r}")
+
+
+
+def dump_workflow_logs(
+    workflow_execution_arn: str,
+    directory: pathlib.Path,
+):
+    execution_events = boto3.client("stepfunctions").get_execution_history(executionArn=workflow_execution_arn)[
+        "events"
+    ]
+    for ev in execution_events:
+        if ev["type"] == "TaskStateExited":
+            output = json.loads(ev["stateExitedEventDetails"]["output"])
+            job_name = output["JobName"]
+            for attempt_no, attempt in enumerate(output["Attempts"]):
+                try:
+                    log_stream_name = attempt["Container"]["LogStreamName"]
+                except KeyError:
+                    continue
+                with (directory / f"{job_name}.{attempt_no}.log").open("w") as logfd:
+                    write_stream_logfile(
+                        log_group_name="/aws/batch/job",
+                        log_stream_name=log_stream_name,
+                        logfd=logfd,
+                    )
+
+
+def write_stream_logfile(
+    log_group_name: str, log_stream_name: str, logfd: typing.TextIO
+):
+    logs_client = boto3.client("logs")
+    answer = {"nextToken": None}
+    while "nextToken" in answer:
+        kwargs = dict(
+            logGroupName=log_group_name,
+            logStreamNames=[log_stream_name],
+        )
+        if answer["nextToken"] is not None:
+            kwargs["nextToken"] = answer["nextToken"]
+        answer = logs_client.filter_log_events(**kwargs)
+        log_events = answer["events"]
+        for le in log_events:
+            timestamp = datetime.fromtimestamp(le["timestamp"] / 1000)
+            logfd.write(f"{timestamp.isoformat()}: {le['message']}\n")
+
 
 
 if __name__ == "__main__":
