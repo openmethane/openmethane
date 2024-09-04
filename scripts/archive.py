@@ -46,7 +46,9 @@ def main():
     if config.workflow_execution_arn:
         log_directory = store_path / "logs"
         log_directory.mkdir(exist_ok=True)
-        dump_workflow_logs(workflow_execution_arn=config.workflow_execution_arn, directory=log_directory)
+        dump_workflow_logs(
+            workflow_execution_arn=config.workflow_execution_arn, directory=log_directory
+        )
 
     s3_result = subprocess.run(
         ("aws", "s3", "sync", "--no-progress", str(store_path), f"{config.target_bucket}/{prefix}"),
@@ -116,7 +118,7 @@ class Config:
             success=success,
             execution_id=execution_id,
             test=test,
-            workflow_execution_arn=workflow_execution_arn
+            workflow_execution_arn=workflow_execution_arn,
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):
@@ -164,14 +166,13 @@ def get_prefix(config: Config) -> str:
     raise ValueError(f"Unknown config.run_type={config.run_type!r}")
 
 
-
 def dump_workflow_logs(
     workflow_execution_arn: str,
     directory: pathlib.Path,
 ):
-    execution_events = boto3.client("stepfunctions").get_execution_history(executionArn=workflow_execution_arn)[
-        "events"
-    ]
+    execution_events = boto3.client("stepfunctions").get_execution_history(
+        executionArn=workflow_execution_arn
+    )["events"]
     for ev in execution_events:
         if ev["type"] == "TaskStateExited":
             output = json.loads(ev["stateExitedEventDetails"]["output"])
@@ -189,9 +190,7 @@ def dump_workflow_logs(
                     )
 
 
-def write_stream_logfile(
-    log_group_name: str, log_stream_name: str, logfd: typing.TextIO
-):
+def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typing.TextIO):
     logs_client = boto3.client("logs")
     answer = {"nextToken": None}
     while "nextToken" in answer:
@@ -206,7 +205,6 @@ def write_stream_logfile(
         for le in log_events:
             timestamp = datetime.fromtimestamp(le["timestamp"] / 1000)
             logfd.write(f"{timestamp.isoformat()}: {le['message']}\n")
-
 
 
 if __name__ == "__main__":
