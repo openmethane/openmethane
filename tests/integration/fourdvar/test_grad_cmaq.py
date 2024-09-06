@@ -57,7 +57,7 @@ def _run_grad_cmaq():
     ppm_scale = 1e6
     # convert g to kg
     kg_scale = 1e-3
-
+    grav = 9.81
     conversion_list = []
     # all spcs have same shape, get from 1st
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
@@ -72,6 +72,9 @@ def _run_grad_cmaq():
         met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
         # slice off any extra layers above area of interest
         rhoj = ncf.get_variable(met_file, "DENSA_J")[:, : lay_thick.size, ...]
+        top_pressure = ncf.get_attr(met_file, "VGTOP")
+        # we need to correct by the top pressure. The DENSA_J variable below is in kg/m**2 so we need to subtract off the mass associated with the top level
+        rhoj = rhoj - top_pressure-grav
         xcell = ncf.get_attr(met_file, "XCELL")
         ycell = ncf.get_attr(met_file, "YCELL")
         cell_area = float(xcell * ycell)
