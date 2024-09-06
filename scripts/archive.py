@@ -18,16 +18,16 @@ with the execution ID of the workflow.
 
 import json
 import logging
+import os
 import pathlib
 import shutil
 import subprocess
 import sys
 import typing
-
-import boto3
 from dataclasses import dataclass
 from datetime import datetime
 
+import boto3
 import marshmallow.utils
 
 # Loads environment using the value of the environment variable "TARGET"
@@ -195,9 +195,9 @@ def dump_workflow_logs(
     workflow_execution_arn: str,
     directory: pathlib.Path,
 ):
-    execution_events = boto3.client("stepfunctions").get_execution_history(
-        executionArn=workflow_execution_arn
-    )["events"]
+    execution_events = boto3.client(
+        "stepfunctions", region_name=os.environ["AWS_REGION"]
+    ).get_execution_history(executionArn=workflow_execution_arn)["events"]
     for ev in execution_events:
         if ev["type"] == "TaskStateExited":
             output = json.loads(ev["stateExitedEventDetails"]["output"])
@@ -216,7 +216,7 @@ def dump_workflow_logs(
 
 
 def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typing.TextIO):
-    logs_client = boto3.client("logs")
+    logs_client = boto3.client("logs", region_name=os.environ["AWS_REGION"])
     answer = {"nextToken": None}
     while "nextToken" in answer:
         kwargs = dict(
