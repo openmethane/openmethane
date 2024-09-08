@@ -73,7 +73,7 @@ def _run_grad_cmaq():
         # slice off any extra layers above area of interest
         rhoj = ncf.get_variable(met_file, "DENSA_J")[:, : lay_thick.size, ...]
         top_pressure = ncf.get_attr(met_file, "VGTOP")
-        # we need to correct by the top pressure. The DENSA_J variable below is in kg/m**2 so we need to subtract off the mass associated with the top level
+        # we need to correct by the top pressure. The DENSA_J variable is in kg/m**2 so we need to subtract off the mass associated with the top level
         rhoj = rhoj - top_pressure-grav
         xcell = ncf.get_attr(met_file, "XCELL")
         ycell = ncf.get_attr(met_file, "YCELL")
