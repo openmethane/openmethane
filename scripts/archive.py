@@ -14,6 +14,11 @@ with the execution ID of the workflow.
 For manually started test runs (if successful or not), the data is stored in the prefix
 `tests/${EXECUTION_ID}`
 with the execution ID of the workflow.
+
+If configured using the TARGET_BUCKET_REDUCED environment variable, a reduced set
+of results appropriate for sharing is also stored in the configured bucket. For now,
+only the environment.txt file is stored there, but you can add additional files to
+store below.
 """
 
 import json
@@ -63,17 +68,19 @@ def main():
     # if requested, also push a reduced set of results to a second bucket
     if config.target_bucket_reduced:
         s3_result_reduced = subprocess.run(
-            ("aws",
-             "s3",
-             "sync",
-             "--no-progress",
-             "--exclude",
-             "*",
-             # you can add more --include flags to include more stuff in the reduced result
-             "--include",
-             "environment.txt",
-             str(store_path),
-             f"{config.target_bucket_reduced}/{prefix}"),
+            (
+                "aws",
+                "s3",
+                "sync",
+                "--no-progress",
+                "--exclude",
+                "*",
+                # you can add more --include flags to include more stuff in the reduced result
+                "--include",
+                "environment.txt",
+                str(store_path),
+                f"{config.target_bucket_reduced}/{prefix}",
+            ),
             check=False,
         )
         if s3_result_reduced.returncode == 1:
