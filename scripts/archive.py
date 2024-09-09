@@ -14,6 +14,9 @@ with the execution ID of the workflow.
 For manually started test runs (if successful or not), the data is stored in the prefix
 `tests/${EXECUTION_ID}`
 with the execution ID of the workflow.
+
+If configured using the TARGET_BUCKET_REDUCED environment variable, a reduced set
+of results to be made available publicly is also stored in the configured bucket.
 """
 
 import json
