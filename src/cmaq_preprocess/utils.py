@@ -202,3 +202,9 @@ def nested_dir(domain: Domain, date: datetime.date, root_dir: pathlib.Path) -> p
     # and move the nested logic to the configuration
     templated_path = root_dir / "<YYYY-MM-DD>" / domain.id
     return pathlib.Path(date_handle.replace_date(str(templated_path), date))
+
+
+def date_range(start_date: datetime.date, end_date: datetime.date):
+    """Like range() but with days and inclusive of the end date."""
+    for n in range((end_date - start_date).days + 1):
+        yield start_date + datetime.timedelta(days=n)
