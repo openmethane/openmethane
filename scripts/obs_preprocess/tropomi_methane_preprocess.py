@@ -36,59 +36,70 @@ logger = logging.get_logger(__name__)
 
 
 N_CPUS = int(os.environ.get("NCPUS", 1))
-DEFAULT_WS1 = int(os.environ.get("DEFAULT_WS1", 7)) # default recommended by SRON
-DEFAULT_WS2 = int(os.environ.get("DEFAULT_WS2", 100)) # default recommended by SRON
-def destripe_smoothing(data: np.ndarray,
-                       ws1: int = DEFAULT_WS1,
-                       ws2: int = DEFAULT_WS2,
-                       ) -> np.ndarray:
-    """ data = 2D array """
+DEFAULT_WS1 = int(os.environ.get("DEFAULT_WS1", 7))  # default recommended by SRON
+DEFAULT_WS2 = int(os.environ.get("DEFAULT_WS2", 100))  # default recommended by SRON
+
+
+def destripe_smoothing(
+    data: np.ndarray,
+    ws1: int = DEFAULT_WS1,
+    ws2: int = DEFAULT_WS2,
+) -> np.ndarray:
+    """Remove low-frequency stripes in the data using smoothing.
+
+    Parameters
+    ----------
+    data
+        2D data array
+    ws1
+        The window size along the second axis
+    ws2
+        The window size along the first axis
+    """
 
     # get the number of rows
-    n=data.shape[0]
+    n = data.shape[0]
     # get the number of columns
-    m=data.shape[1]
+    m = data.shape[1]
 
-    back=np.zeros((n,m))*np.nan
+    back = np.zeros((n, m)) * np.nan
     for i in range(m):
         # define half window size
-        ws=ws1
+        ws = ws1
 
-        if i<ws:
-            st=0
-            sp=i+ws
+        if i < ws:
+            st = 0
+            sp = i + ws
 
-        elif m-i<ws:
-            st=i-ws
-            sp=m-1
+        elif m - i < ws:
+            st = i - ws
+            sp = m - 1
         else:
-            st=i-ws
-            sp=i+ws
+            st = i - ws
+            sp = i + ws
 
+        back[:, i] = np.nanmedian(data[:, st:sp], axis=1)
 
-        back[:,i]=np.nanmedian(data[:,st:sp],axis=1)
+    this = data - back
 
-
-    this=data-back
-
-    stripes=np.zeros((n,m))*np.nan
+    stripes = np.zeros((n, m)) * np.nan
     for j in range(n):
-        ws=ws2
+        ws = ws2
 
-        if j<ws:
-            st=0
-            sp=j+ws
+        if j < ws:
+            st = 0
+            sp = j + ws
 
-        elif n-j<ws:
-            st=j-ws
-            sp=n-1
+        elif n - j < ws:
+            st = j - ws
+            sp = n - 1
         else:
-            st=j-ws
-            sp=j+ws
+            st = j - ws
+            sp = j + ws
 
-        stripes[j,:]=np.nanmedian(this[st:sp,:],axis=0)
+        stripes[j, :] = np.nanmedian(this[st:sp, :], axis=0)
 
-    return data -stripes
+    return data - stripes
 
 
 def time_wrapper(
