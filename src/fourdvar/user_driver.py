@@ -16,6 +16,7 @@
 
 import logging
 import os
+import pathlib
 import pickle
 
 from scipy.optimize import fmin_l_bfgs_b as minimize
