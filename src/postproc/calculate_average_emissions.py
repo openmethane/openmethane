@@ -24,6 +24,8 @@ def calculate_average_emissions(
                                  designated_posterior_file: pathlib.Path = None,
                                 ):
     prior_emis_files = list_emis_template_files( template_dir, emis_template)
+    if len(prior_emis_files) == 0:
+        raise ValueError(f'no emission template files found at {template_dir}')
     prior_emis_list = []
     for filename in prior_emis_files:
         with xr.open_dataset( filename) as xrds:
