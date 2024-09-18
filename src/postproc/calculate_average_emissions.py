@@ -110,6 +110,7 @@ def list_emis_template_files(template_dir: pathlib.Path,
                              emis_template: str,
                              ) -> list:
     record_dir = template_dir / 'record'
+    print(glob.glob(print(template_dir / "**/*"), recursive=True))
     prior_emis_glob = record_dir / emis_template
     prior_emis_files = glob.glob( str(prior_emis_glob))
     prior_emis_files.sort()
