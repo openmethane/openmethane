@@ -5,8 +5,8 @@ import numpy as np
 import xarray as xr
 from netCDF4 import Dataset
 
-from fourdvar.params.template_defn import template_dir
-from fourdvar.util.archive_handle import archive_path
+from fourdvar.params import template_defn
+from fourdvar.util import archive_handle
 
 SPECIES_MOLEMASS = {'CH4': 16} # molar mass in gram
 G2KG = 1e-3 # conv factor kg to g
@@ -21,9 +21,9 @@ def calculate_average_emissions(
                                  species: str = 'CH4',
                                  designated_posterior_file: pathlib.Path | None = None,
                                 ):
-    prior_emis_files = list_emis_template_files( template_dir, emis_template)
+    prior_emis_files = list_emis_template_files( template_defn.template_dir, emis_template)
     if len(prior_emis_files) == 0:
-        raise ValueError(f'no emission template files found at {template_dir}')
+        raise ValueError(f'no emission template files found at {template_defn.template_dir}')
     prior_emis_list = []
     for filename in prior_emis_files:
         with xr.open_dataset( filename) as xrds:
@@ -80,7 +80,7 @@ def find_last_iteration( archive_dir: pathlib.Path,
     if solution_path.is_file():
         result = solution_path
     else:
-        iter_glob = archive_path / iter_template
+        iter_glob = archive_handle.archive_path / iter_template
         iter_files = glob.glob( str(iter_glob))
         if iter_files is None:
             raise ValueError(f'no converged iterations found at {iter_glob}')
@@ -110,7 +110,6 @@ def list_emis_template_files(template_dir: pathlib.Path,
                              emis_template: str,
                              ) -> list:
     record_dir = template_dir / 'record'
-    print(glob.glob(str(template_dir / "**/*"), recursive=True))
     prior_emis_glob = record_dir / emis_template
     prior_emis_files = glob.glob( str(prior_emis_glob))
     prior_emis_files.sort()
