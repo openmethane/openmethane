@@ -150,15 +150,12 @@ jobs:
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
-          TEMPLATE_DIR: /opt/project/data/templates
           # Uses the local checked-in WRF and prior data
           TARGET: docker-test
           NUM_PROC_COLS: 1
           NUM_PROC_ROWS: 2
         run: |
           cd /opt/project
-          mkdir /opt/project/data
-          cp -r /opt/project/tests/test-data/templates /opt/project/data/templates
           make fetch-domains
           bash scripts/run-all.sh
       - name: Run fourdvar integration tests
