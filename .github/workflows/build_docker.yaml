@@ -157,6 +157,7 @@ jobs:
           NUM_PROC_ROWS: 2
         run: |
           cd /opt/project
+          mkdir /opt/project/data
           cp -r /opt/project/tests/test-data/templates /opt/project/data/templates
           make fetch-domains
           bash scripts/run-all.sh
