@@ -1,27 +1,25 @@
-import os
-import datetime
-import pathlib
 import glob
+import pathlib
 
 import numpy as np
 import xarray as xr
 from netCDF4 import Dataset
 
-from fourdvar.datadef.observation_data import ObservationData
-from fourdvar.params.input_defn import obs_file
 from fourdvar.params.template_defn import template_dir
+from fourdvar.util.archive_handle import archive_path
+
 SPECIES_MOLEMASS = {'CH4': 16} # molar mass in gram
 G2KG = 1e-3 # conv factor kg to g
 SOLUTION_FILENAME = 'final_solution.ncf'
+
+
 def calculate_average_emissions(
         archive_dir: pathlib.Path,
                                  output_file: pathlib.Path,
                                  emis_template: str = 'emis_*.nc',
                                  iter_template: str = 'iter*.ncf',
                                  species: str = 'CH4',
-                                 delete_attrs: list|tuple = ['NLAYS', 'NVARS',],
-                                 override_attrs= None,
-                                 designated_posterior_file: pathlib.Path = None,
+                                 designated_posterior_file: pathlib.Path | None = None,
                                 ):
     prior_emis_files = list_emis_template_files( template_dir, emis_template)
     if len(prior_emis_files) == 0:
@@ -50,7 +48,7 @@ def calculate_average_emissions(
         posterior_emis_mean_xr.attrs['units'] = 'kg/m**2/s'
         out_ds[species] = posterior_emis_mean_xr
         out_ds.to_netcdf(output_file)
-    return
+
 
 def get_posterior(archive_dir: pathlib.Path,
                   species: str = 'CH4',
@@ -73,6 +71,8 @@ def get_posterior(archive_dir: pathlib.Path,
     else:
         result = emis_array
     return result
+
+
 def find_last_iteration( archive_dir: pathlib.Path,
                          iter_template: str) -> pathlib.Path:
     """ returns successful convergence output if present, otherwise last iteration """
@@ -88,6 +88,8 @@ def find_last_iteration( archive_dir: pathlib.Path,
             iter_files.sort()
             result =  iter_files[-1]
     return result
+
+
 def copy_attributes( in_ds: xr.Dataset,
                      out_ds: xr.Dataset,
                      override_attrs = None,
@@ -102,10 +104,8 @@ def copy_attributes( in_ds: xr.Dataset,
     for k in in_ds.attrs:
         if k not in delete_attrs:
             out_ds.attrs[k] = in_ds.attrs[k]
-    
-    
-                     
-                                
+
+
 def list_emis_template_files(template_dir: pathlib.Path,
                              emis_template: str,
                              ) -> list:
