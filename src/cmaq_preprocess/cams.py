@@ -301,8 +301,7 @@ def interpolate_from_cams_to_cmaq_grid(
             LONP = ncbdy.variables["LON"][:].squeeze()
             sigma = ncmet.getncattr("VGLVLS")
             mtop = ncmet.getncattr("VGTOP")
-            base_MZ_time = datetime.datetime(1900, 1, 1, 0, 0, 0)  # epoch
-            MZdates = [base_MZ_time + datetime.timedelta(hours=int(t)) for t in ncin["time"][:]]
+            MZdates = nc.num2date(ncin.variables["valid_time"][:], ncin.variables["valid_time"].getncattr("units"))
             latmz = ncin.variables["latitude"][:].squeeze()
             lonmz = ncin.variables["longitude"][:].squeeze()
             PSURF = ncsrf.variables["PRSFC"][:].squeeze()
