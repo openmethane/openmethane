@@ -14,6 +14,5 @@
 source load_p4d_modules.sh
 
 export TARGET=nci-nsw
-#export STORE_PATH=/scratch/q90/pjr563/openmethane-test
 
 bash scripts/run-all.sh
