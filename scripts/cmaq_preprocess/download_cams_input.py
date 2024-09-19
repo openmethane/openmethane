@@ -49,7 +49,7 @@ def download_cams_input(start_date: str, end_date: str, output: str | Path):
     These data are stored on tape, so the download may be queued for several minutes
     while the data are retrieved.
     """
-    c = cdsapi.Client(url="https://ads.atmosphere.copernicus.eu/api/v2")
+    c = cdsapi.Client()
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
