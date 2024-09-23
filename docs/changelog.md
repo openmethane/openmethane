@@ -19,6 +19,18 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.4.1 (2024-09-23)
+
+### 🆕 Features
+
+- Adds configuration for running the `aust-nsw` domain on Gadi
+  using the results from an existing daily run. ([#79](https://github.com/openmethane/openmethane/pulls/79))
+
+### 🎉 Improvements
+
+- add calculation of posterior emissions for front end ([#71](https://github.com/openmethane/openmethane/pulls/71))
+
+
 ## openmethane v0.4.0 (2024-09-23)
 
 ### ⚠️ Breaking Changes
