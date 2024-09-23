@@ -301,8 +301,7 @@ def interpolate_from_cams_to_cmaq_grid(
             LONP = ncbdy.variables["LON"][:].squeeze()
             sigma = ncmet.getncattr("VGLVLS")
             mtop = ncmet.getncattr("VGTOP")
-            base_MZ_time = datetime.datetime(1900, 1, 1, 0, 0, 0)  # epoch
-            MZdates = [base_MZ_time + datetime.timedelta(hours=int(t)) for t in ncin["time"][:]]
+            MZdates = netCDF4.num2date(ncin.variables["valid_time"][:], ncin.variables["valid_time"].getncattr("units"))
             latmz = ncin.variables["latitude"][:].squeeze()
             lonmz = ncin.variables["longitude"][:].squeeze()
             PSURF = ncsrf.variables["PRSFC"][:].squeeze()
@@ -331,7 +330,7 @@ def interpolate_from_cams_to_cmaq_grid(
 
             ## populate the pressure array
             P = numpy.zeros(ncin["ch4_c"].shape)
-            P += ncin["level"][...][
+            P += ncin["pressure_level"][...][
                 :, numpy.newaxis, numpy.newaxis
             ]  # broadcasting but into axis 0 not axis -1
             LATMZ = numpy.zeros((len(latmz), len(lonmz)))
@@ -390,7 +389,7 @@ def interpolate_from_cams_to_cmaq_grid(
                 PRES_CM[0] = PSURF[itime, irow, icol]
                 PRES_CM = (PRES_CM[1:] + PRES_CM[:-1]) / 2.0
                 # PRES_MZ = Ap +  Bp * PSURF[itime,irow,icol]
-                PRES_MZm = ncin["level"][:].astype("float")
+                PRES_MZm = ncin["pressure_level"][:].astype("float")
                 mb2pa = 100.0  # converting from  millibar to pascal
                 Iz = match_two_sorted_arrays(PRES_MZm * mb2pa, PRES_CM)
             ## set the values to zero for species that we *WILL* interpolate to
