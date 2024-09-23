@@ -19,6 +19,74 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.4.0 (2024-09-23)
+
+### ⚠️ Breaking Changes
+
+- Move `scripts/cmaq_preprocess/upload-domains.py` from Bash to Python ([#48](https://github.com/openmethane/openmethane/pulls/48))
+
+### 🆕 Features
+
+- Add archive script to copy the results fo the daily and monthly AWS workflows to S3
+
+  This script is used to archive the daily and monthly outputs to AWS S3, in the case of both a successful
+  run and a failure. The failed runs will use a prefix of `/failed/$DOMAIN_NAME/$EXECUTION_ID`,
+  while the daily and monthly results are stored in `/results/$DOMAIN_NAME/daily/$YEAR/$MONTH/$DAY` and
+  `/results/$DOMAIN_NAME/monthly/$YEAR/$MONTH`, respectively.
+
+  These data can then be fetched from S3 and used for any local analysis or postmortems. ([#47](https://github.com/openmethane/openmethane/pulls/47))
+- Add script which loads previous results of daily runs for the monthly run. ([#52](https://github.com/openmethane/openmethane/pulls/52))
+- Move `scripts/archive.py` from Bash to Python, add more error handling, make it runnable when started from
+  EventBridge. ([#53](https://github.com/openmethane/openmethane/pulls/53))
+- Support loading observations from multiple input files using a glob.
+
+  Adds new environment parameter, `TEMPLATE_DIR`, to set the directory containing the CMAQ template files
+  and `OBS_FILE_GLOB` to enable override the path of the input observation file/s. ([#55](https://github.com/openmethane/openmethane/pulls/55))
+
+### 🎉 Improvements
+
+- Removed a duplicate global entry for the start/end date of a simulation
+  and unified how parameters are named throughout `fourdvar`. ([#54](https://github.com/openmethane/openmethane/pulls/54))
+- Load previous MCIP data when loading from the archive.
+
+  Added support for using fourdvar date identifiers in the CMAQ preprocessing directories.
+
+  Removed an ununsed `diurnal` parameter from `fourdvar`. ([#57](https://github.com/openmethane/openmethane/pulls/57))
+- Log chi squared and bias values during the cost function execution ([#59](https://github.com/openmethane/openmethane/pulls/59))
+- Don't clean up data for failed runs to make runs easily restartable ([#60](https://github.com/openmethane/openmethane/pulls/60))
+- Added bias correction step for CAMS data.
+
+  Fixes shock caused by discontinuity between CAMS free-running model
+  and TROPOMI data. 
+  the bias_correct_cams script should be included in the monthly
+  workflow. It probably isn't necessary for the daily workflow provided
+  we use local enhancement as our alerts algorithm. ([#63](https://github.com/openmethane/openmethane/pulls/63))
+- Added CMAQ gradient test
+
+  This addes a test for the CMAQ adjoint using a simple cost function of
+  the sum of squares of model concentrations. the test uses the same
+  logic as test_grad_finite_diff but is limited to the steps between
+  model input and model output, i.e tests a shorter loop. Provided the
+  run_model and run_adjoint are numerical no-ops this *should* be a
+  direct test of the cmaq adjoint. ([#67](https://github.com/openmethane/openmethane/pulls/67))
+- Print logs to stdout when CMAQ fails. ([#68](https://github.com/openmethane/openmethane/pulls/68))
+- Added destriping function for TROPOMI data ([#72](https://github.com/openmethane/openmethane/pulls/72))
+
+### 🐛 Bug Fixes
+
+- Update the prior file location for the docker target ([#46](https://github.com/openmethane/openmethane/pulls/46))
+- Update `scripts/load_from_archive.py` to use an inclusive end date
+  which is a convention used throughout this project. ([#56](https://github.com/openmethane/openmethane/pulls/56))
+
+### 📚 Improved Documentation
+
+- Updated the diagrams for the `daily` workflow and added the `monthly` workflow. ([#58](https://github.com/openmethane/openmethane/pulls/58))
+
+### 🔧 Trivial/Internal Changes
+
+- [#64](https://github.com/openmethane/openmethane/pulls/64), [#66](https://github.com/openmethane/openmethane/pulls/66), [#68](https://github.com/openmethane/openmethane/pulls/68), [#69](https://github.com/openmethane/openmethane/pulls/69), [#73](https://github.com/openmethane/openmethane/pulls/73), [#74](https://github.com/openmethane/openmethane/pulls/74)
+
+
 # ## openmethane v0.3.1 (2024-08-07)
 
 No significant changes.
