@@ -18,7 +18,6 @@ from pathlib import Path
 
 import cdsapi
 import click
-import netCDF4 as nc
 
 DATETIME_FORMAT = "%Y-%m-%d"
 
