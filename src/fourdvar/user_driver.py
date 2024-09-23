@@ -16,6 +16,7 @@
 
 import logging
 import os
+import pathlib
 import pickle
 
 from scipy.optimize import fmin_l_bfgs_b as minimize
@@ -25,6 +26,7 @@ import fourdvar.util.archive_handle as archive
 import fourdvar.util.cmaq_handle as cmaq
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn, data_access, input_defn
+from postproc.calculate_average_emissions import calculate_average_emissions
 
 logger = logging.getLogger(__name__)
 
@@ -134,5 +136,9 @@ def post_process(out_physical, metadata):
     output: None.
     """
     out_physical.archive("final_solution.ncf")
+    posterior_emissions_path = os.path.join(archive.get_archive_path(), "posterior_emissions.nc")
+    calculate_average_emissions( pathlib.Path(archive.get_archive_path()),
+                                 pathlib.Path( posterior_emissions_path),
+                                 )
     with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:
         pickle.dump(metadata, f)
