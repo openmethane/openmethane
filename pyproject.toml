@@ -27,7 +27,7 @@ environs = "^11.0.0"
 xarray = "^2024.5.0"
 xarray-datatree = "^0.0.14"
 click = "^8.1.7"
-cdsapi = "^0.7.0"
+cdsapi = "^0.7.3"
 attrs = "^23.2.0"
 boto3 = "^1.35.11"
 
