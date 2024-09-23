@@ -110,7 +110,7 @@ jobs:
         if: steps.cache-cams.outputs.cache-hit != 'true'
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
+          CDSAPI_URL: https://ads-beta.atmosphere.copernicus.eu/api
         run: |
           cd /opt/project
           # This can take a few minutes as the CAMS data is stored on tape
@@ -121,7 +121,7 @@ jobs:
       - name: Run pytest
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
+          CDSAPI_URL: https://ads-beta.atmosphere.copernicus.eu/api
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           TARGET: docker-test
@@ -147,7 +147,7 @@ jobs:
       - name: Run e2e test
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api/v2
+          CDSAPI_URL: https://ads-beta.atmosphere.copernicus.eu/api
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           # Uses the local checked-in WRF and prior data
