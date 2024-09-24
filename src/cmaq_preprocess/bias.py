@@ -55,7 +55,7 @@ def get_bcon_files(config: CMAQConfig) -> list[pathlib.Path]:
     for date in utils.date_range(config.start_date, config.end_date):
         chem_dir = utils.nested_dir(config.domain, date, config.ctm_dir)
         bcon_files.append(
-            chem_dir / f"ICON.{config.domain.id}.{config.domain.mcip_suffix}.{config.mech}.nc"
+            chem_dir / f"BCON.{config.domain.id}.{config.domain.mcip_suffix}.{config.mech}.nc"
         )
     return bcon_files
 
