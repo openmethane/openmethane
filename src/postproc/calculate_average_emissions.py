@@ -53,7 +53,7 @@ def calculate_average_emissions(
 def get_posterior(archive_dir: pathlib.Path,
                   species: str = 'CH4',
                   iter_template: str = 'iter*.ncf',
-                  designated_posterior_file : pathlib.Path = None,
+                  designated_posterior_file : pathlib.Path | None = None,
                   ) -> np.ndarray:
     if designated_posterior_file is not None:
         posterior_file = designated_posterior_file

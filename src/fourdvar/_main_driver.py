@@ -86,9 +86,9 @@ def cost_func(vector):
     bias = (observed.get_vector() - simulated.get_vector()).mean()
     chisq = (
         ((observed.get_vector() - simulated.get_vector()) / np.array(observed.uncertainty)) ** 2
-    ).mean() / observed.length
+    ).sum() / observed.length
 
-    logger.info(f"cost = {cost} bias={bias} chisq={chisq} in {int(end_time - start_time)}s")
+    logger.info(f"cost={cost} bias={bias} chisq={chisq} in {int(end_time - start_time)}s")
     return cost
 
 

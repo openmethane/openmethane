@@ -25,6 +25,7 @@ import fourdvar.datadef as d
 import fourdvar.util.archive_handle as archive
 import fourdvar.util.cmaq_handle as cmaq
 from fourdvar._transform import transform
+from fourdvar.env import env
 from fourdvar.params import archive_defn, data_access, input_defn
 from postproc.calculate_average_emissions import calculate_average_emissions
 
@@ -121,9 +122,17 @@ def minim(cost_func, grad_func, init_guess):
         bounds = None
     else:
         bounds = len(init_guess) * [(0, None)]
-
+    maxiter = env.int("MAX_ITERATIONS", 20)
+    logger.info(f"Running minimiser with a maximum of {maxiter} iteration")
     answer = minimize(
-        cost_func, init_guess, bounds=bounds, fprime=grad_func, callback=callback_func, maxiter=20
+        cost_func,
+        init_guess,
+        bounds=bounds,
+        fprime=grad_func,
+        callback=callback_func,
+        maxiter=maxiter,
+        # Very verbose output on every successful iteration
+        iprint=200,
     )
     # check answer warnflag, etc for success
     answer = [*list(answer), start_dict]
@@ -137,8 +146,9 @@ def post_process(out_physical, metadata):
     """
     out_physical.archive("final_solution.ncf")
     posterior_emissions_path = os.path.join(archive.get_archive_path(), "posterior_emissions.nc")
-    calculate_average_emissions( pathlib.Path(archive.get_archive_path()),
-                                 pathlib.Path( posterior_emissions_path),
-                                 )
+    calculate_average_emissions(
+        pathlib.Path(archive.get_archive_path()),
+        pathlib.Path(posterior_emissions_path),
+    )
     with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:
         pickle.dump(metadata, f)
