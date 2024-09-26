@@ -29,6 +29,7 @@ The following environment variables are configurable:
 | ADJOINT_BWD         | path  | Path to backward adjoint executable                                 | N/A                                        |
 | NUM_PROC_COLS       | int   | Number of processors to use for the columns                         | 1                                          |
 | NUM_PROC_ROW        | int   | Number of processors to use for the rows                            | 1                                          |
+| MAX_ITERATIONS      | int   | Maximum successful iterations performed by fourdvar                 | 20                                         |
 
 
 For values with a default of N/A an exception will be raised if
