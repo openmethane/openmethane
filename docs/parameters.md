@@ -52,4 +52,4 @@ These will be used by the `fetch_tropomi.py` script to authenticate with the GES
 ## CAMS Login
 Used to fetch CAMS data during the cmaq_preprocess step.
  
-This requires a CAMS account, which can be created at the ECMWF [Atmosphere Data Store](https://ads-beta.atmosphere.copernicus.eu/).
+This requires a CAMS account, which can be created at the ECMWF [Atmosphere Data Store](https://ads.atmosphere.copernicus.eu/).
