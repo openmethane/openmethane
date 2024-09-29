@@ -6,7 +6,7 @@ import pytest
 from click.testing import CliRunner
 from scripts.obs_preprocess import fetch_tropomi
 
-
+# This hits the api
 def test_fetch(tmpdir, root_dir):
     runner = CliRunner()
     result = runner.invoke(
@@ -57,3 +57,24 @@ def test_fetch_missing_creds(monkeypatch, env_var):
         match="EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing",
     ):
         fetch_tropomi.create_session()
+
+
+# This hits the api with invalid data
+def test_fetch_invalid_date(tmpdir, root_dir):
+    runner = CliRunner()
+    result = runner.invoke(
+        fetch_tropomi.fetch_data,
+        [
+            "-c",
+            str(root_dir / "config" / "obs_preprocess" / "config.austtest.json"),
+            "-s",
+            "1900-07-01",
+            "-e",
+            "1901-07-02",
+            str(tmpdir),
+        ],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert str(result.exception) == '500 Server Error: Internal Server Error for url: https://disc.gsfc.nasa.gov/service/subset/jsonwsp'
+
