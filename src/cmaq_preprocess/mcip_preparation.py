@@ -29,7 +29,7 @@ def check_input_met_and_output_folders(
         chemdir = nested_dir(domain, date, ctm_dir)
 
         if not os.path.exists(mcipdir):
-            warnings.warn(f"MCIP output directory not found at {mcipdir} ... ")
+            warnings.warn(f"MCIP output directory not found at {mcipdir}")
             return False
 
         ## create output destination
@@ -53,10 +53,9 @@ def check_input_met_and_output_folders(
             "METDOT3D",
         ]
         for filetype in mcip_files:
-            matches = sorted(mcipdir.glob(f"{filetype}_*"))
-            if len(matches) == 0:
-                warnings.warn(f"{filetype} file not found in folder {mcipdir} ... ")
+            expected_filename = f"{filetype}_{domain.mcip_suffix}"
+
+            if not (mcipdir / expected_filename).exists():
+                warnings.warn(f"{expected_filename} file not found in folder {mcipdir}")
                 return False
-            elif len(matches) > 1:
-                raise ValueError(f"More than one file found matching the pattern {filetype}_*")
     return True
