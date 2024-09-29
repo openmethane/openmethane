@@ -6,7 +6,7 @@ import pytest
 from click.testing import CliRunner
 from scripts.obs_preprocess import fetch_tropomi
 
-
+# This hits the api
 def test_fetch(tmpdir, root_dir):
     runner = CliRunner()
     result = runner.invoke(
@@ -59,6 +59,7 @@ def test_fetch_missing_creds(monkeypatch, env_var):
         fetch_tropomi.create_session()
 
 
+# This hits the api with invalid data
 def test_fetch_invalid_date(tmpdir, root_dir):
     runner = CliRunner()
     result = runner.invoke(

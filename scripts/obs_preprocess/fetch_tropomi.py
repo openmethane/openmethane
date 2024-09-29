@@ -145,7 +145,7 @@ def fetch_data(config_file, start, end, output):
     }
 
     while response["result"]["Status"] in ["Accepted", "Running"]:
-        sleep(5)
+        sleep(1)
         response = get_http_data(status_request, session)
         status = response["result"]["Status"]
         percent = response["result"]["PercentCompleted"]
