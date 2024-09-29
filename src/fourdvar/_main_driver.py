@@ -54,6 +54,10 @@ def cost_func(vector):
         model_out = transform(model_in, d.ModelOutputData)
         data_access.prev_vector = vector.copy()
 
+    # TODO: Temp archive for debugging
+    model_out.archive(f"conc_cost.ncf")
+    logger.warning("Archived concentrations in cost function")
+
     simulated = transform(model_out, d.ObservationData)
 
     # TODO: Temp archive for debugging
