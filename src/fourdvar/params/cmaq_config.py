@@ -112,7 +112,7 @@ if use_jobfs is True:
         logger.warning("cannot find PBS_JOBFS, use_jobfs can only be run with qsub.")
         chk_path = os.path.join(cmaq_base, "chkpnt")
 else:
-    chk_path = os.path.join(cmaq_base, "chkpnt")
+    chk_path = env.str("CHK_PATH", os.path.join(cmaq_base, "chkpnt"))
 
 mcip_met_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
