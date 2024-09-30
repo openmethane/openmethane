@@ -27,9 +27,9 @@ def calculate_average_emissions(
     prior_emis_list = []
     for filename in prior_emis_files:
         with xr.open_dataset( filename) as xrds:
-            prior_emis_list.append( xrds[species].to_numpy())
+            prior_emis_list.append( xrds[species].to_numpy().mean(axis=0)) # average ove rhours
     prior_emis_array = np.array( prior_emis_list)
-    prior_emis_mean_3d = prior_emis_array.mean(axis=(0,1))
+    prior_emis_mean_3d = prior_emis_array.mean(axis=(0)) # average over days
     prior_emis_mean_surf = prior_emis_mean_3d[0,...]
     posterior_multiplier = get_posterior( archive_dir, species,
                                           iter_template, designated_posterior_file)
