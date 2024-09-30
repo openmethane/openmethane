@@ -114,6 +114,10 @@ if use_jobfs is True:
 else:
     chk_path = env.str("CHK_PATH", os.path.join(cmaq_base, "chkpnt"))
 
+# TODO: Temporary fix for existing production runs
+if chk_path == "/mnt/scratch":
+    chk_path = os.path.join(chk_path, env.str("EXECUTION_ID"))
+
 mcip_met_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
