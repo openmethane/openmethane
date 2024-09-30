@@ -100,6 +100,9 @@ def setup_run():
     else:
         env_dict["AVG_CONC_SPCS"] = str(cmaq_config.avg_conc_spcs)
 
+    # Ensure the directory for the checkpoint files already exists
+    fh.ensure_path(cmaq_config.chk_path)
+
     env_dict["ADJ_CHEM_CHK"] = cmaq_config.chem_chk + " -v"
     env_dict["ADJ_VDIFF_CHK"] = cmaq_config.vdiff_chk + " -v"
     env_dict["ADJ_AERO_CHK"] = cmaq_config.aero_chk + " -v"
