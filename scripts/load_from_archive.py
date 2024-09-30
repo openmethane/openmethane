@@ -32,6 +32,7 @@ def main():
         for path in [
             ["input"],
             ["cmaq"],
+            ["mcip"],
         ]:
             _sync_daily_directory(date, path)
 
