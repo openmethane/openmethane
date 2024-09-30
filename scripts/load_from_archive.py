@@ -31,7 +31,7 @@ def main():
     for date in date_range(START_DATE, END_DATE):  # this is inclusive of END_DATE
         for path in [
             ["input"],
-            ["mcip"],
+            ["cmaq"],
         ]:
             _sync_daily_directory(date, path)
 
