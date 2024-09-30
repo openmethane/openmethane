@@ -40,10 +40,14 @@ def calculate_average_emissions(
         copy_attributes( in_ds, out_ds, delete_attrs = ['NVARS', 'NLAYS'])
         cell_area = in_ds.XCELL * in_ds.YCELL
         conv_fac = SPECIES_MOLEMASS[ species] * G2KG
+        prior_emis_mean_output = prior_emis_mean_surf * conv_fac /cell_area
         posterior_emis_mean_output = posterior_emis_mean_surf * conv_fac /cell_area
         # now create coordinates, missing from input
         x = in_ds.XORIG + 0.5*in_ds.XCELL + np.arange(in_ds.NCOLS) * in_ds.XCELL
         y = in_ds.YORIG + 0.5*in_ds.YCELL + np.arange( in_ds.NROWS) * in_ds.YCELL
+        prior_emis_mean_xr = xr.DataArray( prior_emis_mean_output, coords={'y':y, 'x':x})
+        prior_emis_mean_xr.attrs['units'] = 'kg/m**2/s'
+        out_ds['prior_'+species] = prior_emis_mean_xr
         posterior_emis_mean_xr = xr.DataArray( posterior_emis_mean_output, coords={'y':y, 'x':x})
         posterior_emis_mean_xr.attrs['units'] = 'kg/m**2/s'
         out_ds[species] = posterior_emis_mean_xr
