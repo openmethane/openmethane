@@ -11,6 +11,7 @@ set -x
 source scripts/environment.sh
 
 SKIP_CAMS_DOWNLOAD=${SKIP_CAMS_DOWNLOAD:-}
+SKIP_CMAQ_SETUP=${SKIP_CMAQ_SETUP:-}
 SKIP_TEMPLATE_GENERATION=${SKIP_TEMPLATE_GENERATION:-}
 
 # Skip the CAMS download if the variable is set to anything other than an empty string
@@ -23,8 +24,12 @@ else
   echo "Skipping CAMS download"
 fi
 
-echo "Preparing CMAQ input files"
-python scripts/cmaq_preprocess/setup_for_cmaq.py
+if [[ -z "${SKIP_CMAQ_SETUP}" ]]; then
+  echo "Preparing CMAQ input files"
+  python scripts/cmaq_preprocess/setup_for_cmaq.py
+else
+  echo "Skipping CMAQ setup"
+fi
 
 # Skip the template generation if SKIP_TEMPLATE_GENERATION is set to anything other than an empty string
 if [[ -n "${SKIP_TEMPLATE_GENERATION}" ]]; then
