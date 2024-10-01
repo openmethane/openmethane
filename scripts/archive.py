@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import boto3
+import botocore
 import marshmallow.utils
 
 # Loads environment using the value of the environment variable "TARGET"
@@ -39,7 +40,7 @@ def main():
     store_path = get_store_path(config)
     prefix = get_prefix(config)
 
-    config.dump(store_path=store_path, prefix=prefix)
+    # config.dump(store_path=store_path, prefix=prefix)
 
     # If we have a full workflow ARN (which means we're running on AWS), we can fetch
     # the logs and archive them as well
@@ -216,6 +217,7 @@ def dump_workflow_logs(
 
 
 def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typing.TextIO):
+    logging.info(f"Fetching logs from {log_group_name}/{log_stream_name}")
     logs_client = boto3.client("logs", region_name=os.environ["AWS_REGION"])
     answer = {"nextToken": None}
     while "nextToken" in answer:
@@ -225,7 +227,13 @@ def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typin
         )
         if answer["nextToken"] is not None:
             kwargs["nextToken"] = answer["nextToken"]
-        answer = logs_client.filter_log_events(**kwargs)
+        try:
+            answer = logs_client.filter_log_events(**kwargs)
+        except botocore.exceptions.ClientError as e:
+            msg = f"Error fetching logs: {e}"
+            logging.exception(msg)
+            logfd.write(f"{msg}\n")
+            return
         log_events = answer["events"]
         for le in log_events:
             timestamp = datetime.fromtimestamp(le["timestamp"] / 1000)
