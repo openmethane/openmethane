@@ -94,6 +94,6 @@ RUN pip install -e .
 # For testing it might be easier to mount $(PWD):/opt/project so that local changes are reflected in the container
 COPY . /opt/project
 
-# tini forward signals to real entrypoint
+# tini forwards all signals to real entrypoint
 ENTRYPOINT ["tini", "--", "/opt/project/scripts/docker-entrypoint.sh"]
 CMD ["/bin/bash"]
