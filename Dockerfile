@@ -67,7 +67,7 @@ ENV TARGET=docker \
     END_DATE=2022-07-22
 
 RUN apt-get update && \
-    apt-get install -y csh make nano jq curl tree awscli && \
+    apt-get install -y csh make nano jq curl tree awscli tini && \
     rm -rf /var/lib/apt/lists/*
 
 # /opt/project is chosen because pycharm will automatically mount to this directory
@@ -94,5 +94,6 @@ RUN pip install -e .
 # For testing it might be easier to mount $(PWD):/opt/project so that local changes are reflected in the container
 COPY . /opt/project
 
-
+# tini forwards all signals to real entrypoint
+ENTRYPOINT ["tini", "--", "/opt/project/scripts/docker-entrypoint.sh"]
 CMD ["/bin/bash"]
