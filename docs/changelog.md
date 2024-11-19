@@ -21,7 +21,9 @@ of rst and use slightly different categories.
 
 ## openmethane v0.5.1 (2024-11-19)
 
-No significant changes.
+### 🐛 Bug Fixes
+
+- Update ADS API URLs from ads-beta to new production domain ads.atmosphere.copernicus.eu in CI/CD.
 
 
 ## openmethane v0.5.0 (2024-11-19)
