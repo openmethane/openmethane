@@ -19,6 +19,35 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.5.0 (2024-11-19)
+
+### ⚠️ Breaking Changes
+
+- `fetch_tropomi_data` now fails if any network requests fail.
+  This is more robust than the previous behavior, which would silently ignore any failed requests leading
+  to an incomplete or missing observational dataset. ([#89](https://github.com/openmethane/openmethane/pulls/89))
+
+### 🆕 Features
+
+- Add retry behaviour when fetching tropomi data
+  Add `CHK_PATH` environment variable for defining the location of checkpoint files in CMAQ. ([#89](https://github.com/openmethane/openmethane/pulls/89))
+
+### 🎉 Improvements
+
+- Enhanced the verbosity of the minimiser to provide more information about the minimisation process. ([#84](https://github.com/openmethane/openmethane/pulls/84))
+- Be more specific about the expected MCIP filename when running cmaq_preprocess ([#91](https://github.com/openmethane/openmethane/pulls/91))
+- Add option to not recalculate the initial/boundary conditions during the CMAQ preprocessing step. ([#93](https://github.com/openmethane/openmethane/pulls/93))
+- Automatically clean up the directory specified via the `CHK_PATH` environment variable when running via docker.
+  This `CHK_PATH` directory is a scratch directory that is used to store temporary files. ([#98](https://github.com/openmethane/openmethane/pulls/98))
+
+### 🐛 Bug Fixes
+
+- Correct issue with multi-day monthly bias correction ([#83](https://github.com/openmethane/openmethane/pulls/83))
+- Correct an error in the calculation of the chi-squared value on each cost-function evaluation. ([#84](https://github.com/openmethane/openmethane/pulls/84))
+- The checkpoint directory is automatically created which running the model ([#94](https://github.com/openmethane/openmethane/pulls/94))
+- Handle archiving log streams that are no longer available ([#97](https://github.com/openmethane/openmethane/pulls/97))
+
+
 ## openmethane v0.4.1 (2024-09-23)
 
 ### 🆕 Features
