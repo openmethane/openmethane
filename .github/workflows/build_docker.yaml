@@ -63,8 +63,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           push: true
           pull: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
   test-unit:
     timeout-minutes: 10
     runs-on: ubuntu-latest
