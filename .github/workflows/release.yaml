@@ -89,7 +89,7 @@ jobs:
           git commit -a -m "bump(pre-release): version $NEW_VERSION > $NEXT_VERSION"
           git push && git push --tags
 
-  draft-release:
+  publish-release:
     name: Create draft release
     runs-on: ubuntu-latest
     needs: bump-version
@@ -116,7 +116,6 @@ jobs:
           tag_name: v${{ needs.bump-version.outputs.release-version }}
           body: ${{ needs.bump-version.outputs.release-notes }}
           token: "${{ secrets.PAT }}"
-          draft: true
           files: |
             dist/{{ project_name_python }}-${{ needs.bump-version.outputs.release-version }}-py3-none-any.whl
             dist/{{ project_name_python }}-${{ needs.bump-version.outputs.release-version }}.tar.gz
