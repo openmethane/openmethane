@@ -1,4 +1,4 @@
-name: build_docker
+name: Build docker image
 
 on:
   workflow_dispatch:
@@ -43,6 +43,16 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # check if the triggering ref is a vX.Y.Z tag and NOT vX.Y.Za0 (prerelease)
+      - name: Check for stable release
+        id: check-stable
+        if: startsWith(github.event.ref, 'refs/tags/v')
+        run: |
+          if [[ "${{ github.event.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "STABLE_RELEASE=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -53,7 +63,8 @@ jobs:
             type=pep440,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main'}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.event.ref, 'refs/tags/v') }}
+            type=raw,value=stable,enable=${{ steps.check-stable.outputs.STABLE_RELEASE == 'true' }}
       - name: Build and push image
         uses: docker/build-push-action@v5
         id: build
