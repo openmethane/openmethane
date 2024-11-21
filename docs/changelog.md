@@ -21,15 +21,18 @@ of rst and use slightly different categories.
 
 ## openmethane v0.5.2 (2024-11-21)
 
+### 🐛 Bug Fixes
+
+- Fix docker build to only push stable image tags when container tests pass.
+
 ### 🎉 Improvements
 
-- Combine bump and release workflows into a simplified release process
-
-  Update container tagging strategy for latest and stable tags ([#103](https://github.com/openmethane/openmethane/pulls/103))
+- Combine bump and release workflows into a simplified release process.
+- Update container tagging strategy for latest and stable tags ([#103](https://github.com/openmethane/openmethane/pulls/103)).
 
 ### 🔧 Trivial/Internal Changes
 
-- [#106](https://github.com/openmethane/openmethane/pulls/106)
+- Small changes to GHA workflows to bring them inline with improvements made in other repos.
 
 
 ## openmethane v0.5.1 (2024-11-19)
@@ -50,7 +53,7 @@ of rst and use slightly different categories.
 ### 🆕 Features
 
 - Add retry behaviour when fetching tropomi data
-  Add `CHK_PATH` environment variable for defining the location of checkpoint files in CMAQ. ([#89](https://github.com/openmethane/openmethane/pulls/89))
+- Add `CHK_PATH` environment variable for defining the location of checkpoint files in CMAQ. ([#89](https://github.com/openmethane/openmethane/pulls/89))
 
 ### 🎉 Improvements
 
@@ -109,10 +112,8 @@ of rst and use slightly different categories.
 - Removed a duplicate global entry for the start/end date of a simulation
   and unified how parameters are named throughout `fourdvar`. ([#54](https://github.com/openmethane/openmethane/pulls/54))
 - Load previous MCIP data when loading from the archive.
-
-  Added support for using fourdvar date identifiers in the CMAQ preprocessing directories.
-
-  Removed an ununsed `diurnal` parameter from `fourdvar`. ([#57](https://github.com/openmethane/openmethane/pulls/57))
+- Added support for using fourdvar date identifiers in the CMAQ preprocessing directories.
+- Removed an ununsed `diurnal` parameter from `fourdvar`. ([#57](https://github.com/openmethane/openmethane/pulls/57))
 - Log chi squared and bias values during the cost function execution ([#59](https://github.com/openmethane/openmethane/pulls/59))
 - Don't clean up data for failed runs to make runs easily restartable ([#60](https://github.com/openmethane/openmethane/pulls/60))
 - Added bias correction step for CAMS data.
