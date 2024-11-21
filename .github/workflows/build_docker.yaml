@@ -50,10 +50,12 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
+          # tag as `build-XYZ` since images need to be tagged to push
           tags: |
             type=schedule
             type=ref,event=branch
             type=ref,event=pr
+            type=raw,value=build-${{ github.run_number }}
       - name: Build and push image
         uses: docker/build-push-action@v5
         id: build
@@ -236,6 +238,11 @@ jobs:
             docker tag "${{ needs.build.outputs.registry-image-id }}" "$tag"
             docker push "$tag"
           done
+      - name: Remove build tag from published image
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-tags: build-${{ github.run_number }}
 
   # Push the image to ECR as well
   push-ecr:
