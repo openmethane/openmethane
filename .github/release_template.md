@@ -1,3 +1,0 @@
-## Announcements
-
-* Announcement 1
