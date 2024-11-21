@@ -1,4 +1,4 @@
-name: Create Release
+name: Create release
 
 on:
   workflow_dispatch:
@@ -90,7 +90,7 @@ jobs:
           git push && git push --tags
 
   publish-release:
-    name: Create draft release
+    name: Create release
     runs-on: ubuntu-latest
     needs: bump-version
     steps:
@@ -110,7 +110,7 @@ jobs:
         run: |
           poetry build --no-interaction
 
-      - name: Create draft Release
+      - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.bump-version.outputs.release-version }}
