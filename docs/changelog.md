@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.5.3 (2024-11-21)
+
+### 🐛 Bug Fixes
+
+- Fix release images failing docker push because they have no valid tags ([#109](https://github.com/openmethane/openmethane/pulls/109))
+
+
 ## openmethane v0.5.2 (2024-11-21)
 
 ### 🐛 Bug Fixes
