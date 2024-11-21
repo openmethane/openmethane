@@ -238,6 +238,11 @@ jobs:
             docker tag "${{ needs.build.outputs.registry-image-id }}" "$tag"
             docker push "$tag"
           done
+      - name: Remove build tag from published image
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-tags: build-${{ github.run_number }}
 
   # Push the image to ECR as well
   push-ecr:
