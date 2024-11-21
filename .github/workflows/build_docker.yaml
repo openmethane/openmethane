@@ -50,10 +50,12 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
+          # tag as `build-XYZ` since images need to be tagged to push
           tags: |
             type=schedule
             type=ref,event=branch
             type=ref,event=pr
+            type=raw,value=build-${{ github.run_number }}
       - name: Build and push image
         uses: docker/build-push-action@v5
         id: build
