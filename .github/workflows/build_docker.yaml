@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: ghcr.io/openmethane/openmethane
+  IMAGE: openmethane/openmethane
 
 jobs:
   build:
@@ -49,7 +49,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: "${{ env.IMAGE }}"
+          images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
           tags: |
             type=schedule
             type=ref,event=branch
@@ -68,7 +68,7 @@ jobs:
       - name: Construct remote image id
         id: remote-image-id
         run: |
-          echo "REMOTE_ID=${{ env.IMAGE }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "REMOTE_ID=${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
   test-unit:
     timeout-minutes: 10
@@ -201,7 +201,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: "${{ env.IMAGE }}"
+          images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
           tags: |
             type=ref,event=pr
             type=pep440,pattern={{version}}
@@ -259,7 +259,7 @@ jobs:
       contents: read
       packages: read
     env:
-      ECR_IMAGE: ${{ matrix.account_id }}.dkr.ecr.ap-southeast-2.amazonaws.com/openmethane/openmethane
+      ECR_REGISTRY: ${{ matrix.account_id }}.dkr.ecr.ap-southeast-2.amazonaws.com
     steps:
       - name: Login to Container registry
         uses: docker/login-action@v3
@@ -288,7 +288,7 @@ jobs:
           
           IFS=$'\n'
           for tag in $TAGS; do
-            ECR_TAG=${tag/"${{ env.IMAGE }}"/"${{ env.ECR_IMAGE }}"}
+            ECR_TAG=${tag/"${{ env.REGISTRY }}"/"${{ env.ECR_REGISTRY }}"}
             echo "Tagging ${{ needs.build.outputs.registry-image-id }} as $ECR_TAG"
             docker tag "${{ needs.build.outputs.registry-image-id }}" "$ECR_TAG"
             docker push "$ECR_TAG"
