@@ -41,6 +41,8 @@ jobs:
         uses: actions/setup-python@v4
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
+      - name: Install dependencies
+        run: poetry install --only main
       - name: Install towncrier
         run: poetry run pip install towncrier
 
