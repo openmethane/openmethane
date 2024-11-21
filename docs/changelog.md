@@ -19,6 +19,19 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.5.2 (2024-11-21)
+
+### 🎉 Improvements
+
+- Combine bump and release workflows into a simplified release process
+
+  Update container tagging strategy for latest and stable tags ([#103](https://github.com/openmethane/openmethane/pulls/103))
+
+### 🔧 Trivial/Internal Changes
+
+- [#106](https://github.com/openmethane/openmethane/pulls/106)
+
+
 ## openmethane v0.5.1 (2024-11-19)
 
 ### 🐛 Bug Fixes
