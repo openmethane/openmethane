@@ -153,6 +153,16 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.github_token }}
     steps:
+      - name: Check package version
+        if: startsWith(github.event.ref, 'refs/tags/v')
+        run: |
+          TAG_REF="${{ github.event.ref }}"
+          TAG_VERSION=${TAG_REF/"refs\/tags\/"}
+          if [ "$OPENMETHANE_VERSION" != "$TAG_VERSION" ]; then
+            echo "OPENMETHANE_VERSION is $OPENMETHANE_VERSION; expected version is $TAG_VERSION"
+            exit 1
+          fi
+
       - name: Run e2e test
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
