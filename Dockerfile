@@ -42,6 +42,8 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
 # This isn't a hyper optimised container but it's a good starting point
 FROM debian:bookworm
 
+# These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
+# These must be duplicated in .github/workflows/build_docker.yaml
 LABEL org.opencontainers.image.title="Open Methane"
 LABEL org.opencontainers.image.description="Open Methane model and tools"
 LABEL org.opencontainers.image.authors="Peter Rayner <peter.rayner@superpowerinstitute.com.au>, Jared Lewis <jared.lewis@climate-resource.com>"

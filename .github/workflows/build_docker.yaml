@@ -56,6 +56,12 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=raw,value=build-${{ github.run_number }}
+          # Duplicated from Dockerfile due to https://github.com/docker/metadata-action/issues/295
+          labels: |
+            org.opencontainers.image.title="Open Methane"
+            org.opencontainers.image.description="Open Methane model and tools"
+            org.opencontainers.image.authors="Peter Rayner <peter.rayner@superpowerinstitute.com.au>, Jared Lewis <jared.lewis@climate-resource.com>"
+            org.opencontainers.image.vendor="The Superpower Institute"
       - name: Build and push image
         uses: docker/build-push-action@v5
         id: build
