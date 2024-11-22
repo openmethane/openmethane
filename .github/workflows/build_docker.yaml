@@ -63,6 +63,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            OPENMETHANE_VERSION=${{ steps.meta.outputs.version }}
           push: true
           pull: false
           cache-from: type=gha

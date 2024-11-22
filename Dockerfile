@@ -42,7 +42,17 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
 # This isn't a hyper optimised container but it's a good starting point
 FROM debian:bookworm
 
-MAINTAINER Jared Lewis <jared.lewis@climate-resource.com>
+LABEL org.opencontainers.image.title="Open Methane"
+LABEL org.opencontainers.image.description="Open Methane model and tools"
+LABEL org.opencontainers.image.authors="Peter Rayner <peter.rayner@superpowerinstitute.com.au>, Jared Lewis <jared.lewis@climate-resource.com>"
+LABEL org.opencontainers.image.vendor="The Superpower Institute"
+
+# OPENMETHANE_VERSION will be overridden in release builds with semver vX.Y.Z
+ARG OPENMETHANE_VERSION=development
+# Make the $OPENMETHANE_VERSION available as an env var inside the container
+ENV OPENMETHANE_VERSION=$OPENMETHANE_VERSION
+
+LABEL org.opencontainers.image.version="${OPENMETHANE_VERSION}"
 
 # Configure Python
 ENV PYTHONFAULTHANDLER=1 \
