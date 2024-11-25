@@ -124,6 +124,7 @@ class PhysicalAbstractData(FourDVarData):
             "SDATE": np.int32(dt.replace_date("<YYYYDDD>", date_defn.start_date)),
             "EDATE": np.int32(dt.replace_date("<YYYYDDD>", date_defn.end_date)),
             "VAR-LIST": "".join([f"{s:<16}" for s in self.spcs]),
+            "openmethane_version": os.getenv("OPENMETHANE_VERSION", "development"),
         }
         dim_dict = {"ROW": self.nrows, "COL": self.ncols}
 
