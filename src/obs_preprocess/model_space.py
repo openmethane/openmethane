@@ -219,11 +219,9 @@ class ModelSpace:
 
     def get_pressure_weight(self, target_coord):
         pbound = self.get_pressure_bounds(target_coord)
-        # assign everything above the top layer to the top layer
-        pbound[-1] = 0.0
         # calculate pressure weight per layer
         pdiff = pbound[:-1] - pbound[1:]
-        pweight = pdiff / pbound[0]
+        pweight = pdiff / (pbound[0] -pbound[-1])
         return pweight
 
     def pressure_interp(self, obs_pressure, obs_value, target_coord):
