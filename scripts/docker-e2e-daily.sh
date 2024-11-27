@@ -14,6 +14,7 @@ END_DATE=${START_DATE:-2022-07-22}
 DOMAIN_NAME=${DOMAIN_NAME:-aust-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
 NCPUS=${NCPUS:-1} # WRF will fail on aust-test if run with too many cores
+BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # aust-test domain is 10x10 so avoid trimming all cells
 
 RUN_ID="daily/$DOMAIN_NAME/$DOMAIN_VERSION/$START_DATE"
 DATA_PATH="$DATA_ROOT/$RUN_ID"
@@ -69,8 +70,8 @@ docker run --name="e2e-daily-wrf-run" --rm \
 # JobName: prior-generate
 docker run --name="e2e-daily-prior-generate" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e CDSAPI_KEY=$CDSAPI_KEY \
-  -e CDSAPI_URL=$CDSAPI_URL \
+  -e CDSAPI_KEY="$CDSAPI_KEY" \
+  -e CDSAPI_URL="$CDSAPI_URL" \
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
@@ -85,10 +86,11 @@ docker run --name="e2e-daily-obs_preprocess-fetch_tropomi" --rm \
 # JobName: cmaq_preprocess-run
 docker run --name="e2e-daily-cmaq_preprocess-run" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e CDSAPI_KEY=$CDSAPI_KEY \
-  -e CDSAPI_URL=$CDSAPI_URL \
+  -e CDSAPI_KEY="$CDSAPI_KEY" \
+  -e CDSAPI_URL="$CDSAPI_URL" \
   -e NUM_PROC_COLS=1 \
   -e NUM_PROC_ROWS=1 \
+  -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
   openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 # JobName: obs_preprocess-process_tropomi
