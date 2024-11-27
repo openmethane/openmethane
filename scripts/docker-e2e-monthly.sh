@@ -14,6 +14,7 @@ END_DATE=${END_DATE:-2022-07-22}
 DOMAIN_NAME=${DOMAIN_NAME:-aust-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
 NCPUS=${NCPUS:-1} # WRF will fail on aust-test if run with too many cores
+BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # aust-test domain is 10x10 so avoid trimming all cells
 
 RUN_ID="monthly/$DOMAIN_NAME/$DOMAIN_VERSION/$START_DATE"
 DATA_PATH="$DATA_ROOT/$RUN_ID"
@@ -84,6 +85,7 @@ docker run --name="e2e-monthly-cmaq_preprocess-run" --rm \
   -e CDSAPI_URL="$CDSAPI_URL" \
   -e NUM_PROC_COLS=1 \
   -e NUM_PROC_ROWS=1 \
+  -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
   -e SKIP_CMAQ_SETUP=true \
   openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
