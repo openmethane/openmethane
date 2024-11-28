@@ -52,8 +52,10 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
     assert len(obs_list) == 8
 
     # First item is the domain
-    domain = obs_list[0]
-    data_regression.check(clean(domain), basename="tropomi_methane_domain")
+    domain = clean(obs_list[0])
+    # version is dynamic, so remove it from this test
+    del domain['openmethane_version']
+    data_regression.check(domain, basename="tropomi_methane_domain")
 
     # Rest are observations
     obs = obs_list[1]
