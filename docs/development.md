@@ -29,3 +29,21 @@ This workflow will:
 - update `docs/changelog.md` with the contents of the changelog items
 - prepare a GitHub Release with the changelog content
 - build and push a container image with the same version tag
+
+## Running locally
+
+There are currently several ways to run individual parts of the workflow
+locally, using the existing bash and python scripts.
+
+It is also possible to run an end-to-end daily or monthly workflow locally
+using docker containers, with:
+- `scripts/docker-e2e-daily.sh`
+- `scripts/docker-e2e-monthly.sh`
+
+These scripts assume `openmethane`, `openmethane-prior` and `setup-wrf` are
+checked out locally in the same folder.
+
+By default, these scripts will run on the `aust-test` 5x5 test domain, and
+store data in `/tmp/openmethane-e2e`. While these scripts could be used on
+the full domain, they are likely to take many, many hours to complete on
+consumer hardware.
