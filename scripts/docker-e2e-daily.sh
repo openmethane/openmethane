@@ -23,12 +23,19 @@ DATA_PATH="$DATA_ROOT/$RUN_ID"
 STORE_PATH="/opt/project/data/$RUN_ID"
 CHK_PATH="$STORE_PATH/scratch"
 
-if [[ ! -f "$HOME/.cdsapirc" ]]; then
-  echo "\$HOME/.cdsapirc must have a valid url and key to continue"
+if [[ -f .env ]]; then
+  echo "Loading environment from .env"
+  source .env
+fi
+
+if [ -z "$EARTHDATA_USERNAME" ] || [ -z "$EARTHDATA_PASSWORD" ]; then
+  echo "EARTHDATA_USERNAME and EARTHDATA_PASSWORD env variables must be set or present in .env"
   exit 1
 fi
-CDSAPI_KEY=$(grep -Po '^key: \K.*?$' "$HOME/.cdsapirc")
-CDSAPI_URL=$(grep -Po '^url: \K.*?$' "$HOME/.cdsapirc")
+if [ -z "$CDSAPI_URL" ] || [ -z "$CDSAPI_KEY" ]; then
+  echo "CDSAPI_URL and CDSAPI_KEY env variables must be set or present in .env"
+  exit 1
+fi
 
 # Ensure data path exists
 mkdir -p "$DATA_PATH"
@@ -82,6 +89,8 @@ docker run --name="e2e-daily-prior-generate" --rm \
 
 # JobName: obs_preprocess-fetch_tropomi
 docker run --name="e2e-daily-obs_preprocess-fetch_tropomi" --rm \
+  -e EARTHDATA_USERNAME="$EARTHDATA_USERNAME" \
+  -e EARTHDATA_PASSWORD="$EARTHDATA_PASSWORD" \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane bash scripts/obs_preprocess/fetch_tropomi.sh
 
