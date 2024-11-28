@@ -15,6 +15,7 @@
 #
 
 import datetime as dt
+import os
 from copy import deepcopy
 
 import numpy as np
@@ -283,4 +284,5 @@ class ModelSpace:
         domain = deepcopy(self.gridmeta)
         domain["SDATE"] = self.sdate
         domain["EDATE"] = self.edate
+        domain["openmethane_version"] = os.getenv('OPENMETHANE_VERSION')
         return domain
