@@ -6,7 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # changes can be easily tested
 bash "$SCRIPT_DIR/docker-build-all.sh"
 
-DATA_ROOT="/tmp/openmethane-e2e"
+DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
 # Task variables
 START_DATE=${START_DATE:-2022-07-22}
