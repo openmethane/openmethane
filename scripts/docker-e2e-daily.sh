@@ -120,5 +120,5 @@ docker run --name="e2e-daily-fourdvar-daily" --rm \
   openmethane python scripts/fourdvar/run_daily_step.py
 
 
-# Clean up
-#rm -rf "$DATA_PATH"
+echo "Success: daily run complete"
+echo "Results in: $DATA_PATH"

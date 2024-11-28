@@ -104,6 +104,5 @@ docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane python runscript.py
 
-
-# Clean up
-#rm -rf "$DATA_PATH"
+echo "Success: monthly run complete"
+echo "Results in: $DATA_PATH"
