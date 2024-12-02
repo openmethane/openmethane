@@ -89,9 +89,9 @@ docker run --name="e2e-daily-prior-generate" --rm \
 
 # JobName: obs_preprocess-fetch_tropomi
 docker run --name="e2e-daily-obs_preprocess-fetch_tropomi" --rm \
+  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e EARTHDATA_USERNAME="$EARTHDATA_USERNAME" \
   -e EARTHDATA_PASSWORD="$EARTHDATA_PASSWORD" \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane bash scripts/obs_preprocess/fetch_tropomi.sh
 
 # JobName: cmaq_preprocess-run
