@@ -147,8 +147,8 @@ def post_process(out_physical, metadata):
     out_physical.archive("final_solution.ncf")
     posterior_emissions_path = os.path.join(archive.get_archive_path(), "posterior_emissions.nc")
     calculate_average_emissions(
-        pathlib.Path(archive.get_archive_path()),
-        pathlib.Path(posterior_emissions_path),
+        archive_dir=pathlib.Path(archive.get_archive_path()),
+        output_file=pathlib.Path(posterior_emissions_path),
     )
     with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:
         pickle.dump(metadata, f)
