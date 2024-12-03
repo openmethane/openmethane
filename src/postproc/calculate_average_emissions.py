@@ -1,4 +1,5 @@
 import glob
+import os
 import pathlib
 
 import numpy as np
@@ -79,11 +80,11 @@ def get_posterior(
 
 def find_last_iteration(archive_dir: pathlib.Path, iter_template: str) -> pathlib.Path:
     """returns successful convergence output if present, otherwise last iteration"""
-    solution_path = archive_dir / SOLUTION_FILENAME
+    solution_path = pathlib.Path(os.path.join(archive_dir, SOLUTION_FILENAME))
     if solution_path.is_file():
         result = solution_path
     else:
-        iter_glob = archive_handle.archive_path / iter_template
+        iter_glob = pathlib.Path(os.path.join(archive_handle.archive_path, iter_template))
         iter_files = glob.glob(str(iter_glob))
         if iter_files is None:
             raise ValueError(f"no converged iterations found at {iter_glob}")
@@ -114,8 +115,7 @@ def list_emis_template_files(
     template_dir: pathlib.Path,
     emis_template: str,
 ) -> list:
-    record_dir = template_dir / "record"
-    prior_emis_glob = record_dir / emis_template
+    prior_emis_glob = pathlib.Path(os.path.join(template_dir, "record", emis_template))
     prior_emis_files = glob.glob(str(prior_emis_glob))
     prior_emis_files.sort()
     return prior_emis_files
