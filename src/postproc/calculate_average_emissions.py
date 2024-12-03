@@ -11,7 +11,7 @@ from fourdvar.util import archive_handle
 
 SPECIES_MOLEMASS = {"CH4": 16}  # molar mass in gram
 G2KG = 1e-3  # conv factor kg to g
-SOLUTION_FILENAME = "final_solution.ncf"
+SOLUTION_FILENAME = "posterior_multipliers.nc"
 
 
 def calculate_average_emissions(
