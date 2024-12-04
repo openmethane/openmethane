@@ -1,30 +1,24 @@
 import glob
-import os
 import pathlib
 
 import numpy as np
 import xarray as xr
-from netCDF4 import Dataset
 
-from fourdvar.params import template_defn
-from fourdvar.util import archive_handle
+from fourdvar.datadef import PhysicalData
 
 SPECIES_MOLEMASS = {"CH4": 16}  # molar mass in gram
 G2KG = 1e-3  # conv factor kg to g
-SOLUTION_FILENAME = "posterior_multipliers.nc"
 
 
 def calculate_average_emissions(
-    archive_dir: pathlib.Path,
-    output_file: pathlib.Path,
+    posterior_multipliers: PhysicalData,
+    template_dir: pathlib.Path,
     emis_template: str = "emis_*.nc",
-    iter_template: str = "iter*.ncf",
     species: str = "CH4",
-    designated_posterior_file: pathlib.Path | None = None,
 ):
-    prior_emis_files = list_emis_template_files(template_defn.template_dir, emis_template)
+    prior_emis_files = list_emis_template_files(template_dir, emis_template)
     if len(prior_emis_files) == 0:
-        raise ValueError(f"no emission template files found at {template_defn.template_dir}")
+        raise ValueError(f"no emission template files found at {template_dir}")
     prior_emis_list = []
     for filename in prior_emis_files:
         with xr.open_dataset(filename) as xrds:
@@ -33,9 +27,13 @@ def calculate_average_emissions(
     prior_emis_mean_3d = prior_emis_array.mean(axis=(0, 1))
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
 
-    posterior_multiplier = get_posterior(
-        archive_dir, species, iter_template, designated_posterior_file
-    )
+    posterior_multiplier = posterior_multipliers.emis[species]
+
+    if posterior_multipliers.emis[species].ndim > 2:
+        averaged_dimensions = posterior_multipliers.emis[species].ndim - 2
+        averaged_axes = tuple(range(averaged_dimensions))
+        posterior_multiplier = posterior_multipliers.emis[species].mean(axis=averaged_axes)
+
     posterior_emis_mean_surf = posterior_multiplier * prior_emis_mean_surf
 
     # create output based on an emis file input
@@ -51,47 +49,7 @@ def calculate_average_emissions(
         posterior_emis_mean_xr = xr.DataArray(posterior_emis_mean_output, coords={"y": y, "x": x})
         posterior_emis_mean_xr.attrs["units"] = "kg/m**2/s"
         out_ds[species] = posterior_emis_mean_xr
-        out_ds.to_netcdf(output_file)
-
-
-def get_posterior(
-    archive_dir: pathlib.Path,
-    species: str = "CH4",
-    iter_template: str = "iter*.ncf",
-    designated_posterior_file: pathlib.Path | None = None,
-) -> np.ndarray:
-    if designated_posterior_file is not None:
-        posterior_file = designated_posterior_file
-    else:
-        posterior_file = find_last_iteration(archive_dir, iter_template)
-    with Dataset(posterior_file) as posterior_nc:
-        emis_group = posterior_nc["/emis"]
-        emis_array = emis_group[species][...]
-    # we can't assume how many dimensions this will have, preserve the last two and average over all the rest
-    PRESERVED_DIMENSIONS = 2
-    if emis_array.ndim > 2:
-        averaged_dimensions = emis_array.ndim - PRESERVED_DIMENSIONS
-        averaged_axes = tuple(range(averaged_dimensions))
-        result = emis_array.mean(axis=averaged_axes)
-    else:
-        result = emis_array
-    return result
-
-
-def find_last_iteration(archive_dir: pathlib.Path, iter_template: str) -> pathlib.Path:
-    """returns successful convergence output if present, otherwise last iteration"""
-    solution_path = pathlib.Path(os.path.join(archive_dir, SOLUTION_FILENAME))
-    if solution_path.is_file():
-        result = solution_path
-    else:
-        iter_glob = pathlib.Path(os.path.join(archive_handle.archive_path, iter_template))
-        iter_files = glob.glob(str(iter_glob))
-        if iter_files is None:
-            raise ValueError(f"no converged iterations found at {iter_glob}")
-        else:
-            iter_files.sort()
-            result = iter_files[-1]
-    return result
+        return out_ds
 
 
 def copy_attributes(
@@ -115,7 +73,7 @@ def list_emis_template_files(
     template_dir: pathlib.Path,
     emis_template: str,
 ) -> list:
-    prior_emis_glob = pathlib.Path(os.path.join(template_dir, "record", emis_template))
+    prior_emis_glob = pathlib.Path(template_dir, "record", emis_template)
     prior_emis_files = glob.glob(str(prior_emis_glob))
     prior_emis_files.sort()
     return prior_emis_files

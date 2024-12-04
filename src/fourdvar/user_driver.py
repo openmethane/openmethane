@@ -27,8 +27,8 @@ import fourdvar.util.cmaq_handle as cmaq
 from fourdvar._transform import transform
 from fourdvar.datadef import PhysicalData
 from fourdvar.env import env
-from fourdvar.params import archive_defn, data_access, input_defn
-from postproc.calculate_average_emissions import calculate_average_emissions
+from fourdvar.params import archive_defn, data_access, input_defn, template_defn
+from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 
 logger = logging.getLogger(__name__)
 
@@ -152,10 +152,12 @@ def post_process(out_physical: PhysicalData, metadata):
     # what most of our downstream consumers are interested in is the actual
     # "measurable" emissions, which we can produce by multiplying the fourdvar
     # result by the template emission (prior) in each cell.
-    posterior_emissions_path = os.path.join(archive.get_archive_path(), "posterior_emissions.nc")
-    calculate_average_emissions(
-        archive_dir=pathlib.Path(archive.get_archive_path()),
-        output_file=pathlib.Path(posterior_emissions_path),
+    posterior_emissions = posterior_emissions_postprocess(
+        posterior_multipliers=out_physical,
+        template_dir=template_defn.template_dir,
+    )
+    posterior_emissions.to_netcdf(
+        pathlib.Path(archive.get_archive_path(), "posterior_emissions.nc")
     )
 
     with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:
