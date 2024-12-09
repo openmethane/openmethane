@@ -152,8 +152,9 @@ def post_process(out_physical: PhysicalData, metadata):
     # what most of our downstream consumers are interested in is the actual
     # "measurable" emissions, which we can produce by multiplying the fourdvar
     # result by the template emission (prior) in each cell.
+    species = "CH4"
     posterior_emissions = posterior_emissions_postprocess(
-        posterior_multipliers=out_physical,
+        posterior_multipliers=out_physical.emis[species],
         template_dir=template_defn.template_dir,
     )
     posterior_emissions.to_netcdf(

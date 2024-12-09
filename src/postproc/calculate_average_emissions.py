@@ -4,14 +4,12 @@ import pathlib
 import numpy as np
 import xarray as xr
 
-from fourdvar.datadef import PhysicalData
-
 SPECIES_MOLEMASS = {"CH4": 16}  # molar mass in gram
 G2KG = 1e-3  # conv factor kg to g
 
 
 def calculate_average_emissions(
-    posterior_multipliers: PhysicalData,
+    posterior_multipliers: np.ndarray,
     template_dir: pathlib.Path,
     emis_template: str = "emis_*.nc",
     species: str = "CH4",
@@ -27,14 +25,7 @@ def calculate_average_emissions(
     prior_emis_mean_3d = prior_emis_array.mean(axis=(0, 1))
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
 
-    posterior_multiplier = posterior_multipliers.emis[species]
-
-    if posterior_multipliers.emis[species].ndim > 2:
-        averaged_dimensions = posterior_multipliers.emis[species].ndim - 2
-        averaged_axes = tuple(range(averaged_dimensions))
-        posterior_multiplier = posterior_multipliers.emis[species].mean(axis=averaged_axes)
-
-    posterior_emis_mean_surf = posterior_multiplier * prior_emis_mean_surf
+    posterior_emis_mean_surf = posterior_multipliers * prior_emis_mean_surf
 
     # create output based on an emis file input
     with xr.open_dataset(prior_emis_files[0]) as in_ds:

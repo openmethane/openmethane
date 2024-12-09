@@ -18,7 +18,8 @@ import pytest
 import xarray as xr
 
 import fourdvar.datadef as d
-from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
+from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess, normalise_posterior
+
 
 def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     target_environment('docker-test')
@@ -45,7 +46,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     # the minimiser (test-data/fourdvar/posterior_multipliers.nc) by the expected
     # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
     posterior_emissions = posterior_emissions_postprocess(
-        posterior_multipliers=posterior_multipliers,
+        posterior_multipliers=posterior_multipliers.emis['CH4'],
         template_dir=pathlib.Path(test_data_dir, "templates"),
         emis_template="emis_record_2022-07-22.nc"
     )
@@ -57,7 +58,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     assert posterior_emissions.attrs['YCELL'] == 10000, "post-processed cell size has changed"
     assert posterior_emissions['CH4'].sum() == pytest.approx(2.3740436e-09), "post-processed emissions (max) don't match expected"
 
-    expected_moles = posterior_multipliers.emis['CH4'].mean(axis=tuple(range(posterior_multipliers.emis['CH4'].ndim - 2))) * prior_emis_mean_surf
+    expected_moles = normalise_posterior(posterior_multipliers.emis['CH4']) * prior_emis_mean_surf
     # convert from moles to m**2/kg
     expected = expected_moles * (16 * 1e-3) / (posterior_emissions.attrs['XCELL'] * posterior_emissions.attrs['YCELL'])
 
