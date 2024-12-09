@@ -1,12 +1,15 @@
 import click
 import glob
+import logging
 import pathlib
 
 from netCDF4 import Dataset
 
-from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess, normalise_posterior
+from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 
 SOLUTION_FILENAME = "posterior_multipliers.nc"
+
+logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option(
@@ -47,6 +50,7 @@ def manual_postproc(
     else:
         posterior_file = find_last_iteration(archive_dir, iter_template)
 
+    logger.debug(f"post processing {posterior_file}")
     with Dataset(posterior_file) as posterior_nc:
         emis_array = posterior_nc['/emis']['CH4'][...]
 
@@ -70,6 +74,7 @@ def find_last_iteration(
         return solution_path
     else:
         iter_glob = pathlib.Path(archive_dir, iter_template)
+        logger.debug(f"no solution provided, attempting to load iteration from {iter_glob}")
         iter_files = glob.glob(str(iter_glob))
         if iter_files is not None:
             iter_files.sort()
