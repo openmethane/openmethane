@@ -22,11 +22,13 @@ def calculate_average_emissions_moles(
     for filename in prior_emis_files:
         logger.debug(f"loading {filename}")
         with xr.open_dataset(filename) as xrds:
-            prior_emis_list.append(xrds[species].to_numpy())
+            prior_emis_steps = xrds[species].to_numpy()
+            prior_emis_day = prior_emis_steps.mean(axis=0)
+            prior_emis_list.append(prior_emis_day)
     prior_emis_array = np.array(prior_emis_list)
 
     logger.debug("calculating 2 dimensional mean of template emissions")
-    prior_emis_mean_3d = prior_emis_array.mean(axis=(0, 1))
+    prior_emis_mean_3d = prior_emis_array.mean(axis=0)
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
 
     logger.debug("multiplying averaged template emissions by posterior multipliers")
