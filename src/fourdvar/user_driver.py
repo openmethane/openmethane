@@ -18,6 +18,7 @@ import logging
 import os
 import pathlib
 import pickle
+import xarray as xr
 
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
@@ -149,13 +150,18 @@ def post_process(out_physical: PhysicalData, metadata):
     # for every grid cell. save the raw result, which will be useful internally.
     out_physical.archive("posterior_multipliers.nc")
 
+    # open the prior emissions to use as a template format for the results file
+    prior_emissions = xr.open_dataset(template_defn.prior_file)
+
     # what most of our downstream consumers are interested in is the actual
     # "measurable" emissions, which we can produce by multiplying the fourdvar
     # result by the template emission (prior) in each cell.
     species = "CH4"
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=out_physical.emis[species],
+        prior_emissions_ds=prior_emissions,
         template_dir=template_defn.template_dir,
+        species=species,
     )
     posterior_emissions.to_netcdf(
         pathlib.Path(archive.get_archive_path(), "posterior_emissions.nc")

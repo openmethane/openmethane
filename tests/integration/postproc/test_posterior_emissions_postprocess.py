@@ -27,6 +27,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     posterior_multipliers = d.PhysicalData.from_file(
         pathlib.Path(test_data_dir, "fourdvar", "posterior_multipliers.nc")
     )
+    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "out-om-domain-info.nc"))
 
     # validate that test input hasn't changed before we attempt to transform it
     assert posterior_multipliers.emis_units == "mol/(s*m^2)", "incorrect unit emissions"
@@ -47,6 +48,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis['CH4'],
+        prior_emissions_ds=prior_emissions,
         template_dir=pathlib.Path(test_data_dir, "templates"),
         emis_template="emis_record_2022-07-22.nc"
     )
