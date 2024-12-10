@@ -42,22 +42,26 @@ DATETIME_FORMAT = "%Y-%m-%d"
     type=click.Path(exists=False, path_type=Path),
     default="data/inputs/cams_eac4_methane.nc",
 )
-def download_cams_input(start_date: str, end_date: str, output: str | Path):
+def download_cams_input(start_date: str, end_date: str, output: str | Path, force: bool = False):
     """
     Download Methane chemistry data from CAMS on pressure levels
 
     These data are stored on tape, so the download may be queued for several minutes
     while the data are retrieved.
     """
+    if datetime.strptime(start_date, DATETIME_FORMAT) > datetime.strptime(
+            end_date, DATETIME_FORMAT
+    ):
+        raise ValueError("Start date must be before end date")
+
+    if not force and Path(output).exists():
+        print(f"CAMS file {output} already exists, skipping")
+        return
+
     # This will use ENV variables CDSAPI_KEY and CDSAPI_URL to connect to ADS
     c = cdsapi.Client()
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-
-    if datetime.strptime(start_date, DATETIME_FORMAT) > datetime.strptime(
-        end_date, DATETIME_FORMAT
-    ):
-        raise ValueError("Start date must be before end date")
 
     # fmt: off
     c.retrieve(
