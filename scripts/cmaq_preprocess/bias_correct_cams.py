@@ -18,7 +18,7 @@ def main():
     icon_file = get_icon_file(config)
     bcon_files = get_bcon_files(config)
     met_file = get_met_file(config)
-    if os.getenv('CORRECT_BIAS_BY_REGION') is not None:
+    if int(os.getenv('CORRECT_BIAS_BY_REGION','1')) > 0:
         correct_bias_by_region = True
     else:
         correct_bias_by_region = False
