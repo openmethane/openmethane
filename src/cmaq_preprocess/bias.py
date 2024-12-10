@@ -26,10 +26,11 @@ def mass_weighted_mean(
         field = ds[species].to_numpy()
         vertical_integral = np.tensordot(field, thickness, (-3, 0)).squeeze()
         if region_inds is not None:
-            region_slice = np.s_[region_inds[0][0]:region_inds[1][0],
-                                 region_inds[1][0]:region_inds[1][1]]
+            region_slice = np.s_[region_inds[0][0]:region_inds[1][0]+1,
+                                 region_inds[1][0]:region_inds[1][1]+1]
         else:
             region_slice = np.s_[:,:] # whole array
+        print('region slice',region_slice,vertical_integral[region_slice].mean())
         return vertical_integral[ region_slice].mean()
 
 
@@ -62,7 +63,7 @@ def earliest_region(
     while date <= end_date:
         date_string = date.strftime("%Y%m%d")
         if len(obs.ind_by_date[date_string]) > 0:
-            lite_coords = [d['lite_coord'] for d in obs.ind_by_date[date_string]]
+            lite_coords = [obs.lite_coord[d] for d in obs.ind_by_date[date_string]]
             llc_inds = (np.min([l[2] for l in lite_coords]),
                         np.min([l[3] for l in lite_coords]))
             urc_inds = (np.max([l[2] for l in lite_coords]),
