@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import glob
+import numpy as np
 import pathlib
 import pytest
 import xarray as xr
@@ -65,6 +67,43 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     expected = expected_moles * (16 * 1e-3) / (posterior_emissions.attrs['XCELL'] * posterior_emissions.attrs['YCELL'])
 
     # spot check several cells
-    assert posterior_emissions['CH4'][0][0] == expected[0][0], "emissions are do not equal multiplier times prior"
-    assert posterior_emissions['CH4'][2][4] == expected[2][4], "emissions are do not equal multiplier times prior"
-    assert posterior_emissions['CH4'][4][4] == expected[4][4], "emissions are do not equal multiplier times prior"
+    assert posterior_emissions['CH4'][0][0][0] == expected[0][0], "emissions do not equal multiplier times prior"
+    assert posterior_emissions['CH4'][0][2][4] == expected[2][4], "emissions do not equal multiplier times prior"
+    assert posterior_emissions['CH4'][0][4][4] == expected[4][4], "emissions do not equal multiplier times prior"
+
+    assert posterior_emissions['time'][0] == np.datetime64("2022-07-22"), "time coordinates do not match expected"
+    assert posterior_emissions['time'].attrs["bounds"] == "time_bounds"
+
+    assert posterior_emissions['time_bounds'][0][0] == np.datetime64("2022-07-22"), "time_bounds do not match expected"
+    assert posterior_emissions['time_bounds'][0][1] == np.datetime64("2022-07-23"), "time_bounds do not match expected"
+
+def test_posterior_emissions_postprocess_multi_day(target_environment, test_data_dir):
+    target_environment('docker-test')
+
+    posterior_multipliers = d.PhysicalData.from_file(
+        pathlib.Path(test_data_dir, "fourdvar", "posterior_multipliers.nc")
+    )
+    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "out-om-domain-info.nc"))
+
+    prior_emis = glob.glob(str(pathlib.Path(test_data_dir, "templates", "record", "emis_*.nc")))
+    assert len(prior_emis) == 2, "did not find exactly 2 days of test data"
+
+    # calculate the estimated emissions, multiplying the posterior multipliers from
+    # the minimiser (test-data/fourdvar/posterior_multipliers.nc) by the expected
+    # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
+    posterior_emissions = posterior_emissions_postprocess(
+        posterior_multipliers=posterior_multipliers.emis['CH4'],
+        prior_emissions_ds=prior_emissions,
+        template_dir=pathlib.Path(test_data_dir, "templates"),
+        emis_template="emis_*.nc"
+    )
+
+    # spot check several cells
+    assert posterior_emissions['CH4'][0][0][0] == pytest.approx(1.1774051e-10), "emissions are do not match expected"
+    assert posterior_emissions['CH4'][0][4][4] == pytest.approx(9.4978345e-11), "emissions are do not match expected"
+
+    assert posterior_emissions['time'][0] == np.datetime64("2022-07-22"), "time coordinates do not match expected"
+    assert posterior_emissions['time'].attrs["bounds"] == "time_bounds"
+
+    assert posterior_emissions['time_bounds'][0][0] == np.datetime64("2022-07-22"), "time_bounds do not match expected"
+    assert posterior_emissions['time_bounds'][0][1] == np.datetime64("2022-07-24"), "time_bounds do not match expected"

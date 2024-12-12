@@ -4,12 +4,9 @@ import os
 import pathlib
 import xarray as xr
 
-from postproc.calculate_average_emissions import calculate_average_emissions_moles
+from postproc.calculate_average_emissions import calculate_average_emissions
 
 logger = logging.getLogger(__name__)
-
-SPECIES_MOLEMASS = {"CH4": 16}  # molar mass in gram
-G2KG = 1e-3  # conv factor kg to g
 
 
 def posterior_emissions_postprocess(
@@ -19,18 +16,31 @@ def posterior_emissions_postprocess(
     emis_template: str = "emis_*.nc",
     species: str = "CH4",
 ) -> xr.Dataset:
+    # what most of our downstream consumers are interested in is the actual
+    # "measurable" emissions, which we can produce by multiplying the fourdvar
+    # result by the template emission (prior) in each cell.
+    emissions_array, period_start, period_end = calculate_average_emissions(
+        posterior_multipliers=normalise_posterior(posterior_multipliers),
+        template_dir=template_dir,
+        emis_template=emis_template,
+        species=species,
+    )
+
     # copy dimensions and attributes from the prior emissions, as the posterior
     # emissions should be provided in the same grid / format
-    logger.debug("creating Dataset from prior emissions data")
+    logger.debug("creating Dataset from posterior emissions data with prior emissions structure")
     posterior_emissions = xr.Dataset(
         data_vars={
             "latitude": (("y", "x"), prior_emissions_ds.variables["LAT"][0]),
             "longitude": (("y", "x"), prior_emissions_ds.variables["LON"][0]),
+            "time_bounds": (("time", "nv"), [[period_start, period_end]]),
+            "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
+            "CH4": (("time", "y", "x"), [emissions_array], { "units": "kg/m**2/s" }),
         },
         coords={
-            "date": prior_emissions_ds.coords["date"],
             "x": prior_emissions_ds.coords["x"],
             "y": prior_emissions_ds.coords["y"],
+            "time": (("time"), [period_start], { "bounds": "time_bounds" }),
         },
         attrs={
             "DX": prior_emissions_ds.DX,
@@ -42,25 +52,7 @@ def posterior_emissions_postprocess(
             "history": "",
         },
     )
-        # prior_emissions_ds.copy(deep=True))
 
-    # what most of our downstream consumers are interested in is the actual
-    # "measurable" emissions, which we can produce by multiplying the fourdvar
-    # result by the template emission (prior) in each cell.
-    emissions_moles = calculate_average_emissions_moles(
-        posterior_multipliers=normalise_posterior(posterior_multipliers),
-        template_dir=template_dir,
-        emis_template=emis_template,
-    )
-
-    logger.debug("converting emissions to kg/m**2/s")
-    cell_area = posterior_emissions.DX * posterior_emissions.DY
-    conv_fac = SPECIES_MOLEMASS[species] * G2KG
-    posterior_emis_mean_output = emissions_moles * conv_fac / cell_area
-
-    logger.debug("adding emissions to Dataset")
-    posterior_emissions[species] = (('y', 'x'), posterior_emis_mean_output)
-    posterior_emissions[species].attrs["units"] = "kg/m**2/s"
     return posterior_emissions
 
 
