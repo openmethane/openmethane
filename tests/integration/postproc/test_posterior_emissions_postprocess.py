@@ -77,6 +77,28 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     assert posterior_emissions['time_bounds'][0][0] == np.datetime64("2022-07-22"), "time_bounds do not match expected"
     assert posterior_emissions['time_bounds'][0][1] == np.datetime64("2022-07-23"), "time_bounds do not match expected"
 
+    assert posterior_emissions['lat'][0][0] == pytest.approx(-23.042923), "lat coordinates do not match expected"
+    assert posterior_emissions['lat'][2][2] == pytest.approx(-22.837988), "lat coordinates do not match expected"
+    assert posterior_emissions['lat'][4][4] == pytest.approx(-22.632904), "lat coordinates do not match expected"
+    assert posterior_emissions['lat'].attrs["bounds"] == "lat_bounds"
+
+    assert posterior_emissions['lat_bounds'][0][0][0] == pytest.approx(-23.09412003), "lat_bounds coordinates do not match expected"
+    assert posterior_emissions['lat_bounds'][0][0][1] == pytest.approx(-23.00298309), "lat_bounds coordinates do not match expected"
+    assert posterior_emissions['lat_bounds'][0][0][2] == pytest.approx(-22.99169922), "lat_bounds coordinates do not match expected"
+    assert posterior_emissions['lat_bounds'][0][0][3] == pytest.approx(-23.08282471), "lat_bounds coordinates do not match expected"
+
+    assert posterior_emissions['lon'][0][0] == pytest.approx(148.47278), "lon coordinates do not match expected"
+    assert posterior_emissions['lon'][2][2] == pytest.approx(148.646), "lon coordinates do not match expected"
+    assert posterior_emissions['lon'][4][4] == pytest.approx(148.8186), "lon coordinates do not match expected"
+    assert posterior_emissions['lon'].attrs["bounds"] == "lon_bounds"
+
+    assert posterior_emissions['lon_bounds'][0][0][0] == pytest.approx(148.42938232), "lon_bounds coordinates do not match expected"
+    assert posterior_emissions['lon_bounds'][0][0][1] == pytest.approx(148.41714478), "lon_bounds coordinates do not match expected"
+    assert posterior_emissions['lon_bounds'][0][0][2] == pytest.approx(148.5161438), "lon_bounds coordinates do not match expected"
+    assert posterior_emissions['lon_bounds'][0][0][3] == pytest.approx(148.52845764), "lon_bounds coordinates do not match expected"
+
+
+
 def test_posterior_emissions_postprocess_multi_day(target_environment, test_data_dir):
     target_environment('docker-test')
 
@@ -99,11 +121,9 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     )
 
     # spot check several cells
-    assert posterior_emissions['CH4'][0][0][0] == pytest.approx(1.1774051e-10), "emissions are do not match expected"
-    assert posterior_emissions['CH4'][0][4][4] == pytest.approx(9.4978345e-11), "emissions are do not match expected"
+    assert posterior_emissions['CH4'][0][0][0] == pytest.approx(1.1774051e-10), "emissions do not match expected"
+    assert posterior_emissions['CH4'][0][4][4] == pytest.approx(9.4978345e-11), "emissions do not match expected"
 
     assert posterior_emissions['time'][0] == np.datetime64("2022-07-22"), "time coordinates do not match expected"
-    assert posterior_emissions['time'].attrs["bounds"] == "time_bounds"
-
     assert posterior_emissions['time_bounds'][0][0] == np.datetime64("2022-07-22"), "time_bounds do not match expected"
     assert posterior_emissions['time_bounds'][0][1] == np.datetime64("2022-07-24"), "time_bounds do not match expected"

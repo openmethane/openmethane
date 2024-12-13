@@ -35,9 +35,21 @@ def posterior_emissions_postprocess(
     logger.debug("creating Dataset from posterior emissions data with prior emissions structure")
     posterior_emissions = xr.Dataset(
         data_vars={
-            "latitude": (("y", "x"), prior_emissions_ds.variables["LAT"][0]),
-            "longitude": (("y", "x"), prior_emissions_ds.variables["LON"][0]),
-            "time_bounds": (("time", "nv"), [[period_start, period_end]]),
+            "lat": (("y", "x"), prior_emissions_ds.variables["LAT"][0], {
+                "long_name": "latitude",
+                "units": "degrees_north",
+                "standard_name": "latitude",
+                "bounds": "lat_bounds",
+            }),
+            "lon": (("y", "x"), prior_emissions_ds.variables["LON"][0], {
+                "long_name": "longitude",
+                "units": "degrees_east",
+                "standard_name": "longitude",
+                "bounds": "lon_bounds",
+            }),
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-boundaries
+            "lat_bounds": (("y", "x", "cell_corners"), extract_bounds(prior_emissions_ds.variables["LATD"][0][0])),
+            "lon_bounds": (("y", "x", "cell_corners"), extract_bounds(prior_emissions_ds.variables["LOND"][0][0])),
             # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
             "grid_projection": ((), 0, {
                 "grid_mapping_name": "lambert_conformal_conic",
@@ -75,6 +87,37 @@ def posterior_emissions_postprocess(
     )
 
     return posterior_emissions
+
+
+def extract_bounds(corner_coords: xr.Variable):
+    """
+    Extract grid cell boundary coordinates for a single dimension, from a 2D
+    array of size x+1,y+1 where x,y are the grid cell coordinates.
+    An array describing the corners of a 2x2 grid would have 3x3 items, where
+    the corners of the cell at [0][0] would be: [0][0], [1][0], [1][1], [0][1]
+
+    See: https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-boundaries
+
+    :param corner_coords:
+    :return:
+    """
+    corner_shape = np.shape(corner_coords)
+    if corner_shape[0] < 1 or corner_shape[1] < 1:
+        raise ValueError("no corner coordinates provided")
+
+    # create an array smaller by 1 in each dimension
+    corner_values = np.empty(shape=(corner_shape[0] - 1, corner_shape[1] - 1, 4))
+
+    it = np.nditer(corner_values, flags=["multi_index"], op_axes=[[0, 1]])
+    for _ in it:
+        y, x = it.multi_index
+        corner_values[y][x] = [
+            corner_coords[y][x],
+            corner_coords[y + 1][x],
+            corner_coords[y + 1][x + 1],
+            corner_coords[y][x + 1],
+        ]
+    return corner_values
 
 
 def normalise_posterior(
