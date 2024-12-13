@@ -26,6 +26,10 @@ def posterior_emissions_postprocess(
         species=species,
     )
 
+    # create a variable with projection coordinates
+    projection_x = prior_emissions_ds.XORIG + (0.5 * prior_emissions_ds.XCELL) + np.arange(len(prior_emissions_ds.COL)) * prior_emissions_ds.XCELL
+    projection_y = prior_emissions_ds.YORIG + (0.5 * prior_emissions_ds.YCELL) + np.arange(len(prior_emissions_ds.ROW)) * prior_emissions_ds.YCELL
+
     # copy dimensions and attributes from the prior emissions, as the posterior
     # emissions should be provided in the same grid / format
     logger.debug("creating Dataset from posterior emissions data with prior emissions structure")
@@ -34,6 +38,23 @@ def posterior_emissions_postprocess(
             "latitude": (("y", "x"), prior_emissions_ds.variables["LAT"][0]),
             "longitude": (("y", "x"), prior_emissions_ds.variables["LON"][0]),
             "time_bounds": (("time", "nv"), [[period_start, period_end]]),
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
+            "grid_projection": ((), 0, {
+                "grid_mapping_name": "lambert_conformal_conic",
+                "standard_parallel": (prior_emissions_ds.TRUELAT1, prior_emissions_ds.TRUELAT2),
+                "longitude_of_central_meridian": prior_emissions_ds.STAND_LON,
+                "latitude_of_projection_origin": prior_emissions_ds.MOAD_CEN_LAT,
+            }),
+            "projection_x": (("x"), projection_x, {
+                "long_name": "x coordinate of projection",
+                "units": "m",
+                "standard_name": "projection_x_coordinate",
+            }),
+            "projection_y": (("y"), projection_y, {
+                "long_name": "y coordinate of projection",
+                "units": "m",
+                "standard_name": "projection_y_coordinate",
+            }),
             "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
             "CH4": (("time", "y", "x"), [emissions_array], { "units": "kg/m**2/s" }),
         },
