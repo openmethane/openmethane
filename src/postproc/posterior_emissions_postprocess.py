@@ -19,7 +19,7 @@ def posterior_emissions_postprocess(
     # what most of our downstream consumers are interested in is the actual
     # "measurable" emissions, which we can produce by multiplying the fourdvar
     # result by the template emission (prior) in each cell.
-    emissions_array, period_start, period_end = calculate_average_emissions(
+    emissions_array, prior_emissions_array, period_start, period_end = calculate_average_emissions(
         posterior_multipliers=normalise_posterior(posterior_multipliers),
         template_dir=template_dir,
         emis_template=emis_template,
@@ -35,6 +35,7 @@ def posterior_emissions_postprocess(
     logger.debug("creating Dataset from posterior emissions data with prior emissions structure")
     posterior_emissions = xr.Dataset(
         data_vars={
+            # meta data
             "lat": (("y", "x"), prior_emissions_ds.variables["LAT"][0], {
                 "long_name": "latitude",
                 "units": "degrees_north",
@@ -68,7 +69,12 @@ def posterior_emissions_postprocess(
                 "standard_name": "projection_y_coordinate",
             }),
             "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
+
+            # results data
             "CH4": (("time", "y", "x"), [emissions_array], { "units": "kg/m**2/s" }),
+
+            # expected emissions (prior averaged over period)
+            "prior_CH4": (("time", "y", "x"), [prior_emissions_array], { "units": "kg/m**2/s" })
         },
         coords={
             "x": prior_emissions_ds.coords["x"],
@@ -85,6 +91,11 @@ def posterior_emissions_postprocess(
             "history": "",
         },
     )
+
+    # ensure time and time_bounds use the same time encoding
+    time_encoding = f"days since {period_start.strftime('%Y-%m-%d')}"
+    posterior_emissions.time.encoding["units"] = time_encoding
+    posterior_emissions.time_bounds.encoding["units"] = time_encoding
 
     return posterior_emissions
 

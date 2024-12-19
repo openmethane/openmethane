@@ -48,14 +48,15 @@ def calculate_average_emissions(
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
 
     logger.debug("multiplying averaged template emissions by posterior multipliers")
-    posterior_emissions_array = posterior_multipliers * prior_emis_mean_surf
+    posterior_emis_mean_surf = posterior_multipliers * prior_emis_mean_surf
 
     logger.debug("converting emissions to kg/m**2/s")
     conv_fac = SPECIES_MOLEMASS[species] * G2KG
-    posterior_emis_mean_output = posterior_emissions_array * conv_fac / prior_emis_cell_area
+    posterior_emis_mean_output = posterior_emis_mean_surf * conv_fac / prior_emis_cell_area
+    prior_emis_mean_output = prior_emis_mean_surf * conv_fac / prior_emis_cell_area
 
     # each file covers a full day, so add 1d to the end date for the full period
-    return (posterior_emis_mean_output, prior_emis_start, prior_emis_end + timedelta(days=1))
+    return (posterior_emis_mean_output, prior_emis_mean_output, prior_emis_start, prior_emis_end + timedelta(days=1))
 
 
 def list_emis_template_files(
