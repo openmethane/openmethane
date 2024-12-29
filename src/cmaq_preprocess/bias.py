@@ -64,10 +64,10 @@ def earliest_region(
         date_string = date.strftime("%Y%m%d")
         if len(obs.ind_by_date[date_string]) > 0:
             lite_coords = [obs.lite_coord[d] for d in obs.ind_by_date[date_string]]
-            llc_inds = (np.min([l[2] for l in lite_coords]),
-                        np.min([l[3] for l in lite_coords]))
-            urc_inds = (np.max([l[2] for l in lite_coords]),
-                        np.max([l[3] for l in lite_coords]))
+            llc_inds = (np.min([l[3] for l in lite_coords]),
+                        np.min([l[4] for l in lite_coords]))
+            urc_inds = (np.max([l[3] for l in lite_coords]),
+                        np.max([l[4] for l in lite_coords]))
             return llc_inds, urc_inds
         else:
             date += one_day
