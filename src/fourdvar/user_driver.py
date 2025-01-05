@@ -25,9 +25,10 @@ import fourdvar.datadef as d
 import fourdvar.util.archive_handle as archive
 import fourdvar.util.cmaq_handle as cmaq
 from fourdvar._transform import transform
+from fourdvar.datadef import PhysicalData
 from fourdvar.env import env
-from fourdvar.params import archive_defn, data_access, input_defn
-from postproc.calculate_average_emissions import calculate_average_emissions
+from fourdvar.params import archive_defn, data_access, input_defn, template_defn
+from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 
 logger = logging.getLogger(__name__)
 
@@ -139,16 +140,26 @@ def minim(cost_func, grad_func, init_guess):
     return answer
 
 
-def post_process(out_physical, metadata):
+def post_process(out_physical: PhysicalData, metadata):
     """application: how to handle/save results of minimizer
     input: PhysicalData (solution), list (user-defined output of minim)
     output: None.
     """
-    out_physical.archive("final_solution.ncf")
-    posterior_emissions_path = os.path.join(archive.get_archive_path(), "posterior_emissions.nc")
-    calculate_average_emissions(
-        pathlib.Path(archive.get_archive_path()),
-        pathlib.Path(posterior_emissions_path),
+    # fourdvar solves for multipliers against the template emissions (prior)
+    # for every grid cell. save the raw result, which will be useful internally.
+    out_physical.archive("posterior_multipliers.nc")
+
+    # what most of our downstream consumers are interested in is the actual
+    # "measurable" emissions, which we can produce by multiplying the fourdvar
+    # result by the template emission (prior) in each cell.
+    species = "CH4"
+    posterior_emissions = posterior_emissions_postprocess(
+        posterior_multipliers=out_physical.emis[species],
+        template_dir=template_defn.template_dir,
     )
+    posterior_emissions.to_netcdf(
+        pathlib.Path(archive.get_archive_path(), "posterior_emissions.nc")
+    )
+
     with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:
         pickle.dump(metadata, f)
