@@ -166,6 +166,3 @@ def post_process(out_physical: PhysicalData, metadata):
     posterior_emissions.to_netcdf(
         pathlib.Path(archive.get_archive_path(), "posterior_emissions.nc")
     )
-
-    with open(os.path.join(archive.get_archive_path(), "ans_details.pickle"), "wb") as f:
-        pickle.dump(metadata, f)
