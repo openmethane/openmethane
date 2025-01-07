@@ -71,10 +71,18 @@ def posterior_emissions_postprocess(
             "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
 
             # results data
-            "CH4": (("time", "y", "x"), [emissions_array], { "units": "kg/m**2/s" }),
+            "CH4": (("time", "y", "x"), [emissions_array], {
+                "units": "kg/m**2/s",
+                "standard_name": "emissions",
+                "long_name": "expected flux of methane based on public data (prior)",
+            }),
 
             # expected emissions (prior averaged over period)
-            "prior_CH4": (("time", "y", "x"), [prior_emissions_array], { "units": "kg/m**2/s" })
+            "prior_CH4": (("time", "y", "x"), [prior_emissions_array], {
+                "units": "kg/m**2/s",
+                "standard_name": "emissions",
+                "long_name": "estimated flux of methane based on observations (posterior)",
+            })
         },
         coords={
             "x": prior_emissions_ds.coords["x"],
