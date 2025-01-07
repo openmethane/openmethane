@@ -52,7 +52,7 @@ def posterior_emissions_postprocess(
             "lat_bounds": (("y", "x", "cell_corners"), extract_bounds(prior_emissions_ds.variables["LATD"][0][0])),
             "lon_bounds": (("y", "x", "cell_corners"), extract_bounds(prior_emissions_ds.variables["LOND"][0][0])),
             # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
-            "grid_projection": ((), 0, {
+            "grid_projection": ((), False, {
                 "grid_mapping_name": "lambert_conformal_conic",
                 "standard_parallel": (prior_emissions_ds.TRUELAT1, prior_emissions_ds.TRUELAT2),
                 "longitude_of_central_meridian": prior_emissions_ds.STAND_LON,
