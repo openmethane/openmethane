@@ -49,7 +49,6 @@ jobs:
         id: version
         run: |
           PACKAGE_VERSION=$(grep -oP '^version = "\K(.+)(?=")' pyproject.toml)
-          echo "Package version is: $PACKAGE_VERSION"
           echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
