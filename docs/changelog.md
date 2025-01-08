@@ -19,6 +19,19 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.6.0 (2025-01-08)
+
+### 🎉 Improvements
+
+- Make OPENMETHANE_VERSION environment variable available inside the container ([#108](https://github.com/openmethane/openmethane/pulls/108))
+- Set top of model domain to top pressure level. Removes impact of
+  unmodelled top of atmosphere on observation operator. Resolves #111. ([#112](https://github.com/openmethane/openmethane/pulls/112))
+- Add scripts for running dockerised workflows locally ([#113](https://github.com/openmethane/openmethane/pulls/113))
+- Add post-processing integration test ([#115](https://github.com/openmethane/openmethane/pulls/115))
+- Adding regional bias correction ([#116](https://github.com/openmethane/openmethane/pulls/116))
+- Improve monthly results format to adopt more of CF Conventions and make the file plottable in panoply ([#117](https://github.com/openmethane/openmethane/pulls/117))
+
+
 ## openmethane v0.5.3 (2024-11-21)
 
 ### 🐛 Bug Fixes
