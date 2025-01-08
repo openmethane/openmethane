@@ -19,6 +19,11 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.6.3 (2025-01-08)
+
+No significant changes.
+
+
 ## openmethane v0.6.2 (2025-01-08)
 
 ### 🐛 Bug Fixes
