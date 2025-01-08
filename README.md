@@ -151,4 +151,3 @@ This will create a new docker container when running the scripts or tests.
 This can be a bit flakey in PyCharm. 
 Similar functionality can be achieved with VSCode in a likely more stable manner.
 
-# meaningless comment to trigger push
