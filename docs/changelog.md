@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.6.2 (2025-01-08)
+
+### 🐛 Bug Fixes
+
+- Fix OPENMETHANE_VERSION being incorrectly populated in container images ([#119](https://github.com/openmethane/openmethane/pulls/119))
+
+
 ## openmethane v0.6.1 (2025-01-08)
 
 ### 🐛 Bug Fixes
