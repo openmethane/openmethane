@@ -1,8 +1,12 @@
+from datetime import datetime, timedelta
 import glob
+import logging
 import pathlib
 
 import numpy as np
 import xarray as xr
+
+logger = logging.getLogger(__name__)
 
 SPECIES_MOLEMASS = {"CH4": 16}  # molar mass in gram
 G2KG = 1e-3  # conv factor kg to g
@@ -17,47 +21,42 @@ def calculate_average_emissions(
     prior_emis_files = list_emis_template_files(template_dir, emis_template)
     if len(prior_emis_files) == 0:
         raise ValueError(f"no emission template files found at {template_dir}")
+
+    prior_emis_cell_area = None
+    prior_emis_start = None
+    prior_emis_end = None
     prior_emis_list = []
+    logger.debug("loading prior emission templates")
     for filename in prior_emis_files:
-        with xr.open_dataset(filename) as xrds:
-            prior_emis_list.append(xrds[species].to_numpy())
+        logger.debug(f"loading {filename}")
+        with xr.open_dataset(filename) as prior_emis_day_ds:
+            day = datetime.strptime(str(prior_emis_day_ds.SDATE), "%Y%j") # format is <YEAR><DAY OF YEAR>
+            if prior_emis_cell_area is None:
+                prior_emis_cell_area = prior_emis_day_ds.XCELL * prior_emis_day_ds.YCELL
+            if prior_emis_start is None or day < prior_emis_start:
+                prior_emis_start = day
+            if prior_emis_end is None or day > prior_emis_end:
+                prior_emis_end = day
+
+            # average over hours to get a single day average
+            prior_emis_list.append(prior_emis_day_ds[species].to_numpy().mean(axis=0))
+
+    logger.debug("calculating 2 dimensional mean of template emissions")
     prior_emis_array = np.array(prior_emis_list)
-    prior_emis_mean_3d = prior_emis_array.mean(axis=(0, 1))
+    # average over days to get an average over the full period
+    prior_emis_mean_3d = prior_emis_array.mean(axis=0)
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
 
+    logger.debug("multiplying averaged template emissions by posterior multipliers")
     posterior_emis_mean_surf = posterior_multipliers * prior_emis_mean_surf
 
-    # create output based on an emis file input
-    with xr.open_dataset(prior_emis_files[0]) as in_ds:
-        out_ds = xr.Dataset()
-        copy_attributes(in_ds, out_ds, delete_attrs=["NVARS", "NLAYS"])
-        cell_area = in_ds.XCELL * in_ds.YCELL
-        conv_fac = SPECIES_MOLEMASS[species] * G2KG
-        posterior_emis_mean_output = posterior_emis_mean_surf * conv_fac / cell_area
-        # now create coordinates, missing from input
-        x = in_ds.XORIG + 0.5 * in_ds.XCELL + np.arange(in_ds.NCOLS) * in_ds.XCELL
-        y = in_ds.YORIG + 0.5 * in_ds.YCELL + np.arange(in_ds.NROWS) * in_ds.YCELL
-        posterior_emis_mean_xr = xr.DataArray(posterior_emis_mean_output, coords={"y": y, "x": x})
-        posterior_emis_mean_xr.attrs["units"] = "kg/m**2/s"
-        out_ds[species] = posterior_emis_mean_xr
-        return out_ds
+    logger.debug("converting emissions to kg/m**2/s")
+    conv_fac = SPECIES_MOLEMASS[species] * G2KG
+    posterior_emis_mean_output = posterior_emis_mean_surf * conv_fac / prior_emis_cell_area
+    prior_emis_mean_output = prior_emis_mean_surf * conv_fac / prior_emis_cell_area
 
-
-def copy_attributes(
-    in_ds: xr.Dataset,
-    out_ds: xr.Dataset,
-    override_attrs=None,
-    delete_attrs=None,
-):
-    # make sure nothing is in mutually exclusive dicts
-    if (delete_attrs is not None) and (override_attrs is not None):
-        delete_keys = set(delete_attrs.keys())
-        override_keys = set(override_attrs.keys())
-        if override_keys.intersection(delete_keys) is not None:
-            raise ValueError("keys appearing in both delete and override dictionaries")
-    for k in in_ds.attrs:
-        if k not in delete_attrs:
-            out_ds.attrs[k] = in_ds.attrs[k]
+    # each file covers a full day, so add 1d to the end date for the full period
+    return (posterior_emis_mean_output, prior_emis_mean_output, prior_emis_start, prior_emis_end + timedelta(days=1))
 
 
 def list_emis_template_files(
