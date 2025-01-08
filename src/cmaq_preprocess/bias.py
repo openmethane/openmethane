@@ -32,7 +32,24 @@ def mass_weighted_mean(
             region_slice = np.s_[:,:] # whole array
         print('region slice',region_slice,vertical_integral[region_slice].mean())
         return vertical_integral[ region_slice].mean()
-
+def earliest_observation_date(
+        start_date: datetime.date,
+        end_date: datetime.date,
+        obs: ObservationData,
+        ) -> datetime.datetime:
+    """
+    takes an observation dataset and returns the first day with observations
+    """
+    one_day = datetime.timedelta(days=1)
+    date = start_date
+    while date <= end_date:
+        date_string = date.strftime("%Y%m%d")
+        if len(obs.ind_by_date[date_string]) > 0:
+            return date
+        else:
+            date += one_day
+    return None
+                               
 
 def earliest_mean(
     start_date: datetime.date,
@@ -40,16 +57,12 @@ def earliest_mean(
     obs_file: pathlib.Path,
 ) -> float:
     obs = ObservationData.from_file(obs_file)
-    # now find the earliest date with obs and return their mean
-    one_day = datetime.timedelta(days=1)
-    date = start_date
-    while date <= end_date:
-        date_string = date.strftime("%Y%m%d")
-        if len(obs.ind_by_date[date_string]) > 0:
-            return np.mean(np.array(obs.value)[obs.ind_by_date[date_string]])
-        else:
-            date += one_day
-    raise ValueError("no valid observations found")
+    earliest_date = earliest_observation_date( start_date, end_date, obs)
+    if earliest_date is None:
+        raise ValueError("no valid observations found")
+    date_string = earliest_date.strftime("%Y%m%d")
+    return np.mean(np.array(obs.value)[obs.ind_by_date[date_string]])
+
 
 def earliest_region(
     start_date: datetime.date,
@@ -57,21 +70,16 @@ def earliest_region(
     obs_file: pathlib.Path,
 ) -> tuple:
     obs = ObservationData.from_file(obs_file)
-    # now find the earliest date with obs and return their mean
-    one_day = datetime.timedelta(days=1)
-    date = start_date
-    while date <= end_date:
-        date_string = date.strftime("%Y%m%d")
-        if len(obs.ind_by_date[date_string]) > 0:
-            lite_coords = [obs.lite_coord[d] for d in obs.ind_by_date[date_string]]
-            llc_inds = (np.min([l[3] for l in lite_coords]),
-                        np.min([l[4] for l in lite_coords]))
-            urc_inds = (np.max([l[3] for l in lite_coords]),
-                        np.max([l[4] for l in lite_coords]))
-            return llc_inds, urc_inds
-        else:
-            date += one_day
-    raise ValueError("no valid observations found")
+    earliest_date = earliest_observation_date( start_date, end_date, obs)
+    if earliest_date is None:
+        raise ValueError("no valid observations found")
+    date_string = earliest_date.strftime("%Y%m%d")
+    lite_coords = [obs.lite_coord[d] for d in obs.ind_by_date[date_string]]
+    llc_inds = (np.min([l[3] for l in lite_coords]),
+                np.min([l[4] for l in lite_coords]))
+    urc_inds = (np.max([l[3] for l in lite_coords]),
+                np.max([l[4] for l in lite_coords]))
+    return llc_inds, urc_inds
 
 def get_icon_file(config: CMAQConfig) -> pathlib.Path:
     chem_dir = utils.nested_dir(config.domain, config.start_date, config.ctm_dir)
