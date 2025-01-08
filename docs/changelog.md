@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.6.1 (2025-01-08)
+
+### 🐛 Bug Fixes
+
+- Fix GitHub Actions script to support dash shell syntax ([#118](https://github.com/openmethane/openmethane/pulls/118))
+
+
 ## openmethane v0.6.0 (2025-01-08)
 
 ### 🎉 Improvements
