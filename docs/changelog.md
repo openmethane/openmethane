@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.6.4 (2025-01-13)
+
+### 🐛 Bug Fixes
+
+- Revert bwd wipeout change in cmaq_preprocess ([#122](https://github.com/openmethane/openmethane/pulls/122))
+
+
 ## openmethane v0.6.3 (2025-01-08)
 
 No significant changes.
