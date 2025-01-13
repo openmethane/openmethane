@@ -50,7 +50,7 @@ gridname: aust-test_v1
 ha_rhoj_chk: /opt/project/data/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc
 hadv_chk: /opt/project/data/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc
 icon_file: /opt/project/data/cmaq/<YYYY-MM-DD>/d01/ICON.d01.aust-test_v1.CH4only.nc
-ioapi_logging: true
+ioapi_logging: false
 ipr1_file: /opt/project/data/run-cmaq/output/PA_1.<YYYYMMDD>.nc
 ipr2_file: /opt/project/data/run-cmaq/output/PA_2.<YYYYMMDD>.nc
 ipr3_file: /opt/project/data/run-cmaq/output/PA_3.<YYYYMMDD>.nc
