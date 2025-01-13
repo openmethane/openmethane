@@ -24,6 +24,7 @@ import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.params import cmaq_config, date_defn, template_defn
+from fourdvar.params.root_path_defn import store_path
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,10 @@ def build_cmd(executable: str) -> str:
     run_cmd = cmaq_config.cmd_preamble
     if int(cmaq_config.npcol) != 1 or int(cmaq_config.nprow) != 1:
         # use mpi
-        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
+        # run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
+
+        # write stdout and stderr to a file per-node for debugging
+        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} -outfile-pattern={store_path}/cmaq-stdout.%r-%h.log -errfile-pattern={store_path}/cmaq-stderr.%r-%h.log "
     run_cmd += executable
 
     return run_cmd

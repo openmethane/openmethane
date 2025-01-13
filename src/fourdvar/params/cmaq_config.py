@@ -33,7 +33,7 @@ nprow = env.int("NUM_PROC_ROWS", 1)  # pert
 # note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 # extra ioapi write logging
-ioapi_logging = False
+ioapi_logging = True
 
 # max & min No. seconds per sync (science) step
 maxsync = 600
