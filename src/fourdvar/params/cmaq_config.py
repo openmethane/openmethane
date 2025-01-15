@@ -33,7 +33,7 @@ nprow = env.int("NUM_PROC_ROWS", 1)  # pert
 # note: if npcol and nprow are 1 then cmaq is run in serial mode
 
 # extra ioapi write logging
-ioapi_logging = True
+ioapi_logging = False
 
 # max & min No. seconds per sync (science) step
 maxsync = 600
@@ -133,6 +133,10 @@ gridname = _DOMAIN_MCIP_SUFFIX
 fwd_logfile = os.path.join(output_path, "fwd_CH4_only.<YYYYMMDD>.log")
 bwd_logfile = os.path.join(output_path, "bwd_CH4_only.<YYYYMMDD>.log")
 
+# temporary, change when reworking archive system
+fwd_stdout_log = os.path.join(output_path, "fwd_stdout.<YYYYMMDD>.log")
+bwd_stdout_log = os.path.join(output_path, "bwd_stdout.<YYYYMMDD>.log")
+
 # floor file
 floor_file = os.path.join(output_path, "FLOOR_bnmk")
 
@@ -192,10 +196,6 @@ emis_sense_file = os.path.join(output_path, "EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc"
 emis_scale_sense_file = os.path.join(output_path, "EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 
 curdir = os.path.realpath(os.curdir)
-
-# temporary, change when reworking archive system
-fwd_stdout_log = os.path.join(output_path, "fwd_stdout.log")
-bwd_stdout_log = os.path.join(output_path, "bwd_stdout.log")
 
 # list of patterns of logs created by cmaq in curent working dir
 # cmaq_handle.wipeout resolves and deletes all listed files.
