@@ -234,7 +234,7 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
             "bconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.bcon"},
             "iconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.icon"},
         },
-        cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 1.838 - 1.771),
+        cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 0.0),
         boundary_trim=env.int("BOUNDARY_TRIM", 5),
     )
 
