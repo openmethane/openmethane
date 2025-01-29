@@ -19,6 +19,14 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.7.0 (2025-01-29)
+
+### 🎉 Improvements
+
+- Add "daily" sync type to sync a single daily folder during daily reprocessing ([#120](https://github.com/openmethane/openmethane/pulls/120))
+- Improving bias correction ([#129](https://github.com/openmethane/openmethane/pulls/129))
+
+
 ## openmethane v0.6.6 (2025-01-15)
 
 ### 🎉 Improvements
