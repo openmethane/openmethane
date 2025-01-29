@@ -1,5 +1,5 @@
 boundary_trim: 5
-cams_to_cmaq_bias: 0.06700000000000017
+cams_to_cmaq_bias: 0.0
 cmaq_source_dir: /opt/cmaq/CMAQv5.0.2_notpollen
 ctm_dir: /opt/project/data/cmaq
 domain:

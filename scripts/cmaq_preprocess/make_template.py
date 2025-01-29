@@ -86,7 +86,7 @@ if str(cmaq_config.sense_emis_lays).lower() == "template":
 # clear fwd and bwd logs from previous runs to prevent a log write error
 cmaq_handle.wipeout_fwd()
 # disable clearing of bwd working folder as this may be the cause of #121
-#cmaq_handle.wipeout_bwd()
+cmaq_handle.wipeout_bwd()
 
 # generate sample files by running 1 day of cmaq (fwd & bwd)
 cmaq_handle.run_fwd_single(date_defn.start_date, is_first=True)
