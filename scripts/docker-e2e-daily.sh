@@ -109,11 +109,6 @@ docker run --name="e2e-daily-obs_preprocess-process_tropomi" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane bash scripts/obs_preprocess/process_tropomi.sh
 
-# JobName: cmaq_preprocess-bias_correct
-docker run --name="e2e-daily-cmaq_preprocess-bias_correct" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python scripts/cmaq_preprocess/bias_correct_cams.py
-
 # JobName: fourdvar-daily
 docker run --name="e2e-daily-fourdvar-daily" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
