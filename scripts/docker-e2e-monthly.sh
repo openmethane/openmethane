@@ -89,7 +89,7 @@ docker run --name="e2e-monthly-cmaq_preprocess-run" --rm \
   -e CDSAPI_KEY="$CDSAPI_KEY" \
   -e CDSAPI_URL="$CDSAPI_URL" \
   -e NUM_PROC_COLS=1 \
-  -e NUM_PROC_ROWS=1 \
+  -e NUM_PROC_ROWS=2 \
   -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
   -e SKIP_CMAQ_SETUP=true \
   openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh

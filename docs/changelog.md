@@ -19,6 +19,20 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.6.6 (2025-01-15)
+
+### 🎉 Improvements
+
+- More updates to debug output and logging when running cmaq ([#124](https://github.com/openmethane/openmethane/pulls/124))
+
+
+## openmethane v0.6.5 (2025-01-13)
+
+### 🎉 Improvements
+
+- Collect more debug output and logging in cmaq_preprocess ([#123](https://github.com/openmethane/openmethane/pulls/123))
+
+
 ## openmethane v0.6.4 (2025-01-13)
 
 ### 🐛 Bug Fixes

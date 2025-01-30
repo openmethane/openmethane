@@ -24,6 +24,7 @@ import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.params import cmaq_config, date_defn, template_defn
+from fourdvar.params.root_path_defn import store_path
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +151,7 @@ def setup_run():
     return env_dict
 
 
-def build_cmd(executable: str) -> str:
+def build_cmd(executable: str, stdout_filename: str) -> str:
     """
     Creates the command to run the executable.
 
@@ -165,7 +166,12 @@ def build_cmd(executable: str) -> str:
     run_cmd = cmaq_config.cmd_preamble
     if int(cmaq_config.npcol) != 1 or int(cmaq_config.nprow) != 1:
         # use mpi
-        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
+        # run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
+
+        # write stdout and stderr to a file per-node for debugging
+        #  -outfile-pattern=prefix.%r-%h.stdout
+        #  -errfile-pattern=prefix.%r-%h.stderr
+        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} -errfile-pattern={stdout_filename}.%r-%h.stderr "
     run_cmd += executable
 
     return run_cmd
@@ -203,11 +209,11 @@ def run_cmaq(
     -------
     Information about the completed process
     """
-    cmd = build_cmd(executable)
-    logger.debug(f"Running {cmd} for {date.strftime('%Y%m%d')}")
-
     stdout_filename = dt.replace_date(template_stdout_filename, date)
     fh.ensure_path(stdout_filename, inc_file=True)
+
+    cmd = build_cmd(executable, stdout_filename)
+    logger.debug(f"Running {cmd} for {date.strftime('%Y%m%d')}")
 
     environment = {**os.environ, **env_dict}
 
