@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.7.1 (2025-02-02)
+
+### 🐛 Bug Fixes
+
+- Fix bug in cmaq_preprocess when mcip folder is loaded from archive without wrf folder ([#130](https://github.com/openmethane/openmethane/pulls/130))
+
+
 ## openmethane v0.7.0 (2025-01-29)
 
 ### 🎉 Improvements
