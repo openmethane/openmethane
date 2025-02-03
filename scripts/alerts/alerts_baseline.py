@@ -15,12 +15,14 @@
 #
 import os
 import dotenv
+import glob
 from postproc import alerts
 
 def main():
     dotenv.load_dotenv()
     domain_file = os.getenv('ALERTS_DOMAIN_FILE', default='om-domain-info.nc')
-    dir_list = os.getenv('ALERTS_BASELINE_DIRS', default=None)
+    dir_glob = os.getenv('ALERTS_BASELINE_DIRS', default=None)
+    dir_list = glob.glob( dir_glob)
     if dir_list is None:
         raise ValueError('must specify environment variable ALERTS_BASELINE_DIRS')
     obs_file_template = os.getenv('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
@@ -31,7 +33,7 @@ def main():
         dir_list = dir_list,
         obs_file_template = obs_file_template,
         sim_file_template = sim_file_template,
-        output_file_name = output_file,
+        output_file = output_file,
     )
 
     

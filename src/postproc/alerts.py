@@ -20,9 +20,11 @@ import glob
 import pathlib
 import pickle
 import gzip
+import itertools
 
 import xarray as xr
 
+ALERTS_MINIMUM_DATA = 1 # nimimum data required to define alerts baseline
 
 def iterPickle(filename, compressed=True):
     with gzip.open(filename) if compressed else open(filename, 'rb') as f:
@@ -65,16 +67,18 @@ def append_obs_sim(
     if len(sim_list) != len( obs_list):
         raise ValueError('inconsistent lenghts for obs and sim')
     for obs, sim in zip( obs_list, sim_list):
-        if obs.lite_coord != sim.lite_coord:
+        if obs['lite_coord'] != sim['lite_coord']:
             raise ValueError('inconsistent lite coord')
-        ind = obs.lite_coord[3:5]
+        ind = obs['lite_coord'][3:5]
         obs_sim_lists[ind].append((obs['value'], sim['value']))
+
+        
 def create_alerts_baseline(
         domain_file: pathlib.Path,
         dir_list: typing.Iterable,
         obs_file_template: str = 'input/test_obs.pic.gz',
         sim_file_template: str = 'simulobs.pic.gz',
-        output_file_name: str = 'alerts_baseline.nc',
+        output_file: str = 'alerts_baseline.nc',
         ):
     '''constructs a baseline for alerts.
        the baseline consists of a mean and standard deviation for the differences between obs and simulation
@@ -90,28 +94,27 @@ def create_alerts_baseline(
     # first create 2d array of lists of paired obs and simulations, start with empty lists
     with xr.open_dataset( domain_file) as ds:
         dss = ds.load()
-        n_cols = dss.dims['COL']
-        n_rows = dss.dims['ROW']
+        n_cols = dss.sizes['COL']
+        n_rows = dss.sizes['ROW']
+        alerts_dims = ('ROW', 'COL')
     obs_sim_lists = np.empty((n_rows, n_cols), dtype=object)
-    for j in range( n_rows):
-        for i in range( n_cols):
-            obs_sim_lists[j,i] = []
+    for j,i in  itertools.product(range( n_rows), range( n_cols)):
+        obs_sim_lists[j,i] = []
     # now add observation-simulation pairs from each run to their relevant points
     for dir in dir_list:
         append_obs_sim( obs_sim_lists, dir, obs_file_template, sim_file_template)
     baseline_mean_diff = np.zeros_like( obs_sim_lists)
     baseline_std_diff = np.zeros_like( obs_sim_lists)
-    for j in n_range( n_nrows):
-        for i in range( n_cols):
-            if len( obs_sim_lists[j,i]) == 0: # no obs here
-                baseline_mean_diff[j,i] = np.nan
-                baseline_std_diff[j,i] = np.nan
-            else:
-                paired_array = np.array( obs_sim_lists[j,i])
-                baseline_mean_diff[j,i] = (paired_array[0,:] -paired_array[1,:]).mean()
-                baseline_std_diff[j,i] = (paired_array[0,:] -paired_array[1,:]).std()
-    dss['baseline_mean_diff'] = baseline_mean_diff
-    dss['baseline_std_diff'] = baseline_std_diff
+    for j,i in  itertools.product(range( n_rows), range( n_cols)):
+        if len( obs_sim_lists[j,i]) <= ALERTS_MINIMUM_DATA: # not enough obs here for obs and std-dev
+            baseline_mean_diff[j,i] = np.nan
+            baseline_std_diff[j,i] = np.nan
+        else:
+            paired_array = np.array( obs_sim_lists[j,i])
+            baseline_mean_diff[j,i] = (paired_array[:,0] -paired_array[:,1]).mean()
+            baseline_std_diff[j,i] = (paired_array[:,0] -paired_array[:,1]).std()
+    dss['baseline_mean_diff'] = xr.DataArray(baseline_mean_diff, dims=alerts_dims)
+    dss['baseline_std_diff'] = xr.DataArray(baseline_std_diff, dims=alerts_dims)
     dss.to_netcdf(output_file)
     return
 
