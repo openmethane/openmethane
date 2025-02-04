@@ -22,7 +22,7 @@ def main():
     dotenv.load_dotenv()
     domain_file = os.getenv('ALERTS_DOMAIN_FILE', default='om-domain-info.nc')
     dir_glob = os.getenv('ALERTS_BASELINE_DIRS', default=None)
-    dir_list = glob.glob( dir_glob)
+    dir_list = sorted(glob.glob( dir_glob))
     if dir_list is None:
         raise ValueError('must specify environment variable ALERTS_BASELINE_DIRS')
     obs_file_template = os.getenv('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')

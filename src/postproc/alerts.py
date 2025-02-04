@@ -106,22 +106,35 @@ def create_alerts_baseline(
         near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
         near_fields.append( near)
         far_fields.append( far)
-    dss['baseline_mean_diff'] = xr.DataArray(baseline_mean_diff, dims=alerts_dims)
-    dss['baseline_std_diff'] = xr.DataArray(baseline_std_diff, dims=alerts_dims)
+    near_fields_array = np.array(near_fields)
+    far_fields_array = np.array( far_fields)
+    enhancement = near_fields_array -far_fields_array
+    obs_baseline_mean_diff = enhancement[:,0,...].mean(axis=0)
+    obs_baseline_std_diff = enhancement[:,0,...].std(axis=0)
+    sim_baseline_mean_diff = enhancement[:,1,...].mean(axis=0)
+    sim_baseline_std_diff = enhancement[:,1,...].std(axis=0)
+    dss['obs_baseline_mean_diff'] = xr.DataArray(obs_baseline_mean_diff, dims=alerts_dims)
+    dss['obs_baseline_std_diff'] = xr.DataArray(obs_baseline_std_diff, dims=alerts_dims)
+    dss['sim_baseline_mean_diff'] = xr.DataArray(sim_baseline_mean_diff, dims=alerts_dims)
+    dss['sim_baseline_std_diff'] = xr.DataArray(sim_baseline_std_diff, dims=alerts_dims)
     dss.to_netcdf(output_file)
     return
 
-def map_enhance( emis, lat, lon, landMask, concs, nearThreshold, farThreshold):
-    nConcs = concs.shape[1]-3 # number of concentration records, the -3 removes lat,lon,time
-    resultShape = (nConcs,)+land_mask.shape
+def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
+    nConcs = concs.shape[1]-2 # number of concentration records, the -2 removes lat,lon
+    n_rows = land_mask.shape[0]
+    n_cols = land_mask.shape[1]
+    resultShape = (nConcs, n_rows, n_cols)
     near_field = np.zeros( resultShape)
+    near_field[...] = np.nan
     far_field = np.zeros( resultShape)
+    far_field[...] = np.nan
     # now build the input queue for multiprocessing points
     nCPUs = int(os.environ.get('NCPUS', '1'))
     input_proc_list = []
-    for i,j in itertools.product(range(0,emis.shape[0],100), range(0, emis.shape[1],100)):
-        if landMask[ i,j] > 0.5: # land point
-            input_proc_list.append(( i, j, lat, lon, landMask, concs,\
+    for i,j in itertools.product(range(0,n_rows,1), range(0, n_cols,1)):
+        if land_mask[ i,j] > 0.5: # land point
+            input_proc_list.append(( i, j, lat, lon, land_mask, concs,\
                           nearThreshold, farThreshold))
     with multiprocessing.Pool( nCPUs) as pool:
         processOutput = pool.imap_unordered( point_enhance, input_proc_list)
@@ -131,8 +144,8 @@ def map_enhance( emis, lat, lon, landMask, concs, nearThreshold, farThreshold):
     return  near_field, far_field
 
 def point_enhance( val):
-    i, j, lat, lon, landMask, concs, nearThreshold, farThreshold = val
-    if landMask[i,j] < 0.5: # ocean point
+    i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold = val
+    if land_mask[i,j] < 0.5: # ocean point
         return i,j,0.,0.
     else:
         dist = calc_dist( concs, (lat[i,j], lon[i,j]))
