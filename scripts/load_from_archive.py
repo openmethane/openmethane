@@ -76,6 +76,7 @@ def daily():
     likely to change.
     """
     for path in [
+        ["wrf"],
         ["mcip"],
     ]:
         _sync_daily_directory(START_DATE, path, pathlib.Path('.'), allow_missing=True)
