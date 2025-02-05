@@ -120,6 +120,64 @@ def create_alerts_baseline(
     dss.to_netcdf(output_file)
     return
 
+def create_alerts(
+        baseline_file: pathlib.Path,
+        daily_dir: pathlib.Path,
+        obs_file_template: str = 'input/test_obs.pic.gz',
+        sim_file_template: str = 'simulobs.pic.gz',
+        output_file: str = 'alerts.nc',
+        alerts_threshold: float = 0.0,
+        significance_threshold: float = 1.0,
+):
+    '''
+       constructs alerts.
+       the baseline consists of a mean and standard deviation for local enhancement where the mean is based on simulations and the standard deviation on observations
+       for the alert we consider whether the observed local enhancement lies outside the confidence interval defined by the mean and standard deviation and outside the confidence interval defined by the mean and threshold
+       at each point in the domain.
+       Output is stored as a netcdf file.
+       It contains nans wherever an alert cannot be defined (usually no obs), 0 for no alert and 1 for an alert
+       inputs:
+       baseline_file: netcdf file describing the baseline (see function create_alerts_baseline. will be used to template the output.
+       daily_dir: directory containing obs and simulation outputs as ObservationData.
+       obs_file_template: string to be appended to  daily_dir to point to observations
+       sim_file_template: string to be appended to daily_dir to point to simulations
+       output_file: name of output_file, will be overwritten if exists
+    '''
+    near_threshold = float( os.getenv('ALERTS_NEAR_THRESHOLD', '0.2'))
+    far_threshold = float( os.getenv('ALERTS_FAR_THRESHOLD', '1.0'))
+    with xr.open_dataset( baseline_file) as ds:
+        dss = ds.load()
+        n_cols = dss.sizes['COL']
+        n_rows = dss.sizes['ROW']
+        lats = dss['LAT'].to_numpy().squeeze()
+        lons = dss['LON'].to_numpy().squeeze()
+        land_mask = dss['LANDMASK'].to_numpy().squeeze()
+        baseline_mean = dss['sim_baseline_mean_diff'].to_numpy().squeeze()
+        baseline_std = dss['obs_baseline_std_diff'].to_numpy().squeeze()
+        alerts_dims = ('ROW', 'COL')
+        ds.close()
+    obs_list, sim_list = get_obs_sim(  daily_dir, obs_file_template, sim_file_template)
+    obs_sim = [(o['latitude_center'], o['longitude_center'],\
+                o['value'], s['value'],) for o,s in zip(obs_list, sim_list)]
+    obs_sim_array = np.array( obs_sim)
+    near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
+    enhancement = near -far
+    obs_enhancement = enhancement[0,...]
+    alerts = np.zeros( resultShape)
+    alerts[...] = np.nan
+    # first construct mask for points we cannot calcolate alert, either no baseline or no obs
+    undefined_mask = np.isnan( obs_enhancement) | np.isnan( baseline_mean) | np.isnan( baseline_std)
+    defined_mask = ~undefined_mask
+    # now calculate alerts only where defined
+    alerts[defined_mask] = float(
+        ( np.abs( obs_enhancement - baseline_mean)[defined_mask] > significance_threshold *
+          baseline_std[defined_mask]) &
+        (np.abs( obs_enhancement -baseline_mean)[defined_mask] > alerts_threshold))
+
+    dss['obs_enhancement'] = xr.DataArray(obs_enhacement, dims=alerts_dims)
+    dss['alerts'] = xr.DataArray(alerts, dims=alerts_dims)
+    dss.to_netcdf(output_file)
+    return
 def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
     nConcs = concs.shape[1]-2 # number of concentration records, the -2 removes lat,lon
     n_rows = land_mask.shape[0]
