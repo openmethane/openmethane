@@ -149,6 +149,7 @@ def create_alerts(
         dss = ds.load()
         n_cols = dss.sizes['COL']
         n_rows = dss.sizes['ROW']
+        resultShape = (n_rows, n_cols)
         lats = dss['LAT'].to_numpy().squeeze()
         lons = dss['LON'].to_numpy().squeeze()
         land_mask = dss['LANDMASK'].to_numpy().squeeze()
@@ -169,10 +170,11 @@ def create_alerts(
     undefined_mask = np.isnan( obs_enhancement) | np.isnan( baseline_mean) | np.isnan( baseline_std)
     defined_mask = ~undefined_mask
     # now calculate alerts only where defined
-    alerts[defined_mask] = float(
-        ( np.abs( obs_enhancement - baseline_mean)[defined_mask] > significance_threshold *
-          baseline_std[defined_mask]) &
-        (np.abs( obs_enhancement -baseline_mean)[defined_mask] > alerts_threshold))
+    alerts[defined_mask] = (
+        (np.abs( obs_enhancement - baseline_mean)[defined_mask] > significance_threshold *
+         baseline_std[defined_mask]) &
+        (np.abs( obs_enhancement -baseline_mean)[defined_mask] >
+         alerts_threshold)).astype('float')
 
     dss['obs_enhancement'] = xr.DataArray(obs_enhacement, dims=alerts_dims)
     dss['alerts'] = xr.DataArray(alerts, dims=alerts_dims)
