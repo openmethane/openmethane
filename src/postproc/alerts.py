@@ -176,7 +176,7 @@ def create_alerts(
         (np.abs( obs_enhancement -baseline_mean)[defined_mask] >
          alerts_threshold)).astype('float')
 
-    dss['obs_enhancement'] = xr.DataArray(obs_enhacement, dims=alerts_dims)
+    dss['obs_enhancement'] = xr.DataArray(obs_enhancement, dims=alerts_dims)
     dss['alerts'] = xr.DataArray(alerts, dims=alerts_dims)
     dss.to_netcdf(output_file)
     return
@@ -206,7 +206,7 @@ def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
 def point_enhance( val):
     i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold = val
     if land_mask[i,j] < 0.5: # ocean point
-        return i,j,0.,0.
+        return i,j,np.nan,np.nan
     else:
         dist = calc_dist( concs, (lat[i,j], lon[i,j]))
         near = dist < nearThreshold
@@ -214,7 +214,7 @@ def point_enhance( val):
         nearCount = near.sum()
         farCount = far.sum()
         if ( nearCount == 0) or (farCount == 0):
-            return i,j,0.,0.
+            return i,j,np.nan,np.nan
         else:
             near_field = concs[near,2:].mean( axis=0)
             far_field = concs[far,2:].mean( axis=0)
