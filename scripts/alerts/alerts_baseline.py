@@ -27,7 +27,7 @@ def main():
         raise ValueError('must specify environment variable ALERTS_BASELINE_DIRS')
     obs_file_template = os.getenv('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
     sim_file_template = os.getenv('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
-    output_file = os.getenv('ALERTS_OUTPUT_FILE', default='alerts_baseline.nc')
+    output_file = os.getenv('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
     alerts.create_alerts_baseline(
         domain_file = domain_file,
         dir_list = dir_list,
