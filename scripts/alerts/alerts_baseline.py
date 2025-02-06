@@ -28,12 +28,17 @@ def main():
         raise ValueError('must specify environment variable ALERTS_BASELINE_DIRS')
     obs_file_template = os.getenv('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
     sim_file_template = os.getenv('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
+    near_threshold = float(os.getenv('ALERTS_NEAR_THRESHOLD', '0.2'))
+    far_threshold = float(os.getenv('ALERTS_FAR_THRESHOLD', '1.0'))
     output_file = os.getenv('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
+
     alerts.create_alerts_baseline(
         domain_file = pathlib.Path(domain_file),
         dir_list = dir_list,
         obs_file_template = obs_file_template,
         sim_file_template = sim_file_template,
+        near_threshold = near_threshold,
+        far_threshold = far_threshold,
         output_file = output_file,
     )
 

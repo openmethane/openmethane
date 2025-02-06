@@ -73,6 +73,8 @@ def create_alerts_baseline(
         dir_list: typing.Iterable,
         obs_file_template: str = 'input/test_obs.pic.gz',
         sim_file_template: str = 'simulobs.pic.gz',
+        near_threshold: float = 0.2,
+        far_threshold: float = 1.0,
         output_file: str = 'alerts_baseline.nc',
         ):
     '''constructs a baseline for alerts.
@@ -84,10 +86,10 @@ def create_alerts_baseline(
        dir_list: list of directories containing obs and simulation outputs as ObservationData.
        obs_file_template: string to be appended to each dir in dir_list to point to observations
        sim_file_template: string to be appended to each dir in dir_list to point to simulations
+       near_threshold: distance from the target cell to be included in the near field
+       far_threshold: distance from the target cell to be included in the far field
        output_file: name of output_file, will be overwritten if exists
     '''
-    near_threshold = float( os.getenv('ALERTS_NEAR_THRESHOLD', '0.2'))
-    far_threshold = float( os.getenv('ALERTS_FAR_THRESHOLD', '1.0'))
     with xr.open_dataset( domain_file) as ds:
         dss = ds.load()
         n_cols = dss.sizes['COL']
