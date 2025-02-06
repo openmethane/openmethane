@@ -117,8 +117,11 @@ def create_alerts_baseline(
     dss['obs_baseline_std_diff'] = xr.DataArray(obs_baseline_std_diff, dims=alerts_dims)
     dss['sim_baseline_mean_diff'] = xr.DataArray(sim_baseline_mean_diff, dims=alerts_dims)
     dss['sim_baseline_std_diff'] = xr.DataArray(sim_baseline_std_diff, dims=alerts_dims)
+
+    dss.attrs['alerts_near_threshold'] = near_threshold
+    dss.attrs['alerts_far_threshold'] = far_threshold
+
     dss.to_netcdf(output_file)
-    return
 
 def create_alerts(
         baseline_file: pathlib.Path,
@@ -143,8 +146,6 @@ def create_alerts(
        sim_file_template: string to be appended to daily_dir to point to simulations
        output_file: name of output_file, will be overwritten if exists
     '''
-    near_threshold = float( os.getenv('ALERTS_NEAR_THRESHOLD', '0.2'))
-    far_threshold = float( os.getenv('ALERTS_FAR_THRESHOLD', '1.0'))
     with xr.open_dataset( baseline_file) as ds:
         dss = ds.load()
         n_cols = dss.sizes['COL']
@@ -156,7 +157,10 @@ def create_alerts(
         baseline_mean = dss['sim_baseline_mean_diff'].to_numpy().squeeze()
         baseline_std = dss['obs_baseline_std_diff'].to_numpy().squeeze()
         alerts_dims = ('ROW', 'COL')
+        near_threshold = dss.attrs['alerts_near_threshold']
+        far_threshold = dss.attrs['alerts_far_threshold']
         ds.close()
+
     obs_list, sim_list = get_obs_sim(  daily_dir, obs_file_template, sim_file_template)
     obs_sim = [(o['latitude_center'], o['longitude_center'],\
                 o['value'], s['value'],) for o,s in zip(obs_list, sim_list)]
