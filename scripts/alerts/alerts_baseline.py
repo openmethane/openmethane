@@ -17,7 +17,10 @@ import os
 import pathlib
 import dotenv
 import glob
+
 from postproc import alerts
+from scripts.load_from_archive import load_from_archive
+
 
 def main():
     dotenv.load_dotenv()
@@ -31,6 +34,8 @@ def main():
     near_threshold = float(os.getenv('ALERTS_NEAR_THRESHOLD', '0.2'))
     far_threshold = float(os.getenv('ALERTS_FAR_THRESHOLD', '1.0'))
     output_file = os.getenv('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
+
+    load_from_archive('baseline')
 
     alerts.create_alerts_baseline(
         domain_file = pathlib.Path(domain_file),
