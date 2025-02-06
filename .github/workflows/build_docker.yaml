@@ -120,24 +120,13 @@ jobs:
       volumes:
         - /opt/project/data
     steps:
-      - name: Cache CAMS data
-        id: cache-cams
+      - name: Cache test data
         uses: actions/cache@v4
         with:
-          path: data/inputs
-          key: cams
-      - name: Download CAMS input data
-        if: steps.cache-cams.outputs.cache-hit != 'true'
-        env:
-          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api
-        run: |
-          cd /opt/project
-          # This can take a few minutes as the CAMS data is stored on tape
-          python scripts/cmaq_preprocess/download_cams_input.py \
-            -s 2022-07-22 \
-            -e 2022-07-22 \
-            data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+          path: |
+            /opt/project/data/cams
+            /opt/project/data/domains
+          key: test-data
       - name: Run pytest
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
@@ -147,7 +136,7 @@ jobs:
           TARGET: docker-test
         run: |
           cd /opt/project
-          make fetch-domains
+          make fetch-test-data
           env
           python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
 
