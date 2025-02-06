@@ -1,4 +1,4 @@
-from datatree import open_datatree
+from xarray import open_datatree
 from scripts.cmaq_preprocess.make_prior import make_prior
 
 

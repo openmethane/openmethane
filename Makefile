@@ -52,10 +52,8 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 		bash scripts/run-all.sh
 
 .PHONY: fetch-domains
-fetch-domains:  ## Fetch the latest WRF geometry domain data from setup-wrf
-	mkdir -p data/domains/aust10km/v1 data/domains/aust-test/v1
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1/geo_em.d01.nc
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/v1/geo_em.d01.nc
+## Fetch the latest WRF geometry domain data from setup-wrf
+fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
@@ -82,3 +80,29 @@ prepare-templates:  ## Prepare the template files for a CMAQ run
 .PHONY: changelog-draft
 changelog-draft:  ## compile a draft of the next changelog
 	$(RUN_CMD) towncrier build --draft
+
+.PHONY: docker-test
+docker-test: build fetch-test-data ## Run the tests
+	docker run --rm -it \
+		-v $(PWD):/opt/project \
+		-v ~/.cdsapirc:/root/.cdsapirc \
+		openmethane \
+		make test
+
+## Fetch the latest WRF geometry domain data and CAMS data required for tests
+.PHONY: fetch-test-data
+fetch-test-data: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+
+data/domains/aust10km/v1/geo_em.d01.nc:
+	mkdir -p data/domains/aust10km/v1
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1/geo_em.d01.nc
+
+data/domains/aust-test/v1/geo_em.d01.nc:
+	mkdir -p data/domains/aust-test/v1
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/v1/geo_em.d01.nc
+
+data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc:
+	mkdir -p data/cams
+	$(PYTHON_CMD) scripts/cmaq_preprocess/download_cams_input.py \
+		-s 2022-07-22 -e 2022-07-22 \
+		data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
