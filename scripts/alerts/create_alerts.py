@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 import os
+import pathlib
 import dotenv
-import glob
+
 from postproc import alerts
 
 def main():
@@ -30,8 +31,8 @@ def main():
     alerts_threshold = float(os.getenv( 'ALERTS_THRESHOLD', default='0.0'))
     significance_threshold = float(os.getenv( 'SIGNIFICANCE_THRESHOLD', default='2.0'))
     alerts.create_alerts(
-        baseline_file = baseline_file,
-        daily_dir = daily_dir,
+        baseline_file = pathlib.Path(baseline_file),
+        daily_dir = pathlib.Path(daily_dir),
         obs_file_template = obs_file_template,
         sim_file_template = sim_file_template,
         output_file = output_file,
