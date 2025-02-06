@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import os
+import pathlib
 import dotenv
 import glob
 from postproc import alerts
@@ -29,7 +30,7 @@ def main():
     sim_file_template = os.getenv('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
     output_file = os.getenv('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
     alerts.create_alerts_baseline(
-        domain_file = domain_file,
+        domain_file = pathlib.Path(domain_file),
         dir_list = dir_list,
         obs_file_template = obs_file_template,
         sim_file_template = sim_file_template,
