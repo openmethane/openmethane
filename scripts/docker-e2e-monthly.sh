@@ -57,8 +57,17 @@ echo "Running om-monthly end-to-end, data will be stored in $DATA_PATH"
 # Transpose tasks from om-infra into local docker commands
 
 # JobName: archive-load
-# In AWS, we load daily results from S3 for the period spanned by the monthly
-# run. Here we can just copy/link the files from the data folder.
+# Note: this needs AWS credentials, so the script must be run using aws-vault
+#docker run --name="e2e-monthly-archive-load" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e TARGET_BUCKET="om-dev-results" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/load_from_archive.py --sync monthly
+
+# Local alternative to archive-load which just copies/links the files
 COPY_TIMESTAMP=$(date -d "$START_DATE")
 while (( $(date -d "${COPY_TIMESTAMP}" +%s) <= $(date -d "${END_DATE}" +%s) )); do
   DAILY_PATH="$DATA_ROOT/daily/$DOMAIN_NAME/$DOMAIN_VERSION/$(date -d "$COPY_TIMESTAMP" '+%Y-%m-%d')"
@@ -103,6 +112,18 @@ docker run --name="e2e-monthly-cmaq_preprocess-bias_correct" --rm \
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane python runscript.py
+
+# JobName: archive-baseline-load
+# Note: this needs AWS credentials, so the script must be run using aws-vault
+#docker run --name="e2e-monthly-archive-baseline-load" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e TARGET_BUCKET="om-dev-results" \
+#  -e BASELINE_LENGTH_DAYS="3" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/load_from_archive.py --sync baseline
 
 # JobName: alerts-baseline
 docker run --name="e2e-monthly-alerts-baseline" --rm \
