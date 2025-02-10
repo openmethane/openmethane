@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
+
 import glob
 
 from fourdvar.env import env
 from postproc import alerts
-from util import archive
 
 
 def main():
@@ -32,14 +31,6 @@ def main():
     near_threshold = env.float('ALERTS_NEAR_THRESHOLD', 0.2)
     far_threshold = env.float('ALERTS_FAR_THRESHOLD', 1.0)
     output_file = env.str('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
-
-    archive.baseline(
-        daily_s3_bucket=os.getenv('TARGET_BUCKET'),
-        end_date=env.date("END_DATE"),
-        domain_name=env.str("DOMAIN_NAME"),
-        local_path=env.path("STORE_PATH"),
-        baseline_length_days=env.int("BASELINE_LENGTH_DAYS", 365),
-    )
 
     alerts.create_alerts_baseline(
         domain_file = domain_file,
