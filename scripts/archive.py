@@ -34,6 +34,7 @@ import marshmallow.utils
 # Loads environment using the value of the environment variable "TARGET"
 from fourdvar.env import env
 
+alerts_baseline_file = env.path('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
 
 def main():
     config = Config.from_environment()
@@ -60,6 +61,20 @@ def main():
         # s3_result.returncode could be 2 if new directories are required
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
+
+    alerts_baseline_path = store_path.joinpath(alerts_baseline_file)
+    alerts_baseline_dest = config.domain_name # path in S3 where the alerts_baseline will be stored
+    if alerts_baseline_path.exists():
+        s3_result_alerts = subprocess.run(
+            (
+                "aws", "s3", "sync", "--no-progress",
+                "--exclude", "*",
+                "--include", alerts_baseline_path,
+                str(alerts_baseline_path.parent),
+                f"{config.target_bucket}/{alerts_baseline_dest}"
+            ),
+            check=False,
+        )
 
     # if requested, also push a reduced set of results to a second bucket
     if config.target_bucket_reduced:
