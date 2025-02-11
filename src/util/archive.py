@@ -64,7 +64,7 @@ def daily(
         _s3_sync_fetch(daily_root + remote_path, local_path.joinpath(remote_path), allow_missing=True)
 
     # fetch the alerts_baseline file for creating alerts
-    _s3_object_fetch(f"{daily_s3_bucket}/{alerts_baseline_remote}", local_path)
+    _s3_object_fetch(daily_s3_bucket + str(alerts_baseline_remote), local_path)
 
 
 def baseline(
@@ -99,7 +99,7 @@ def baseline(
         # baseline calculation requires input/test_obs.pic.gz and simulobs.pic.gz for each day
         # use exclude/include to download a single file
         _s3_sync_fetch(daily_root + "input", destination_path.joinpath("input"), allow_missing=True, extra_params=["--exclude=*", "--include=test_obs.pic.gz"])
-        _s3_object_fetch(f"{daily_root}/simulobs.pic.gz", destination_path, allow_missing=True)
+        _s3_object_fetch(daily_root + "simulobs.pic.gz", destination_path, allow_missing=True)
 
 
 def _get_daily_archive_path(s3_bucket_name: str, domain_name: str, date: datetime.date) -> str:
