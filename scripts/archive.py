@@ -34,8 +34,6 @@ import marshmallow.utils
 # Loads environment using the value of the environment variable "TARGET"
 from fourdvar.env import env
 
-alerts_baseline_file = env.path('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
-
 def main():
     config = Config.from_environment()
     store_path = config.store_path or get_store_path(config)
@@ -62,16 +60,22 @@ def main():
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
 
-    alerts_baseline_path = store_path.joinpath(alerts_baseline_file)
-    alerts_baseline_dest = config.domain_name # path in S3 where the alerts_baseline will be stored
-    if alerts_baseline_path.exists():
+    alerts_baseline_local_path = config.alerts_baseline_file
+    alerts_baseline_dest = config.alerts_baseline_remote
+
+    # this check is only necessary because we're using s3 sync, which makes it hard
+    # to change the filename when copying
+    if alerts_baseline_local_path.name != alerts_baseline_dest.name:
+        raise ValueError("alerts_baseline: local path and expected remote path have different filenames")
+
+    if alerts_baseline_local_path.exists():
         s3_result_alerts = subprocess.run(
             (
                 "aws", "s3", "sync", "--no-progress",
                 "--exclude", "*",
-                "--include", alerts_baseline_path,
-                str(alerts_baseline_path.parent),
-                f"{config.target_bucket}/{alerts_baseline_dest}"
+                "--include", alerts_baseline_local_path.name,
+                str(alerts_baseline_local_path.parent),
+                f"{config.target_bucket}/{alerts_baseline_dest.parent}"
             ),
             check=False,
         )
@@ -120,6 +124,8 @@ class Config:
     test: bool
     execution_id: str
     workflow_execution_arn: str
+    alerts_baseline_file: pathlib.Path
+    alerts_baseline_remote: pathlib.Path
 
     @classmethod
     def from_environment(cls):
@@ -149,6 +155,8 @@ class Config:
         test = env.bool("TEST", False)
         execution_id = env.str("EXECUTION_ID")
         workflow_execution_arn = env.str("WORKFLOW_EXECUTION_ARN", "")
+        alerts_baseline_file = env.path('ALERTS_BASELINE_FILE')
+        alerts_baseline_remote = env.path("ALERTS_BASELINE_REMOTE")
 
         return cls(
             store_path=store_path,
@@ -163,6 +171,8 @@ class Config:
             execution_id=execution_id,
             test=test,
             workflow_execution_arn=workflow_execution_arn,
+            alerts_baseline_remote=alerts_baseline_remote,
+            alerts_baseline_file=alerts_baseline_file
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):
@@ -177,6 +187,7 @@ success        = {self.success!r}
 test           = {self.test!r}
 execution_id   = {self.execution_id!r}
 workflow_execution_arn = {self.workflow_execution_arn!r}
+alerts_baseline_remote = {self.alerts_baseline_remote!r}
 store_path     = {store_path}
 prefix         = {prefix!r}
 """)
