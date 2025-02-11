@@ -23,6 +23,8 @@ DATA_PATH="$DATA_ROOT/$RUN_ID"
 STORE_PATH="/opt/project/data/$RUN_ID"
 CHK_PATH="$STORE_PATH/scratch"
 
+TARGET_BUCKET="s3://om-dev-results"
+
 if [[ -f .env ]]; then
   echo "Loading environment from .env"
   source .env
@@ -60,7 +62,7 @@ echo "Running om-monthly end-to-end, data will be stored in $DATA_PATH"
 # Note: this needs AWS credentials, so the script must be run using aws-vault
 #docker run --name="e2e-monthly-archive-load" --rm \
 #  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e TARGET_BUCKET="om-dev-results" \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
 #  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 #  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
 #  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
@@ -117,7 +119,7 @@ docker run --name="e2e-monthly-fourdvar-monthly" --rm \
 # Note: this needs AWS credentials, so the script must be run using aws-vault
 #docker run --name="e2e-monthly-archive-baseline-load" --rm \
 #  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e TARGET_BUCKET="om-dev-results" \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
 #  -e BASELINE_LENGTH_DAYS="3" \
 #  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 #  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
@@ -132,6 +134,21 @@ docker run --name="e2e-monthly-alerts-baseline" --rm \
   -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
   openmethane python scripts/alerts/alerts_baseline.py
+
+# JobName: archive-success
+# Warning: this will delete the results folder on success!
+#docker run --name="e2e-monthly-archive-success" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e SUCCESS="true" \
+#  -e RUN_TYPE="monthly" \
+#  -e EXECUTION_ID="e2e-monthly" \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
+#  -e TARGET_BUCKET_REDUCED="" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/archive.py
 
 echo "Success: monthly run complete"
 echo "Results in: $DATA_PATH"
