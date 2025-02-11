@@ -61,7 +61,7 @@ def main():
         sys.exit(1)
 
     # place the alerts baseline file in a more general location, based on config
-    if config.alerts_baseline_file.exists():
+    if config.alerts_baseline_file and config.alerts_baseline_file.exists():
         s3_result_alerts = subprocess.run(
             (
                 "aws", "s3", "cp", "--no-progress",
@@ -146,8 +146,8 @@ class Config:
         test = env.bool("TEST", False)
         execution_id = env.str("EXECUTION_ID")
         workflow_execution_arn = env.str("WORKFLOW_EXECUTION_ARN", "")
-        alerts_baseline_file = env.path('ALERTS_BASELINE_FILE')
-        alerts_baseline_remote = env.path("ALERTS_BASELINE_REMOTE")
+        alerts_baseline_file = env.path("ALERTS_BASELINE_FILE", None)
+        alerts_baseline_remote = env.path("ALERTS_BASELINE_REMOTE", None)
 
         return cls(
             store_path=store_path,
