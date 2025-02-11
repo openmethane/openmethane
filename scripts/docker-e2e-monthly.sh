@@ -23,6 +23,8 @@ DATA_PATH="$DATA_ROOT/$RUN_ID"
 STORE_PATH="/opt/project/data/$RUN_ID"
 CHK_PATH="$STORE_PATH/scratch"
 
+TARGET_BUCKET="s3://om-dev-results"
+
 if [[ -f .env ]]; then
   echo "Loading environment from .env"
   source .env
@@ -57,8 +59,17 @@ echo "Running om-monthly end-to-end, data will be stored in $DATA_PATH"
 # Transpose tasks from om-infra into local docker commands
 
 # JobName: archive-load
-# In AWS, we load daily results from S3 for the period spanned by the monthly
-# run. Here we can just copy/link the files from the data folder.
+# Note: this needs AWS credentials, so the script must be run using aws-vault
+#docker run --name="e2e-monthly-archive-load" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/load_from_archive.py --sync monthly
+
+# Local alternative to archive-load which just copies/links the files
 COPY_TIMESTAMP=$(date -d "$START_DATE")
 while (( $(date -d "${COPY_TIMESTAMP}" +%s) <= $(date -d "${END_DATE}" +%s) )); do
   DAILY_PATH="$DATA_ROOT/daily/$DOMAIN_NAME/$DOMAIN_VERSION/$(date -d "$COPY_TIMESTAMP" '+%Y-%m-%d')"
@@ -103,6 +114,43 @@ docker run --name="e2e-monthly-cmaq_preprocess-bias_correct" --rm \
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane python runscript.py
+
+# JobName: archive-baseline-load
+# Note: this needs AWS credentials, so the script must be run using aws-vault
+#docker run --name="e2e-monthly-archive-baseline-load" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
+#  -e BASELINE_LENGTH_DAYS="3" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/load_from_archive.py --sync baseline
+
+# JobName: alerts-baseline
+docker run --name="e2e-monthly-alerts-baseline" --rm \
+  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+  -e ALERTS_DOMAIN_FILE="$STORE_PATH/prior/outputs/out-om-domain-info.nc" \
+  -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
+  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
+  openmethane python scripts/alerts/alerts_baseline.py
+
+# JobName: archive-success
+# Warning: this will delete the results folder on success!
+#docker run --name="e2e-monthly-archive-success" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e SUCCESS="true" \
+#  -e RUN_TYPE="monthly" \
+#  -e EXECUTION_ID="e2e-monthly" \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
+#  -e TARGET_BUCKET_REDUCED="" \
+#  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
+#  -e ALERTS_BASELINE_REMOTE="$DOMAIN_NAME/alerts_baseline.nc" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/archive.py
 
 echo "Success: monthly run complete"
 echo "Results in: $DATA_PATH"

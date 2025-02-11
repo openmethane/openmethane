@@ -34,10 +34,9 @@ import marshmallow.utils
 # Loads environment using the value of the environment variable "TARGET"
 from fourdvar.env import env
 
-
 def main():
     config = Config.from_environment()
-    store_path = get_store_path(config)
+    store_path = config.store_path or get_store_path(config)
     prefix = get_prefix(config)
 
     # config.dump(store_path=store_path, prefix=prefix)
@@ -60,6 +59,17 @@ def main():
         # s3_result.returncode could be 2 if new directories are required
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
+
+    # place the alerts baseline file in a more general location, based on config
+    if config.alerts_baseline_file and config.alerts_baseline_file.exists():
+        s3_result_alerts = subprocess.run(
+            (
+                "aws", "s3", "cp", "--no-progress",
+                str(config.alerts_baseline_file),
+                f"{config.target_bucket}/{config.alerts_baseline_remote}"
+            ),
+            check=False,
+        )
 
     # if requested, also push a reduced set of results to a second bucket
     if config.target_bucket_reduced:
@@ -85,7 +95,7 @@ def main():
 
     if config.success:
         logging.debug(f"Deleting {store_path}.")
-        shutil.rmtree(store_path)
+        # shutil.rmtree(store_path)
     else:
         logging.debug(f"Not deleting {store_path} for failed run - clean up manually.")
     logging.debug("Finished successfully")
@@ -93,6 +103,7 @@ def main():
 
 @dataclass
 class Config:
+    store_path: pathlib.Path
     target_bucket: str
     target_bucket_reduced: str
     domain_name: str
@@ -104,6 +115,8 @@ class Config:
     test: bool
     execution_id: str
     workflow_execution_arn: str
+    alerts_baseline_file: pathlib.Path
+    alerts_baseline_remote: pathlib.Path
 
     @classmethod
     def from_environment(cls):
@@ -125,6 +138,7 @@ class Config:
             end_date = env.date("END_DATE")
             domain_name = env.str("DOMAIN_NAME")
 
+        store_path = env.path("STORE_PATH")
         target_bucket = env.str("TARGET_BUCKET")
         target_bucket_reduced = env.str("TARGET_BUCKET_REDUCED", "")
         run_type = env.str("RUN_TYPE")
@@ -132,8 +146,11 @@ class Config:
         test = env.bool("TEST", False)
         execution_id = env.str("EXECUTION_ID")
         workflow_execution_arn = env.str("WORKFLOW_EXECUTION_ARN", "")
+        alerts_baseline_file = env.path("ALERTS_BASELINE_FILE", None)
+        alerts_baseline_remote = env.path("ALERTS_BASELINE_REMOTE", None)
 
         return cls(
+            store_path=store_path,
             target_bucket=target_bucket,
             target_bucket_reduced=target_bucket_reduced,
             domain_name=domain_name,
@@ -145,6 +162,8 @@ class Config:
             execution_id=execution_id,
             test=test,
             workflow_execution_arn=workflow_execution_arn,
+            alerts_baseline_remote=alerts_baseline_remote,
+            alerts_baseline_file=alerts_baseline_file
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):
@@ -159,6 +178,7 @@ success        = {self.success!r}
 test           = {self.test!r}
 execution_id   = {self.execution_id!r}
 workflow_execution_arn = {self.workflow_execution_arn!r}
+alerts_baseline_remote = {self.alerts_baseline_remote!r}
 store_path     = {store_path}
 prefix         = {prefix!r}
 """)
