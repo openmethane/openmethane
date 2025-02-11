@@ -13,26 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import pathlib
-import dotenv
 
+import logging
+
+from fourdvar.env import env
 from postproc import alerts
 
 def main():
-    dotenv.load_dotenv()
-    baseline_file = os.getenv('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
-    daily_dir = os.getenv('ALERTS_DAILY_DIR', default=None)
+    baseline_file = env.path('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
+    daily_dir = env.path('ALERTS_DAILY_DIR', default=None) or env.path('STORE_PATH', default=None)
     if daily_dir is None:
         raise ValueError('must specify environment variable ALERTS_DAILY_DIR')
-    obs_file_template = os.getenv('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
-    sim_file_template = os.getenv('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
-    output_file = os.getenv('ALERTS_OUTPUT_FILE', default='alerts.nc')
-    alerts_threshold = float(os.getenv( 'ALERTS_THRESHOLD', default='0.0'))
-    significance_threshold = float(os.getenv( 'SIGNIFICANCE_THRESHOLD', default='2.0'))
+    obs_file_template = env.str('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
+    sim_file_template = env.str('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
+    output_file = env.str('ALERTS_OUTPUT_FILE', default='alerts.nc')
+    alerts_threshold = env.float( 'ALERTS_THRESHOLD', default=0.0)
+    significance_threshold = env.float( 'SIGNIFICANCE_THRESHOLD', default=2.0)
+
     alerts.create_alerts(
-        baseline_file = pathlib.Path(baseline_file),
-        daily_dir = pathlib.Path(daily_dir),
+        baseline_file = baseline_file,
+        daily_dir = daily_dir,
         obs_file_template = obs_file_template,
         sim_file_template = sim_file_template,
         output_file = output_file,
@@ -42,4 +42,5 @@ def main():
 
     
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main()

@@ -13,27 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import pathlib
-import dotenv
+
 import glob
+
+from fourdvar.env import env
 from postproc import alerts
 
+
 def main():
-    dotenv.load_dotenv()
-    domain_file = os.getenv('ALERTS_DOMAIN_FILE', default='om-domain-info.nc')
-    dir_glob = os.getenv('ALERTS_BASELINE_DIRS', default=None)
-    dir_list = sorted(glob.glob( dir_glob))
+    domain_file = env.path('ALERTS_DOMAIN_FILE', default='om-domain-info.nc')
+    dir_glob = env.str('ALERTS_BASELINE_DIRS', default=None)
+    dir_list = sorted(glob.glob(dir_glob))
     if dir_list is None:
         raise ValueError('must specify environment variable ALERTS_BASELINE_DIRS')
-    obs_file_template = os.getenv('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
-    sim_file_template = os.getenv('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
-    near_threshold = float(os.getenv('ALERTS_NEAR_THRESHOLD', '0.2'))
-    far_threshold = float(os.getenv('ALERTS_FAR_THRESHOLD', '1.0'))
-    output_file = os.getenv('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
+    obs_file_template = env.str('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
+    sim_file_template = env.str('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
+    near_threshold = env.float('ALERTS_NEAR_THRESHOLD', 0.2)
+    far_threshold = env.float('ALERTS_FAR_THRESHOLD', 1.0)
+    output_file = env.str('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
 
     alerts.create_alerts_baseline(
-        domain_file = pathlib.Path(domain_file),
+        domain_file = domain_file,
         dir_list = dir_list,
         obs_file_template = obs_file_template,
         sim_file_template = sim_file_template,

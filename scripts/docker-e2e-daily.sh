@@ -23,6 +23,8 @@ DATA_PATH="$DATA_ROOT/$RUN_ID"
 STORE_PATH="/opt/project/data/$RUN_ID"
 CHK_PATH="$STORE_PATH/scratch"
 
+TARGET_BUCKET="s3://om-dev-results"
+
 if [[ -f .env ]]; then
   echo "Loading environment from .env"
   source .env
@@ -60,6 +62,18 @@ EOF
 echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 
 # Transpose tasks from om-infra into local docker commands
+
+# JobName: archive-load
+# Note: this needs AWS credentials, so the script must be run using aws-vault
+#docker run --name="e2e-daily-archive-load" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
+#  -e ALERTS_BASELINE_REMOTE="$DOMAIN_NAME/alerts_baseline.nc" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/load_from_archive.py --sync daily
 
 # This only has to be done once assuming $DATA_ROOT isn't cleared
 if [[ -d "$DATA_ROOT/geog/WPS_GEOG" ]]; then
@@ -113,6 +127,13 @@ docker run --name="e2e-daily-obs_preprocess-process_tropomi" --rm \
 docker run --name="e2e-daily-fourdvar-daily" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane python scripts/fourdvar/run_daily_step.py
+
+# JobName: alerts-create-alerts
+docker run --name="e2e-daily-create-alerts" --rm \
+  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
+  -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
+  openmethane python scripts/alerts/create_alerts.py
 
 
 echo "Success: daily run complete"
