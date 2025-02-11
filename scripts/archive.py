@@ -38,7 +38,7 @@ alerts_baseline_file = env.path('ALERTS_BASELINE_FILE', default='alerts_baseline
 
 def main():
     config = Config.from_environment()
-    store_path = get_store_path(config)
+    store_path = config.store_path or get_store_path(config)
     prefix = get_prefix(config)
 
     # config.dump(store_path=store_path, prefix=prefix)
@@ -108,6 +108,7 @@ def main():
 
 @dataclass
 class Config:
+    store_path: pathlib.Path
     target_bucket: str
     target_bucket_reduced: str
     domain_name: str
@@ -140,6 +141,7 @@ class Config:
             end_date = env.date("END_DATE")
             domain_name = env.str("DOMAIN_NAME")
 
+        store_path = env.path("STORE_PATH")
         target_bucket = env.str("TARGET_BUCKET")
         target_bucket_reduced = env.str("TARGET_BUCKET_REDUCED", "")
         run_type = env.str("RUN_TYPE")
@@ -149,6 +151,7 @@ class Config:
         workflow_execution_arn = env.str("WORKFLOW_EXECUTION_ARN", "")
 
         return cls(
+            store_path=store_path,
             target_bucket=target_bucket,
             target_bucket_reduced=target_bucket_reduced,
             domain_name=domain_name,
