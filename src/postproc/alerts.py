@@ -16,7 +16,7 @@
 import os
 import typing
 import numpy as np
-import glob
+import logging
 import pathlib
 import pickle
 import gzip
@@ -26,6 +26,8 @@ import multiprocessing
 import xarray as xr
 
 ALERTS_MINIMUM_DATA = 1 # nimimum data required to define alerts baseline
+
+logger = logging.getLogger(__name__)
 
 def iterPickle(filename, compressed=True):
     with gzip.open(filename) if compressed else open(filename, 'rb') as f:
@@ -149,6 +151,8 @@ def create_alerts(
        output_file: name of output_file, will be overwritten if exists
     '''
     with xr.open_dataset( baseline_file) as ds:
+        logger.debug(f"Alerts baseline found at {baseline_file}")
+
         dss = ds.load()
         n_cols = dss.sizes['COL']
         n_rows = dss.sizes['ROW']
@@ -184,8 +188,12 @@ def create_alerts(
 
     dss['obs_enhancement'] = xr.DataArray(obs_enhancement, dims=alerts_dims)
     dss['alerts'] = xr.DataArray(alerts, dims=alerts_dims)
+
+    logger.debug(f"Writing alerts to {output_file}")
+
     dss.to_netcdf(output_file)
-    return
+
+
 def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
     nConcs = concs.shape[1]-2 # number of concentration records, the -2 removes lat,lon
     n_rows = land_mask.shape[0]

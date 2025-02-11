@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+import logging
+
 from fourdvar.env import env
 from postproc import alerts
 
@@ -40,4 +42,5 @@ def main():
 
     
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main()
