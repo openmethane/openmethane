@@ -128,6 +128,14 @@ docker run --name="e2e-daily-fourdvar-daily" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane python scripts/fourdvar/run_daily_step.py
 
+# JobName: alerts-create-alerts
+docker run --name="e2e-daily-create-alerts" --rm \
+  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
+  -e ALERTS_DAILY_DIR="$STORE_PATH" \
+  -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
+  openmethane python scripts/alerts/create_alerts.py
+
 
 echo "Success: daily run complete"
 echo "Results in: $DATA_PATH"
