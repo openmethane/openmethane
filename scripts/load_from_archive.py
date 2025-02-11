@@ -26,6 +26,7 @@ STORE_PATH: pathlib.Path = env.path("STORE_PATH")
 START_DATE = env.date("START_DATE")
 END_DATE = env.date("END_DATE")
 BASELINE_LENGTH_DAYS = env.int("BASELINE_LENGTH_DAYS", 365)
+ALERTS_BASELINE_REMOTE = env.path("ALERTS_BASELINE_REMOTE")
 
 
 @click.command()
@@ -44,6 +45,7 @@ def load_from_archive(sync: str = "monthly"):
                 start_date=START_DATE,
                 domain_name=DOMAIN_NAME,
                 local_path=STORE_PATH,
+                alerts_baseline_remote=ALERTS_BASELINE_REMOTE,
             )
 
         case "baseline":

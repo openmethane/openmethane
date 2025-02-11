@@ -60,22 +60,13 @@ def main():
         logging.error("Sync failed with exit code 1")
         sys.exit(1)
 
-    alerts_baseline_local_path = config.alerts_baseline_file
-    alerts_baseline_dest = config.alerts_baseline_remote
-
-    # this check is only necessary because we're using s3 sync, which makes it hard
-    # to change the filename when copying
-    if alerts_baseline_local_path.name != alerts_baseline_dest.name:
-        raise ValueError("alerts_baseline: local path and expected remote path have different filenames")
-
-    if alerts_baseline_local_path.exists():
+    # place the alerts baseline file in a more general location, based on config
+    if config.alerts_baseline_file.exists():
         s3_result_alerts = subprocess.run(
             (
-                "aws", "s3", "sync", "--no-progress",
-                "--exclude", "*",
-                "--include", alerts_baseline_local_path.name,
-                str(alerts_baseline_local_path.parent),
-                f"{config.target_bucket}/{alerts_baseline_dest.parent}"
+                "aws", "s3", "cp", "--no-progress",
+                str(config.alerts_baseline_file),
+                f"{config.target_bucket}/{config.alerts_baseline_remote}"
             ),
             check=False,
         )
@@ -104,7 +95,7 @@ def main():
 
     if config.success:
         logging.debug(f"Deleting {store_path}.")
-        shutil.rmtree(store_path)
+        # shutil.rmtree(store_path)
     else:
         logging.debug(f"Not deleting {store_path} for failed run - clean up manually.")
     logging.debug("Finished successfully")
