@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.0 (2025-02-11)
+
+### 🆕 Features
+
+- Add methane alerts baseline and detection ([#131](https://github.com/openmethane/openmethane/pulls/131))
+
+
 ## openmethane v0.7.1 (2025-02-02)
 
 ### 🐛 Bug Fixes
