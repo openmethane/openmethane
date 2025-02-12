@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.3 (2025-02-12)
+
+### 🎉 Improvements
+
+- Add logging to alerts scripts ([#136](https://github.com/openmethane/openmethane/pulls/136))
+
+
 ## openmethane v0.8.2 (2025-02-11)
 
 No significant changes.
