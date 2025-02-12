@@ -213,7 +213,7 @@ def create_alerts(
 
 
 def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
-    logger.debug("Calculating enhancements")
+    logger.debug("Calculating enhancements in map_enhance")
     nConcs = concs.shape[1]-2 # number of concentration records, the -2 removes lat,lon
     n_rows = land_mask.shape[0]
     n_cols = land_mask.shape[1]
@@ -222,13 +222,18 @@ def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
     near_field[...] = np.nan
     far_field = np.zeros( resultShape)
     far_field[...] = np.nan
+
+
     # now build the input queue for multiprocessing points
-    nCPUs = int(os.environ.get('NCPUS', '1'))
+    logger.debug(f"Building input_proc_list for shape {resultShape}")
     input_proc_list = []
     for i,j in itertools.product(range(0,n_rows,1), range(0, n_cols,1)):
         if land_mask[ i,j] > 0.5: # land point
             input_proc_list.append(( i, j, lat, lon, land_mask, concs,\
                           nearThreshold, farThreshold))
+
+    nCPUs = int(os.environ.get('NCPUS', '1'))
+    logger.debug(f"Spawning {nCPUs} processes")
     with multiprocessing.Pool( nCPUs) as pool:
         processOutput = pool.imap_unordered( point_enhance, input_proc_list)
         for obs in processOutput:
