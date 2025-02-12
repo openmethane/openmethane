@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.4 (2025-02-12)
+
+### 🐛 Bug Fixes
+
+- - Fix incorrect s3 path if TARGET_BUCKET doesn't contain a trailing slash ([#137](https://github.com/openmethane/openmethane/pulls/137))
+
+
 ## openmethane v0.8.3 (2025-02-12)
 
 ### 🎉 Improvements
