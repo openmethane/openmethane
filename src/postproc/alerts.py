@@ -238,27 +238,19 @@ def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
 
 def point_enhance( val):
     i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold = val
-    logger.info(f"[Cell ({i}, {j})] Calculating point enhancement")
+    logger.debug(f"[Cell ({i}, {j})] Calculating point enhancement")
 
     if land_mask[i,j] < 0.5: # ocean point
         return i,j,np.nan,np.nan
     else:
-        logger.debug(f"[Cell ({i}, {j})] Calculating distances")
         dist = calc_dist( concs, (lat[i,j], lon[i,j]))
-
-        logger.debug(f"[Cell ({i}, {j})] Finding near and far cells")
         near = dist < nearThreshold
         far = (dist > nearThreshold ) & (dist < farThreshold)
-
-        logger.debug(f"[Cell ({i}, {j})] Calculating near and far sums")
         nearCount = near.sum()
         farCount = far.sum()
-
         if ( nearCount == 0) or (farCount == 0):
-            logger.debug(f"[Cell ({i}, {j})] Not enough data to calculate near and far fields")
             return i,j,np.nan,np.nan
         else:
-            logger.debug(f"[Cell ({i}, {j})] Calculating mean of near and far fields")
             near_field = concs[near,2:].mean( axis=0)
             far_field = concs[far,2:].mean( axis=0)
             return i,j, near_field, far_field
