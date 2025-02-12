@@ -28,13 +28,15 @@ of rst and use slightly different categories.
 
 ## openmethane v0.8.2 (2025-02-11)
 
-No significant changes.
+### 🐛 Bug Fixes
 
+- Fix incorrect paths in _s3_object_fetch calls (41af1e3)
 
 ## openmethane v0.8.1 (2025-02-11)
 
-No significant changes.
+### 🐛 Bug Fixes
 
+- Make `ALERTS_BASELINE_REMOTE` env optional in `load_from_archive.py` (e04bb95)
 
 ## openmethane v0.8.0 (2025-02-11)
 
@@ -42,6 +44,9 @@ No significant changes.
 
 - Add methane alerts baseline and detection ([#131](https://github.com/openmethane/openmethane/pulls/131))
 
+### 🐛 Bug Fixes
+
+- Fix failing tests due to xarray-datatree ([#135](https://github.com/openmethane/openmethane/pulls/135))
 
 ## openmethane v0.7.1 (2025-02-02)
 
