@@ -59,6 +59,8 @@ def get_obs_sim(
        reads obs and simulations from dir/obs_template_file and dir/sim_template_file,
        checks for consistency of coordinates
 '''
+    logger.debug(f"Loading observation data from {dir}")
+
     obs_path = pathlib.Path.joinpath( pathlib.Path(dir), obs_file_template)
     obs_list = read_obs_file( obs_path, pop_keys=['weight_grid'])
     sim_path = pathlib.Path.joinpath( pathlib.Path(dir), sim_file_template)
@@ -72,7 +74,7 @@ def get_obs_sim(
         
 def create_alerts_baseline(
         domain_file: pathlib.Path,
-        dir_list: typing.Iterable,
+        dir_list: list[str],
         obs_file_template: str = 'input/test_obs.pic.gz',
         sim_file_template: str = 'simulobs.pic.gz',
         near_threshold: float = 0.2,
@@ -93,6 +95,8 @@ def create_alerts_baseline(
        output_file: name of output_file, will be overwritten if exists
     '''
     with xr.open_dataset( domain_file) as ds:
+        logger.debug(f"Domain found at {domain_file}")
+
         dss = ds.load()
         n_cols = dss.sizes['COL']
         n_rows = dss.sizes['ROW']
@@ -102,6 +106,9 @@ def create_alerts_baseline(
         alerts_dims = ('ROW', 'COL')
     near_fields = []
     far_fields = []
+
+    logger.info(f"Creating alerts baseline from {len(dir_list)} observations")
+
     for dir in dir_list:
         obs_list, sim_list = get_obs_sim(  dir, obs_file_template, sim_file_template)
         obs_sim = [(o['latitude_center'], o['longitude_center'],\
@@ -110,13 +117,22 @@ def create_alerts_baseline(
         near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
         near_fields.append( near)
         far_fields.append( far)
+
+    logger.info(f"Constructing near_fields_array")
     near_fields_array = np.array(near_fields)
+
+    logger.info(f"Constructing far_fields_array")
     far_fields_array = np.array( far_fields)
+
+    logger.info(f"Calculating enhancement")
     enhancement = near_fields_array -far_fields_array
+
     obs_baseline_mean_diff = enhancement[:,0,...].mean(axis=0)
     obs_baseline_std_diff = enhancement[:,0,...].std(axis=0)
     sim_baseline_mean_diff = enhancement[:,1,...].mean(axis=0)
     sim_baseline_std_diff = enhancement[:,1,...].std(axis=0)
+
+    logger.info(f"Creating dataset variables")
     dss['obs_baseline_mean_diff'] = xr.DataArray(obs_baseline_mean_diff, dims=alerts_dims)
     dss['obs_baseline_std_diff'] = xr.DataArray(obs_baseline_std_diff, dims=alerts_dims)
     dss['sim_baseline_mean_diff'] = xr.DataArray(sim_baseline_mean_diff, dims=alerts_dims)
@@ -125,6 +141,7 @@ def create_alerts_baseline(
     dss.attrs['alerts_near_threshold'] = near_threshold
     dss.attrs['alerts_far_threshold'] = far_threshold
 
+    logger.info(f"Writing alerts baseline to {output_file}")
     dss.to_netcdf(output_file)
 
 def create_alerts(
@@ -171,6 +188,7 @@ def create_alerts(
     obs_sim = [(o['latitude_center'], o['longitude_center'],\
                 o['value'], s['value'],) for o,s in zip(obs_list, sim_list)]
     obs_sim_array = np.array( obs_sim)
+
     near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
     enhancement = near -far
     obs_enhancement = enhancement[0,...]
@@ -189,12 +207,13 @@ def create_alerts(
     dss['obs_enhancement'] = xr.DataArray(obs_enhancement, dims=alerts_dims)
     dss['alerts'] = xr.DataArray(alerts, dims=alerts_dims)
 
-    logger.debug(f"Writing alerts to {output_file}")
+    logger.info(f"Writing alerts to {output_file}")
 
     dss.to_netcdf(output_file)
 
 
 def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
+    logger.debug("Calculating enhancements")
     nConcs = concs.shape[1]-2 # number of concentration records, the -2 removes lat,lon
     n_rows = land_mask.shape[0]
     n_cols = land_mask.shape[1]
@@ -219,17 +238,27 @@ def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
 
 def point_enhance( val):
     i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold = val
+    logger.info(f"[Cell ({i}, {j})] Calculating point enhancement")
+
     if land_mask[i,j] < 0.5: # ocean point
         return i,j,np.nan,np.nan
     else:
+        logger.debug(f"[Cell ({i}, {j})] Calculating distances")
         dist = calc_dist( concs, (lat[i,j], lon[i,j]))
+
+        logger.debug(f"[Cell ({i}, {j})] Finding near and far cells")
         near = dist < nearThreshold
         far = (dist > nearThreshold ) & (dist < farThreshold)
+
+        logger.debug(f"[Cell ({i}, {j})] Calculating near and far sums")
         nearCount = near.sum()
         farCount = far.sum()
+
         if ( nearCount == 0) or (farCount == 0):
+            logger.debug(f"[Cell ({i}, {j})] Not enough data to calculate near and far fields")
             return i,j,np.nan,np.nan
         else:
+            logger.debug(f"[Cell ({i}, {j})] Calculating mean of near and far fields")
             near_field = concs[near,2:].mean( axis=0)
             far_field = concs[far,2:].mean( axis=0)
             return i,j, near_field, far_field
