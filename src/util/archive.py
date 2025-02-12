@@ -64,7 +64,7 @@ def daily(
         _s3_sync_fetch(daily_root + remote_path, local_path.joinpath(remote_path), allow_missing=True)
 
     # fetch the alerts_baseline file for creating alerts
-    _s3_object_fetch(daily_s3_bucket + str(alerts_baseline_remote), local_path)
+    _s3_object_fetch("/".join([daily_s3_bucket.rstrip("/"), str(alerts_baseline_remote)]), local_path)
 
 
 def baseline(
