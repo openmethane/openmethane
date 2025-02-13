@@ -12,9 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import datetime
 import os
-import typing
 import numpy as np
 import logging
 import pathlib
@@ -24,6 +23,8 @@ import itertools
 import multiprocessing
 
 import xarray as xr
+
+from util.netcdf import extract_bounds
 
 ALERTS_MINIMUM_DATA = 1 # nimimum data required to define alerts baseline
 
@@ -67,10 +68,18 @@ def get_obs_sim(
     sim_list = read_obs_file( sim_path, pop_keys=['weight_grid'])
     if len(sim_list) != len( obs_list):
         raise ValueError('inconsistent lenghts for obs and sim')
+
+    period_start: datetime.datetime | None = None
+    period_end: datetime.datetime | None = None
+
     for obs, sim in zip( obs_list, sim_list):
+        if (period_start is None) or (period_start > obs['time']):
+            period_start = obs['time']
+        if (period_end is None) or (period_end < obs['time']):
+            period_end = obs['time']
         if obs['lite_coord'] != sim['lite_coord']:
             raise ValueError('inconsistent lite coord')
-    return obs_list, sim_list
+    return obs_list, sim_list, period_start, period_end
         
 def create_alerts_baseline(
         domain_file: pathlib.Path,
@@ -110,8 +119,8 @@ def create_alerts_baseline(
     logger.info(f"Creating alerts baseline from {len(dir_list)} observations")
 
     for dir in dir_list:
-        obs_list, sim_list = get_obs_sim(  dir, obs_file_template, sim_file_template)
-        obs_sim = [(o['latitude_center'], o['longitude_center'],\
+        obs_list, sim_list, period_start, period_end = get_obs_sim(dir, obs_file_template, sim_file_template)
+        obs_sim = [(o['latitude_center'], o['longitude_center'],
                     o['value'], s['value'],) for o,s in zip(obs_list, sim_list)]
         obs_sim_array = np.array( obs_sim)
         near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
@@ -170,22 +179,22 @@ def create_alerts(
     with xr.open_dataset( baseline_file) as ds:
         logger.debug(f"Alerts baseline found at {baseline_file}")
 
-        dss = ds.load()
-        n_cols = dss.sizes['COL']
-        n_rows = dss.sizes['ROW']
+        alerts_baseline_ds = ds.load()
+        n_cols = alerts_baseline_ds.sizes['COL']
+        n_rows = alerts_baseline_ds.sizes['ROW']
         resultShape = (n_rows, n_cols)
-        lats = dss['LAT'].to_numpy().squeeze()
-        lons = dss['LON'].to_numpy().squeeze()
-        land_mask = dss['LANDMASK'].to_numpy().squeeze()
-        baseline_mean = dss['sim_baseline_mean_diff'].to_numpy().squeeze()
-        baseline_std = dss['obs_baseline_std_diff'].to_numpy().squeeze()
-        alerts_dims = ('ROW', 'COL')
-        near_threshold = dss.attrs['alerts_near_threshold']
-        far_threshold = dss.attrs['alerts_far_threshold']
+        lats = alerts_baseline_ds['LAT'].to_numpy().squeeze()
+        lons = alerts_baseline_ds['LON'].to_numpy().squeeze()
+        land_mask = alerts_baseline_ds['LANDMASK'].to_numpy().squeeze()
+        baseline_mean = alerts_baseline_ds['sim_baseline_mean_diff'].to_numpy().squeeze()
+        baseline_std = alerts_baseline_ds['obs_baseline_std_diff'].to_numpy().squeeze()
+
+        near_threshold = alerts_baseline_ds.attrs['alerts_near_threshold']
+        far_threshold = alerts_baseline_ds.attrs['alerts_far_threshold']
         ds.close()
 
-    obs_list, sim_list = get_obs_sim(  daily_dir, obs_file_template, sim_file_template)
-    obs_sim = [(o['latitude_center'], o['longitude_center'],\
+    obs_list, sim_list, obs_period_start, obs_period_end = get_obs_sim(daily_dir, obs_file_template, sim_file_template)
+    obs_sim = [(o['latitude_center'], o['longitude_center'],
                 o['value'], s['value'],) for o,s in zip(obs_list, sim_list)]
     obs_sim_array = np.array( obs_sim)
 
@@ -204,12 +213,116 @@ def create_alerts(
         (np.abs( obs_enhancement -baseline_mean)[defined_mask] >
          alerts_threshold)).astype('float')
 
-    dss['obs_enhancement'] = xr.DataArray(obs_enhancement, dims=alerts_dims)
-    dss['alerts'] = xr.DataArray(alerts, dims=alerts_dims)
-
     logger.info(f"Writing alerts to {output_file}")
 
-    dss.to_netcdf(output_file)
+    # observations have specific times, but represent all the observations
+    # that were available for the entire day, so make the period the full day
+    period_start = obs_period_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    # end of day
+    period_end = obs_period_end.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
+
+    # create a variable with projection coordinates
+    projection_x = alerts_baseline_ds.XORIG + (0.5 * alerts_baseline_ds.XCELL) + np.arange(len(alerts_baseline_ds.COL)) * alerts_baseline_ds.XCELL
+    projection_y = alerts_baseline_ds.YORIG + (0.5 * alerts_baseline_ds.YCELL) + np.arange(len(alerts_baseline_ds.ROW)) * alerts_baseline_ds.YCELL
+
+    # copy dimensions and attributes from the alerts baseline, as the alerts
+    # should be provided in the same grid / format
+    # TODO: move most of this to the construction of the alerts_baseline output
+    alerts_ds = xr.Dataset(
+        data_vars={
+            # meta data
+            "lat": (("y", "x"), alerts_baseline_ds.variables["LAT"][0], {
+                "long_name": "latitude",
+                "units": "degrees_north",
+                "standard_name": "latitude",
+                "bounds": "lat_bounds",
+            }),
+            "lon": (("y", "x"), alerts_baseline_ds.variables["LON"][0], {
+                "long_name": "longitude",
+                "units": "degrees_east",
+                "standard_name": "longitude",
+                "bounds": "lon_bounds",
+            }),
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-boundaries
+            "lat_bounds": (("y", "x", "cell_corners"), extract_bounds(alerts_baseline_ds.variables["LATD"][0][0])),
+            "lon_bounds": (("y", "x", "cell_corners"), extract_bounds(alerts_baseline_ds.variables["LOND"][0][0])),
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
+            "grid_projection": ((), False, {
+                "grid_mapping_name": "lambert_conformal_conic",
+                "standard_parallel": (alerts_baseline_ds.TRUELAT1, alerts_baseline_ds.TRUELAT2),
+                "longitude_of_central_meridian": alerts_baseline_ds.STAND_LON,
+                "latitude_of_projection_origin": alerts_baseline_ds.MOAD_CEN_LAT,
+            }),
+            "projection_x": (("x"), projection_x, {
+                "long_name": "x coordinate of projection",
+                "units": "m",
+                "standard_name": "projection_x_coordinate",
+            }),
+            "projection_y": (("y"), projection_y, {
+                "long_name": "y coordinate of projection",
+                "units": "m",
+                "standard_name": "projection_y_coordinate",
+            }),
+            "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
+
+            # copied data
+            "landmask": (("y", "x"), alerts_baseline_ds.variables['LANDMASK'][0], {
+                "long_name": alerts_baseline_ds.variables['LANDMASK'].attrs['var_desc'],
+                "standard_name": "land_binary_mask",
+            }),
+            "obs_baseline_mean_diff": (("time", "y", "x"), [alerts_baseline_ds.variables["obs_baseline_mean_diff"]], {
+                "long_name": "Average observed difference between near and far field concentrations",
+                "units": "ppb",
+            }),
+            "obs_baseline_std_diff": (("time", "y", "x"), [alerts_baseline_ds.variables["obs_baseline_std_diff"]], {
+                "long_name": "Standard deviation of observed difference between near and far field concentrations",
+                "units": "ppb",
+            }),
+            "sim_baseline_mean_diff": (("time", "y", "x"), [alerts_baseline_ds.variables["sim_baseline_mean_diff"]], {
+                "long_name": "Average simulated difference between near and far field concentrations'",
+                "units": "ppb",
+            }),
+            "sim_baseline_std_diff": (("time", "y", "x"), [alerts_baseline_ds.variables["sim_baseline_std_diff"]], {
+                "long_name": "Standard deviation of simulated difference between near and far field concentrations",
+                "units": "ppb",
+            }),
+
+            # results data
+            "alerts": (("time", "y", "x"), [alerts], {
+                "long_name": "Boolean flag for anomalous concentration",
+                "missing_value": np.nan,
+            }),
+            "obs_enhancement": (("time", "y", "x"), [obs_enhancement], {
+                "long_name": "Difference between near and far field concentrations",
+                "units": "ppb",
+            })
+        },
+        coords={
+            "x": alerts_baseline_ds.coords["x"],
+            "y": alerts_baseline_ds.coords["y"],
+            "time": (("time"), [period_start], { "bounds": "time_bounds" }),
+        },
+        attrs={
+            "DX": alerts_baseline_ds.DX,
+            "DY": alerts_baseline_ds.DY,
+            "XCELL": alerts_baseline_ds.XCELL,
+            "YCELL": alerts_baseline_ds.YCELL,
+            "alerts_near_threshold": alerts_baseline_ds.alerts_near_threshold,
+            "alerts_far_threshold": alerts_baseline_ds.alerts_far_threshold,
+
+            # common
+            "title": "Open Methane daily methane alerts",
+            "openmethane_version": os.getenv("OPENMETHANE_VERSION", "development"),
+            "history": "",
+        },
+    )
+
+    # ensure time and time_bounds use the same time encoding
+    time_encoding = f"days since {period_start.strftime('%Y-%m-%d')}"
+    alerts_ds.time.encoding["units"] = time_encoding
+    alerts_ds.time_bounds.encoding["units"] = time_encoding
+
+    alerts_ds.to_netcdf(output_file)
 
 
 def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
