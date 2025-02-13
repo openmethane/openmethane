@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.5 (2025-02-13)
+
+### 🎉 Improvements
+
+- - Update create_alerts output to follow CF Conventions ([#138](https://github.com/openmethane/openmethane/pulls/138))
+
+
 ## openmethane v0.8.4 (2025-02-12)
 
 ### 🐛 Bug Fixes
