@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.6 (2025-02-17)
+
+### 🐛 Bug Fixes
+
+- - Fix alerts baseline not handling NaN values ([#140](https://github.com/openmethane/openmethane/pulls/140))
+
+
 ## openmethane v0.8.5 (2025-02-13)
 
 ### 🎉 Improvements
