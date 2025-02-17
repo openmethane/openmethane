@@ -15,7 +15,6 @@
 import datetime
 import os
 import numpy as np
-import logging
 import pathlib
 import pickle
 import gzip
@@ -24,11 +23,12 @@ import multiprocessing
 
 import xarray as xr
 
+from util.logger import get_logger
 from util.netcdf import extract_bounds
 
 ALERTS_MINIMUM_DATA = 1 # nimimum data required to define alerts baseline
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def iterPickle(filename, compressed=True):
     with gzip.open(filename) if compressed else open(filename, 'rb') as f:
