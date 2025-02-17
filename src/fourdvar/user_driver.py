@@ -14,10 +14,7 @@
 # limitations under the License.
 #
 
-import logging
-import os
 import pathlib
-import pickle
 import xarray as xr
 
 from scipy.optimize import fmin_l_bfgs_b as minimize
@@ -30,8 +27,9 @@ from fourdvar.datadef import PhysicalData
 from fourdvar.env import env
 from fourdvar.params import archive_defn, data_access, input_defn, template_defn
 from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 observed = None
 background = None

@@ -1,17 +1,16 @@
 import click
 import glob
-import logging
 import pathlib
 import xarray as xr
 
 from netCDF4 import Dataset
 
 from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
+from util.logger import get_logger
 
 SOLUTION_FILENAME = "posterior_multipliers.nc"
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logger = get_logger(__name__)
 
 @click.command()
 @click.option(
