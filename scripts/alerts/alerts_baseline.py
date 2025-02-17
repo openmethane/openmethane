@@ -31,6 +31,7 @@ def main():
     sim_file_template = env.str('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
     near_threshold = env.float('ALERTS_NEAR_THRESHOLD', 0.2)
     far_threshold = env.float('ALERTS_FAR_THRESHOLD', 1.0)
+    count_threshold = env.int('ALERTS_COUNT_THRESHOLD', 1)
     output_file = env.str('ALERTS_BASELINE_FILE', default='alerts_baseline.nc')
 
     alerts.create_alerts_baseline(
@@ -40,6 +41,7 @@ def main():
         sim_file_template = sim_file_template,
         near_threshold = near_threshold,
         far_threshold = far_threshold,
+        count_threshold = count_threshold,
         output_file = output_file,
     )
 

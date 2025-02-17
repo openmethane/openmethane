@@ -80,14 +80,44 @@ def get_obs_sim(
         if obs['lite_coord'] != sim['lite_coord']:
             raise ValueError('inconsistent lite coord')
     return obs_list, sim_list, period_start, period_end
-        
-def create_alerts_baseline(
+
+def calculate_baseline_statistics( near_fields_array: np.ndarray,
+                                   far_fields_array: np.ndarray,
+                                   count_threshold: int,
+                                   ) -> tuple[ np.ndarray]:
+    """ calculates baseline statistics of mean and standard deviation of
+       local enhancement along with number of valid samples for each spatial point.
+       If number of valid enhancements < count_threshold, returns np.nan
+    """
+    logger.info('calculating baseline statistics')
+    # enforce types
+    near_fields_array = np.array( near_fields_array)
+    far_fields_array = np.array(far_fields_array)
+    # check consistent masking
+    if (np.isnan( near_fields_array) != np.isnan( far_fields_array)).any():
+        raise ValueError("inconsistent masking of near and far fields")
+    baseline_count = (~np.isnan( far_fields_array[:,0,...])).sum(axis=0)
+    too_few_obs = (baseline_count < count_threshold)
+    enhancement = near_fields_array -far_fields_array
+    obs_baseline_mean_diff = np.nanmean( enhancement[:,0,...],axis=0)
+    obs_baseline_mean_diff[ too_few_obs] = np.nan
+    obs_baseline_std_diff = np.nanstd( enhancement[:,0,...],axis=0)
+    obs_baseline_std_diff[ too_few_obs] = np.nan
+    sim_baseline_mean_diff = np.nanmean( enhancement[:,1,...],axis=0)
+    sim_baseline_mean_diff[ too_few_obs] = np.nan
+    sim_baseline_std_diff = np.nanstd( enhancement[:,1,...],axis=0)
+    sim_baseline_std_diff[ too_few_obs] = np.nan
+    return obs_baseline_mean_diff, obs_baseline_std_diff, sim_baseline_mean_diff,\
+        sim_baseline_std_diff, baseline_count
+                         
+def create_alerts_baseline( 
         domain_file: pathlib.Path,
         dir_list: list[str],
         obs_file_template: str = 'input/test_obs.pic.gz',
         sim_file_template: str = 'simulobs.pic.gz',
         near_threshold: float = 0.2,
         far_threshold: float = 1.0,
+        count_threshold: int = 1,
         output_file: str = 'alerts_baseline.nc',
         ):
     '''constructs a baseline for alerts.
@@ -133,22 +163,23 @@ def create_alerts_baseline(
     logger.info(f"Constructing far_fields_array")
     far_fields_array = np.array( far_fields)
 
-    logger.info(f"Calculating enhancement")
-    enhancement = near_fields_array -far_fields_array
 
-    obs_baseline_mean_diff = enhancement[:,0,...].mean(axis=0)
-    obs_baseline_std_diff = enhancement[:,0,...].std(axis=0)
-    sim_baseline_mean_diff = enhancement[:,1,...].mean(axis=0)
-    sim_baseline_std_diff = enhancement[:,1,...].std(axis=0)
+    obs_baseline_mean_diff, obs_baseline_std_diff, sim_baseline_mean_diff,\
+        sim_baseline_std_diff, baseline_count =\
+            calculate_baseline_statistics( near_fields_array, far_fields_array,
+                                           count_threshold)
 
     logger.info(f"Creating dataset variables")
     dss['obs_baseline_mean_diff'] = xr.DataArray(obs_baseline_mean_diff, dims=alerts_dims)
     dss['obs_baseline_std_diff'] = xr.DataArray(obs_baseline_std_diff, dims=alerts_dims)
     dss['sim_baseline_mean_diff'] = xr.DataArray(sim_baseline_mean_diff, dims=alerts_dims)
     dss['sim_baseline_std_diff'] = xr.DataArray(sim_baseline_std_diff, dims=alerts_dims)
+    dss['baseline_count'] = xr.DataArray(baseline_count, dims=alerts_dims)
 
     dss.attrs['alerts_near_threshold'] = near_threshold
     dss.attrs['alerts_far_threshold'] = far_threshold
+    dss.attrs['alerts_count_threshold'] = count_threshold
+    
 
     logger.info(f"Writing alerts baseline to {output_file}")
     dss.to_netcdf(output_file)
