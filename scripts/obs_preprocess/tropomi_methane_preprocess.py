@@ -26,13 +26,12 @@ import numpy as np
 from netCDF4 import Dataset
 
 import fourdvar.util.file_handle as fh
-from fourdvar import logging
 from fourdvar.params import date_defn, input_defn
 from obs_preprocess.model_space import ModelSpace
 from obs_preprocess.obsESA_defn import ObsSRON
+from util.logger import get_logger
 
-logging.setup_logging()
-logger = logging.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 N_CPUS = int(os.environ.get("NCPUS", 1))

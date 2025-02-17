@@ -10,7 +10,6 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", None)
 LOG_FILE = os.getenv("LOG_FILE", None)
 OM_LOGGING_FILE = os.getenv("OM_LOGGING_FILE", None)
 
-
 def _setup_logger():
     """
     Parses environment variables and sets up logging based on their values.
