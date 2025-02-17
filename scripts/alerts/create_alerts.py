@@ -29,6 +29,7 @@ def main():
     output_file = env.str('ALERTS_OUTPUT_FILE', default='alerts.nc')
     alerts_threshold = env.float( 'ALERTS_THRESHOLD', default=0.0)
     significance_threshold = env.float( 'SIGNIFICANCE_THRESHOLD', default=2.0)
+    count_threshold = env.int("ALERTS_COUNT_THRESHOLD", 30)
 
     alerts.create_alerts(
         baseline_file = baseline_file,
@@ -38,6 +39,7 @@ def main():
         output_file = output_file,
         alerts_threshold = alerts_threshold,
         significance_threshold=significance_threshold,
+        count_threshold = count_threshold,
     )
 
     
