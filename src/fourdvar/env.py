@@ -6,6 +6,7 @@ import logging
 
 from environs import Env
 
+# TODO: replace this with util.logger once circular dependency has been resolved
 logger = logging.getLogger(__name__)
 
 

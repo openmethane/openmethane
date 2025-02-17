@@ -19,12 +19,13 @@ import time
 import numpy as np
 
 from fourdvar import datadef as d
-from fourdvar import logging, user_driver
+from fourdvar import user_driver
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn, data_access
+from util.logger import get_logger
 
-logging.setup_logging()
-logger = logging.get_logger(__name__)
+
+logger = get_logger(__name__)
 
 
 def cost_func(vector):

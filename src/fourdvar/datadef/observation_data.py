@@ -15,7 +15,6 @@
 #
 import datetime
 import glob
-import logging
 import os
 import pathlib
 from copy import deepcopy
@@ -30,8 +29,9 @@ import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.params import date_defn, template_defn
 from fourdvar.util.archive_handle import get_archive_path
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @attrs.define

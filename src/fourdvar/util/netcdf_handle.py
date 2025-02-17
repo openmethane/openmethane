@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-import logging
 import os
 import shutil
 import subprocess
@@ -24,8 +22,9 @@ import netCDF4 as ncf
 import numpy as np
 
 import fourdvar.util.date_handle as dt
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def validate(filepath, dataset):

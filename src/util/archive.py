@@ -5,10 +5,12 @@ during re-processing.
 """
 
 import datetime
-import logging
 import pathlib
 import subprocess
 
+from util.logger import get_logger
+
+logger = get_logger(__name__)
 
 def monthly(
         daily_s3_bucket: str,
@@ -148,7 +150,7 @@ def _s3_fetch(s3_path: str, local_path: pathlib.Path, single_file: bool, extra_p
         raise error
 
     local_path.mkdir(parents=True, exist_ok=True)
-    logging.info(f"Downloading {s3_path} to {local_path}")
+    logger.info(f"Downloading {s3_path} to {local_path}")
 
     # Download the path or file
     operation = "cp" if single_file else "sync"
@@ -158,7 +160,7 @@ def _s3_fetch(s3_path: str, local_path: pathlib.Path, single_file: bool, extra_p
     except subprocess.CalledProcessError as error:
         print(f"S3 fetch failed with stdout:\n{error.output}\nstderr:\n{error.stderr}")
         raise error
-    logging.debug(f"Output from {' '.join(res.args)}: {res.stdout}")
+    logger.debug(f"Output from {' '.join(res.args)}: {res.stdout}")
 
 
 def date_range(start_date: datetime.date, end_date: datetime.date):

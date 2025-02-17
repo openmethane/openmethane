@@ -132,8 +132,8 @@ def test_cmaq_config(data_regression, target_environment, target):
         "env",
         "os",
         "store_path",
-        "logging",
         "logger",
+        "get_logger",
     }
 
     cwd = os.getcwd()
