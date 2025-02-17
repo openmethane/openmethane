@@ -182,6 +182,7 @@ def create_alerts(
         output_file: str = 'alerts.nc',
         alerts_threshold: float = 0.0,
         significance_threshold: float = 1.0,
+        count_threshold: int = 30,
 ):
     '''
        constructs alerts.
@@ -209,6 +210,7 @@ def create_alerts(
         land_mask = alerts_baseline_ds['LANDMASK'].to_numpy().squeeze()
         baseline_mean = alerts_baseline_ds['sim_baseline_mean_diff'].to_numpy().squeeze()
         baseline_std = alerts_baseline_ds['obs_baseline_std_diff'].to_numpy().squeeze()
+        baseline_count = alerts_baseline_ds['baseline_count'].to_numpy().squeeze()
 
         near_threshold = alerts_baseline_ds.attrs['alerts_near_threshold']
         far_threshold = alerts_baseline_ds.attrs['alerts_far_threshold']
@@ -225,7 +227,8 @@ def create_alerts(
     alerts = np.zeros( resultShape)
     alerts[...] = np.nan
     # first construct mask for points we cannot calcolate alert, either no baseline or no obs
-    undefined_mask = np.isnan( obs_enhancement) | np.isnan( baseline_mean) | np.isnan( baseline_std)
+    undefined_mask = np.isnan( obs_enhancement) | np.isnan( baseline_mean) |\
+        np.isnan( baseline_std) | (baseline_count < count_threshold)
     defined_mask = ~undefined_mask
     # now calculate alerts only where defined
     alerts[defined_mask] = (
@@ -306,6 +309,10 @@ def create_alerts(
             "sim_baseline_std_diff": (("time", "y", "x"), [alerts_baseline_ds.variables["sim_baseline_std_diff"]], {
                 "long_name": "Standard deviation of simulated difference between near and far field concentrations",
                 "units": "ppb",
+            }),
+            "baseline_count": (("time", "y", "x"), [alerts_baseline_ds.variables["baseline_count"]], {
+                "long_name": "number of observations in baseline",
+                "units": "counts",
             }),
 
             # results data
