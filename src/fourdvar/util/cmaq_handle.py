@@ -15,7 +15,6 @@
 #
 import datetime
 import glob
-import logging
 import os
 import subprocess
 import time
@@ -24,9 +23,9 @@ import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
 from fourdvar.params import cmaq_config, date_defn, template_defn
-from fourdvar.params.root_path_defn import store_path
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def parse_env_dict(env_dict, date):

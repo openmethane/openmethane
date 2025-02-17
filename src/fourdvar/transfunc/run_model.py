@@ -13,14 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-
-import logging
-
 import fourdvar.util.cmaq_handle as cmaq
 from fourdvar.datadef import ModelInputData, ModelOutputData
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def run_model(model_input):

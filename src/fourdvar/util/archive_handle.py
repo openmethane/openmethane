@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-import logging
 import os
 
 from fourdvar.params import archive_defn
 from fourdvar.util import file_handle
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 finished_setup = False
 archive_path = ""

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import logging
 import os
 
 import numpy as np
@@ -23,8 +22,9 @@ import fourdvar.util.netcdf_handle as ncf
 from fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from fourdvar.params import date_defn, input_defn, template_defn
 from fourdvar.util.archive_handle import get_archive_path
+from util.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PhysicalAbstractData(FourDVarData):
