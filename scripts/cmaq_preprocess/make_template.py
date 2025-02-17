@@ -21,9 +21,9 @@ import numpy as np
 import fourdvar.util.date_handle as dt
 import fourdvar.util.file_handle as fh
 import fourdvar.util.netcdf_handle as ncf
-from fourdvar.logging import setup_logging
 from fourdvar.params import cmaq_config, date_defn, template_defn
 from fourdvar.util import cmaq_handle
+from util.logger import get_logger
 
 
 def copy_file(src_template: str, dest_template: str, date: datetime.date | None):
@@ -39,7 +39,8 @@ def copy_file(src_template: str, dest_template: str, date: datetime.date | None)
     ncf.copy_compress(src, dest)
 
 
-setup_logging()
+logger = get_logger(__name__)
+logger.debug("Preparing for cmaq fwd and bwd run")
 
 # Copy a template emissions file into the input directory
 emis_file = dt.replace_date(cmaq_config.emis_file, date_defn.start_date)

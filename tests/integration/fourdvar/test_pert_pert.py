@@ -22,15 +22,12 @@ import fourdvar.datadef as d
 import fourdvar.user_driver as user
 import fourdvar.util.archive_handle as archive
 import fourdvar.util.cmaq_handle as cmaq
-from fourdvar import logging
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn
-
+from util.logger import get_logger
 
 def _run_pert_pert():
-    # This is the main function that is called by the test
-    logger = logging.get_logger(__name__)
-    logging.setup_logging()
+    logger = get_logger(__name__)
 
     # replace archive directory name and desciption file
     archive_defn.experiment = "pert_pert_test"
