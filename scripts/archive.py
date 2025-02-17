@@ -17,10 +17,8 @@ with the execution ID of the workflow.
 """
 
 import json
-import logging
 import os
 import pathlib
-import shutil
 import subprocess
 import sys
 import typing
@@ -33,6 +31,9 @@ import marshmallow.utils
 
 # Loads environment using the value of the environment variable "TARGET"
 from fourdvar.env import env
+from util.logger import get_logger
+
+logger = get_logger(__name__)
 
 def main():
     config = Config.from_environment()
@@ -57,7 +58,7 @@ def main():
     if s3_result.returncode == 1:
         # We only want to catch an return code of 1 as this is a substantial failure
         # s3_result.returncode could be 2 if new directories are required
-        logging.error("Sync failed with exit code 1")
+        logger.error("Sync failed with exit code 1")
         sys.exit(1)
 
     # place the alerts baseline file in a more general location, based on config
@@ -90,15 +91,15 @@ def main():
         if s3_result_reduced.returncode == 1:
             # We only want to catch an return code of 1 as this is a substantial failure
             # s3_result.returncode could be 2 if new directories are required
-            logging.error("Sync to reduced results target bucket failed with exit code 1")
+            logger.error("Sync to reduced results target bucket failed with exit code 1")
             sys.exit(1)
 
     if config.success:
-        logging.debug(f"Deleting {store_path}.")
+        logger.debug(f"Deleting {store_path}.")
         # shutil.rmtree(store_path)
     else:
-        logging.debug(f"Not deleting {store_path} for failed run - clean up manually.")
-    logging.debug("Finished successfully")
+        logger.debug(f"Not deleting {store_path} for failed run - clean up manually.")
+    logger.debug("Finished successfully")
 
 
 @dataclass
@@ -167,7 +168,7 @@ class Config:
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):
-        logging.debug(f"""Configuration:
+        logger.debug(f"""Configuration:
 target_bucket  = {self.target_bucket!r}
 domain_name    = {self.domain_name!r}
 start_date_raw = {self.start_date_raw!r}
@@ -237,7 +238,7 @@ def dump_workflow_logs(
 
 
 def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typing.TextIO):
-    logging.info(f"Fetching logs from {log_group_name}/{log_stream_name}")
+    logger.info(f"Fetching logs from {log_group_name}/{log_stream_name}")
     logs_client = boto3.client("logs", region_name=os.environ["AWS_REGION"])
     answer = {"nextToken": None}
     while "nextToken" in answer:
@@ -251,7 +252,7 @@ def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typin
             answer = logs_client.filter_log_events(**kwargs)
         except botocore.exceptions.ClientError as e:
             msg = f"Error fetching logs: {e}"
-            logging.exception(msg)
+            logger.exception(msg)
             logfd.write(f"{msg}\n")
             return
         log_events = answer["events"]
@@ -261,5 +262,4 @@ def write_stream_logfile(log_group_name: str, log_stream_name: str, logfd: typin
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=env.str("LOG_LEVEL", "DEBUG"))
     main()

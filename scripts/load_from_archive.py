@@ -13,7 +13,6 @@ The script downloads specific directories from that archive,
 into ${STORE_PATH}/${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}.
 """
 import click
-import logging
 import pathlib
 
 # Loads environment using the value of the environment variable "TARGET"
@@ -69,5 +68,4 @@ def load_from_archive(sync: str = "monthly"):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=env.str("LOG_LEVEL", "DEBUG"))
     load_from_archive()
