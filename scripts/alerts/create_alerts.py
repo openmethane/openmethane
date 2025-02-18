@@ -27,8 +27,9 @@ def main():
     obs_file_template = env.str('ALERTS_OBS_FILE_TEMPLATE', default='input/test_obs.pic.gz')
     sim_file_template = env.str('ALERTS_SIM_FILE_TEMPLATE', default='simulobs.pic.gz')
     output_file = env.str('ALERTS_OUTPUT_FILE', default='alerts.nc')
-    alerts_threshold = env.float( 'ALERTS_THRESHOLD', default=0.0)
-    significance_threshold = env.float( 'SIGNIFICANCE_THRESHOLD', default=2.0)
+    alerts_threshold = env.float( 'ALERTS_THRESHOLD', default=5.0)
+    significance_threshold = env.float( 'SIGNIFICANCE_THRESHOLD', default=3.0)
+    count_threshold = env.int("ALERTS_COUNT_THRESHOLD", 30)
 
     alerts.create_alerts(
         baseline_file = baseline_file,
@@ -38,6 +39,7 @@ def main():
         output_file = output_file,
         alerts_threshold = alerts_threshold,
         significance_threshold=significance_threshold,
+        count_threshold = count_threshold,
     )
 
     
