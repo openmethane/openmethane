@@ -337,6 +337,9 @@ def create_alerts(
             "YCELL": alerts_baseline_ds.YCELL,
             "alerts_near_threshold": alerts_baseline_ds.alerts_near_threshold,
             "alerts_far_threshold": alerts_baseline_ds.alerts_far_threshold,
+            "alerts_threshold": alerts_threshold,
+            "alerts_significance_threshold": significance_threshold,
+            "alerts_count_threshold": count_threshold,
 
             # common
             "title": "Open Methane daily methane alerts",
