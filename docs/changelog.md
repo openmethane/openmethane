@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.7 (2025-02-18)
+
+### 🎉 Improvements
+
+- calculating alerts with new baseline methodology ([#141](https://github.com/openmethane/openmethane/pulls/141))
+
+
 ## openmethane v0.8.6 (2025-02-17)
 
 ### 🐛 Bug Fixes
