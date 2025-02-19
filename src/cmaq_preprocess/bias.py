@@ -27,7 +27,7 @@ def mass_weighted_mean(
         vertical_integral = np.tensordot(field, thickness, (-3, 0)).squeeze()
         if region_inds is not None:
             region_slice = np.s_[region_inds[0][0]:region_inds[1][0]+1,
-                                 region_inds[1][0]:region_inds[1][1]+1]
+                                 region_inds[0][1]:region_inds[1][1]+1]
         else:
             region_slice = np.s_[:,:] # whole array
         print('region slice',region_slice,vertical_integral[region_slice].mean())
