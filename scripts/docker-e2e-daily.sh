@@ -133,6 +133,7 @@ docker run --name="e2e-daily-create-alerts" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
   -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
+  -e ALERTS_COUNT_THRESHOLD="2" \
   openmethane python scripts/alerts/create_alerts.py
 
 
