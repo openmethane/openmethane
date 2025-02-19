@@ -1,4 +1,5 @@
 import os
+
 import xarray as xr
 
 import fourdvar.params.input_defn
@@ -18,7 +19,7 @@ def main():
     icon_file = get_icon_file(config)
     bcon_files = get_bcon_files(config)
     met_file = get_met_file(config)
-    correct_bias_by_region = os.getenv('DISABLE_CORRECT_BIAS_BY_REGION') != 'true'
+    correct_bias_by_region = os.getenv("DISABLE_CORRECT_BIAS_BY_REGION") != "true"
     levels = xr.open_dataset(met_file).attrs["VGLVLS"]
     bias = calculate_bias(
         icon_file=icon_file,

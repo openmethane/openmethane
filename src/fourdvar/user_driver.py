@@ -15,8 +15,8 @@
 #
 
 import pathlib
-import xarray as xr
 
+import xarray as xr
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import fourdvar.datadef as d

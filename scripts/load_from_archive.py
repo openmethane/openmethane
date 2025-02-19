@@ -12,8 +12,10 @@ The archived data is stored in the prefix ${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/
 The script downloads specific directories from that archive,
 into ${STORE_PATH}/${DOMAIN_NAME}/daily/${YEAR}/${MONTH}/${DAY}.
 """
-import click
+
 import pathlib
+
+import click
 
 # Loads environment using the value of the environment variable "TARGET"
 from fourdvar.env import env
@@ -30,11 +32,12 @@ ALERTS_BASELINE_REMOTE = env.path("ALERTS_BASELINE_REMOTE", "")
 
 @click.command()
 @click.option(
-    "--sync", "-s",
+    "--sync",
+    "-s",
     help="Sync a single day ('daily') or multiple dates for a 'monthly' or 'baseline' task",
     default="monthly",
     show_default=True,
-    type=click.Choice(['monthly', 'daily', 'baseline'])
+    type=click.Choice(["monthly", "daily", "baseline"]),
 )
 def load_from_archive(sync: str = "monthly"):
     match sync:

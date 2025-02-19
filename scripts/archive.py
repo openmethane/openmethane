@@ -35,6 +35,7 @@ from util.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 def main():
     config = Config.from_environment()
     store_path = config.store_path or get_store_path(config)
@@ -65,9 +66,12 @@ def main():
     if config.alerts_baseline_file and config.alerts_baseline_file.exists():
         s3_result_alerts = subprocess.run(
             (
-                "aws", "s3", "cp", "--no-progress",
+                "aws",
+                "s3",
+                "cp",
+                "--no-progress",
                 str(config.alerts_baseline_file),
-                f"{config.target_bucket}/{config.alerts_baseline_remote}"
+                f"{config.target_bucket}/{config.alerts_baseline_remote}",
             ),
             check=False,
         )
@@ -75,17 +79,19 @@ def main():
     # if requested, also push a reduced set of results to a second bucket
     if config.target_bucket_reduced:
         s3_result_reduced = subprocess.run(
-            ("aws",
-             "s3",
-             "sync",
-             "--no-progress",
-             "--exclude",
-             "*",
-             # you can add more --include flags to include more stuff in the reduced result
-             "--include",
-             "environment.txt",
-             str(store_path),
-             f"{config.target_bucket_reduced}/{prefix}"),
+            (
+                "aws",
+                "s3",
+                "sync",
+                "--no-progress",
+                "--exclude",
+                "*",
+                # you can add more --include flags to include more stuff in the reduced result
+                "--include",
+                "environment.txt",
+                str(store_path),
+                f"{config.target_bucket_reduced}/{prefix}",
+            ),
             check=False,
         )
         if s3_result_reduced.returncode == 1:
@@ -164,7 +170,7 @@ class Config:
             test=test,
             workflow_execution_arn=workflow_execution_arn,
             alerts_baseline_remote=alerts_baseline_remote,
-            alerts_baseline_file=alerts_baseline_file
+            alerts_baseline_file=alerts_baseline_file,
         )
 
     def dump(self, store_path: pathlib.Path, prefix: str):

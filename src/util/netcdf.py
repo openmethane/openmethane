@@ -1,6 +1,6 @@
-
 import numpy as np
 import xarray as xr
+
 
 def extract_bounds(corner_coords: xr.Variable):
     """

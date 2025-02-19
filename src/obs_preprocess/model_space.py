@@ -222,7 +222,7 @@ class ModelSpace:
         pbound = self.get_pressure_bounds(target_coord)
         # calculate pressure weight per layer
         pdiff = pbound[:-1] - pbound[1:]
-        pweight = pdiff / (pbound[0] -pbound[-1])
+        pweight = pdiff / (pbound[0] - pbound[-1])
         return pweight
 
     def pressure_interp(self, obs_pressure, obs_value, target_coord):
@@ -282,5 +282,5 @@ class ModelSpace:
         domain = deepcopy(self.gridmeta)
         domain["SDATE"] = self.sdate
         domain["EDATE"] = self.edate
-        domain["openmethane_version"] = os.getenv('OPENMETHANE_VERSION')
+        domain["openmethane_version"] = os.getenv("OPENMETHANE_VERSION")
         return domain

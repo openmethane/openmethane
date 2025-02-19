@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from datetime import datetime, timedelta
 import glob
 import pathlib
+from datetime import datetime, timedelta
 
 import numpy as np
 import xarray as xr
@@ -46,7 +46,9 @@ def calculate_average_emissions(
     for filename in prior_emis_files:
         logger.debug(f"loading {filename}")
         with xr.open_dataset(filename) as prior_emis_day_ds:
-            day = datetime.strptime(str(prior_emis_day_ds.SDATE), "%Y%j") # format is <YEAR><DAY OF YEAR>
+            day = datetime.strptime(
+                str(prior_emis_day_ds.SDATE), "%Y%j"
+            )  # format is <YEAR><DAY OF YEAR>
             if prior_emis_cell_area is None:
                 prior_emis_cell_area = prior_emis_day_ds.XCELL * prior_emis_day_ds.YCELL
             if prior_emis_start is None or day < prior_emis_start:
@@ -72,7 +74,12 @@ def calculate_average_emissions(
     prior_emis_mean_output = prior_emis_mean_surf * conv_fac / prior_emis_cell_area
 
     # each file covers a full day, so add 1d to the end date for the full period
-    return (posterior_emis_mean_output, prior_emis_mean_output, prior_emis_start, prior_emis_end + timedelta(days=1))
+    return (
+        posterior_emis_mean_output,
+        prior_emis_mean_output,
+        prior_emis_start,
+        prior_emis_end + timedelta(days=1),
+    )
 
 
 def list_emis_template_files(

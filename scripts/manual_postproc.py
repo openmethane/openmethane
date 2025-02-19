@@ -1,8 +1,8 @@
-import click
 import glob
 import pathlib
-import xarray as xr
 
+import click
+import xarray as xr
 from netCDF4 import Dataset
 
 from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
@@ -11,6 +11,7 @@ from util.logger import get_logger
 SOLUTION_FILENAME = "posterior_multipliers.nc"
 
 logger = get_logger(__name__)
+
 
 @click.command()
 @click.option(
@@ -48,11 +49,11 @@ logger = get_logger(__name__)
     type=click.STRING,
 )
 def manual_postproc(
-        archive_dir: pathlib.Path,
-        template_dir: pathlib.Path,
-        iter_template: str,
-        prior_file: pathlib.Path,
-        posterior_file: pathlib.Path | None = None,
+    archive_dir: pathlib.Path,
+    template_dir: pathlib.Path,
+    iter_template: str,
+    prior_file: pathlib.Path,
+    posterior_file: pathlib.Path | None = None,
 ):
     if posterior_file is not None:
         posterior_file = posterior_file
@@ -61,7 +62,7 @@ def manual_postproc(
 
     logger.debug(f"post processing {posterior_file}")
     with Dataset(posterior_file) as posterior_nc:
-        emis_array = posterior_nc['/emis']['CH4'][...]
+        emis_array = posterior_nc["/emis"]["CH4"][...]
 
     prior_emissions = xr.open_dataset(pathlib.Path(prior_file))
 
@@ -76,11 +77,8 @@ def manual_postproc(
     posterior_emissions.to_netcdf(output_file)
 
 
-def find_last_iteration(
-        archive_dir: pathlib.Path,
-        iter_template: str
-) -> pathlib.Path:
-    """ returns successful convergence output if present, otherwise last iteration """
+def find_last_iteration(archive_dir: pathlib.Path, iter_template: str) -> pathlib.Path:
+    """returns successful convergence output if present, otherwise last iteration"""
     solution_path = pathlib.Path(archive_dir, SOLUTION_FILENAME)
     if solution_path.is_file():
         return solution_path
@@ -91,7 +89,7 @@ def find_last_iteration(
         if iter_files is not None:
             iter_files.sort()
             return iter_files[-1]
-        raise ValueError(f'no converged iterations found at {iter_glob}')
+        raise ValueError(f"no converged iterations found at {iter_glob}")
 
 
 if __name__ == "__main__":

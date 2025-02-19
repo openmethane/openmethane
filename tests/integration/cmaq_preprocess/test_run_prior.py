@@ -1,5 +1,5 @@
-from xarray import open_datatree
 from scripts.cmaq_preprocess.make_prior import make_prior
+from xarray import open_datatree
 
 
 def test_make_prior(test_data_dir, tmpdir, compare_dataset, emission_template):
