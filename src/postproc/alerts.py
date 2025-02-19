@@ -225,23 +225,23 @@ def create_alerts_baseline(
             # baseline data
             "obs_baseline_mean_diff": (("time", "y", "x"), [obs_baseline_mean_diff], {
                 "long_name": "Average observed difference between near and far field concentrations",
-                "units": "ppb",
+                "units": "1e-9",
             }),
             "obs_baseline_std_diff": (("time", "y", "x"), [obs_baseline_std_diff], {
                 "long_name": "Standard deviation of observed difference between near and far field concentrations",
-                "units": "ppb",
+                "units": "1e-9",
             }),
             "sim_baseline_mean_diff": (("time", "y", "x"), [sim_baseline_mean_diff], {
                 "long_name": "Average simulated difference between near and far field concentrations'",
-                "units": "ppb",
+                "units": "1e-9",
             }),
             "sim_baseline_std_diff": (("time", "y", "x"), [sim_baseline_std_diff], {
                 "long_name": "Standard deviation of simulated difference between near and far field concentrations",
-                "units": "ppb",
+                "units": "1e-9",
             }),
             "baseline_count": (("time", "y", "x"), [baseline_count], {
                 "long_name": "number of observations in baseline",
-                "units": "counts",
+                "units": "1",
             }),
         },
         coords={
@@ -375,7 +375,7 @@ def create_alerts(
             }),
             "obs_enhancement": (("time", "y", "x"), [obs_enhancement], {
                 "long_name": "Difference between near and far field concentrations",
-                "units": "ppb",
+                "units": "1e-9",
             })
         },
         coords={
