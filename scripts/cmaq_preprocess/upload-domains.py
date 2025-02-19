@@ -7,13 +7,13 @@ This requires credentials for the Bucket and is assumed to have been run from th
 directory.
 """
 
-import logging
 import shlex
 import subprocess
 import sys
 
 # Loads environment using the value of the environment variable "TARGET"
 from fourdvar.env import env
+from util.logger import get_logger
 
 GEO_DIR = env.str("GEO_DIR", "data/domains")
 TARGET_DIR = "s3://openmethane-prior/domains"
@@ -28,6 +28,8 @@ EXTRA_R2_ARGS = env.str("EXTRA_R2_ARGS", "")
 FORCE = env.bool("FORCE", False)
 
 
+logger = get_logger(__name__)
+
 def main():
     r2_arguments = ["--endpoint-url", AWS_ENDPOINT_URL, "--region", AWS_REGION]
     if EXTRA_R2_ARGS:
@@ -39,7 +41,7 @@ def main():
         capture_output=True,
         text=True,
     )
-    logging.debug(f"AWS configuration:\n{aws_config.stdout}")
+    logger.debug(f"AWS configuration:\n{aws_config.stdout}")
 
     check_geo_dir_up_to_date(r2_arguments)
 
@@ -47,7 +49,7 @@ def main():
 
     if dry_sync_output:
         if ask_upload():
-            logging.info(f"Uploading data to {TARGET_DIR=}")
+            logger.info(f"Uploading data to {TARGET_DIR=}")
             sync_result = subprocess.run(
                 ["aws", "s3", "sync", GEO_DIR, TARGET_DIR, *r2_arguments],  # noqa: S607
                 check=False,
@@ -56,18 +58,18 @@ def main():
             # Swallow an exit code of 2 as that still indicates success
             # This is quite poorly documented by AWS
             if sync_result.returncode not in [0, 2]:
-                logging.error(f"Failed to upload data to {TARGET_DIR=}")
-                logging.error(f"Error: {sync_result.stderr}")
+                logger.error(f"Failed to upload data to {TARGET_DIR=}")
+                logger.error(f"Error: {sync_result.stderr}")
                 sys.exit(sync_result.returncode)
-            logging.info("Done.")
+            logger.info("Done.")
     else:
-        logging.info("Nothing to upload")
+        logger.info("Nothing to upload")
 
 
 def ask_upload():
     if FORCE:
         upload = True
-        logging.debug(f"Forcing upload because {FORCE=}.")
+        logger.debug(f"Forcing upload because {FORCE=}.")
     else:
         answer = input("Upload? (y/N): ")
         upload = answer.strip() in "yY"
@@ -80,7 +82,7 @@ def dry_sync(r2_arguments):
         check=False,
         capture_output=True,
     )
-    logging.debug(
+    logger.debug(
         f"""Result from a dryrun:
 Stdout:
 {dry_sync_to_r2.stdout}
@@ -92,7 +94,7 @@ Stderr:
 
 
 def check_geo_dir_up_to_date(r2_arguments):
-    logging.info("Checking if up to date")
+    logger.info("Checking if up to date")
     dry_sync_from_r2 = subprocess.run(
         ["aws", "s3", "sync", TARGET_DIR, GEO_DIR, "--dryrun", *r2_arguments],  # noqa: S607
         check=False,
@@ -100,15 +102,15 @@ def check_geo_dir_up_to_date(r2_arguments):
     )
     if dry_sync_from_r2.stdout.strip():
         # the dry run did changes
-        logging.debug(f"Dry run syncing from r2 to GEO_DIR reports: {dry_sync_from_r2.stdout}")
-        logging.warning(f"Local {GEO_DIR=} is not up to date with {TARGET_DIR=}.")
-        logging.warning("Run `make sync-domains-from-cf`")
+        logger.debug(f"Dry run syncing from r2 to GEO_DIR reports: {dry_sync_from_r2.stdout}")
+        logger.warning(f"Local {GEO_DIR=} is not up to date with {TARGET_DIR=}.")
+        logger.warning("Run `make sync-domains-from-cf`")
         if not FORCE:
             sys.exit(1)
     else:
-        logging.debug(f"Local {GEO_DIR=} is up to date with {TARGET_DIR=}.")
+        logger.debug(f"Local {GEO_DIR=} is up to date with {TARGET_DIR=}.")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=env.str("LOG_LEVEL", "DEBUG"))
+    logger.basicConfig(level=env.str("LOG_LEVEL", "DEBUG"))
     main()
