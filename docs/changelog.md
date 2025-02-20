@@ -19,6 +19,19 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.8 (2025-02-20)
+
+### 🎉 Improvements
+
+- - Add common logging module which can be controlled via environment vars ([#139](https://github.com/openmethane/openmethane/pulls/139))
+- - Update alerts baseline file format to follow CF conventions ([#142](https://github.com/openmethane/openmethane/pulls/142))
+
+### 🐛 Bug Fixes
+
+- fixing indexing error ([#143](https://github.com/openmethane/openmethane/pulls/143))
+- - Fix alerts baseline creation being dependent on uncertain x, y coordinates ([#144](https://github.com/openmethane/openmethane/pulls/144))
+
+
 ## openmethane v0.8.7 (2025-02-18)
 
 ### 🎉 Improvements
