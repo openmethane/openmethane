@@ -129,6 +129,10 @@ def create_alerts_baseline(
         logger.debug(f"Domain found at {domain_file}")
 
         domain_ds = ds.load()
+
+        domain_size_x = domain_ds.sizes['COL']
+        domain_size_y = domain_ds.sizes['ROW']
+
         lats = domain_ds['LAT'].to_numpy().squeeze()
         lons = domain_ds['LON'].to_numpy().squeeze()
         land_mask = domain_ds['LANDMASK'].to_numpy().squeeze()
@@ -173,8 +177,12 @@ def create_alerts_baseline(
     baseline_period_end = obs_period_end.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
 
     # create a variable with projection coordinates
-    projection_x = domain_ds.XORIG + (0.5 * domain_ds.XCELL) + np.arange(len(domain_ds.COL)) * domain_ds.XCELL
-    projection_y = domain_ds.YORIG + (0.5 * domain_ds.YCELL) + np.arange(len(domain_ds.ROW)) * domain_ds.YCELL
+    projection_x = (
+        domain_ds.XORIG + (0.5 * domain_ds.XCELL) + np.arange(domain_size_x) * domain_ds.XCELL
+    )
+    projection_y = (
+        domain_ds.YORIG + (0.5 * domain_ds.YCELL) + np.arange(domain_size_y) * domain_ds.YCELL
+    )
 
     logger.info(f"Creating dataset")
     # copy dimensions and attributes from the domain, as the alerts should be
@@ -245,8 +253,8 @@ def create_alerts_baseline(
             }),
         },
         coords={
-            "x": domain_ds.coords["x"],
-            "y": domain_ds.coords["y"],
+            "x": np.arange(domain_size_x),
+            "y": np.arange(domain_size_y),
             "time": (("time"), [baseline_period_start], {"bounds": "time_bounds"}),
         },
         attrs={
