@@ -46,8 +46,9 @@ def _setup_logger():
             log_level = log_levels[LOG_LEVEL]
             logging.basicConfig(level=log_level)
         else:
+            valid_levels = ', '.join(log_levels.keys())
             logging.warning(
-                f"LOG_LEVEL={LOG_LEVEL} is not a valid log level, must be one of: {', '.join(log_levels.keys())}"
+                f"LOG_LEVEL={LOG_LEVEL} is not a valid log level, must be one of: {valid_levels}"
             )
 
     # Log to a file if a filename is provided in the LOG_FILE environment var

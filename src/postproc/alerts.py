@@ -35,14 +35,14 @@ def iterPickle(filename, compressed=True):
     with gzip.open(filename) if compressed else open(filename, "rb") as f:
         while True:
             try:
-                yield pickle.load(f)
+                yield pickle.load(f) # noqa: S301
             except EOFError:
                 break
 
 
 def read_obs_file(
     path: pathlib.Path,
-    pop_keys: list = None,
+    pop_keys: list | None = None,
 ) -> list:
     """read obs from file
     remove keys specified by pop_keys if present."""
@@ -116,7 +116,7 @@ def calculate_baseline_statistics(
     )
 
 
-def create_alerts_baseline(
+def create_alerts_baseline( # noqa: PLR0913
     domain_file: pathlib.Path,
     dir_list: list[str],
     obs_file_template: str = "input/test_obs.pic.gz",
@@ -125,18 +125,25 @@ def create_alerts_baseline(
     far_threshold: float = 1.0,
     output_file: str = "alerts_baseline.nc",
 ):
-    """constructs a baseline for alerts.
-    the baseline consists of a mean and standard deviation for the differences between obs and simulation
-    at each point in the domain.
-    Output is stored as a netcdf file.
-    inputs:
-    domain_file: netcdf file describing the domain, will be used to template the output.
-    dir_list: list of directories containing obs and simulation outputs as ObservationData.
-    obs_file_template: string to be appended to each dir in dir_list to point to observations
-    sim_file_template: string to be appended to each dir in dir_list to point to simulations
-    near_threshold: distance from the target cell to be included in the near field
-    far_threshold: distance from the target cell to be included in the far field
-    output_file: name of output_file, will be overwritten if exists
+    """
+    Constructs a baseline for alerts. The baseline consists of a mean and
+    standard deviation for the differences between obs and simulation at each
+    point in the domain. Output is stored as a netcdf file.
+
+    :param domain_file: netcdf file describing the domain, will be used to
+        template the output.
+    :param dir_list: list of directories containing obs and simulation outputs
+        as ObservationData.
+    :param obs_file_template: string to be appended to each dir in dir_list to
+        point to observations
+    :param sim_file_template: string to be appended to each dir in dir_list to
+        point to simulations
+    :param near_threshold: distance from the target cell to be included in the
+        near field
+    :param far_threshold: distance from the target cell to be included in the
+        far field
+    :param output_file: name of output_file, will be overwritten if exists
+    :return:
     """
     with xr.open_dataset(domain_file) as ds:
         logger.debug(f"Domain found at {domain_file}")
@@ -290,7 +297,7 @@ def create_alerts_baseline(
                 ("time", "y", "x"),
                 [obs_baseline_mean_diff],
                 {
-                    "long_name": "Average observed difference between near and far field concentrations",
+                    "long_name": "Average observed difference between near and far field concentrations", # noqa: E501
                     "units": "1e-9",
                 },
             ),
@@ -298,7 +305,7 @@ def create_alerts_baseline(
                 ("time", "y", "x"),
                 [obs_baseline_std_diff],
                 {
-                    "long_name": "Standard deviation of observed difference between near and far field concentrations",
+                    "long_name": "Standard deviation of observed difference between near and far field concentrations", # noqa: E501
                     "units": "1e-9",
                 },
             ),
@@ -306,7 +313,7 @@ def create_alerts_baseline(
                 ("time", "y", "x"),
                 [sim_baseline_mean_diff],
                 {
-                    "long_name": "Average simulated difference between near and far field concentrations'",
+                    "long_name": "Average simulated difference between near and far field concentrations'", # noqa: E501
                     "units": "1e-9",
                 },
             ),
@@ -314,7 +321,7 @@ def create_alerts_baseline(
                 ("time", "y", "x"),
                 [sim_baseline_std_diff],
                 {
-                    "long_name": "Standard deviation of simulated difference between near and far field concentrations",
+                    "long_name": "Standard deviation of simulated difference between near and far field concentrations", # noqa: E501
                     "units": "1e-9",
                 },
             ),
@@ -355,7 +362,7 @@ def create_alerts_baseline(
     alerts_baseline_ds.to_netcdf(output_file)
 
 
-def create_alerts(
+def create_alerts( # noqa: PLR0913
     baseline_file: pathlib.Path,
     daily_dir: pathlib.Path,
     obs_file_template: str = "input/test_obs.pic.gz",
@@ -366,18 +373,32 @@ def create_alerts(
     count_threshold: int = 30,
 ):
     """
-    constructs alerts.
-    the baseline consists of a mean and standard deviation for local enhancement where the mean is based on simulations and the standard deviation on observations
-    for the alert we consider whether the observed local enhancement lies outside the confidence interval defined by the mean and standard deviation and outside the confidence interval defined by the mean and threshold
-    at each point in the domain.
-    Output is stored as a netcdf file.
-    It contains nans wherever an alert cannot be defined (usually no obs), 0 for no alert and 1 for an alert
-    inputs:
-    baseline_file: netcdf file describing the baseline (see function create_alerts_baseline. will be used to template the output.
-    daily_dir: directory containing obs and simulation outputs as ObservationData.
-    obs_file_template: string to be appended to  daily_dir to point to observations
-    sim_file_template: string to be appended to daily_dir to point to simulations
-    output_file: name of output_file, will be overwritten if exists
+    Construct alerts.
+    The baseline consists of a mean and standard deviation for local enhancement
+    where the mean is based on simulations and the standard deviation on
+    observations. For the alert we consider whether the observed local
+    enhancement lies outside the confidence interval defined by the mean and
+    standard deviation and outside the confidence interval defined by the mean
+    and threshold at each point in the domain.
+
+    Output is stored as a netcdf file, which will contain nans wherever an
+    alert cannot be defined (usually no obs), 0 for no alert and 1 for an alert.
+
+    :param baseline_file: netcdf file describing the baseline (see function
+        create_alerts_baseline). will be used to template the output.
+    :param daily_dir: directory containing obs and simulation outputs as
+        ObservationData.
+    :param obs_file_template: string to be appended to daily_dir to point to
+        observations
+    :param sim_file_template: string to be appended to daily_dir to point to
+        simulations
+    :param output_file: name of output_file, will be overwritten if exists
+    :param alerts_threshold: the minimum delta between the baseline and the
+        observed concentration for an alert to be generated for a cell.
+    :param significance_threshold: controls how much standard deviation is
+        considered when generating alerts.
+    :param count_threshold: the minimum observation count in the baseline for
+        alerts to be generated for a cell
     """
     with xr.open_dataset(baseline_file) as ds:
         logger.debug(f"Alerts baseline found at {baseline_file}")
@@ -512,7 +533,7 @@ def create_alerts(
     alerts_ds.to_netcdf(output_file)
 
 
-def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold):
+def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold): # noqa: PLR0913
     logger.debug("Calculating enhancements in map_enhance")
     nConcs = concs.shape[1] - 2  # number of concentration records, the -2 removes lat,lon
     n_rows = land_mask.shape[0]

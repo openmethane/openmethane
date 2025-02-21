@@ -173,13 +173,13 @@ def _s3_fetch(
     # Verify that the path exists
     # Raises CalledProcessError if the path doesn't exist
     try:
-        subprocess.run(["aws", "s3", "ls", s3_path], check=True, capture_output=False)
-    except subprocess.CalledProcessError as error:
+        subprocess.run(["aws", "s3", "ls", s3_path], check=True, capture_output=False) # noqa: S603 S607
+    except subprocess.CalledProcessError:
         # if no data is available, there is no archive to restore
         if allow_missing:
             print(f"Skipping {s3_path}")
             return
-        raise error
+        raise
 
     local_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Downloading {s3_path} to {local_path}")
@@ -188,10 +188,10 @@ def _s3_fetch(
     operation = "cp" if single_file else "sync"
     command = ["aws", "s3", operation, "--no-progress", *extra_params, s3_path, str(local_path)]
     try:
-        res = subprocess.run(command, check=True, capture_output=True, text=True)
+        res = subprocess.run(command, check=True, capture_output=True, text=True) # noqa: S603
     except subprocess.CalledProcessError as error:
         print(f"S3 fetch failed with stdout:\n{error.output}\nstderr:\n{error.stderr}")
-        raise error
+        raise
     logger.debug(f"Output from {' '.join(res.args)}: {res.stdout}")
 
 
