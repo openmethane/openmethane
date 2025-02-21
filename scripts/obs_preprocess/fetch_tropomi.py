@@ -15,7 +15,7 @@ from typing import Any
 import click
 import dotenv
 import requests
-from requests.adapters import Retry, HTTPAdapter
+from requests.adapters import HTTPAdapter, Retry
 
 # Load environment variables from a local .env file
 dotenv.load_dotenv()
@@ -42,13 +42,10 @@ def create_session() -> requests.Session:
     # Exponential backoff with jitter to avoid a thundering herd
     # Maximum duration would be 5 * 2 ** 6 = 320 seconds
     retries = Retry(
-        total=6,
-        backoff_factor=5.0,
-        backoff_jitter=1.0,
-        status_forcelist=[429, 500, 502, 503, 504]
+        total=6, backoff_factor=5.0, backoff_jitter=1.0, status_forcelist=[429, 500, 502, 503, 504]
     )
-    session.mount('http://', HTTPAdapter(max_retries=retries))
-    session.mount('https://', HTTPAdapter(max_retries=retries))
+    session.mount("http://", HTTPAdapter(max_retries=retries))
+    session.mount("https://", HTTPAdapter(max_retries=retries))
 
     credentials_path = Path("~/.netrc").expanduser()
     if not credentials_path.exists():

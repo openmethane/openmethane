@@ -50,7 +50,7 @@ def download_cams_input(start_date: str, end_date: str, output: str | Path, forc
     while the data are retrieved.
     """
     if datetime.strptime(start_date, DATETIME_FORMAT) > datetime.strptime(
-            end_date, DATETIME_FORMAT
+        end_date, DATETIME_FORMAT
     ):
         raise ValueError("Start date must be before end date")
 

@@ -30,6 +30,7 @@ FORCE = env.bool("FORCE", False)
 
 logger = get_logger(__name__)
 
+
 def main():
     r2_arguments = ["--endpoint-url", AWS_ENDPOINT_URL, "--region", AWS_REGION]
     if EXTRA_R2_ARGS:

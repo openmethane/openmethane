@@ -13,18 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import time
 
 import numpy as np
 
-import fourdvar._main_driver as main
 import fourdvar.datadef as d
 import fourdvar.user_driver as user
 import fourdvar.util.archive_handle as archive
-from fourdvar._transform import transform
-from fourdvar.params import cmaq_config, archive_defn, template_defn
 import fourdvar.util.date_handle as dt
 import fourdvar.util.netcdf_handle as ncf
+from fourdvar._transform import transform
+from fourdvar.params import archive_defn, cmaq_config, template_defn
 
 
 def test_fourdvar_grad_cmaq(target_environment):
@@ -46,9 +44,9 @@ def _run_grad_cmaq():
     model_input_vector = modelInput.get_vector()
     modelOutput = transform(modelInput, d.ModelOutputData)
     init_cost = modelOutput.sum_squares()
-    forcing_vector = modelOutput.get_vector() # adjoint of sum_squares
-    adjointForcing = d.AdjointForcingData.load_from_vector_template ( forcing_vector)
-    sensitivity = transform( adjointForcing, d.SensitivityData)
+    forcing_vector = modelOutput.get_vector()  # adjoint of sum_squares
+    adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
+    sensitivity = transform(adjointForcing, d.SensitivityData)
     # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
     # physical constants:
     # molar weight of dry air (precision matches cmaq)
@@ -86,25 +84,24 @@ def _run_grad_cmaq():
             frac = float(2 * r + 1) / float(2 * reps)
             rhoj_interp[r:-1:reps, ...] = (1 - frac) * rhoj[:-1, ...] + frac * rhoj[1:, ...]
         rhoj_interp[-1, ...] = rhoj[-1, ...]
-        unit_array = (ppm_scale * kg_scale * mwair) / (rhoj_interp * lay_thick)/cell_area
+        unit_array = (ppm_scale * kg_scale * mwair) / (rhoj_interp * lay_thick) / cell_area
 
-        conversion_list.append( unit_array)
-    conversion_vector = np.array( conversion_list).flatten()
+        conversion_list.append(unit_array)
+    conversion_vector = np.array(conversion_list).flatten()
     sensitivity_vector = sensitivity.get_vector()
     sensitivity_vector_mole = sensitivity_vector * conversion_vector
 
-
     epsilon = 1e-2
-    dx_template = np.zeros_like( model_input_vector)
-    dx_template[:] =1.
+    dx_template = np.zeros_like(model_input_vector)
+    dx_template[:] = 1.0
     dx = epsilon * dx_template
     pert_input_vector = model_input_vector + dx
-    pert_model_input = d.ModelInputData.load_from_vector_template( pert_input_vector)
-    pert_model_output = transform( pert_model_input, d.ModelOutputData)
+    pert_model_input = d.ModelInputData.load_from_vector_template(pert_input_vector)
+    pert_model_output = transform(pert_model_input, d.ModelOutputData)
     pert_cost = pert_model_output.sum_squares()
-    print( 'pert cost', pert_cost)
-    print('finite diff ',pert_cost - init_cost)
-    print('grad calc ',dx@sensitivity_vector_mole)
+    print("pert cost", pert_cost)
+    print("finite diff ", pert_cost - init_cost)
+    print("grad calc ", dx @ sensitivity_vector_mole)
 
 
 if __name__ == "__main__":

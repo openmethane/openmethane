@@ -12,12 +12,13 @@ from util.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 def monthly(
-        daily_s3_bucket: str,
-        start_date: datetime.date,
-        end_date: datetime.date,
-        domain_name: str,
-        local_path: pathlib.Path,
+    daily_s3_bucket: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    domain_name: str,
+    local_path: pathlib.Path,
 ):
     """
     Sync a subset of the daily output for a range of dates into the working
@@ -45,11 +46,11 @@ def monthly(
 
 
 def daily(
-        daily_s3_bucket: str,
-        start_date: datetime.date,
-        domain_name: str,
-        local_path: pathlib.Path,
-        alerts_baseline_remote: pathlib.Path,
+    daily_s3_bucket: str,
+    start_date: datetime.date,
+    domain_name: str,
+    local_path: pathlib.Path,
+    alerts_baseline_remote: pathlib.Path,
 ):
     """
     Sync a subset of the daily output for a single date into the working
@@ -63,18 +64,22 @@ def daily(
         "wrf",
         "mcip",
     ]:
-        _s3_sync_fetch(daily_root + remote_path, local_path.joinpath(remote_path), allow_missing=True)
+        _s3_sync_fetch(
+            daily_root + remote_path, local_path.joinpath(remote_path), allow_missing=True
+        )
 
     # fetch the alerts_baseline file for creating alerts
-    _s3_object_fetch("/".join([daily_s3_bucket.rstrip("/"), str(alerts_baseline_remote)]), local_path)
+    _s3_object_fetch(
+        "/".join([daily_s3_bucket.rstrip("/"), str(alerts_baseline_remote)]), local_path
+    )
 
 
 def baseline(
-        daily_s3_bucket: str,
-        end_date: datetime.date,
-        domain_name: str,
-        local_path: pathlib.Path,
-        baseline_length_days: int,
+    daily_s3_bucket: str,
+    end_date: datetime.date,
+    domain_name: str,
+    local_path: pathlib.Path,
+    baseline_length_days: int,
 ):
     """
     Sync a subset of the daily output for a range of dates into the working
@@ -100,7 +105,12 @@ def baseline(
 
         # baseline calculation requires input/test_obs.pic.gz and simulobs.pic.gz for each day
         # use exclude/include to download a single file
-        _s3_sync_fetch(daily_root + "input", destination_path.joinpath("input"), allow_missing=True, extra_params=["--exclude=*", "--include=test_obs.pic.gz"])
+        _s3_sync_fetch(
+            daily_root + "input",
+            destination_path.joinpath("input"),
+            allow_missing=True,
+            extra_params=["--exclude=*", "--include=test_obs.pic.gz"],
+        )
         _s3_object_fetch(daily_root + "simulobs.pic.gz", destination_path, allow_missing=True)
 
 
@@ -118,15 +128,37 @@ def _get_daily_archive_path(s3_bucket_name: str, domain_name: str, date: datetim
     return s3_path + "/"  # S3 directory paths must end with a slash
 
 
-def _s3_sync_fetch(s3_path: str, local_path: pathlib.Path, extra_params=None, allow_missing: bool = False):
-    _s3_fetch(s3_path, local_path, single_file=False, extra_params=extra_params, allow_missing=allow_missing)
+def _s3_sync_fetch(
+    s3_path: str, local_path: pathlib.Path, extra_params=None, allow_missing: bool = False
+):
+    _s3_fetch(
+        s3_path,
+        local_path,
+        single_file=False,
+        extra_params=extra_params,
+        allow_missing=allow_missing,
+    )
 
 
-def _s3_object_fetch(s3_path: str, local_path: pathlib.Path, extra_params=None, allow_missing: bool = False):
-    _s3_fetch(s3_path, local_path, single_file=True, extra_params=extra_params, allow_missing=allow_missing)
+def _s3_object_fetch(
+    s3_path: str, local_path: pathlib.Path, extra_params=None, allow_missing: bool = False
+):
+    _s3_fetch(
+        s3_path,
+        local_path,
+        single_file=True,
+        extra_params=extra_params,
+        allow_missing=allow_missing,
+    )
 
 
-def _s3_fetch(s3_path: str, local_path: pathlib.Path, single_file: bool, extra_params=None, allow_missing: bool = False):
+def _s3_fetch(
+    s3_path: str,
+    local_path: pathlib.Path,
+    single_file: bool,
+    extra_params=None,
+    allow_missing: bool = False,
+):
     """
     Fetch an entire folder from s3 using `aws s3 sync`
     :param s3_path: Remote path starting with s3://BUCKET_NAME
@@ -141,13 +173,13 @@ def _s3_fetch(s3_path: str, local_path: pathlib.Path, single_file: bool, extra_p
     # Verify that the path exists
     # Raises CalledProcessError if the path doesn't exist
     try:
-        subprocess.run(["aws", "s3", "ls", s3_path], check=True, capture_output=False)
-    except subprocess.CalledProcessError as error:
+        subprocess.run(["aws", "s3", "ls", s3_path], check=True, capture_output=False) # noqa: S603 S607
+    except subprocess.CalledProcessError:
         # if no data is available, there is no archive to restore
         if allow_missing:
             print(f"Skipping {s3_path}")
             return
-        raise error
+        raise
 
     local_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Downloading {s3_path} to {local_path}")
@@ -156,10 +188,10 @@ def _s3_fetch(s3_path: str, local_path: pathlib.Path, single_file: bool, extra_p
     operation = "cp" if single_file else "sync"
     command = ["aws", "s3", operation, "--no-progress", *extra_params, s3_path, str(local_path)]
     try:
-        res = subprocess.run(command, check=True, capture_output=True, text=True)
+        res = subprocess.run(command, check=True, capture_output=True, text=True) # noqa: S603
     except subprocess.CalledProcessError as error:
         print(f"S3 fetch failed with stdout:\n{error.output}\nstderr:\n{error.stderr}")
-        raise error
+        raise
     logger.debug(f"Output from {' '.join(res.args)}: {res.stdout}")
 
 

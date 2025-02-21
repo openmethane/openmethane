@@ -6,6 +6,7 @@ import pytest
 from click.testing import CliRunner
 from scripts.obs_preprocess import fetch_tropomi
 
+
 # This hits the api
 def test_fetch(tmpdir, root_dir):
     runner = CliRunner()
@@ -76,5 +77,7 @@ def test_fetch_invalid_date(tmpdir, root_dir):
     )
 
     assert result.exit_code == 1, result.output
-    assert str(result.exception) == '500 Server Error: Internal Server Error for url: https://disc.gsfc.nasa.gov/service/subset/jsonwsp'
-
+    assert (
+        str(result.exception)
+        == "500 Server Error: Internal Server Error for url: https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
+    )

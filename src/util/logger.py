@@ -19,10 +19,10 @@ import pathlib
 
 from fourdvar.params.root_path_defn import store_path
 
-
 LOG_LEVEL = os.getenv("LOG_LEVEL", None)
 LOG_FILE = os.getenv("LOG_FILE", None)
 OM_LOGGING_FILE = os.getenv("OM_LOGGING_FILE", None)
+
 
 def _setup_logger():
     """
@@ -46,7 +46,10 @@ def _setup_logger():
             log_level = log_levels[LOG_LEVEL]
             logging.basicConfig(level=log_level)
         else:
-            logging.warning(f"LOG_LEVEL={LOG_LEVEL} is not a valid log level, must be one of: {', '.join(log_levels.keys())}")
+            valid_levels = ', '.join(log_levels.keys())
+            logging.warning(
+                f"LOG_LEVEL={LOG_LEVEL} is not a valid log level, must be one of: {valid_levels}"
+            )
 
     # Log to a file if a filename is provided in the LOG_FILE environment var
     log_file = None
@@ -66,10 +69,10 @@ def _setup_logger():
             file_dir = os.path.dirname(log_file)
             file_name = os.path.basename(log_file)
             rotation = 0
-            rotate_log_name = pathlib.Path(file_dir, f"{'{:03d}'.format(rotation)}.{file_name}")
+            rotate_log_name = pathlib.Path(file_dir, f"{f'{rotation:03d}'}.{file_name}")
             while os.path.exists(rotate_log_name):
                 rotation += 1
-                rotate_log_name = pathlib.Path(file_dir, f"{'{:03d}'.format(rotation)}.{file_name}")
+                rotate_log_name = pathlib.Path(file_dir, f"{f'{rotation:03d}'}.{file_name}")
             os.rename(log_file, rotate_log_name)
 
         log_file_handler = logging.FileHandler(log_file)
@@ -78,6 +81,7 @@ def _setup_logger():
         # to_file_handle.setFormatter(to_file_formatter)
 
     return log_level, log_file_handler
+
 
 def get_logger(package_name: str) -> logging.Logger:
     log_level, log_file_handler = _setup_logger()

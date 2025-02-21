@@ -24,7 +24,6 @@ from fourdvar._transform import transform
 from fourdvar.params import archive_defn, data_access
 from util.logger import get_logger
 
-
 logger = get_logger(__name__)
 
 
@@ -56,13 +55,13 @@ def cost_func(vector):
         data_access.prev_vector = vector.copy()
 
     # TODO: Temp archive for debugging
-    model_out.archive(f"conc_cost.ncf")
+    model_out.archive("conc_cost.ncf")
     logger.warning("Archived concentrations in cost function")
 
     simulated = transform(model_out, d.ObservationData)
 
     # TODO: Temp archive for debugging
-    simulated.archive(f"forward-test.ncf", force_lite=True)
+    simulated.archive("forward-test.ncf", force_lite=True)
     logger.warning("Forward test log complete")
 
     residual = d.ObservationData.get_residual(observed, simulated)
@@ -132,7 +131,7 @@ def gradient_func(vector):
     simulated = transform(model_out, d.ObservationData)
 
     # TODO: Temp archive for debugging
-    simulated.archive(f"forward-test.ncf", force_lite=True)
+    simulated.archive("forward-test.ncf", force_lite=True)
     logger.warning("Forward test log complete")
 
     residual = d.ObservationData.get_residual(observed, simulated)
