@@ -1,0 +1,3 @@
+
+# ruff format . && ruff check --fix .
+86ce484334b32d56a63fea5bb8df745bdda94a8e
