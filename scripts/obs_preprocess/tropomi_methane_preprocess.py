@@ -332,6 +332,11 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, max_process_time):
     """
     model_grid = ModelSpace.create_from_fourdvar()
 
+    # load psurf file pre-emptively so multiple threads dont attempt
+    # simultaneous reads
+    start_date = int(date_defn.start_date.strftime("%Y%m%d"))
+    model_grid.update_psurf(start_date)
+
     file_list = sorted([os.path.realpath(f) for f in glob.glob(source)])
 
     obs_list = []
