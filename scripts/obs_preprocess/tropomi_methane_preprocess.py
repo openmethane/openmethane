@@ -363,6 +363,7 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, max_process_time):
         except Exception:
             # Ignore all observations in that file
             logger.exception(f"Failed to process file: {fname}. Skipping")
+            raise
 
     print(f"found {n_valid_obs} valid soundings from {n_total_obs} possible")
     if len(obs_list) > 0:
