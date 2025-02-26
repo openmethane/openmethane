@@ -25,6 +25,7 @@ from netCDF4 import Dataset
 from fourdvar.params import cmaq_config, date_defn, template_defn
 from fourdvar.util import date_handle
 from obs_preprocess.ray_trace import Grid
+from util.logger import get_logger
 
 
 # convert HHMMSS into sec
@@ -78,6 +79,8 @@ class ModelSpace:
         CONC = path to any concentration file output by CMAQ
         date_range = [ start_date, end_date ] (as datetime objects).
         """
+        self.logger = get_logger(__name__)
+
         # read netCDF files
         self.gridmeta = {}
         with Dataset(METCRO3D, "r") as f:
@@ -212,6 +215,8 @@ class ModelSpace:
         row = target_coord[3]
         col = target_coord[4]
         if date != self.psurf_date:
+            if self.psurf_date is not None:
+                self.logger.warning("update_psurf is not thread-safe and may cause issues reading METCRO2D")
             self.update_psurf(date)
         vgbot = self.psurf_arr[time, row, col]
         vglvl = np.array(self.gridmeta["VGLVLS"])
