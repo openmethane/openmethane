@@ -247,6 +247,7 @@ def process_file(
             "ch4_column_precision": ch4_column_precision[i],
             "obs_kernel": averaging_kernel[i, :],
             "qa_value": qa_value[i],
+            "surface_albedo_SWIR": swir_albedo[i],
             "ch4_profile_apriori": ch4_profile_apriori[i, :],
         }
 
