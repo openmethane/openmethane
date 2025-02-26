@@ -19,6 +19,17 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.8.9 (2025-02-26)
+
+### 🐛 Bug Fixes
+
+- - Fix multiple threads reading METCRO2D file simultaneously ([#146](https://github.com/openmethane/openmethane/pulls/146))
+
+### 🔧 Trivial/Internal Changes
+
+- [#145](https://github.com/openmethane/openmethane/pulls/145)
+
+
 ## openmethane v0.8.8 (2025-02-20)
 
 ### 🎉 Improvements
