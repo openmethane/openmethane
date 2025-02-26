@@ -66,6 +66,7 @@ class ObsSRON(ObsMultiRay):
         newobs.out_dict["time"] = kwargs["time"]
         newobs.out_dict["qa_value"] = kwargs["qa_value"]
         newobs.out_dict["surface_albedo_SWIR"] = kwargs["surface_albedo_SWIR"]
+        newobs.out_dict["aerosol_aod_SWIR"] = kwargs["aerosol_aod_SWIR"]
         newobs.out_dict["latitude_corners"] = kwargs["latitude_corners"]
         newobs.out_dict["longitude_corners"] = kwargs["longitude_corners"]
         newobs.out_dict["latitude_center"] = kwargs["latitude_center"]

@@ -122,6 +122,7 @@ def process_obs(obs: dict[str, float], model_grid: ModelSpace) -> ObsSRON:
 
 def process_file(
         model_grid: ModelSpace, ds: Dataset, qa_cutoff: float, swir_albedo_cutoff: float,
+        swir_aod_cutoff: float,
         max_process_time: float,
         
 ) -> tuple[list[ObsSRON], int, int]:
@@ -183,8 +184,11 @@ def process_file(
     ch4_profile_apriori = temp.reshape(temp.size, -1)
     qa = diag.variables["qa_value"][:]
     qa_value = qa.reshape((qa.size,))
-    swir = detailed_results.variables['surface_albedo_SWIR'][:]
+    swir = detailed_results.variables["surface_albedo_SWIR"][:]
     swir_albedo = swir.reshape(swir.size)
+    aod = detailed_results.variables["aerosol_optical_thickness_SWIR"][:]
+    swir_aod = aod.reshape(swir.size)
+
 
     mask_arr = np.ma.getmaskarray(ch4_column)
 
@@ -199,8 +203,10 @@ def process_file(
     )
     mask_filter = np.logical_not(mask_arr)
     qa_filter = qa_value > qa_cutoff
-    swir_filter = (swir_albedo > swir_albedo_cutoff) 
-    include_filter = np.logical_and.reduce((lat_filter, lon_filter, mask_filter, qa_filter, swir_filter))
+    swir_albedo_filter = (swir_albedo > swir_albedo_cutoff)
+    swir_aod_filter = (swir_aod < swir_aod_cutoff)
+    include_filter = np.logical_and.reduce((lat_filter, lon_filter, mask_filter,
+                                            qa_filter, swir_albedo_filter, swir_aod_filter))
 
     epoch = dt.datetime.utcfromtimestamp(0)
 
@@ -248,6 +254,7 @@ def process_file(
             "obs_kernel": averaging_kernel[i, :],
             "qa_value": qa_value[i],
             "surface_albedo_SWIR": swir_albedo[i],
+            "aerosol_aod_SWIR": swir_aod[i],
             "ch4_profile_apriori": ch4_profile_apriori[i, :],
         }
 
@@ -332,6 +339,11 @@ def process_observations(
     "--swir-albedo-cutoff",
     help="Minimum surface_albedo_SWIR before observation is discarded.",
     default=0.03,
+)
+@click.option(
+    "--swir-aod-cutoff",
+    help="maximum SWIR aerosol optical depth before observation is discarded.",
+    default=0.13,
 )
 @click.option(
     "--max-process-time",
