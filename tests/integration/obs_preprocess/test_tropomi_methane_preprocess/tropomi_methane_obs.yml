@@ -4,6 +4,7 @@
 - time
 - qa_value
 - surface_albedo_SWIR
+- aerosol_aod_SWIR
 - latitude_corners
 - longitude_corners
 - latitude_center
