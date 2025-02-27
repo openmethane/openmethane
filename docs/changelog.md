@@ -19,6 +19,14 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.9.0 (2025-02-27)
+
+### 🎉 Improvements
+
+- - Add ability to filter out observations where albedo was below a threshold ([#147](https://github.com/openmethane/openmethane/pulls/147))
+- Adding SWIR aod filter and storing SWIR aod in obs output ([#148](https://github.com/openmethane/openmethane/pulls/148))
+
+
 ## openmethane v0.8.9 (2025-02-26)
 
 ### 🐛 Bug Fixes
