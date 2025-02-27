@@ -350,7 +350,7 @@ def process_observations(
     help="Maximum time to process each observation in seconds. Default is 5 seconds",
     default=5,
 )
-def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, max_process_time):
+def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, swir_aod_cutoff, max_process_time):
     """
     Process TROPOMI data to create a set of observations for use in the fourdvar system.
     """
@@ -384,6 +384,7 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, m
                     ds,
                     qa_cutoff=qa_cutoff,
                     swir_albedo_cutoff = swir_albedo_cutoff,
+                    swir_aod_cutoff = swir_aod_cutoff, 
                     max_process_time=max_process_time,
                 )
 
