@@ -56,7 +56,8 @@ class ObsSRON(ObsMultiRay):
         - co_column_precision : float (molec. cm-2)
         - co_column_apriori : float (molec. cm-2)
         - co_profile_apriori : array[ float ] (length=levels, units=molec. cm-2)
-        - qa_value : float (unitless).
+        - qa_value : float (unitless)
+        - surface_albedo_SWIR : float (unitless).
         """
         newobs = cls(obstype="ESA_co_obs")
 
@@ -64,6 +65,7 @@ class ObsSRON(ObsMultiRay):
         newobs.out_dict["uncertainty"] = kwargs["ch4_column_precision"]
         newobs.out_dict["time"] = kwargs["time"]
         newobs.out_dict["qa_value"] = kwargs["qa_value"]
+        newobs.out_dict["surface_albedo_SWIR"] = kwargs["surface_albedo_SWIR"]
         newobs.out_dict["latitude_corners"] = kwargs["latitude_corners"]
         newobs.out_dict["longitude_corners"] = kwargs["longitude_corners"]
         newobs.out_dict["latitude_center"] = kwargs["latitude_center"]

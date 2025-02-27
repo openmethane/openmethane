@@ -121,7 +121,9 @@ def process_obs(obs: dict[str, float], model_grid: ModelSpace) -> ObsSRON:
 
 
 def process_file(
-    model_grid: ModelSpace, ds: Dataset, qa_cutoff: float, max_process_time: float
+        model_grid: ModelSpace, ds: Dataset, qa_cutoff: float, swir_albedo_cutoff: float,
+        max_process_time: float,
+        
 ) -> tuple[list[ObsSRON], int, int]:
     """
     Process an individual file
@@ -146,6 +148,7 @@ def process_file(
     product = ds["/PRODUCT"]
     diag = ds["/PRODUCT"]
     geo = ds["/PRODUCT/SUPPORT_DATA/GEOLOCATIONS"]
+    detailed_results = ds['/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS']
     n_levels = product.dimensions["level"].size
     latitude = instrument.variables["latitude"][:]
     latitude_center = latitude.reshape((latitude.size,))
@@ -180,6 +183,8 @@ def process_file(
     ch4_profile_apriori = temp.reshape(temp.size, -1)
     qa = diag.variables["qa_value"][:]
     qa_value = qa.reshape((qa.size,))
+    swir = detailed_results.variables['surface_albedo_SWIR'][:]
+    swir_albedo = swir.reshape(swir.size)
 
     mask_arr = np.ma.getmaskarray(ch4_column)
 
@@ -194,7 +199,8 @@ def process_file(
     )
     mask_filter = np.logical_not(mask_arr)
     qa_filter = qa_value > qa_cutoff
-    include_filter = np.logical_and.reduce((lat_filter, lon_filter, mask_filter, qa_filter))
+    swir_filter = (swir_albedo > swir_albedo_cutoff) 
+    include_filter = np.logical_and.reduce((lat_filter, lon_filter, mask_filter, qa_filter, swir_filter))
 
     epoch = dt.datetime.utcfromtimestamp(0)
 
@@ -241,6 +247,7 @@ def process_file(
             "ch4_column_precision": ch4_column_precision[i],
             "obs_kernel": averaging_kernel[i, :],
             "qa_value": qa_value[i],
+            "surface_albedo_SWIR": swir_albedo[i],
             "ch4_profile_apriori": ch4_profile_apriori[i, :],
         }
 
@@ -322,11 +329,16 @@ def process_observations(
     default=0.5,
 )
 @click.option(
+    "--swir-albedo-cutoff",
+    help="Minimum surface_albedo_SWIR before observation is discarded.",
+    default=0.03,
+)
+@click.option(
     "--max-process-time",
     help="Maximum time to process each observation in seconds. Default is 5 seconds",
     default=5,
 )
-def run_tropomi_preprocess(source, output_file, qa_cutoff, max_process_time):
+def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, max_process_time):
     """
     Process TROPOMI data to create a set of observations for use in the fourdvar system.
     """
@@ -359,6 +371,7 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, max_process_time):
                     model_grid,
                     ds,
                     qa_cutoff=qa_cutoff,
+                    swir_albedo_cutoff = swir_albedo_cutoff,
                     max_process_time=max_process_time,
                 )
 
