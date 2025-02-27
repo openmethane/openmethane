@@ -1,7 +1,8 @@
 import numpy as np
 from click.testing import CliRunner
-from scripts.obs_preprocess import tropomi_methane_preprocess
+import pytest
 
+from scripts.obs_preprocess import tropomi_methane_preprocess
 from fourdvar.util.file_handle import load_list
 
 
@@ -30,6 +31,7 @@ def clean(value):
     return value
 
 
+@pytest.mark.filterwarnings("ignore:All-NaN slice encountered:RuntimeWarning")
 def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_regression):
     target_environment("docker-test")
 
