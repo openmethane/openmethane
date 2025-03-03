@@ -19,6 +19,7 @@ with the execution ID of the workflow.
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import typing
@@ -76,35 +77,43 @@ def main():
             check=False,
         )
 
-    # if requested, also push a reduced set of results to a second bucket
-    if config.target_bucket_reduced:
-        s3_result_reduced = subprocess.run(
-            (
-                "aws",
-                "s3",
-                "sync",
-                "--no-progress",
-                "--exclude",
-                "*",
-                # you can add more --include flags to include more stuff in the reduced result
-                "--include",
-                "environment.txt",
-                str(store_path),
-                f"{config.target_bucket_reduced}/{prefix}",
-            ),
-            check=False,
-        )
-        if s3_result_reduced.returncode == 1:
-            # We only want to catch an return code of 1 as this is a substantial failure
-            # s3_result.returncode could be 2 if new directories are required
-            logger.error("Sync to reduced results target bucket failed with exit code 1")
-            sys.exit(1)
-
     if config.success:
-        logger.debug(f"Deleting {store_path}.")
-        # shutil.rmtree(store_path)
+        # if requested, also push a reduced set of results to a second bucket
+        if config.target_bucket_reduced:
+            public_files = ["alerts.nc"] if config.run_type == "daily" else []
+
+            if len(public_files):
+                logger.info(f"Uploading {len(public_files)} files to public data store")
+                public_files_include = []
+                # add --include FILE for each file to sync
+                for public_file in public_files:
+                    public_files_include.extend(["--include", public_file])
+
+                s3_result_reduced = subprocess.run(
+                    (
+                        "aws",
+                        "s3",
+                        "sync",
+                        "--no-progress",
+                        "--exclude",
+                        "*",
+                        # add all "--include" statements
+                        *public_files_include,
+                        str(store_path),
+                        f"{config.target_bucket_reduced}/{prefix}",
+                    ),
+                    check=False,
+                )
+                if s3_result_reduced.returncode == 1:
+                    # We only want to catch an return code of 1 as this is a substantial failure
+                    # s3_result.returncode could be 2 if new directories are required
+                    logger.error("Sync to reduced results target bucket failed with exit code 1")
+                    sys.exit(1)
+
+        logger.info(f"Deleting {store_path}.")
+        shutil.rmtree(store_path)
     else:
-        logger.debug(f"Not deleting {store_path} for failed run - clean up manually.")
+        logger.info(f"Not deleting {store_path} for failed run - clean up manually.")
     logger.debug("Finished successfully")
 
 
