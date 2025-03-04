@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.9.2 (2025-03-04)
+
+### 🔧 Trivial/Internal Changes
+
+- [#151](https://github.com/openmethane/openmethane/pulls/151)
+
+
 ## openmethane v0.9.1 (2025-03-04)
 
 ### 🎉 Improvements
