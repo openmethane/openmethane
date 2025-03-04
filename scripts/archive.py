@@ -43,7 +43,6 @@ logger = get_logger(__name__)
 def main():
     config = Config.from_environment()
     store_path = config.store_path or get_store_path(config)
-    prefix = get_prefix(config)
 
     # config.dump(store_path=store_path, prefix=prefix)
 
@@ -56,67 +55,60 @@ def main():
             workflow_execution_arn=config.workflow_execution_arn, directory=log_directory
         )
 
-    s3_result = subprocess.run(
-        ("aws", "s3", "sync", "--no-progress", str(store_path), f"{config.target_bucket}/{prefix}"),
-        check=False,
-    )
-    if s3_result.returncode == 1:
-        # We only want to catch an return code of 1 as this is a substantial failure
-        # s3_result.returncode could be 2 if new directories are required
-        logger.error("Sync failed with exit code 1")
-        sys.exit(1)
+    if config.test:
+        archive_dir(store_path, config.target_bucket, pathlib.Path("tests", config.execution_id))
+        return
 
-    # place the alerts baseline file in a more general location, based on config
-    if config.alerts_baseline_file and config.alerts_baseline_file.exists():
-        s3_result_alerts = subprocess.run(
-            (
-                "aws",
-                "s3",
-                "cp",
-                "--no-progress",
-                str(config.alerts_baseline_file),
-                f"{config.target_bucket}/{config.alerts_baseline_remote}",
-            ),
-            check=False,
-        )
-
-    if config.success:
-        # if requested, also push a reduced set of results to a second bucket
-        if config.target_bucket_reduced:
-            public_files = ["alerts.nc"] if config.run_type == "daily" else []
-
-            if len(public_files):
-                logger.info(f"Uploading {len(public_files)} files to public data store")
-                public_files_include = []
-                # add --include FILE for each file to sync
-                for public_file in public_files:
-                    public_files_include.extend(["--include", public_file])
-
-                s3_result_reduced = subprocess.run(
-                    (
-                        "aws",
-                        "s3",
-                        "sync",
-                        "--no-progress",
-                        "--exclude",
-                        "*",
-                        # add all "--include" statements
-                        *public_files_include,
-                        str(store_path),
-                        f"{config.target_bucket_reduced}/{prefix}",
-                    ),
-                    check=False,
-                )
-                if s3_result_reduced.returncode == 1:
-                    # We only want to catch an return code of 1 as this is a substantial failure
-                    # s3_result.returncode could be 2 if new directories are required
-                    logger.error("Sync to reduced results target bucket failed with exit code 1")
-                    sys.exit(1)
-
-        logger.info(f"Deleting {store_path}.")
-        shutil.rmtree(store_path)
-    else:
+    # failed executions should not archive to daily/monthly results locations
+    if not config.success:
+        target_path = pathlib.Path(config.domain_name, "failed", config.execution_id)
+        archive_dir(store_path, config.target_bucket, target_path)
         logger.info(f"Not deleting {store_path} for failed run - clean up manually.")
+        return
+
+    if config.run_type == "daily":
+        # archive the entire run to the private results bucket
+        # at a path like: aust10km/daily/2023/01/01
+        target_path = pathlib.Path(
+            config.domain_name, "daily",
+            f"{config.start_date.year:04}", f"{config.start_date.month:02}", f"{config.start_date.day:02}"
+        )
+        logger.debug(f"Archiving {config.run_type} run to {target_path}")
+        archive_dir(store_path, config.target_bucket, target_path)
+
+        # a small subset of results should be uploaded to the public data store
+        if config.target_bucket_reduced:
+            target_public_path = pathlib.Path(
+                "alerts", "daily", config.domain_name,
+                f"{config.start_date.year:04}", f"{config.start_date.month:02}", f"{config.start_date.day:02}"
+            )
+            logger.debug(f"Archiving {config.run_type} run to {target_path} in public data store.")
+            archive_file(store_path / "alerts.nc", config.target_bucket_reduced, target_public_path / "alerts.nc")
+
+    elif config.run_type == "monthly":
+        # archive the entire run to the private results bucket
+        # at a path like: aust10km/monthly/2023/01
+        target_path = pathlib.Path(
+            config.domain_name, "monthly",
+            f"{config.start_date.year:04}", f"{config.start_date.month:02}"
+        )
+        logger.debug(f"Archiving {config.run_type} run to {target_path}")
+        archive_dir(store_path, config.target_bucket, target_path)
+
+        # on success for a monthly run, replace the alerts_baseline.nc for the domain
+        # with the result from this run
+        # TODO: should this check that alerts_baseline.nc is more recent than existing?
+        if config.alerts_baseline_file and config.alerts_baseline_file.exists():
+            logger.debug(f"Archiving {config.alerts_baseline_file} to {config.alerts_baseline_remote}")
+            archive_file(config.alerts_baseline_file, config.target_bucket, config.alerts_baseline_remote)
+
+    else:
+        raise ValueError(f"Unknown config.run_type={config.run_type!r}")
+
+    # on successful archiving, remove the folder from the store path, it's no longer needed
+    logger.info(f"Deleting {store_path}.")
+    shutil.rmtree(store_path)
+
     logger.debug("Finished successfully")
 
 
@@ -216,19 +208,28 @@ def get_store_path(config: Config) -> pathlib.Path:
     )
 
 
-def get_prefix(config: Config) -> str:
-    if config.test:
-        return f"tests/{config.execution_id}"
-    if not config.success:
-        return f"{config.domain_name}/failed/{config.execution_id}"
-    if config.run_type == "daily":
-        return (
-            f"{config.domain_name}/daily/{config.start_date.year}/{config.start_date.month:02}/"
-            f"{config.start_date.day:02}"
-        )
-    elif config.run_type == "monthly":
-        return f"{config.domain_name}/monthly/{config.start_date.year}/{config.start_date.month:02}"
-    raise ValueError(f"Unknown config.run_type={config.run_type!r}")
+def archive_dir(source_path: pathlib.Path, s3_bucket: str, target_path: pathlib.Path):
+    s3_upload(source_path=source_path, s3_bucket=s3_bucket, target_path=target_path, single=False)
+
+
+def archive_file(source_path: pathlib.Path, s3_bucket: str, target_path: pathlib.Path):
+    s3_upload(source_path=source_path, s3_bucket=s3_bucket, target_path=target_path, single=True)
+
+
+def s3_upload(source_path: pathlib.Path, s3_bucket: str, target_path: pathlib.Path, single: bool):
+    s3_bucket_url = s3_bucket if s3_bucket.startswith("s3://") else f"s3://{s3_bucket}"
+    s3_target_url = f"{s3_bucket_url}/{target_path}"
+
+    s3_operation = "cp" if single else "sync"
+    s3_result = subprocess.run(
+        ("aws", "s3", s3_operation, "--no-progress", str(source_path), str(s3_target_url)),
+        check=False,
+    )
+    if s3_result.returncode == 1:
+        # We only want to catch an return code of 1 as this is a substantial failure
+        # s3_result.returncode could be 2 if new directories are required
+        logger.error(f"sync to {s3_bucket} failed with exit code 1")
+        sys.exit(1)
 
 
 def dump_workflow_logs(
