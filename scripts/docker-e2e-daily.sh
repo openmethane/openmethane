@@ -76,6 +76,16 @@ echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 #  -e AWS_REGION="$AWS_REGION" \
 #  openmethane python scripts/load_from_archive.py --sync daily
 
+if [[ ! -f "$STORE_PATH/alerts_baseline.nc" ]]; then
+  if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc" ]]; then
+    echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc"
+    cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc" "$DATA_PATH/alerts_baseline.nc"
+  else
+    echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc exists before running"
+    exit 1
+  fi
+fi
+
 # This only has to be done once assuming $DATA_ROOT isn't cleared
 if [[ -d "$DATA_ROOT/geog/WPS_GEOG" ]]; then
   echo "WPS_GEOG is present, skipping wrf-download_geog"
