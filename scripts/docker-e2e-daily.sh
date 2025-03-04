@@ -24,6 +24,9 @@ STORE_PATH="/opt/project/data/$RUN_ID"
 CHK_PATH="$STORE_PATH/scratch"
 
 TARGET_BUCKET="s3://om-dev-results"
+#TARGET_BUCKET_REDUCED="s3://om-dev-output" # WARNING: THIS WILL OVERWRITE FILES IN s3
+TARGET_BUCKET_REDUCED=""
+
 
 if [[ -f .env ]]; then
   echo "Loading environment from .env"
@@ -75,6 +78,16 @@ echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 #  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
 #  -e AWS_REGION="$AWS_REGION" \
 #  openmethane python scripts/load_from_archive.py --sync daily
+
+if [[ ! -f "$STORE_PATH/alerts_baseline.nc" ]]; then
+  if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc" ]]; then
+    echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc"
+    cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc" "$DATA_PATH/alerts_baseline.nc"
+  else
+    echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc exists before running"
+    exit 1
+  fi
+fi
 
 # This only has to be done once assuming $DATA_ROOT isn't cleared
 if [[ -d "$DATA_ROOT/geog/WPS_GEOG" ]]; then
@@ -137,6 +150,20 @@ docker run --name="e2e-daily-create-alerts" --rm \
   -e ALERTS_COUNT_THRESHOLD="2" \
   openmethane python scripts/alerts/create_alerts.py
 
+# JobName: archive-success
+# Warning: this will delete the results folder on success!
+#docker run --name="e2e-daily-archive-success" --rm \
+#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#  -e SUCCESS="true" \
+#  -e RUN_TYPE="daily" \
+#  -e EXECUTION_ID="e2e-daily" \
+#  -e TARGET_BUCKET="$TARGET_BUCKET" \
+#  -e TARGET_BUCKET_REDUCED="$TARGET_BUCKET_REDUCED" \
+#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+#  -e AWS_REGION="$AWS_REGION" \
+#  openmethane python scripts/archive.py
 
 echo "Success: daily run complete"
 echo "Results in: $DATA_PATH"
