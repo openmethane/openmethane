@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.9.1 (2025-03-04)
+
+### 🎉 Improvements
+
+- - Upload alerts to public data store when daily run is successful ([#150](https://github.com/openmethane/openmethane/pulls/150))
+
+
 ## openmethane v0.9.0 (2025-02-27)
 
 ### 🎉 Improvements
