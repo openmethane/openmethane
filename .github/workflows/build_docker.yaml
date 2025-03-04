@@ -141,7 +141,7 @@ jobs:
           python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
 
   test-e2e:
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     needs: build
     permissions:

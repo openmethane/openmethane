@@ -563,7 +563,6 @@ def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold): # noqa
 
 def point_enhance(val):
     i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold = val
-    logger.debug(f"[Cell ({i}, {j})] Calculating point enhancement")
 
     if land_mask[i, j] < 0.5:  # ocean point
         return i, j, np.nan, np.nan
