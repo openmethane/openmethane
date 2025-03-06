@@ -127,7 +127,7 @@ def posterior_emissions_postprocess(
                 {
                     "units": "kg/m**2/s",
                     "standard_name": "emissions",
-                    "long_name": "expected flux of methane based on public data (prior)",
+                    "long_name": "estimated flux of methane based on observations (posterior)",
                 },
             ),
             # expected emissions (prior averaged over period)
@@ -137,7 +137,7 @@ def posterior_emissions_postprocess(
                 {
                     "units": "kg/m**2/s",
                     "standard_name": "emissions",
-                    "long_name": "estimated flux of methane based on observations (posterior)",
+                    "long_name": "expected flux of methane based on public data (prior)",
                 },
             ),
         },
