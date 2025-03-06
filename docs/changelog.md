@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.9.3 (2025-03-06)
+
+### 🐛 Bug Fixes
+
+- - Fix `long_name` attributes on CH4 and prior_CH4 variables in results file ([#152](https://github.com/openmethane/openmethane/pulls/152))
+
+
 ## openmethane v0.9.2 (2025-03-04)
 
 ### 🔧 Trivial/Internal Changes
