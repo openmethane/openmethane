@@ -29,6 +29,7 @@ import fourdvar.util.file_handle as fh
 from fourdvar.params import date_defn, input_defn
 from obs_preprocess.model_space import ModelSpace
 from obs_preprocess.obsESA_defn import ObsSRON
+from util.errors.InvalidInputException import InvalidInputException
 from util.logger import get_logger
 
 logger = get_logger(__name__)
@@ -172,7 +173,13 @@ def process_file(
     viewing_azimuth_angle = viewing_azimuth_deg.reshape((viewing_azimuth_deg.size,))
     pressure_interval = meteo.variables["pressure_interval"][:, :]
     pressure_interval = pressure_interval.reshape(pressure_interval.size)
+
     ch4 = product.variables["methane_mixing_ratio_bias_corrected"][...]
+
+    # check for obs files missing methane data
+    if ch4.size <= 1:
+        raise InvalidInputException('Observation file methane_mixing_ratio_bias_corrected is empty')
+
     ch4 = destripe_smoothing(ch4.squeeze())
     ch4_column = ch4.reshape((ch4.size,))
     ch4_precision = product.variables["methane_mixing_ratio_precision"][:]
@@ -391,9 +398,13 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, s
             obs_list.extend(new_obs)
             n_total_obs += file_total_obs
             n_valid_obs += file_valid_obs
+
+        except InvalidInputException:
+            logger.warning(f"Skipping file due to missing methane data: {fname}")
+
         except Exception:
             # Ignore all observations in that file
-            logger.exception(f"Failed to process file: {fname}. Skipping")
+            logger.exception(f"Failed to process file: {fname}")
             raise
 
     print(f"found {n_valid_obs} valid soundings from {n_total_obs} possible")
