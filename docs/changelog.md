@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.9.4 (2025-03-10)
+
+### 🐛 Bug Fixes
+
+- - Skip tropomi files with no `methane_mixing_ratio_bias_corrected` data ([#154](https://github.com/openmethane/openmethane/pulls/154))
+
+
 ## openmethane v0.9.3 (2025-03-06)
 
 ### 🐛 Bug Fixes
