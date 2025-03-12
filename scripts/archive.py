@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 
 def main():
     config = Config.from_environment()
-    store_path = config.store_path or get_store_path(config)
+    store_path = get_store_path(config)
 
     # config.dump(store_path=store_path, prefix=prefix)
 
@@ -114,7 +114,7 @@ def main():
 
 @dataclass
 class Config:
-    store_path: pathlib.Path
+    store_path: pathlib.Path | None
     target_bucket: str
     target_bucket_reduced: str
     domain_name: str
@@ -143,13 +143,14 @@ class Config:
             else:
                 end_date = start_date
             domain_name = input_dict["domain_name"]
+            store_path = None
         else:
             start_date_raw = env.str("START_DATE")
             start_date = env.date("START_DATE")
             end_date = env.date("END_DATE")
             domain_name = env.str("DOMAIN_NAME")
+            store_path = env.path("STORE_PATH")
 
-        store_path = env.path("STORE_PATH")
         target_bucket = env.str("TARGET_BUCKET")
         target_bucket_reduced = env.str("TARGET_BUCKET_REDUCED", "")
         run_type = env.str("RUN_TYPE")
@@ -200,7 +201,22 @@ prefix         = {prefix!r}
 
 
 def get_store_path(config: Config) -> pathlib.Path:
-    """Recomputing STORE_PATH works when started from step functions and eventbridge."""
+    """
+    If running in a workflow, source the archive source from STORE_PATH, to
+    ensure the folder being archived is the one the workflow has used.
+
+    This task may also be triggered by eventbridge in the case of a workflow
+    failure at any step. In that case, STORE_PATH will not be available.
+
+    :param config:
+    :return: Path to the working folder for the workflow.
+    """
+
+    if config.store_path:
+        return config.store_path
+
+    # reconstruct the store path from the same pattern
+    # TODO: this should be centralised instead of being re-constructed here
     return (
         pathlib.Path("/opt/project/data/")
         / config.domain_name
