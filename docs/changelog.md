@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v0.9.5 (2025-03-13)
+
+### 🐛 Bug Fixes
+
+- - Fix archive.py store path when run after a workflow failure ([#155](https://github.com/openmethane/openmethane/pulls/155))
+
+
 ## openmethane v0.9.4 (2025-03-10)
 
 ### 🐛 Bug Fixes
