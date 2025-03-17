@@ -95,10 +95,21 @@ def main():
         logger.debug(f"Archiving {config.run_type} run to {target_path}")
         archive_dir(store_path, config.target_bucket, target_path)
 
-        # on success for a monthly run, replace the alerts_baseline.nc for the domain
-        # with the result from this run
-        # TODO: should this check that alerts_baseline.nc is more recent than existing?
-        if config.alerts_baseline_file and config.alerts_baseline_file.exists():
+    elif config.run_type == "baseline":
+        # archive the entire run to the private results bucket
+        # at a path like: aust10km/baseline/2023/01
+        target_path = pathlib.Path(
+            config.domain_name, "baseline",
+            f"{config.start_date.year:04}", f"{config.start_date.month:02}"
+        )
+        logger.debug(f"Archiving {config.run_type} run to {target_path}")
+        archive_dir(store_path, config.target_bucket, target_path)
+
+        # if the script is configured with alerts_baseline_remote, archive the
+        # result there. this is typically used to provide a new baseline for
+        # daily alerts generated within the daily workflow.
+        alerts_baseline_file = pathlib.Path(store_path, "alerts_baseline.nc")
+        if config.alerts_baseline_remote and alerts_baseline_file.exists():
             logger.debug(f"Archiving {config.alerts_baseline_file} to {config.alerts_baseline_remote}")
             archive_file(config.alerts_baseline_file, config.target_bucket, config.alerts_baseline_remote)
 
