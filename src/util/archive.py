@@ -25,7 +25,7 @@ def monthly(
     folder for the current execution. This daily data is needed for the monthly
     workflow.
     """
-    for date in date_range(start_date, end_date):  # this is inclusive of END_DATE
+    for date in _date_range(start_date, end_date):  # this is inclusive of END_DATE
         destination_path = pathlib.Path(
             local_path,
             domain_name,
@@ -43,6 +43,8 @@ def monthly(
             "mcip",
         ]:
             _s3_sync_fetch(daily_root + remote_path, destination_path.joinpath(remote_path))
+
+        _s3_object_fetch(daily_root + "simulobs.pic.gz", destination_path, allow_missing=True)
 
 
 def daily(
@@ -70,28 +72,27 @@ def daily(
 
     # fetch the alerts_baseline file for creating alerts
     _s3_object_fetch(
-        "/".join([daily_s3_bucket.rstrip("/"), str(alerts_baseline_remote)]), local_path
+        _get_s3_url(daily_s3_bucket, alerts_baseline_remote), local_path
     )
 
 
 def baseline(
     daily_s3_bucket: str,
+    public_s3_bucket: str,
+    start_date: datetime.date,
     end_date: datetime.date,
     domain_name: str,
+    domain_version: str,
     local_path: pathlib.Path,
-    baseline_length_days: int,
 ):
     """
     Sync a subset of the daily output for a range of dates into the working
     folder for the current execution. This subset of the daily data is needed
     to calculate baseline emissions for generating alerts.
     """
-    # Aim for 12 months of data, but if requested dates don't exist in s3
-    # (because a daily workflow has not yet been run) they will be skipped,
-    # and the baseline will use whatever data is available.
-    baseline_start = end_date - datetime.timedelta(days=baseline_length_days - 1)
+    fetch_domain(public_s3_bucket, domain_name, domain_version, local_path)
 
-    for date in date_range(baseline_start, end_date):  # this is inclusive of END_DATE
+    for date in _date_range(start_date, end_date):  # this is inclusive of END_DATE
         destination_path = pathlib.Path(
             local_path,
             domain_name,
@@ -114,6 +115,30 @@ def baseline(
         _s3_object_fetch(daily_root + "simulobs.pic.gz", destination_path, allow_missing=True)
 
 
+def fetch_domain(s3_bucket_name: str, domain_name: str, domain_version: str, output_path: pathlib.Path):
+    domain_filename = f"domain_{domain_version}.d01.nc"
+
+    s3_url = _get_s3_url(
+        s3_bucket_name=s3_bucket_name,
+        s3_path=pathlib.Path('domains', domain_name, domain_version, domain_filename),
+    )
+
+    logger.debug(f"Fetching {domain_name} domain from {s3_url}")
+
+    _s3_object_fetch(
+        s3_path=s3_url,
+        local_path=output_path,
+    )
+
+
+def _get_s3_url(s3_bucket_name: str, s3_path: str | pathlib.Path = None) -> str:
+    s3_bucket = (s3_bucket_name if s3_bucket_name.startswith("s3://") else f"s3://{s3_bucket_name}").rstrip("/")
+    if s3_path is None:
+        return s3_bucket
+
+    return "/".join([s3_bucket, str(s3_path)])
+
+
 def _get_daily_archive_path(s3_bucket_name: str, domain_name: str, date: datetime.date) -> str:
     daily_archive_path = (
         domain_name,
@@ -122,10 +147,10 @@ def _get_daily_archive_path(s3_bucket_name: str, domain_name: str, date: datetim
         f"{date.month:02}",
         f"{date.day:02}",
     )
-    # Allow bucket name to be specified with or without s3:// prefix
-    s3_bucket = f"s3://{s3_bucket_name.replace('s3://', '')}"
-    s3_path = "/".join((s3_bucket, *daily_archive_path)).rstrip("/")
-    return s3_path + "/"  # S3 directory paths must end with a slash
+
+    s3_url = _get_s3_url(s3_bucket_name, '/'.join(daily_archive_path))
+
+    return s3_url + "/"  # S3 directory paths must end with a slash
 
 
 def _s3_sync_fetch(
@@ -195,7 +220,7 @@ def _s3_fetch(
     logger.debug(f"Output from {' '.join(res.args)}: {res.stdout}")
 
 
-def date_range(start_date: datetime.date, end_date: datetime.date):
+def _date_range(start_date: datetime.date, end_date: datetime.date):
     """Like range() but with days and inclusive of the end date."""
     for n in range((end_date - start_date).days + 1):
         yield start_date + datetime.timedelta(days=n)
