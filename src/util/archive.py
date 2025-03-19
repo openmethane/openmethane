@@ -72,7 +72,7 @@ def daily(
 
     # fetch the alerts_baseline file for creating alerts
     _s3_object_fetch(
-        _get_s3_url(daily_s3_bucket, alerts_baseline_remote), local_path
+        _format_s3_url(daily_s3_bucket, alerts_baseline_remote), local_path
     )
 
 
@@ -118,7 +118,7 @@ def baseline(
 def fetch_domain(s3_bucket_name: str, domain_name: str, domain_version: str, output_path: pathlib.Path):
     domain_filename = f"domain_{domain_version}.d01.nc"
 
-    s3_url = _get_s3_url(
+    s3_url = _format_s3_url(
         s3_bucket_name=s3_bucket_name,
         s3_path=pathlib.Path('domains', domain_name, domain_version, domain_filename),
     )
@@ -131,7 +131,7 @@ def fetch_domain(s3_bucket_name: str, domain_name: str, domain_version: str, out
     )
 
 
-def _get_s3_url(s3_bucket_name: str, s3_path: str | pathlib.Path = None) -> str:
+def _format_s3_url(s3_bucket_name: str, s3_path: str | pathlib.Path = None) -> str:
     s3_bucket = (s3_bucket_name if s3_bucket_name.startswith("s3://") else f"s3://{s3_bucket_name}").rstrip("/")
     if s3_path is None:
         return s3_bucket
@@ -148,7 +148,7 @@ def _get_daily_archive_path(s3_bucket_name: str, domain_name: str, date: datetim
         f"{date.day:02}",
     )
 
-    s3_url = _get_s3_url(s3_bucket_name, '/'.join(daily_archive_path))
+    s3_url = _format_s3_url(s3_bucket_name, '/'.join(daily_archive_path))
 
     return s3_url + "/"  # S3 directory paths must end with a slash
 
