@@ -44,8 +44,6 @@ def main():
     config = Config.from_environment()
     store_path = get_store_path(config)
 
-    # config.dump(store_path=store_path, prefix=prefix)
-
     # If we have a full workflow ARN (which means we're running on AWS), we can fetch
     # the logs and archive them as well
     if config.workflow_execution_arn:
@@ -97,10 +95,10 @@ def main():
 
     elif config.run_type == "baseline":
         # archive the entire run to the private results bucket
-        # at a path like: aust10km/baseline/2023/01
+        # at a path like: aust10km/baseline/2023-01-01_2023-01-31
         target_path = pathlib.Path(
             config.domain_name, "baseline",
-            f"{config.start_date.year:04}", f"{config.start_date.month:02}"
+            f"{config.start_date.strftime('%Y-%m-%d')}_{config.end_date.strftime('%Y-%m-%d')}"
         )
         logger.debug(f"Archiving {config.run_type} run to {target_path}")
         archive_dir(store_path, config.archive_bucket, target_path)
@@ -109,9 +107,12 @@ def main():
         # result there. this is typically used to provide a new baseline for
         # daily alerts generated within the daily workflow.
         alerts_baseline_file = pathlib.Path(store_path, "alerts_baseline.nc")
-        if config.alerts_baseline_remote and alerts_baseline_file.exists():
+        if config.alerts_baseline_save_reference and config.alerts_baseline_remote and alerts_baseline_file.exists():
             logger.debug(f"Archiving {config.alerts_baseline_file} to {config.alerts_baseline_remote}")
             archive_file(config.alerts_baseline_file, config.archive_bucket, config.alerts_baseline_remote)
+        else:
+            logger.debug(f"Not archiving {config.alerts_baseline_file} as reference")
+            config.dump(store_path=store_path)
 
     else:
         raise ValueError(f"Unknown config.run_type={config.run_type!r}")
@@ -139,6 +140,7 @@ class Config:
     workflow_execution_arn: str
     alerts_baseline_file: pathlib.Path
     alerts_baseline_remote: pathlib.Path
+    alerts_baseline_save_reference: bool
 
     @classmethod
     def from_environment(cls):
@@ -171,6 +173,7 @@ class Config:
         workflow_execution_arn = env.str("WORKFLOW_EXECUTION_ARN", "")
         alerts_baseline_file = env.path("ALERTS_BASELINE_FILE", None)
         alerts_baseline_remote = env.path("ALERTS_BASELINE_REMOTE", None)
+        alerts_baseline_save_reference = env.str("ALERTS_BASELINE_SAVE_REFERENCE", "false") == "true"
 
         return cls(
             store_path=store_path,
@@ -187,9 +190,10 @@ class Config:
             workflow_execution_arn=workflow_execution_arn,
             alerts_baseline_remote=alerts_baseline_remote,
             alerts_baseline_file=alerts_baseline_file,
+            alerts_baseline_save_reference=alerts_baseline_save_reference,
         )
 
-    def dump(self, store_path: pathlib.Path, prefix: str):
+    def dump(self, store_path: pathlib.Path):
         logger.debug(f"""Configuration:
 archive_bucket  = {self.archive_bucket!r}
 public_bucket  = {self.public_bucket!r}
@@ -203,8 +207,8 @@ test           = {self.test!r}
 execution_id   = {self.execution_id!r}
 workflow_execution_arn = {self.workflow_execution_arn!r}
 alerts_baseline_remote = {self.alerts_baseline_remote!r}
+alerts_baseline_save_reference = {self.alerts_baseline_save_reference!r}
 store_path     = {store_path}
-prefix         = {prefix!r}
 """)
         with (store_path / "environment.txt").open("w") as fd:
             json.dump(env.dump(), fd)
