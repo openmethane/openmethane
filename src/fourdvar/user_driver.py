@@ -17,6 +17,7 @@
 import pathlib
 
 import xarray as xr
+import numpy as np
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import fourdvar.datadef as d
@@ -35,7 +36,6 @@ observed = None
 background = None
 iter_num = 0
 
-allow_neg_values = True
 
 
 def setup():
@@ -106,7 +106,10 @@ def callback_func(current_vector):
     logger.info(f"iter_num = {iter_num}")
 
 
-def minim(cost_func, grad_func, init_guess):
+def minim(cost_func, grad_func,
+          init_guess: np.ndarray,
+          allow_negative_emissions: bool = True,
+          physical_template = None,):
     """application: the minimizer function
     input: cost function, gradient function, prior estimate / background
     output: list (1st element is numpy.ndarray of solution, the rest are user-defined).
@@ -118,10 +121,18 @@ def minim(cost_func, grad_func, init_guess):
     start_grad = grad_func(init_guess)
     start_dict = {"start_cost": start_cost, "start_grad": start_grad}
 
-    if allow_neg_values is True:
+    if allow_negative_emissions is True:
         bounds = None
     else:
-        bounds = len(init_guess) * [(0, None)]
+        species =physical_template.spcs
+        if len(species) != 1:
+            raise ValueError("bounds only works for one species")
+        len_bcon = d.PhysicalData.bcon[ species[0]].size
+        len_emis = init_guess.size - len_bcon
+        # now assign zero as lower bound for emissions
+        bounds = len_emis * [(0, None)]
+        # now add no bounds for bcon
+        bounds += len_bcon * [(None, None)] 
     maxiter = env.int("MAX_ITERATIONS", 20)
     logger.info(f"Running minimiser with a maximum of {maxiter} iteration")
     answer = minimize(

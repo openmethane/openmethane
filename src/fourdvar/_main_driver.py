@@ -23,6 +23,7 @@ from fourdvar import user_driver
 from fourdvar._transform import transform
 from fourdvar.params import archive_defn, data_access
 from util.logger import get_logger
+from fourdvar.env import env
 
 logger = get_logger(__name__)
 
@@ -172,13 +173,16 @@ def get_answer():
     input: None
     output: None (user_driver.display should print/save output as desired).
     """
+    allow_negative_emissions = env.bool("ALLOW_NEGATIVE_EMISSIONS", False)
     # set up background unknowns
     bg_physical = user_driver.get_background()
     bg_unknown = transform(bg_physical, d.UnknownData)
 
     user_driver.setup()
     start_vector = bg_unknown.get_vector()
-    min_output = user_driver.minim(cost_func, gradient_func, start_vector)
+    min_output = user_driver.minim(cost_func, gradient_func, start_vector,
+                                   allow_negative_emissions = allow_negative_emissions,
+                                   physical_template = bg_physical)
     out_vector = min_output[0]
     out_unknown = d.UnknownData(out_vector)
     out_physical = transform(out_unknown, d.PhysicalData)
