@@ -127,7 +127,7 @@ def minim(cost_func, grad_func,
         species =physical_template.spcs
         if len(species) != 1:
             raise ValueError("bounds only works for one species")
-        len_bcon = d.PhysicalData.bcon[ species[0]].size
+        len_bcon = physical_template.bcon[ species[0]].size
         len_emis = init_guess.size - len_bcon
         # now assign zero as lower bound for emissions
         bounds = len_emis * [(0, None)]
