@@ -21,12 +21,13 @@ import click
 from fourdvar.env import env
 from util import archive
 
-TARGET_BUCKET = env.str("TARGET_BUCKET", "s3://test-bucket")
+ARCHIVE_BUCKET = env.str("ARCHIVE_BUCKET", "s3://test-bucket")
+PUBLIC_BUCKET = env.str("PUBLIC_BUCKET", "s3://public-bucket")
 DOMAIN_NAME = env.str("DOMAIN_NAME")
+DOMAIN_VERSION = env.str("DOMAIN_VERSION")
 STORE_PATH: pathlib.Path = env.path("STORE_PATH")
 START_DATE = env.date("START_DATE")
 END_DATE = env.date("END_DATE")
-BASELINE_LENGTH_DAYS = env.int("BASELINE_LENGTH_DAYS", 365)
 ALERTS_BASELINE_REMOTE = env.path("ALERTS_BASELINE_REMOTE", "")
 
 
@@ -43,7 +44,7 @@ def load_from_archive(sync: str = "monthly"):
     match sync:
         case "daily":
             archive.daily(
-                daily_s3_bucket=TARGET_BUCKET,
+                daily_s3_bucket=ARCHIVE_BUCKET,
                 start_date=START_DATE,
                 domain_name=DOMAIN_NAME,
                 local_path=STORE_PATH,
@@ -52,17 +53,19 @@ def load_from_archive(sync: str = "monthly"):
 
         case "baseline":
             archive.baseline(
-                daily_s3_bucket=TARGET_BUCKET,
+                daily_s3_bucket=ARCHIVE_BUCKET,
+                public_s3_bucket=PUBLIC_BUCKET,
+                start_date=START_DATE,
                 end_date=END_DATE,
                 domain_name=DOMAIN_NAME,
+                domain_version=DOMAIN_VERSION,
                 local_path=STORE_PATH,
-                baseline_length_days=BASELINE_LENGTH_DAYS,
             )
 
         # default case catches "monthly" as well
         case _:
             archive.monthly(
-                daily_s3_bucket=TARGET_BUCKET,
+                daily_s3_bucket=ARCHIVE_BUCKET,
                 start_date=START_DATE,
                 end_date=END_DATE,
                 domain_name=DOMAIN_NAME,
