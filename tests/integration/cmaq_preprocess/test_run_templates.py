@@ -27,7 +27,7 @@ def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset, metcro
 
     ds = xr.load_dataset(expected_file)
 
-    assert ds.dims == {"TSTEP": 25, "VAR": 1, "DATE-TIME": 2, "LAY": 32, "ROW": 5, "COL": 5}
+    assert ds.sizes == {"TSTEP": 25, "VAR": 1, "DATE-TIME": 2, "LAY": 32, "ROW": 5, "COL": 5}
     assert list(ds.variables.keys()) == ["TFLAG", "CH4"]
 
     # Check TFLAG
