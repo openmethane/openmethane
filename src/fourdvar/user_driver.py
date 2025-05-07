@@ -117,8 +117,8 @@ def minim(cost_func, grad_func,
     # turn on skipping of unneeded fwd calls
     data_access.allow_fwd_skip = True
 
-    start_cost = cost_func(init_guess, archive_obs_file="simulobs_first_guess.pic.gz")
-    start_grad = grad_func(init_guess)
+    start_cost = cost_func(0.*init_guess, archive_obs_file="simulobs_first_guess.pic.gz")
+    start_grad = grad_func(0.*init_guess)
     start_dict = {"start_cost": start_cost, "start_grad": start_grad}
 
     if allow_negative_emissions is True:
