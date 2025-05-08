@@ -28,7 +28,8 @@ from fourdvar.env import env
 logger = get_logger(__name__)
 
 
-def cost_func(vector):
+def cost_func(vector,
+              archive_obs_file=None):
     """framework: cost function used by minimizer
     input: numpy.ndarray
     output: scalar.
@@ -55,15 +56,12 @@ def cost_func(vector):
         model_out = transform(model_in, d.ModelOutputData)
         data_access.prev_vector = vector.copy()
 
-    # TODO: Temp archive for debugging
-    model_out.archive("conc_cost.ncf")
-    logger.warning("Archived concentrations in cost function")
 
     simulated = transform(model_out, d.ObservationData)
 
-    # TODO: Temp archive for debugging
-    simulated.archive("forward-test.ncf", force_lite=True)
-    logger.warning("Forward test log complete")
+    if archive_obs_file is not None:
+        simulated.archive(archive_obs_file, force_lite=True)
+        logger.info(f"archiving simulated concentrations in {archive_obs_file}")
 
     residual = d.ObservationData.get_residual(observed, simulated)
     w_residual = d.ObservationData.error_weight(residual)
@@ -131,9 +129,6 @@ def gradient_func(vector):
 
     simulated = transform(model_out, d.ObservationData)
 
-    # TODO: Temp archive for debugging
-    simulated.archive("forward-test.ncf", force_lite=True)
-    logger.warning("Forward test log complete")
 
     residual = d.ObservationData.get_residual(observed, simulated)
     w_residual = d.ObservationData.error_weight(residual)

@@ -97,7 +97,6 @@ def callback_func(current_vector):
     current_physical.archive(f"iter{iter_num:04}.ncf")
     if archive_defn.iter_model_output is True:
         current_model_output = d.ModelOutputData()
-        current_model_output.archive(f"conc_iter{iter_num:04}.ncf")
     if archive_defn.iter_obs_lite is True:
         current_model_output = d.ModelOutputData()
         current_obs = transform(current_model_output, d.ObservationData)
@@ -117,7 +116,7 @@ def minim(cost_func, grad_func,
     # turn on skipping of unneeded fwd calls
     data_access.allow_fwd_skip = True
 
-    start_cost = cost_func(init_guess)
+    start_cost = cost_func(init_guess, archive_obs_file="simulobs_first_guess.pic.gz")
     start_grad = grad_func(init_guess)
     start_dict = {"start_cost": start_cost, "start_grad": start_grad}
 
