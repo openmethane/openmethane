@@ -97,7 +97,6 @@ def callback_func(current_vector):
     current_physical.archive(f"iter{iter_num:04}.ncf")
     if archive_defn.iter_model_output is True:
         current_model_output = d.ModelOutputData()
-        current_model_output.archive(f"conc_iter{iter_num:04}.ncf")
     if archive_defn.iter_obs_lite is True:
         current_model_output = d.ModelOutputData()
         current_obs = transform(current_model_output, d.ObservationData)

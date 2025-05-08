@@ -56,9 +56,6 @@ def cost_func(vector,
         model_out = transform(model_in, d.ModelOutputData)
         data_access.prev_vector = vector.copy()
 
-    # TODO: Temp archive for debugging
-    model_out.archive("conc_cost.ncf")
-    logger.warning("Archived concentrations in cost function")
 
     simulated = transform(model_out, d.ObservationData)
 
@@ -132,9 +129,6 @@ def gradient_func(vector):
 
     simulated = transform(model_out, d.ObservationData)
 
-    # TODO: Temp archive for debugging
-    simulated.archive("forward-test.ncf", force_lite=True)
-    logger.warning("Forward test log complete")
 
     residual = d.ObservationData.get_residual(observed, simulated)
     w_residual = d.ObservationData.error_weight(residual)
