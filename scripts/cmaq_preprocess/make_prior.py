@@ -65,7 +65,7 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # 'emis' to use timestep from emissions file
     # 'single' for using a single average across the entire model run
     # integer to use custom number of seconds
-    bcon_tsec = "single"
+    bcon_tsec = 24*60*60 # one day
 
     # data for emission uncertainty
     # allowed values:
@@ -87,7 +87,7 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # dict: apply single value to each spcs ( eg: { 'CO2':1e-6, 'CO':1e-7 } )
     # string: filename for netCDF file already correctly formatted.
     # for test case using 50ppb/day CO
-    bcon_unc = {"CH4": 1e-9}  # ppm/s
+    bcon_unc = {"CH4": 5e-9}  # ppm/s
 
     # convert spc_list into valid list
     emissions_filename = dt.replace_date(emis_template, date_defn.start_date)
