@@ -87,7 +87,7 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # dict: apply single value to each spcs ( eg: { 'CO2':1e-6, 'CO':1e-7 } )
     # string: filename for netCDF file already correctly formatted.
     # for test case using 50ppb/day CO
-    bcon_unc = {"CH4": 5e-9}  # ppm/s
+    bcon_unc = {"CH4": 5e-7}  # ppm/s
 
     # convert spc_list into valid list
     emissions_filename = dt.replace_date(emis_template, date_defn.start_date)
