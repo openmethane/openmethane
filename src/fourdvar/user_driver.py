@@ -48,7 +48,6 @@ def setup():
         logger.warning("input_defn.inc_icon is turned off.")
     bg = get_background()
     obs = get_observed()
-    obs.value =[v+5. for v in obs.value]
     bg.archive("prior.ncf")
     obs.archive("observed.pickle")
 
