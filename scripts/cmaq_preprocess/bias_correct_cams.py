@@ -34,7 +34,7 @@ def main():
 
     correct_icon_bcon(
         species="CH4",
-        bias=bias-5./1000.,
+        bias=bias-5.68./1000.,
         icon_file=icon_file,
         bcon_files=bcon_files,
     )
