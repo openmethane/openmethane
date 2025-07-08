@@ -283,7 +283,7 @@ def interpolate_from_cams_to_cmaq_grid(
             if do_ICs:
                 print("write ICs to file: ", outICON)
                 ncouti = netCDF4.Dataset(outICON, "r+", format="NETCDF4")
-                all_vars = list(ncoutb.variables.keys())[1:]
+                all_vars = list(ncouti.variables.keys())[1:]
                 nvars = len(all_vars)
 
             lens = dict()
