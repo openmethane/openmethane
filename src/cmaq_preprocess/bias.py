@@ -12,6 +12,10 @@ from fourdvar.datadef import ObservationData
 
 from . import utils
 from .read_config_cmaq import CMAQConfig
+import fourdvar.datadef as d
+from fourdvar._transform import transform
+from fourdvar.params.input_defn import obs_file, prior_file
+from fourdvar.params.root_path_defn import store_path
 
 
 def mass_weighted_mean(
@@ -97,6 +101,7 @@ def calculate_icon_bias(
     obs_file: pathlib.Path,
     levels: np.ndarray[float],
     correct_bias_by_region: bool = False,
+        species: str='CH4',
 ) -> float:
     """Calculates the bias between iCon mean and satellite mean across the month.
 
@@ -119,7 +124,7 @@ def calculate_icon_bias(
             else:
                 region_inds = None
             icon_mass_weighted_mean = mass_weighted_mean(icon_files[i_date],
-                                                         "CH4", thickness,
+                                                         species, thickness,
                                                          region_inds)
             icon_means.append( icon_mass_weighted_mean)
     icon_means = np.array(icon_means)
@@ -130,8 +135,38 @@ def calculate_icon_bias(
     return obs_means.mean() - icon_means.mean()
 
 
-def calculate_emissions_bias(
-        start_date: datetime.date,
-        end_date: datetime.date,
-        ) -> float:
-    return 0.0
+def calculate_emissions_bias( prior_file: pathlib.Path,
+                              obs_file: pathlib.Path,
+                              species: str,
+                             ) -> float:
+    """ calculates the difference in simulated concentrations between a run with and without emissions.
+    inputs: prior_file, path to prior emissions file,
+    obs_file, path to observation file,
+    species: name of species to solve for,
+    returns: mean difference between simulated concentrations as a float.
+    """
+    prior = d.PhysicalData.from_file(prior_file)
+    mean_obs_emis = calculate_mean_obs( prior, obs_file)
+    prior.emis[species] *= 0. # zeroing emissions while preserving shape
+    mean_obs_no_emis = calculate_mean_obs( prior, obs_file)
+    return mean_obs_emis -mean_obs_no_emis
+
+def calculate_mean_obs( physical: d.PhysicalData,
+                        obs_file: pathlib.Path,
+                        ) -> float:
+    """ calculates mean concentrations arising from a PhysicalData object and
+    an observation file.
+    Inputs:
+    physical: PhysicalData object carrying icon, bcon and emis fields
+    obs_file: path to observation file
+    returns: float, mean of simulated observations
+    """
+    modelInput = transform(physical, d.ModelInputData)
+    modelOutput = transform(modelInput, d.ModelOutputData)
+    observed = d.ObservationData.from_file(obs_file)
+    simul = transform( modelOutput, d.ObservationData)
+    return simul.get_vector().mean()/1000.
+
+    
+                        
+    
