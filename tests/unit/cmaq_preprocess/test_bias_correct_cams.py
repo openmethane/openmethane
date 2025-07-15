@@ -32,8 +32,8 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch, metcro3d_
     levels = xr.open_dataset(metcro3d_file).attrs["VGLVLS"]
 
     # calculate bias
-    bias = cmaq_preprocess.bias.calculate_bias(
-        icon_file=icon_file,
+    bias = cmaq_preprocess.bias.calculate_icon_bias(
+        icon_files=[icon_file],
         obs_file=obs_file,
         levels=levels,
         start_date=start_date,
