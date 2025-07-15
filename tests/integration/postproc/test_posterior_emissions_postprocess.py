@@ -33,7 +33,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     posterior_multipliers = d.PhysicalData.from_file(
         pathlib.Path(test_data_dir, "fourdvar", "posterior_multipliers.nc")
     )
-    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "out-om-domain-info.nc"))
+    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "prior-emissions.nc"))
 
     # validate that test input hasn't changed before we attempt to transform it
     assert posterior_multipliers.emis_units == "mol/(s*m^2)", "incorrect unit emissions"
@@ -166,7 +166,7 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     posterior_multipliers = d.PhysicalData.from_file(
         pathlib.Path(test_data_dir, "fourdvar", "posterior_multipliers.nc")
     )
-    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "out-om-domain-info.nc"))
+    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "prior-emissions.nc"))
 
     prior_emis = glob.glob(str(pathlib.Path(test_data_dir, "templates", "record", "emis_*.nc")))
     assert len(prior_emis) == 2, "did not find exactly 2 days of test data"

@@ -17,7 +17,7 @@ def _squeeze_strs(values: dict[str, Any]) -> dict[str, Any]:
 def test_make_emissions_templates(test_data_dir, tmpdir, compare_dataset, metcro3d_file):
     data_dir = tmpdir.mkdir("data")
     make_emissions_templates(
-        prior_file=str(test_data_dir / "prior" / "out-om-domain-info.nc"),
+        prior_file=str(test_data_dir / "prior" / "prior-emissions.nc"),
         metcro_template=metcro3d_file,
         emis_template=str(data_dir / "emis_record_<YYYY-MM-DD>.nc"),
     )

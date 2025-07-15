@@ -20,7 +20,7 @@ WRF_DATE="2022072200"
 
 
 # Copy the prior from openmethane-prior
-cp $OPENMETHANE_PRIOR_ROOT/outputs/out-om-domain-info.nc $DIR/prior/
+cp $OPENMETHANE_PRIOR_ROOT/outputs/prior-emissions.nc $DIR/prior/
 
 # Copy the WRF data from setup-wrf
 rm -rf $DIR/wrf/
