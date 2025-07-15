@@ -48,7 +48,7 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch, metcro3d_
     cmaq_preprocess.bias.correct_icon_bcon(
         species="CH4",
         bias=bias,
-        icon_file=icon_file,
+        icon_files=[icon_file],
         bcon_files=bcon_files,
     )
 
