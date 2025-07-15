@@ -155,9 +155,9 @@ def make_emissions_templates(prior_file: str, metcro_template: str, emis_templat
     """
     with nc.Dataset(prior_file, mode="r") as input:
         prior_dates = nc.num2date(
-            input["date"][:], input["date"].getncattr("units"), only_use_cftime_datetimes=False
+            input["time"][:], input["time"].getncattr("units"), only_use_cftime_datetimes=False
         )
-        emissions = input["OCH4_TOTAL"][...]
+        emissions = input["ch4_total"][...]
         grid_shape = emissions.shape[2:]
 
     cmaq_spec = "CH4"
