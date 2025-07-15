@@ -76,7 +76,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
     assert posterior_emissions.attrs["XCELL"] == 10000, "post-processed cell size has changed"
     assert posterior_emissions.attrs["YCELL"] == 10000, "post-processed cell size has changed"
-    assert posterior_emissions["CH4"].sum() == pytest.approx(
+    assert posterior_emissions["ch4"].sum() == pytest.approx(
         2.3740436e-09
     ), "post-processed emissions (max) don't match expected"
 
@@ -90,13 +90,13 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
 
     # spot check several cells
     assert (
-        posterior_emissions["CH4"][0][0][0] == expected[0][0]
+        posterior_emissions["ch4"][0][0][0] == expected[0][0]
     ), "emissions do not equal multiplier times prior"
     assert (
-        posterior_emissions["CH4"][0][2][4] == expected[2][4]
+        posterior_emissions["ch4"][0][2][4] == expected[2][4]
     ), "emissions do not equal multiplier times prior"
     assert (
-        posterior_emissions["CH4"][0][4][4] == expected[4][4]
+        posterior_emissions["ch4"][0][4][4] == expected[4][4]
     ), "emissions do not equal multiplier times prior"
 
     assert posterior_emissions["time"][0] == np.datetime64(
@@ -111,6 +111,10 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
         "2022-07-23"
     ), "time_bounds do not match expected"
 
+    assert posterior_emissions["x"].attrs["bounds"] == "x_bounds"
+
+    assert posterior_emissions["y"].attrs["bounds"] == "y_bounds"
+
     assert posterior_emissions["lat"][0][0] == pytest.approx(
         -23.042923
     ), "lat coordinates do not match expected"
@@ -120,20 +124,6 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     assert posterior_emissions["lat"][4][4] == pytest.approx(
         -22.632904
     ), "lat coordinates do not match expected"
-    assert posterior_emissions["lat"].attrs["bounds"] == "lat_bounds"
-
-    assert posterior_emissions["lat_bounds"][0][0][0] == pytest.approx(
-        -23.09412003
-    ), "lat_bounds coordinates do not match expected"
-    assert posterior_emissions["lat_bounds"][0][0][1] == pytest.approx(
-        -23.00298309
-    ), "lat_bounds coordinates do not match expected"
-    assert posterior_emissions["lat_bounds"][0][0][2] == pytest.approx(
-        -22.99169922
-    ), "lat_bounds coordinates do not match expected"
-    assert posterior_emissions["lat_bounds"][0][0][3] == pytest.approx(
-        -23.08282471
-    ), "lat_bounds coordinates do not match expected"
 
     assert posterior_emissions["lon"][0][0] == pytest.approx(
         148.47278
@@ -144,20 +134,6 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     assert posterior_emissions["lon"][4][4] == pytest.approx(
         148.8186
     ), "lon coordinates do not match expected"
-    assert posterior_emissions["lon"].attrs["bounds"] == "lon_bounds"
-
-    assert posterior_emissions["lon_bounds"][0][0][0] == pytest.approx(
-        148.42938232
-    ), "lon_bounds coordinates do not match expected"
-    assert posterior_emissions["lon_bounds"][0][0][1] == pytest.approx(
-        148.41714478
-    ), "lon_bounds coordinates do not match expected"
-    assert posterior_emissions["lon_bounds"][0][0][2] == pytest.approx(
-        148.5161438
-    ), "lon_bounds coordinates do not match expected"
-    assert posterior_emissions["lon_bounds"][0][0][3] == pytest.approx(
-        148.52845764
-    ), "lon_bounds coordinates do not match expected"
 
 
 def test_posterior_emissions_postprocess_multi_day(target_environment, test_data_dir):
@@ -182,10 +158,10 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     )
 
     # spot check several cells
-    assert posterior_emissions["CH4"][0][0][0] == pytest.approx(
+    assert posterior_emissions["ch4"][0][0][0] == pytest.approx(
         1.1774051e-10
     ), "emissions do not match expected"
-    assert posterior_emissions["CH4"][0][4][4] == pytest.approx(
+    assert posterior_emissions["ch4"][0][4][4] == pytest.approx(
         9.4978345e-11
     ), "emissions do not match expected"
 

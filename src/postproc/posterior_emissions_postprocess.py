@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import pathlib
 
+import pathlib
 import numpy as np
 import xarray as xr
 
 from postproc.calculate_average_emissions import calculate_average_emissions
+from util.cf import get_grid_mappings
 from util.logger import get_logger
-from util.netcdf import extract_bounds
+from util.system import get_version, get_timestamped_command
 
 logger = get_logger(__name__)
 
@@ -43,126 +43,83 @@ def posterior_emissions_postprocess(
         species=species,
     )
 
-    # create a variable with projection coordinates
-    projection_x = (
-        prior_emissions_ds.XORIG
-        + (0.5 * prior_emissions_ds.XCELL)
-        + np.arange(len(prior_emissions_ds.COL)) * prior_emissions_ds.XCELL
-    )
-    projection_y = (
-        prior_emissions_ds.YORIG
-        + (0.5 * prior_emissions_ds.YCELL)
-        + np.arange(len(prior_emissions_ds.ROW)) * prior_emissions_ds.YCELL
-    )
+    # the domain typically has only one grid mapping, which applies to vars
+    # with y, x coords
+    projection_var_name = get_grid_mappings(prior_emissions_ds)[0]
 
     # copy dimensions and attributes from the prior emissions, as the posterior
     # emissions should be provided in the same grid / format
     logger.debug("creating Dataset from posterior emissions data with prior emissions structure")
-    posterior_emissions = xr.Dataset(
-        data_vars={
-            # meta data
-            "lat": (
-                ("y", "x"),
-                prior_emissions_ds.variables["LAT"][0],
-                {
-                    "long_name": "latitude",
-                    "units": "degrees_north",
-                    "standard_name": "latitude",
-                    "bounds": "lat_bounds",
-                },
-            ),
-            "lon": (
-                ("y", "x"),
-                prior_emissions_ds.variables["LON"][0],
-                {
-                    "long_name": "longitude",
-                    "units": "degrees_east",
-                    "standard_name": "longitude",
-                    "bounds": "lon_bounds",
-                },
-            ),
-            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-boundaries
-            "lat_bounds": (
-                ("y", "x", "cell_corners"),
-                extract_bounds(prior_emissions_ds.variables["LATD"][0][0]),
-            ),
-            "lon_bounds": (
-                ("y", "x", "cell_corners"),
-                extract_bounds(prior_emissions_ds.variables["LOND"][0][0]),
-            ),
-            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
-            "grid_projection": (
-                (),
-                False,
-                {
-                    "grid_mapping_name": "lambert_conformal_conic",
-                    "standard_parallel": (prior_emissions_ds.TRUELAT1, prior_emissions_ds.TRUELAT2),
-                    "longitude_of_central_meridian": prior_emissions_ds.STAND_LON,
-                    "latitude_of_projection_origin": prior_emissions_ds.MOAD_CEN_LAT,
-                },
-            ),
-            "projection_x": (
-                ("x"),
-                projection_x,
-                {
-                    "long_name": "x coordinate of projection",
-                    "units": "m",
-                    "standard_name": "projection_x_coordinate",
-                },
-            ),
-            "projection_y": (
-                ("y"),
-                projection_y,
-                {
-                    "long_name": "y coordinate of projection",
-                    "units": "m",
-                    "standard_name": "projection_y_coordinate",
-                },
-            ),
-            "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
-            # results data
-            "CH4": (
-                ("time", "y", "x"),
-                [emissions_array],
-                {
-                    "units": "kg/m**2/s",
-                    "standard_name": "emissions",
-                    "long_name": "estimated flux of methane based on observations (posterior)",
-                },
-            ),
-            # expected emissions (prior averaged over period)
-            "prior_CH4": (
-                ("time", "y", "x"),
-                [prior_emissions_array],
-                {
-                    "units": "kg/m**2/s",
-                    "standard_name": "emissions",
-                    "long_name": "expected flux of methane based on public data (prior)",
-                },
-            ),
-        },
+    posterior_emissions_ds = xr.Dataset(
         coords={
             "x": prior_emissions_ds.coords["x"],
             "y": prior_emissions_ds.coords["y"],
-            "time": (("time"), [period_start], {"bounds": "time_bounds"}),
+            "time": (("time"), [period_start], {
+                "standard_name": "time",
+                "bounds": "time_bounds",
+            }),
+        },
+        data_vars={
+            # bounds
+            "x_bounds": prior_emissions_ds["x_bounds"],
+            "y_bounds": prior_emissions_ds["y_bounds"],
+            "time_bounds": (("time", "time_period"), [[period_start, period_end]]),
+
+            # georeferencing
+            "lon": prior_emissions_ds["lon"],
+            "lat": prior_emissions_ds["lat"],
+            projection_var_name: prior_emissions_ds[projection_var_name],
+
+            # results data
+            # posterior CH4 emissions - Open Methane primary result
+            "ch4": (("time", "y", "x"), [emissions_array], {
+                "units": "kg/m2/s",
+                "standard_name": "surface_upward_mass_flux_of_methane",
+                "long_name": "estimated flux of methane based on observations (posterior)",
+                "grid_mapping": projection_var_name,
+            }),
+            # expected emissions (prior averaged over period)
+            "prior_ch4": (("time", "y", "x"), [prior_emissions_array], {
+                "units": "kg/m2/s",
+                "standard_name": "surface_upward_mass_flux_of_methane",
+                "long_name": "expected flux of methane based on public data (prior)",
+                "grid_mapping": projection_var_name,
+            }),
+
+            "land_mask": prior_emissions_ds["land_mask"],
         },
         attrs={
             "DX": prior_emissions_ds.DX,
             "DY": prior_emissions_ds.DY,
             "XCELL": prior_emissions_ds.XCELL,
             "YCELL": prior_emissions_ds.YCELL,
+
+            # domain
+            "domain_name": prior_emissions_ds.domain_name,
+            "domain_version": prior_emissions_ds.domain_version,
+            "domain_slug": prior_emissions_ds.domain_slug,
+
+            # meta
             "title": "Open Methane monthly emissions estimates",
-            "openmethane_version": os.getenv("OPENMETHANE_VERSION", "development"),
-            "history": "",
+            "comment": "Gridded emissions estimate for methane across Australia",
+            "history": get_timestamped_command(),
+            "openmethane_version": get_version(),
+            "openmethane_prior_version": prior_emissions_ds.openmethane_prior_version,
+
+            "Conventions": "CF-1.12",
         },
     )
 
     # ensure time and time_bounds use the same time encoding
     time_encoding = f"days since {period_start.strftime('%Y-%m-%d')}"
-    posterior_emissions.time.encoding["units"] = time_encoding
-    posterior_emissions.time_bounds.encoding["units"] = time_encoding
+    posterior_emissions_ds.time.encoding["units"] = time_encoding
+    posterior_emissions_ds.time_bounds.encoding["units"] = time_encoding
 
-    return posterior_emissions
+    # disable _FillValue for variables that shouldn't have empty values
+    for var_name in ['time_bounds', 'x', 'y', 'x_bounds', 'y_bounds', 'lat', 'lon']:
+        posterior_emissions_ds[var_name].encoding["_FillValue"] = None
+
+    return posterior_emissions_ds
 
 
 def normalise_posterior(
