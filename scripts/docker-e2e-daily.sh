@@ -72,19 +72,19 @@ echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 #docker run --name="e2e-daily-archive-load" --rm \
 #  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
 #  -e TARGET_BUCKET="$TARGET_BUCKET" \
-#  -e ALERTS_BASELINE_REMOTE="$DOMAIN_NAME/alerts_baseline.nc" \
+#  -e ALERTS_BASELINE_REMOTE="$DOMAIN_NAME/alerts-baseline.nc" \
 #  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 #  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
 #  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
 #  -e AWS_REGION="$AWS_REGION" \
 #  openmethane python scripts/load_from_archive.py --sync daily
 
-if [[ ! -f "$STORE_PATH/alerts_baseline.nc" ]]; then
-  if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc" ]]; then
-    echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc"
-    cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc" "$DATA_PATH/alerts_baseline.nc"
+if [[ ! -f "$STORE_PATH/alerts-baseline.nc" ]]; then
+  if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" ]]; then
+    echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc"
+    cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" "$DATA_PATH/alerts-baseline.nc"
   else
-    echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts_baseline.nc exists before running"
+    echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc exists before running"
     exit 1
   fi
 fi
@@ -145,7 +145,7 @@ docker run --name="e2e-daily-fourdvar-daily" --rm \
 # JobName: alerts-create-alerts
 docker run --name="e2e-daily-create-alerts" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts_baseline.nc" \
+  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
   -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
   -e ALERTS_COUNT_THRESHOLD="2" \
   openmethane python scripts/alerts/create_alerts.py

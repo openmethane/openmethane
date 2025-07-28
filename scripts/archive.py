@@ -106,7 +106,7 @@ def main():
         # if the script is configured with alerts_baseline_remote, archive the
         # result there. this is typically used to provide a new baseline for
         # daily alerts generated within the daily workflow.
-        alerts_baseline_file = pathlib.Path(store_path, "alerts_baseline.nc")
+        alerts_baseline_file = pathlib.Path(store_path, "alerts-baseline.nc")
         if config.alerts_baseline_save_reference and config.alerts_baseline_remote and alerts_baseline_file.exists():
             logger.debug(f"Archiving {config.alerts_baseline_file} to {config.alerts_baseline_remote}")
             archive_file(config.alerts_baseline_file, config.archive_bucket, config.alerts_baseline_remote)

@@ -156,7 +156,7 @@ def post_process(out_physical: PhysicalData, metadata):
     """
     # fourdvar solves for multipliers against the template emissions (prior)
     # for every grid cell. save the raw result, which will be useful internally.
-    out_physical.archive("posterior_multipliers.nc")
+    out_physical.archive("posterior-multipliers.nc")
 
     # open the prior emissions to use as a template format for the results file
     prior_emissions = xr.open_dataset(template_defn.prior_file)
@@ -172,5 +172,5 @@ def post_process(out_physical: PhysicalData, metadata):
         species=species,
     )
     posterior_emissions.to_netcdf(
-        pathlib.Path(archive.get_archive_path(), "posterior_emissions.nc")
+        pathlib.Path(archive.get_archive_path(), "posterior-emissions.nc")
     )
