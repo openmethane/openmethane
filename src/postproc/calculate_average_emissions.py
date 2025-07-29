@@ -33,7 +33,7 @@ def calculate_average_emissions(
     template_dir: pathlib.Path,
     emis_template: str = "emis_*.nc",
     species: str = "CH4",
-):
+) -> tuple[np.ndarray, np.ndarray, datetime, datetime]:
     prior_emis_files = list_emis_template_files(template_dir, emis_template)
     if len(prior_emis_files) == 0:
         raise ValueError(f"no emission template files found at {template_dir}")

@@ -90,13 +90,13 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
 
     # spot check several cells
     assert (
-        posterior_emissions["ch4"][0][0][0] == expected[0][0]
+        posterior_emissions["ch4"][0][0][0][0] == expected[0][0]
     ), "emissions do not equal multiplier times prior"
     assert (
-        posterior_emissions["ch4"][0][2][4] == expected[2][4]
+        posterior_emissions["ch4"][0][0][2][4] == expected[2][4]
     ), "emissions do not equal multiplier times prior"
     assert (
-        posterior_emissions["ch4"][0][4][4] == expected[4][4]
+        posterior_emissions["ch4"][0][0][4][4] == expected[4][4]
     ), "emissions do not equal multiplier times prior"
 
     assert posterior_emissions["time"][0] == np.datetime64(
@@ -158,10 +158,10 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     )
 
     # spot check several cells
-    assert posterior_emissions["ch4"][0][0][0] == pytest.approx(
+    assert posterior_emissions["ch4"][0][0][0][0] == pytest.approx(
         1.1774051e-10
     ), "emissions do not match expected"
-    assert posterior_emissions["ch4"][0][4][4] == pytest.approx(
+    assert posterior_emissions["ch4"][0][0][4][4] == pytest.approx(
         9.4978345e-11
     ), "emissions do not match expected"
 

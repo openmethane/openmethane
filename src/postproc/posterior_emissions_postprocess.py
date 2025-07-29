@@ -43,6 +43,10 @@ def posterior_emissions_postprocess(
         species=species,
     )
 
+    # expand dimensions to include single-value "time", "vertical" coordinates
+    emissions_np = np.expand_dims(emissions_array, axis=(0, 1))
+    prior_emissions_np = np.expand_dims(prior_emissions_array, axis=(0, 1))
+
     # the domain typically has only one grid mapping, which applies to vars
     # with y, x coords
     projection_var_name = get_grid_mappings(prior_emissions_ds)[0]
@@ -58,6 +62,9 @@ def posterior_emissions_postprocess(
                 "standard_name": "time",
                 "bounds": "time_bounds",
             }),
+            # this dimension currently has no coordinate values, so it is left
+            # as a dimension without coordinates
+            # "vertical": (("vertical"), [0], {}),
         },
         data_vars={
             # bounds
@@ -72,14 +79,14 @@ def posterior_emissions_postprocess(
 
             # results data
             # posterior CH4 emissions - Open Methane primary result
-            "ch4": (("time", "y", "x"), [emissions_array], {
+            "ch4": (("time", "vertical", "y", "x"), emissions_np, {
                 "units": "kg/m2/s",
                 "standard_name": "surface_upward_mass_flux_of_methane",
                 "long_name": "estimated flux of methane based on observations (posterior)",
                 "grid_mapping": projection_var_name,
             }),
             # expected emissions (prior averaged over period)
-            "prior_ch4": (("time", "y", "x"), [prior_emissions_array], {
+            "prior_ch4": (("time", "vertical", "y", "x"), prior_emissions_np, {
                 "units": "kg/m2/s",
                 "standard_name": "surface_upward_mass_flux_of_methane",
                 "long_name": "expected flux of methane based on public data (prior)",
