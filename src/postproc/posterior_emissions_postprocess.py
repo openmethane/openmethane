@@ -77,6 +77,10 @@ def posterior_emissions_postprocess(
             "lat": prior_emissions_ds["lat"],
             projection_var_name: prior_emissions_ds[projection_var_name],
 
+            # copied data
+            "land_mask": prior_emissions_ds["land_mask"],
+            "cell_name": prior_emissions_ds["cell_name"],
+
             # results data
             # posterior CH4 emissions - Open Methane primary result
             "ch4": (("time", "vertical", "y", "x"), emissions_np, {
@@ -92,8 +96,6 @@ def posterior_emissions_postprocess(
                 "long_name": "expected flux of methane based on public data (prior)",
                 "grid_mapping": projection_var_name,
             }),
-
-            "land_mask": prior_emissions_ds["land_mask"],
         },
         attrs={
             "DX": prior_emissions_ds.DX,
