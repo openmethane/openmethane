@@ -23,8 +23,9 @@ import pickle
 import numpy as np
 import xarray as xr
 
+from util.cf import get_grid_mappings
 from util.logger import get_logger
-from util.netcdf import extract_bounds
+from util.system import get_timestamped_command, get_version
 
 ALERTS_MINIMUM_DATA = 1  # minimum data required to define alerts baseline
 
@@ -150,12 +151,9 @@ def create_alerts_baseline( # noqa: PLR0913
 
         domain_ds = ds.load()
 
-        domain_size_x = domain_ds.sizes["COL"]
-        domain_size_y = domain_ds.sizes["ROW"]
-
-        lats = domain_ds["LAT"].to_numpy().squeeze()
-        lons = domain_ds["LON"].to_numpy().squeeze()
-        land_mask = domain_ds["LANDMASK"].to_numpy().squeeze()
+        lats = domain_ds["lat"].to_numpy().squeeze()
+        lons = domain_ds["lon"].to_numpy().squeeze()
+        land_mask = domain_ds["land_mask"].to_numpy().squeeze()
     near_fields = []
     far_fields = []
 
@@ -210,88 +208,38 @@ def create_alerts_baseline( # noqa: PLR0913
         hour=0, minute=0, second=0, microsecond=0
     ) + datetime.timedelta(days=1)
 
-    # create a variable with projection coordinates
-    projection_x = (
-        domain_ds.XORIG + (0.5 * domain_ds.XCELL) + np.arange(domain_size_x) * domain_ds.XCELL
-    )
-    projection_y = (
-        domain_ds.YORIG + (0.5 * domain_ds.YCELL) + np.arange(domain_size_y) * domain_ds.YCELL
-    )
+    # the domain typically has only one grid mapping, which applies to vars
+    # with y, x coords
+    projection_var_name = get_grid_mappings(domain_ds)[0]
 
     logger.info("Creating dataset")
     # copy dimensions and attributes from the domain, as the alerts should be
     # provided in the same grid / format
     alerts_baseline_ds = xr.Dataset(
+        coords={
+            "x": domain_ds.coords["x"],
+            "y": domain_ds.coords["y"],
+            "time": (("time"), [baseline_period_start], {
+                "standard_name": "time",
+                "bounds": "time_bounds",
+            }),
+        },
         data_vars={
-            # meta data
-            "lat": (
-                ("y", "x"),
-                domain_ds.variables["LAT"][0],
-                {
-                    "long_name": "latitude",
-                    "units": "degrees_north",
-                    "standard_name": "latitude",
-                    "bounds": "lat_bounds",
-                },
-            ),
-            "lon": (
-                ("y", "x"),
-                domain_ds.variables["LON"][0],
-                {
-                    "long_name": "longitude",
-                    "units": "degrees_east",
-                    "standard_name": "longitude",
-                    "bounds": "lon_bounds",
-                },
-            ),
+            # bounds
             # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-boundaries
-            "lat_bounds": (
-                ("y", "x", "cell_corners"),
-                extract_bounds(domain_ds.variables["LATD"][0][0]),
-            ),
-            "lon_bounds": (
-                ("y", "x", "cell_corners"),
-                extract_bounds(domain_ds.variables["LOND"][0][0]),
-            ),
-            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
-            "grid_projection": (
-                (),
-                False,
-                {
-                    "grid_mapping_name": "lambert_conformal_conic",
-                    "standard_parallel": (domain_ds.TRUELAT1, domain_ds.TRUELAT2),
-                    "longitude_of_central_meridian": domain_ds.STAND_LON,
-                    "latitude_of_projection_origin": domain_ds.MOAD_CEN_LAT,
-                },
-            ),
-            "projection_x": (
-                ("x"),
-                projection_x,
-                {
-                    "long_name": "x coordinate of projection",
-                    "units": "m",
-                    "standard_name": "projection_x_coordinate",
-                },
-            ),
-            "projection_y": (
-                ("y"),
-                projection_y,
-                {
-                    "long_name": "y coordinate of projection",
-                    "units": "m",
-                    "standard_name": "projection_y_coordinate",
-                },
-            ),
+            "x_bounds": domain_ds.variables["x_bounds"],
+            "y_bounds": domain_ds.variables["y_bounds"],
             "time_bounds": (("time", "bounds_t"), [[baseline_period_start, baseline_period_end]]),
+
+            # georeferencing
+            "lat": domain_ds.variables["lat"],
+            "lon": domain_ds.variables["lon"],
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
+            projection_var_name: domain_ds.variables[projection_var_name],
+
             # copied data
-            "landmask": (
-                ("y", "x"),
-                domain_ds.variables["LANDMASK"][0],
-                {
-                    "long_name": domain_ds.variables["LANDMASK"].attrs["var_desc"],
-                    "standard_name": "land_binary_mask",
-                },
-            ),
+            "land_mask": domain_ds.variables["land_mask"],
+
             # baseline data
             "obs_baseline_mean_diff": (
                 ("time", "y", "x"),
@@ -299,6 +247,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 {
                     "long_name": "Average observed difference between near and far field concentrations", # noqa: E501
                     "units": "1e-9",
+                    "grid_mapping": projection_var_name,
                 },
             ),
             "obs_baseline_std_diff": (
@@ -307,6 +256,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 {
                     "long_name": "Standard deviation of observed difference between near and far field concentrations", # noqa: E501
                     "units": "1e-9",
+                    "grid_mapping": projection_var_name,
                 },
             ),
             "sim_baseline_mean_diff": (
@@ -315,6 +265,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 {
                     "long_name": "Average simulated difference between near and far field concentrations'", # noqa: E501
                     "units": "1e-9",
+                    "grid_mapping": projection_var_name,
                 },
             ),
             "sim_baseline_std_diff": (
@@ -323,6 +274,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 {
                     "long_name": "Standard deviation of simulated difference between near and far field concentrations", # noqa: E501
                     "units": "1e-9",
+                    "grid_mapping": projection_var_name,
                 },
             ),
             "baseline_count": (
@@ -331,13 +283,9 @@ def create_alerts_baseline( # noqa: PLR0913
                 {
                     "long_name": "number of observations in baseline",
                     "units": "1",
+                    "grid_mapping": projection_var_name,
                 },
             ),
-        },
-        coords={
-            "x": np.arange(domain_size_x),
-            "y": np.arange(domain_size_y),
-            "time": (("time"), [baseline_period_start], {"bounds": "time_bounds"}),
         },
         attrs={
             "DX": domain_ds.DX,
@@ -346,10 +294,18 @@ def create_alerts_baseline( # noqa: PLR0913
             "YCELL": domain_ds.YCELL,
             "alerts_near_threshold": near_threshold,
             "alerts_far_threshold": far_threshold,
+
+            # domain
+            "domain_name": domain_ds.domain_name,
+            "domain_version": domain_ds.domain_version,
+            "domain_slug": domain_ds.domain_slug,
+
             # common
             "title": "Open Methane methane alerts baseline",
-            "openmethane_version": os.getenv("OPENMETHANE_VERSION", "development"),
-            "history": "",
+            "history": get_timestamped_command(),
+            "openmethane_version": get_version(),
+
+            "Conventions": "CF-1.12",
         },
     )
 
@@ -357,6 +313,13 @@ def create_alerts_baseline( # noqa: PLR0913
     time_encoding = f"days since {baseline_period_start.strftime('%Y-%m-%d')}"
     alerts_baseline_ds.time.encoding["units"] = time_encoding
     alerts_baseline_ds.time_bounds.encoding["units"] = time_encoding
+
+    # disable _FillValue for variables that shouldn't have empty values
+    alerts_baseline_ds.time_bounds.encoding["_FillValue"] = None
+    alerts_baseline_ds.x.encoding["_FillValue"] = None
+    alerts_baseline_ds.y.encoding["_FillValue"] = None
+    alerts_baseline_ds.x_bounds.encoding["_FillValue"] = None
+    alerts_baseline_ds.y_bounds.encoding["_FillValue"] = None
 
     logger.info(f"Writing alerts baseline to {output_file}")
     alerts_baseline_ds.to_netcdf(output_file)
@@ -409,7 +372,7 @@ def create_alerts( # noqa: PLR0913
         resultShape = (n_rows, n_cols)
         lats = alerts_baseline_ds["lat"].to_numpy().squeeze()
         lons = alerts_baseline_ds["lon"].to_numpy().squeeze()
-        land_mask = alerts_baseline_ds["landmask"].to_numpy().squeeze()
+        land_mask = alerts_baseline_ds["land_mask"].to_numpy().squeeze()
         baseline_mean = alerts_baseline_ds["sim_baseline_mean_diff"].to_numpy().squeeze()
         baseline_std = alerts_baseline_ds["obs_baseline_std_diff"].to_numpy().squeeze()
         baseline_count = alerts_baseline_ds["baseline_count"].to_numpy().squeeze()
@@ -464,27 +427,42 @@ def create_alerts( # noqa: PLR0913
         hour=0, minute=0, second=0, microsecond=0
     ) + datetime.timedelta(days=1)
 
+    # the domain typically has only one grid mapping, which applies to vars
+    # with y, x coords
+    projection_var_name = get_grid_mappings(alerts_baseline_ds)[0]
+
     # copy dimensions and attributes from the alerts baseline, as the alerts
     # should be provided in the same grid / format
     alerts_ds = xr.Dataset(
+        coords={
+            "x": alerts_baseline_ds.coords["x"],
+            "y": alerts_baseline_ds.coords["y"],
+            "time": (("time"), [period_start], {
+                "standard_name": "time",
+                "bounds": "time_bounds",
+            }),
+        },
         data_vars={
-            # meta data
+            # bounds
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-boundaries
+            "x_bounds": alerts_baseline_ds.variables["x_bounds"],
+            "y_bounds": alerts_baseline_ds.variables["y_bounds"],
+            "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
+
+            # georeferencing
             "lat": alerts_baseline_ds.variables["lat"],
             "lon": alerts_baseline_ds.variables["lon"],
-            "lat_bounds": alerts_baseline_ds.variables["lat_bounds"],
-            "lon_bounds": alerts_baseline_ds.variables["lon_bounds"],
-            "grid_projection": alerts_baseline_ds.variables["grid_projection"],
-            "projection_x": alerts_baseline_ds.variables["projection_x"],
-            "projection_y": alerts_baseline_ds.variables["projection_y"],
-            # record the time bounds of this alert period
-            "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
+            projection_var_name: alerts_baseline_ds.variables[projection_var_name],
+
             # copied data
-            "landmask": alerts_baseline_ds.variables["landmask"],
+            "land_mask": alerts_baseline_ds.variables["land_mask"],
             "obs_baseline_mean_diff": alerts_baseline_ds.variables["obs_baseline_mean_diff"],
             "obs_baseline_std_diff": alerts_baseline_ds.variables["obs_baseline_std_diff"],
             "sim_baseline_mean_diff": alerts_baseline_ds.variables["sim_baseline_mean_diff"],
             "sim_baseline_std_diff": alerts_baseline_ds.variables["sim_baseline_std_diff"],
             "baseline_count": alerts_baseline_ds.variables["baseline_count"],
+
             # results data
             "alerts": (
                 ("time", "y", "x"),
@@ -492,6 +470,7 @@ def create_alerts( # noqa: PLR0913
                 {
                     "long_name": "Boolean flag for anomalous concentration",
                     "missing_value": np.nan,
+                    "grid_mapping": projection_var_name,
                 },
             ),
             "obs_enhancement": (
@@ -500,13 +479,9 @@ def create_alerts( # noqa: PLR0913
                 {
                     "long_name": "Difference between near and far field concentrations",
                     "units": "1e-9",
+                    "grid_mapping": projection_var_name,
                 },
             ),
-        },
-        coords={
-            "x": alerts_baseline_ds.coords["x"],
-            "y": alerts_baseline_ds.coords["y"],
-            "time": (("time"), [period_start], {"bounds": "time_bounds"}),
         },
         attrs={
             "DX": alerts_baseline_ds.DX,
@@ -518,10 +493,18 @@ def create_alerts( # noqa: PLR0913
             "alerts_threshold": alerts_threshold,
             "alerts_significance_threshold": significance_threshold,
             "alerts_count_threshold": count_threshold,
+
+            # domain
+            "domain_name": alerts_baseline_ds.domain_name,
+            "domain_version": alerts_baseline_ds.domain_version,
+            "domain_slug": alerts_baseline_ds.domain_slug,
+
             # common
             "title": "Open Methane daily methane alerts",
-            "openmethane_version": os.getenv("OPENMETHANE_VERSION", "development"),
-            "history": "",
+            "history": get_timestamped_command(),
+            "openmethane_version": get_version(),
+
+            "Conventions": "CF-1.12",
         },
     )
 
@@ -529,6 +512,13 @@ def create_alerts( # noqa: PLR0913
     time_encoding = f"days since {period_start.strftime('%Y-%m-%d')}"
     alerts_ds.time.encoding["units"] = time_encoding
     alerts_ds.time_bounds.encoding["units"] = time_encoding
+
+    # disable _FillValue for variables that shouldn't have empty values
+    alerts_baseline_ds.time_bounds.encoding["_FillValue"] = None
+    alerts_baseline_ds.x.encoding["_FillValue"] = None
+    alerts_baseline_ds.y.encoding["_FillValue"] = None
+    alerts_baseline_ds.x_bounds.encoding["_FillValue"] = None
+    alerts_baseline_ds.y_bounds.encoding["_FillValue"] = None
 
     alerts_ds.to_netcdf(output_file)
 

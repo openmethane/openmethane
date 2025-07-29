@@ -112,7 +112,7 @@ docker run --name="e2e-daily-prior-generate" --rm \
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
-  -e OUTPUT_DOMAIN="out-om-domain-info.nc" \
+  -e OUTPUT_FILENAME="prior-emissions.nc" \
   "openmethane-prior" bash scripts/run.sh
 
 # JobName: obs_preprocess-fetch_tropomi
