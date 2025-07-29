@@ -12,7 +12,9 @@ from cmaq_preprocess.bias import (
     get_met_file,
 )
 from cmaq_preprocess.read_config_cmaq import load_config_from_env
+from util.logger import get_logger
 
+logger = get_logger(__name__)
 
 def main():
     """Correct the bias between the iCon mean and the satellite observation mean."""
@@ -31,11 +33,11 @@ def main():
         end_date=config.end_date,
         correct_bias_by_region=correct_bias_by_region,
     )
-    print(f"icon_bias={icon_bias:f}")
+    logger.debug(f"icon_bias={icon_bias:f}")
     emissions_bias = calculate_emissions_bias( prior_file = fourdvar.params.input_defn.prior_file,
                                                obs_file = fourdvar.params.input_defn.obs_file,
                                                species=species)
-    print(f"emissions_bias={emissions_bias:f}")
+    logger.debug(f"emissions_bias={emissions_bias:f}")
     total_bias = icon_bias - emissions_bias
 
 

@@ -16,6 +16,9 @@ import fourdvar.datadef as d
 from fourdvar._transform import transform
 from fourdvar.params.input_defn import obs_file, prior_file
 from fourdvar.params.root_path_defn import store_path
+from util.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def mass_weighted_mean(
@@ -28,7 +31,7 @@ def mass_weighted_mean(
     returns three-dimensional thickness-weighted mean of species from netcdf file filename
     in ppm
     """
-    print("file name",file_name)
+    logger.debug(f"file name: {file_name}")
     with xr.open_dataset(file_name) as ds:
         field = ds[species].to_numpy()
         vertical_integral = np.tensordot(field, thickness, (-3, 0)).squeeze()
@@ -38,7 +41,7 @@ def mass_weighted_mean(
             ]
         else:
             region_slice = np.s_[:, :]  # whole array
-        print("region slice", region_slice, vertical_integral[region_slice].mean())
+        logger.info(f"region slice, {region_slice} with mean: {vertical_integral[region_slice].mean()}")
         return vertical_integral[region_slice].mean()
 
 
@@ -129,8 +132,8 @@ def calculate_icon_bias(
             icon_means.append( icon_mass_weighted_mean)
     icon_means = np.array(icon_means)
     obs_means = np.array(obs_means)
-    print('icon_means',icon_means)
-    print('obs_means',obs_means)
+    logger.info(f"icon_means: {icon_means}")
+    logger.info(f"obs_means: {obs_means}")
     obs_means /= 1000. # from ppb to ppm
     return obs_means.mean() - icon_means.mean()
 
