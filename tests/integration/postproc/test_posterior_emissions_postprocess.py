@@ -135,6 +135,14 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
         148.8186
     ), "lon coordinates do not match expected"
 
+    # check that prior emissions in the posterior output are the mean of all
+    # prior timesteps from the input
+    prior_sector_vars = [var_name for var_name in prior_emissions.variables if var_name.startswith("ch4_sector")]
+    for sector_var in prior_sector_vars:
+        sector_mean = prior_emissions[sector_var].mean(axis=0)
+        # spot check a single coord at 1,1
+        assert float(sector_mean[0, 1, 1]) == float(posterior_emissions[f"prior_{sector_var}"][0, 0, 1, 1])
+
 
 def test_posterior_emissions_postprocess_multi_day(target_environment, test_data_dir):
     target_environment("docker-test")
@@ -174,3 +182,6 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     assert posterior_emissions["time_bounds"][0][1] == np.datetime64(
         "2022-07-24"
     ), "time_bounds do not match expected"
+
+    # TODO: check that sectoral ch4 variables equal the mean of all time steps
+    # in the prior file, when we have a multi-day prior for tests

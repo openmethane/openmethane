@@ -124,6 +124,24 @@ def posterior_emissions_postprocess(
     posterior_emissions_ds.time.encoding["units"] = time_encoding
     posterior_emissions_ds.time_bounds.encoding["units"] = time_encoding
 
+    # add prior emissions estimates per-sector
+    # sector estimates are daily, so average them across the month to make them
+    # consistent with ch4 and prior_ch4 data.
+    prior_sector_vars = [var_name for var_name in prior_emissions_ds.data_vars if var_name.startswith("ch4_sector")]
+    for sector_var in prior_sector_vars:
+        # take the mean of prior emissions over the entire period, to align the
+        # prior sector output with the prior and posterior emissions data
+        sector_period_mean = prior_emissions_ds.variables[sector_var].mean(axis=0)
+
+        # add single-value 'time' dimension back to align with existing data
+        sector_period_mean = np.expand_dims(sector_period_mean, axis=0)
+
+        posterior_emissions_ds[f"prior_{sector_var}"] = xr.DataArray(
+            dims=["time", "vertical", "y", "x"], # match prior_ch4 var
+            data=sector_period_mean,
+            attrs=prior_emissions_ds.variables[sector_var].attrs,
+        )
+
     # disable _FillValue for variables that shouldn't have empty values
     for var_name in ['time_bounds', 'x', 'y', 'x_bounds', 'y_bounds', 'lat', 'lon']:
         posterior_emissions_ds[var_name].encoding["_FillValue"] = None
