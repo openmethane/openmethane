@@ -19,7 +19,7 @@ from postproc import alerts
 
 
 def main():
-    baseline_file = env.path("ALERTS_BASELINE_FILE", default="alerts_baseline.nc")
+    baseline_file = env.path("ALERTS_BASELINE_FILE", default="alerts-baseline.nc")
     daily_dir = env.path("ALERTS_DAILY_DIR", default=None) or env.path("STORE_PATH", default=None)
     if daily_dir is None:
         raise ValueError("must specify environment variable ALERTS_DAILY_DIR")

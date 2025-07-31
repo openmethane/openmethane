@@ -49,7 +49,7 @@ def test_daily(mockRun, tmp_path):
         datetime.date(2022, 10, 29),
         "test-domain",
         tmp_path,
-        pathlib.Path("alerts_baseline.nc"),
+        pathlib.Path("alerts-baseline.nc"),
     )
 
     # daily run will fetch wrf and mcip folders for each day
@@ -67,7 +67,7 @@ def test_daily(mockRun, tmp_path):
 
         mockRun.assert_called_with([
             "aws", "s3", "cp", "--no-progress",
-            "s3://test-bucket-name/alerts_baseline.nc",
+            "s3://test-bucket-name/alerts-baseline.nc",
             str(tmp_path),
         ], check=True, capture_output=True, text=True)
 

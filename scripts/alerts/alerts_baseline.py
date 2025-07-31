@@ -30,7 +30,7 @@ def main():
     sim_file_template = env.str("ALERTS_SIM_FILE_TEMPLATE", default="simulobs.pic.gz")
     near_threshold = env.float("ALERTS_NEAR_THRESHOLD", 0.2)
     far_threshold = env.float("ALERTS_FAR_THRESHOLD", 1.0)
-    output_file = env.str("ALERTS_BASELINE_FILE", default="alerts_baseline.nc")
+    output_file = env.str("ALERTS_BASELINE_FILE", default="alerts-baseline.nc")
 
     alerts.create_alerts_baseline(
         domain_file=domain_file,
