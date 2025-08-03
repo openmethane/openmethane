@@ -124,7 +124,7 @@ def create_alerts_baseline( # noqa: PLR0913
     sim_file_template: str = "simulobs.pic.gz",
     near_threshold: float = 0.2,
     far_threshold: float = 1.0,
-    output_file: str = "alerts_baseline.nc",
+    output_file: str = "alerts-baseline.nc",
 ):
     """
     Constructs a baseline for alerts. The baseline consists of a mean and

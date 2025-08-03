@@ -31,7 +31,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     target_environment("docker-test")
 
     posterior_multipliers = d.PhysicalData.from_file(
-        pathlib.Path(test_data_dir, "fourdvar", "posterior_multipliers.nc")
+        pathlib.Path(test_data_dir, "fourdvar", "posterior-multipliers.nc")
     )
     prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "prior-emissions.nc"))
 
@@ -62,7 +62,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     ), "prior emissions values (first) do not match expected"
 
     # calculate the estimated emissions, multiplying the posterior multipliers from
-    # the minimiser (test-data/fourdvar/posterior_multipliers.nc) by the expected
+    # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
     # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis["CH4"],
@@ -72,7 +72,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
     )
 
     # check the transformations on the data, multiplying the posterior multipliers from
-    # the minimiser (test-data/fourdvar/posterior_multipliers.nc) by the expected
+    # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
     # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
     assert posterior_emissions.attrs["XCELL"] == 10000, "post-processed cell size has changed"
     assert posterior_emissions.attrs["YCELL"] == 10000, "post-processed cell size has changed"
@@ -148,7 +148,7 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     target_environment("docker-test")
 
     posterior_multipliers = d.PhysicalData.from_file(
-        pathlib.Path(test_data_dir, "fourdvar", "posterior_multipliers.nc")
+        pathlib.Path(test_data_dir, "fourdvar", "posterior-multipliers.nc")
     )
     prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "prior-emissions.nc"))
 
@@ -156,7 +156,7 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     assert len(prior_emis) == 2, "did not find exactly 2 days of test data"
 
     # calculate the estimated emissions, multiplying the posterior multipliers from
-    # the minimiser (test-data/fourdvar/posterior_multipliers.nc) by the expected
+    # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
     # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis["CH4"],

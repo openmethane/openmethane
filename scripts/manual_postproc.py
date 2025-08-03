@@ -8,7 +8,7 @@ from netCDF4 import Dataset
 from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 from util.logger import get_logger
 
-SOLUTION_FILENAME = "posterior_multipliers.nc"
+SOLUTION_FILENAME = "posterior-multipliers.nc"
 
 logger = get_logger(__name__)
 
@@ -72,7 +72,7 @@ def manual_postproc(
         template_dir=template_dir,
     )
 
-    output_file = pathlib.Path(archive_dir, "posterior_emissions.nc")
+    output_file = pathlib.Path(archive_dir, "posterior-emissions.nc")
     print(f"writing postprocessed file to {output_file}")
     posterior_emissions.to_netcdf(output_file)
 
