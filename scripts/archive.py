@@ -48,7 +48,7 @@ def main():
     # the logs and archive them as well
     if config.workflow_execution_arn:
         log_directory = store_path / "logs"
-        log_directory.mkdir(exist_ok=True)
+        log_directory.mkdir(parents=True, exist_ok=True)
         dump_workflow_logs(
             workflow_execution_arn=config.workflow_execution_arn, directory=log_directory
         )
