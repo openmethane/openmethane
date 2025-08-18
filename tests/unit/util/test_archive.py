@@ -89,10 +89,10 @@ def test_baseline(mockRun, tmp_path):
     # baseline must fetch the domain
     mockRun.assert_has_calls([
         call([
-            "aws", "s3", "ls", "s3://test-public-bucket/domains/test-domain/v2/domain_v2.d01.nc",
+            "aws", "s3", "ls", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
         ], check=True, capture_output=False),
         call([
-            "aws", "s3", "cp", "--no-progress", "s3://test-public-bucket/domains/test-domain/v2/domain_v2.d01.nc",
+            "aws", "s3", "cp", "--no-progress", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
             str(tmp_path),
         ], check=True, capture_output=True, text=True),
     ])
@@ -129,6 +129,6 @@ def test_fetch_domain(mockRun, tmp_path):
 
     mockRun.assert_called_with([
         "aws", "s3", "cp", "--no-progress",
-        "s3://test-bucket-name/domains/test-domain/v1/domain_v1.d01.nc",
+        "s3://test-bucket-name/domains/test-domain/v1/domain.test-domain.nc",
         str(tmp_path),
     ], check=True, capture_output=True, text=True)

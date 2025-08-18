@@ -116,7 +116,7 @@ def baseline(
 
 
 def fetch_domain(s3_bucket_name: str, domain_name: str, domain_version: str, output_path: pathlib.Path):
-    domain_filename = f"domain_{domain_version}.d01.nc"
+    domain_filename = f"domain.{domain_name}.nc"
 
     s3_url = _format_s3_url(
         s3_bucket_name=s3_bucket_name,
