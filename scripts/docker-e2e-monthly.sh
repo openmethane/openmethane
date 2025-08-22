@@ -11,14 +11,14 @@ bash "$SCRIPT_DIR/docker-build-all.sh"
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
 # Task variables
-START_DATE=${START_DATE:-2022-07-22}
-END_DATE=${END_DATE:-2022-07-22}
-DOMAIN_NAME=${DOMAIN_NAME:-aust-test}
+START_DATE=${START_DATE:-2022-10-29}
+END_DATE=${END_DATE:-2022-10-31}
+DOMAIN_NAME=${DOMAIN_NAME:-au-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
 INVENTORY_NAME=${INVENTORY_NAME:-aust10km}
 INVENTORY_VERSION=${INVENTORY_VERSION:-v1}
-NCPUS=${NCPUS:-1} # WRF will fail on aust-test if run with too many cores
-BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # aust-test domain is 10x10 so avoid trimming all cells
+NCPUS=${NCPUS:-1} # WRF will fail on au-test if run with too many cores
+BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # au-test domain is 10x10 so avoid trimming all cells
 
 RUN_ID="monthly/$DOMAIN_NAME/$DOMAIN_VERSION/$START_DATE"
 DATA_PATH="$DATA_ROOT/$RUN_ID"
