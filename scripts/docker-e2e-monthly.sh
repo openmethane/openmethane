@@ -15,6 +15,8 @@ START_DATE=${START_DATE:-2022-07-22}
 END_DATE=${END_DATE:-2022-07-22}
 DOMAIN_NAME=${DOMAIN_NAME:-aust-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
+INVENTORY_NAME=${INVENTORY_NAME:-aust10km}
+INVENTORY_VERSION=${INVENTORY_VERSION:-v1}
 NCPUS=${NCPUS:-1} # WRF will fail on aust-test if run with too many cores
 BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # aust-test domain is 10x10 so avoid trimming all cells
 
@@ -89,6 +91,8 @@ docker run --name="e2e-monthly-prior-generate" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e CDSAPI_KEY="$CDSAPI_KEY" \
   -e CDSAPI_URL="$CDSAPI_URL" \
+  -e INVENTORY_NAME="$INVENTORY_NAME" \
+  -e INVENTORY_VERSION="$INVENTORY_VERSION" \
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
