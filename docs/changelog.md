@@ -19,6 +19,36 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.0.0 (2025-08-25)
+
+### ⚠️ Breaking Changes
+
+- Default output filenames have changed to use - instead of _, including:
+  - posterior_emissions.nc to posterior-emissions.nc
+  - posterior_multipliers.nc to posterior-multipliers.nc
+  - alerts_baseline.nc to alerts-baseline.nc
+
+  ([#170](https://github.com/openmethane/openmethane/pulls/170))
+
+### 🎉 Improvements
+
+- - Update archive scripts to support new 'baseline' workflow ([#156](https://github.com/openmethane/openmethane/pulls/156))
+- Adding archiving of first-guess simulation of observations ([#158](https://github.com/openmethane/openmethane/pulls/158))
+- Support new openmethane-prior output format ([#168](https://github.com/openmethane/openmethane/pulls/168))
+- Fix errors and inconsistencies in CF attributes and variables:
+  - replace integer grid cell coordinates in `x` and `y` with grid projection coordinates
+  - remove `lat_bounds` and `lon_bounds` from output in favour of `x_bounds` and `y_bounds`
+  - fix and add required CF attributes such as `history` and `Conventions`
+
+  ([#168](https://github.com/openmethane/openmethane/pulls/168))
+- Add prior sector estimates to posterior output file ([#169](https://github.com/openmethane/openmethane/pulls/169))
+
+### 🐛 Bug Fixes
+
+- setting non-neg emissions and configuring via environment ([#157](https://github.com/openmethane/openmethane/pulls/157))
+- Fix typo in `do_ICs` fork of `interpolate_from_cams_to_cmaq_grid` ([#165](https://github.com/openmethane/openmethane/pulls/165))
+
+
 ## openmethane v0.9.5 (2025-03-13)
 
 ### 🐛 Bug Fixes
