@@ -17,6 +17,7 @@ import glob
 import pathlib
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -37,47 +38,47 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
 
     # validate that test input hasn't changed before we attempt to transform it
     assert posterior_multipliers.emis_units == "mol/(s*m^2)", "incorrect unit emissions"
-    assert posterior_multipliers.ncols == 5, "incorrect dimensions (cols) in test data"
-    assert posterior_multipliers.nrows == 5, "incorrect dimensions (rows) in test data"
+    assert posterior_multipliers.ncols == 10, "incorrect dimensions (cols) in test data"
+    assert posterior_multipliers.nrows == 10, "incorrect dimensions (rows) in test data"
     assert posterior_multipliers.emis["CH4"].max() == pytest.approx(
-        1.000529
+        1.1112205
     ), "input values (max) do not match expected"
     assert posterior_multipliers.emis["CH4"].sum() == pytest.approx(
-        25.001793
+        99.69608
     ), "input values (sum) do not match expected"
 
     prior_emis = xr.open_dataset(
-        pathlib.Path(test_data_dir, "templates", "record", "emis_record_2022-07-22.nc")
+        pathlib.Path(test_data_dir, "templates", "record", "emis_record_2022-12-07.nc")
     )
     prior_emis_mean_3d = prior_emis["CH4"].to_numpy().mean(axis=0)
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
     assert prior_emis_mean_surf.max() == pytest.approx(
-        0.73562735
+        95.388885
     ), "prior emissions values (max) do not match expected"
     assert prior_emis_mean_surf.mean() == pytest.approx(
-        0.5934696197509766
+        4.111149
     ), "prior emissions values (mean) do not match expected"
     assert prior_emis_mean_surf[0][0] == pytest.approx(
-        0.73562735
+        1.8064358234405518
     ), "prior emissions values (first) do not match expected"
 
     # calculate the estimated emissions, multiplying the posterior multipliers from
     # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
-    # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
+    # emissions values (test-data/templates/record/emis_record_2022-12-07.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis["CH4"],
         prior_emissions_ds=prior_emissions,
         template_dir=pathlib.Path(test_data_dir, "templates"),
-        emis_template="emis_record_2022-07-22.nc",
+        emis_template="emis_record_2022-12-07.nc",
     )
 
     # check the transformations on the data, multiplying the posterior multipliers from
     # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
-    # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
+    # emissions values (test-data/templates/record/emis_record_2022-12-07.nc)
     assert posterior_emissions.attrs["XCELL"] == 10000, "post-processed cell size has changed"
     assert posterior_emissions.attrs["YCELL"] == 10000, "post-processed cell size has changed"
     assert posterior_emissions["ch4"].sum() == pytest.approx(
-        2.3740436e-09
+        6.25249e-08
     ), "post-processed emissions (max) don't match expected"
 
     expected_moles = normalise_posterior(posterior_multipliers.emis["CH4"]) * prior_emis_mean_surf
@@ -99,40 +100,37 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
         posterior_emissions["ch4"][0][0][4][4] == expected[4][4]
     ), "emissions do not equal multiplier times prior"
 
-    assert posterior_emissions["time"][0] == np.datetime64(
-        "2022-07-22"
-    ), "time coordinates do not match expected"
+    assert posterior_emissions["time"][0] == np.datetime64("2022-12-07"),\
+        "time coordinates do not match expected"
     assert posterior_emissions["time"].attrs["bounds"] == "time_bounds"
 
-    assert posterior_emissions["time_bounds"][0][0] == np.datetime64(
-        "2022-07-22"
-    ), "time_bounds do not match expected"
-    assert posterior_emissions["time_bounds"][0][1] == np.datetime64(
-        "2022-07-23"
-    ), "time_bounds do not match expected"
+    assert posterior_emissions["time_bounds"][0][0] == np.datetime64("2022-12-07"),\
+        "time_bounds do not match expected"
+    assert posterior_emissions["time_bounds"][0][1] == np.datetime64("2022-12-08"),\
+        "time_bounds do not match expected"
 
     assert posterior_emissions["x"].attrs["bounds"] == "x_bounds"
 
     assert posterior_emissions["y"].attrs["bounds"] == "y_bounds"
 
-    assert posterior_emissions["lat"][0][0] == pytest.approx(
-        -23.042923
+    assert posterior_emissions["lat"][0, 0].item() == pytest.approx(
+        -23.729095458984375
     ), "lat coordinates do not match expected"
-    assert posterior_emissions["lat"][2][2] == pytest.approx(
-        -22.837988
+    assert posterior_emissions["lat"][2, 2].item() == pytest.approx(
+        -23.524276733398438
     ), "lat coordinates do not match expected"
-    assert posterior_emissions["lat"][4][4] == pytest.approx(
-        -22.632904
+    assert posterior_emissions["lat"][4, 4].item() == pytest.approx(
+        -23.31928062438965
     ), "lat coordinates do not match expected"
 
-    assert posterior_emissions["lon"][0][0] == pytest.approx(
-        148.47278
+    assert posterior_emissions["lon"][0, 0].item() == pytest.approx(
+        148.247802734375
     ), "lon coordinates do not match expected"
-    assert posterior_emissions["lon"][2][2] == pytest.approx(
-        148.646
+    assert posterior_emissions["lon"][2, 2].item() == pytest.approx(
+        148.4224853515625
     ), "lon coordinates do not match expected"
-    assert posterior_emissions["lon"][4][4] == pytest.approx(
-        148.8186
+    assert posterior_emissions["lon"][4, 4].item() == pytest.approx(
+        148.5965576171875
     ), "lon coordinates do not match expected"
 
     # check that prior emissions in the posterior output are the mean of all
@@ -157,7 +155,7 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
 
     # calculate the estimated emissions, multiplying the posterior multipliers from
     # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
-    # emissions values (test-data/templates/record/emis_record_2022-07-22.nc)
+    # emissions values (test-data/templates/record/emis_record_2022-12-07.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis["CH4"],
         prior_emissions_ds=prior_emissions,
@@ -166,22 +164,20 @@ def test_posterior_emissions_postprocess_multi_day(target_environment, test_data
     )
 
     # spot check several cells
-    assert posterior_emissions["ch4"][0][0][0][0] == pytest.approx(
-        1.1774051e-10
+    assert posterior_emissions["ch4"][0, 0, 0, 0].item() == pytest.approx(
+        2.8897012560591406e-10
     ), "emissions do not match expected"
-    assert posterior_emissions["ch4"][0][0][4][4] == pytest.approx(
-        9.4978345e-11
+    assert posterior_emissions["ch4"][0, 0, 4, 4].item() == pytest.approx(
+        8.876147039593718e-11
     ), "emissions do not match expected"
-
-    assert posterior_emissions["time"][0] == np.datetime64(
-        "2022-07-22"
-    ), "time coordinates do not match expected"
-    assert posterior_emissions["time_bounds"][0][0] == np.datetime64(
-        "2022-07-22"
-    ), "time_bounds do not match expected"
-    assert posterior_emissions["time_bounds"][0][1] == np.datetime64(
-        "2022-07-24"
-    ), "time_bounds do not match expected"
+    print("type(posterior_emissions['time'][0].item())")
+    print(type(posterior_emissions["time"][0].item()))
+    assert posterior_emissions["time"][0] == np.datetime64("2022-12-07"),\
+        "time coordinates do not match expected"
+    assert posterior_emissions["time_bounds"][0, 0] == np.datetime64("2022-12-07"),\
+        "time_bounds do not match expected"
+    assert posterior_emissions["time_bounds"][0, 1] == np.datetime64("2022-12-09"),\
+        "time_bounds do not match expected"
 
     # TODO: check that sectoral ch4 variables equal the mean of all time steps
     # in the prior file, when we have a multi-day prior for tests

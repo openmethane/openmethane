@@ -49,8 +49,8 @@ def cmaq_config_dict():
         "mcip_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
         "met_dir": "/opt/project/data/mcip/",
         "ctm_dir": "/opt/project/data/cmaq/",
-        "wrf_dir": "/opt/project/data/runs/aust-test",
-        "geo_dir": "/opt/project/domains/aust-test/v1.0.0/",
+        "wrf_dir": "/opt/project/data/runs/au-test",
+        "geo_dir": "/opt/project/domains/au-test/v1.0.0/",
         "input_cams_file": "/opt/project/data/inputs/cams_eac4_methane.nc",
         "start_date": "2022-07-01",
         "end_date": "2022-07-01",
@@ -64,9 +64,9 @@ def cmaq_config_dict():
         },
         "cams_to_cmaq_bias": 0.06700000000000017,
         "boundary_trim": 5,
-        "domain_name": "aust-test",
+        "domain_name": "au-test",
         "domain_version": "v1",
-        "domain_mcip_suffix": "aust-test_v1",
+        "domain_mcip_suffix": "au-test_v1",
     }
 
 

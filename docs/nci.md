@@ -70,7 +70,7 @@ Some additional EarthData credentials are required.
 
 The WRF geometry files are required to run the OpenMethane pipeline.
 These can be fetched using `make fetch-domains`,
-which will download the `aust-test` and `aust10km` domains from [setup-wrf](https://github.com/openmethane/setup-wrf)
+which will download the `au-test` and `aust10km` domains from [setup-wrf](https://github.com/openmethane/setup-wrf)
 to `data/domains`.
 
 ## Running the test domain

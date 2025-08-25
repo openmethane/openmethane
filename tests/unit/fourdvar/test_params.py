@@ -108,7 +108,7 @@ def test_overrides(target_environment):
 
     target_environment(target)
 
-    assert date_defn.end_date == datetime.date(2022, 7, 22)
+    assert date_defn.end_date == datetime.date(2022, 12, 7)
 
     os.environ.clear()
     os.environ["END_DATE"] = (

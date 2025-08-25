@@ -53,7 +53,7 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 
 .PHONY: fetch-domains
 ## Fetch the latest WRF geometry domain data from setup-wrf
-fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
@@ -91,18 +91,18 @@ docker-test: build fetch-test-data ## Run the tests
 
 ## Fetch the latest WRF geometry domain data and CAMS data required for tests
 .PHONY: fetch-test-data
-fetch-test-data: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+fetch-test-data: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
 	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1/geo_em.d01.nc
 
-data/domains/aust-test/v1/geo_em.d01.nc:
-	mkdir -p data/domains/aust-test/v1
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust-test/geo_em.d01.nc -o data/domains/aust-test/v1/geo_em.d01.nc
+data/domains/au-test/v1/geo_em.d01.nc:
+	mkdir -p data/domains/au-test/v1
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/au-test/geo_em.d01.nc -o data/domains/au-test/v1/geo_em.d01.nc
 
-data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc:
+data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc:
 	mkdir -p data/cams
 	$(PYTHON_CMD) scripts/cmaq_preprocess/download_cams_input.py \
-		-s 2022-07-22 -e 2022-07-22 \
-		data/cams/cams_eac4_methane_2022-07-22-2022-07-22.nc
+		-s 2022-12-07 -e 2022-12-07 \
+		data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc

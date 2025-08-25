@@ -1,12 +1,12 @@
 attrs:
-  EDATE: 2022203
-  SDATE: 2022203
+  EDATE: 2022341
+  SDATE: 2022341
   VAR-LIST: 'CH4             '
 groups:
   /:
     attrs:
-      EDATE: 2022203
-      SDATE: 2022203
+      EDATE: 2022341
+      SDATE: 2022341
       VAR-LIST: 'CH4             '
     coords: {}
     dims: {}
@@ -35,9 +35,9 @@ groups:
       TDAY: 1
     coords: {}
     dims:
-      COL: 5
+      COL: 10
       LAY: 1
-      ROW: 5
+      ROW: 10
       TSTEP: 1
     variables:
       CH4:

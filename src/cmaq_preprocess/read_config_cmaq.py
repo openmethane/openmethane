@@ -187,7 +187,7 @@ def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfi
         name=config.pop("domain_name"),
         version=config.pop("domain_version"),
         map_projection=config.pop("domain_map_projection", "LamCon_34S_150E"),
-        mcip_suffix=config.pop("domain_mcip_suffix", "aust-test_v1"),
+        mcip_suffix=config.pop("domain_mcip_suffix", "au-test_v1"),
     )
 
     return CMAQConfig(domain=domain, **config)

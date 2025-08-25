@@ -73,10 +73,10 @@ ENV LD_LIBRARY_PATH="/opt/venv/lib:${LD_LIBRARY_PATH}"
 # These can be overwritten at runtime
 ENV TARGET=docker \
     STORE_PATH=/opt/project/data \
-    DOMAIN_NAME=aust-test \
+    DOMAIN_NAME=au-test \
     DOMAIN_VERSION=v1 \
-    START_DATE=2022-07-22 \
-    END_DATE=2022-07-22
+    START_DATE=2022-12-07 \
+    END_DATE=2022-12-07
 
 RUN apt-get update && \
     apt-get install -y csh make nano jq curl tree awscli tini && \
