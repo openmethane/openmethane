@@ -19,7 +19,7 @@
 #
 
 export TARGET=${TARGET:-docker}
-export START_DATE=${START_DATE:-2022-07-22}
+export START_DATE=${START_DATE:-2022-12-07}
 
 
 python scripts/obs_preprocess/tropomi_methane_preprocess.py \

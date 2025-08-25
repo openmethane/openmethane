@@ -10,12 +10,12 @@ from cmaq_preprocess.read_config_cmaq import load_config_from_env
 @pytest.fixture
 def wrf_run(root_dir):
     # Verify that WRF has been successfully run previously
-    wrf_output_dir = Path(root_dir) / "tests" / "test-data" / "wrf" / "aust-test" / "2022072200"
+    wrf_output_dir = Path(root_dir) / "tests" / "test-data" / "wrf" / "au-test" / "2022120700"
 
     try:
-        assert (wrf_output_dir / "WRFOUT_d01_2022-07-22T0000Z.nc").exists()
+        assert (wrf_output_dir / "WRFOUT_d01_2022-12-07T0000Z.nc").exists()
         # Check that the 25th hour exists
-        assert (wrf_output_dir / "WRFOUT_d01_2022-07-23T0000Z.nc").exists()
+        assert (wrf_output_dir / "WRFOUT_d01_2022-12-08T0000Z.nc").exists()
     except AssertionError:
         pytest.fail("WRF has not been run successfully. Failing test.")
 
@@ -38,7 +38,7 @@ def test_setup_for_cmaq(
 ):
     cmaq_dir = Path(tmpdir / "cmaq")
     mcip_dir = Path(tmpdir / "mcip")
-    mcip_run_dir = mcip_dir / "2022-07-22" / "d01"
+    mcip_run_dir = mcip_dir / "2022-12-07" / "d01"
 
     # Override some settings
     target_environment("docker-test")
@@ -54,8 +54,8 @@ def test_setup_for_cmaq(
     assert (cmaq_dir / "template_bcon_profile_CH4only_d01.nc").exists()
     assert (cmaq_dir / "template_icon_profile_CH4only_d01.nc").exists()
 
-    assert (mcip_run_dir / "METCRO2D_aust-test_v1").exists()
-    assert (mcip_run_dir / "METCRO3D_aust-test_v1").exists()
+    assert (mcip_run_dir / "METCRO2D_au-test_v1").exists()
+    assert (mcip_run_dir / "METCRO3D_au-test_v1").exists()
 
     # Compare the generated list of files
     data_regression.check(_get_filelisting(cmaq_dir), basename=f"{request.node.name}_cmaq_files")
@@ -95,6 +95,6 @@ def test_setup_for_cmaq(
         basename=f"{request.node.name}_icon",
     )
     compare_dataset(
-        mcip_run_dir / "METCRO3D_aust-test_v1",
+        mcip_run_dir / "METCRO3D_au-test_v1",
         basename=f"{request.node.name}_metcro3d",
     )

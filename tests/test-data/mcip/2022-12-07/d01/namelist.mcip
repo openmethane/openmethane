@@ -1,0 +1,57 @@
+
+ &FILENAMES
+  file_gd    = "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/GRIDDESC"
+  file_hdr   = "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/mmheader.au-test_v1"
+  file_mm    = "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0000Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0100Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0200Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0300Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0400Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0500Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0600Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0700Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0800Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0900Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1000Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1100Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1200Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1300Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1400Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1500Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1600Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1700Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1800Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1900Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2000Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2100Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2200Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2300Z.nc",
+               "/opt/project/data/daily/au-test/v1/2022-12-07/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-08T0000Z.nc",
+  file_ter   = "/opt/project/data/daily/au-test/v1/2022-12-07/wrf/au-test/geo_em.d01.nc"
+  makegrid   = .T.
+ &END
+
+ &USERDEFS
+  lpv        =  0
+  lwout      =  0
+  luvcout    =  1
+  lsat       =  0
+  mcip_start = "2022-12-07-00:00:00.0000"
+  mcip_end   = "2022-12-08-00:00:00.0000"
+  intvl      =  60
+  coordnam   = "LamCon_34S_150E"
+  grdnam     = "au-test_v1"
+  ctmlays    =  -1.0
+  btrim      =  1
+  lprt_col   =  0
+  lprt_row   =  0
+  wrf_lc_ref_lat = -999.0
+ &END
+
+ &WINDOWDEFS
+  x0         =  1
+  y0         =  1
+  ncolsin    =  89
+  nrowsin    =  104
+ &END
+

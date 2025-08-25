@@ -4,7 +4,7 @@ attrs:
     INTERFACE PROCESSOR                                                                                                                       MCIP
     V4.2  FROZEN 09/30/2013                                                                                                                                                                                                                    INPUT
     METEOROLOGY DATA FROM WRF ARW V4.5.1                                      INPUT
-    RUN INITIALIZED:  2022-07-22-00:00:00.0000                                                                                                                CUMULUS
+    RUN INITIALIZED:  2022-12-07-00:00:00.0000                                                                                                                CUMULUS
     PARAMETERIZATION:  Grell G3                                                                                                                             SHALLOW
     CONVECTION:  No shallow convection                                                                                                                      MICROPHYSICS:  Morrison
     2-moment                                                                                                                                LONGWAVE
@@ -30,19 +30,19 @@ attrs:
     COEFF:  not applicable                                                                                                                                  EARTH
     RADIUS ASSUMED IN MCIP:  6370000.000 m                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '
   FTYPE: 1
-  GDNAM: METCRO_aust-test
+  GDNAM: METCRO_au-test_v
   GDTYP: 2
   NCO: netCDF Operators version 5.2.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco,
     Citation = 10.1016/j.envsoft.2008.03.004)
-  NCOLS: 5
+  NCOLS: 10
   NLAYS: 32
-  NROWS: 5
+  NROWS: 10
   NTHIK: 1
   NVARS: 15
   P_ALP: -40.0
   P_BET: -15.0
   P_GAM: 133.302001953125
-  SDATE: 2022203
+  SDATE: 2022341
   STIME: 0
   TSTEP: 10000
   UPNAM: 'METCRO          '
@@ -85,16 +85,16 @@ attrs:
   VGTYP: 7
   XCELL: 10000.0
   XCENT: 133.302001953125
-  XORIG: 1511422.625
+  XORIG: 1480000.375
   YCELL: 10000.0
   YCENT: -27.5
-  YORIG: 385760.4375
+  YORIG: 314369.5
 coords: {}
 dims:
-  COL: 5
+  COL: 10
   DATE-TIME: 2
   LAY: 32
-  ROW: 5
+  ROW: 10
   TSTEP: 25
   VAR: 15
 variables:

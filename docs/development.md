@@ -43,7 +43,7 @@ using docker containers, with:
 These scripts assume `openmethane`, `openmethane-prior` and `setup-wrf` are
 checked out locally in the same folder.
 
-By default, these scripts will run on the `aust-test` 5x5 test domain, and
+By default, these scripts will run on the `au-test` 10x10 test domain, and
 store data in `/tmp/openmethane-e2e`. While these scripts could be used on
 the full domain, they are likely to take many, many hours to complete on
 consumer hardware.

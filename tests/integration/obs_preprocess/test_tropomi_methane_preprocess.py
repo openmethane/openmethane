@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from click.testing import CliRunner
 from scripts.obs_preprocess import tropomi_methane_preprocess
 
@@ -29,7 +30,6 @@ def clean(value):
             value = round(value, 3)
     return value
 
-
 def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_regression):
     target_environment("docker-test")
 
@@ -39,7 +39,7 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
         tropomi_methane_preprocess.run_tropomi_preprocess,
         [
             "--source",
-            str(test_data_dir / "tropomi" / "2022-07-22*" / "*.nc4"),
+            str(test_data_dir / "tropomi" / "2022-12-07*" / "*.nc4"),
             "--output-file",
             str(output_file),
         ],
@@ -49,7 +49,7 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
     assert output_file.exists()
 
     obs_list = load_list(output_file)
-    assert len(obs_list) == 8
+    assert len(obs_list) == 166
 
     # First item is the domain
     domain = clean(obs_list[0])

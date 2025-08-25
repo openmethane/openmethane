@@ -114,15 +114,15 @@
 #   WorkDir    = Working Directory for Fortran links and namelist
 #-----------------------------------------------------------------------
 
-set APPL       = aust-test_v1
+set APPL       = au-test_v1
 set CoordName  = LamCon_34S_150E    # 16-character maximum
-set GridName   = aust-test_v1         # 16-character maximum
+set GridName   = au-test_v1         # 16-character maximum
 
-set DataPath   = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01
-set InMetDir   = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01
+set DataPath   = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01
+set InMetDir   = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01
 set InTerDir   = $DataPath
 set InSatDir   = $DataPath/goes
-set OutDir     = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01
+set OutDir     = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01
 set ProgDir    = /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
 set WorkDir    = $OutDir
 
@@ -147,10 +147,10 @@ cd $InMetDir
 #
 #-----------------------------------------------------------------------
 
-set InMetFiles = ( /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0400Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0500Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0600Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0700Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0800Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T0900Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1400Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1500Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1600Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1700Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1800Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T1900Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T2000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T2100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T2200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-22T2300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-07-22/d01/WRFOUT_d01_2022-07-23T0000Z.nc ) #\
+set InMetFiles = ( /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0400Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0500Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0600Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0700Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0800Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0900Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1400Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1500Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1600Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1700Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1800Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1900Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-08T0000Z.nc ) #\
 
 set IfTer      = "T"
-set InTerFile  = /opt/project/data/domains/aust-test/v1/geo_em.d01.nc
+set InTerFile  = /opt/project/data/domains/au-test/v1/geo_em.d01.nc
 
 set InSatFiles = ( )
 
@@ -182,8 +182,8 @@ set LSAT    = 0
 #   INTVL:       Frequency of output [minutes]
 #-----------------------------------------------------------------------
 
-set MCIP_START = 2022-07-22-00:00:00.0000  # [UTC]
-set MCIP_END   = 2022-07-23-00:00:00.0000  # [UTC]
+set MCIP_START = 2022-12-07-00:00:00.0000  # [UTC]
+set MCIP_END   = 2022-12-08-00:00:00.0000  # [UTC]
 
 set INTVL      = 60 # [min]
 

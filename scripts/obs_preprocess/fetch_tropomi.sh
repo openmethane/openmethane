@@ -18,8 +18,8 @@
 # limitations under the License.
 #
 
-export START_DATE=${START_DATE:-2022-07-22}
-export END_DATE=${END_DATE:-2022-07-22} # Only running a single day
+export START_DATE=${START_DATE:-2022-12-07}
+export END_DATE=${END_DATE:-2022-12-07} # Only running a single day
 
 python scripts/obs_preprocess/fetch_tropomi.py \
       -c config/obs_preprocess/config.json \

@@ -2,13 +2,13 @@ attrs:
   EXEC_ID: 'ICON_CH4only_Linux6_x86_64gfort_profile_CH4only                                 '
   FILEDESC: 'ICON output file INIT_CONC_1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '
   FTYPE: 1
-  GDNAM: 'aust-test_v1    '
+  GDNAM: 'au-test_v1      '
   GDTYP: 2
   NCO: netCDF Operators version 5.2.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco,
     Citation = 10.1016/j.envsoft.2008.03.004)
-  NCOLS: 5
+  NCOLS: 10
   NLAYS: 32
-  NROWS: 5
+  NROWS: 10
   NTHIK: 1
   NVARS: 1
   P_ALP: -40.0
@@ -57,16 +57,16 @@ attrs:
   VGTYP: 7
   XCELL: 10000.0
   XCENT: 133.302
-  XORIG: 1511422.625
+  XORIG: 1480000.375
   YCELL: 10000.0
   YCENT: -27.5
-  YORIG: 385760.438
+  YORIG: 314369.5
 coords: {}
 dims:
-  COL: 5
+  COL: 10
   DATE-TIME: 2
   LAY: 32
-  ROW: 5
+  ROW: 10
   TSTEP: 1
   VAR: 1
 variables:

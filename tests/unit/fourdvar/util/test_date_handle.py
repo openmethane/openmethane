@@ -8,7 +8,7 @@ from fourdvar.util import date_handle
 def test_get_datelist(target_environment):
     target_environment("docker")
     res = date_handle.get_datelist()
-    assert res == [datetime.date(2022, 7, 22)]
+    assert res == [datetime.date(2022, 12, 7)]
 
     # Check that the modified config from target_environment fixture is flowing through as expected
     target_environment("docker", overrides={"START_DATE": "2022-07-01", "END_DATE": "2022-07-02"})
