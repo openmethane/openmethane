@@ -66,9 +66,11 @@ def load_from_archive(sync: str = "monthly"):
         case _:
             archive.monthly(
                 daily_s3_bucket=ARCHIVE_BUCKET,
+                public_s3_bucket=PUBLIC_BUCKET,
                 start_date=START_DATE,
                 end_date=END_DATE,
                 domain_name=DOMAIN_NAME,
+                domain_version=DOMAIN_VERSION,
                 local_path=STORE_PATH,
             )
 

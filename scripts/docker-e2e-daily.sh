@@ -11,12 +11,14 @@ bash "$SCRIPT_DIR/docker-build-all.sh"
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
 # Task variables
-START_DATE=${START_DATE:-2022-07-22}
-END_DATE=${START_DATE:-2022-07-22}
-DOMAIN_NAME=${DOMAIN_NAME:-aust-test}
+START_DATE=${START_DATE:-2022-10-29}
+END_DATE=${START_DATE:-2022-10-29}
+DOMAIN_NAME=${DOMAIN_NAME:-au-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
-NCPUS=${NCPUS:-1} # WRF will fail on aust-test if run with too many cores
-BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # aust-test domain is 10x10 so avoid trimming all cells
+INVENTORY_DOMAIN_NAME=${INVENTORY_DOMAIN_NAME:-aust10km}
+INVENTORY_DOMAIN_VERSION=${INVENTORY_DOMAIN_VERSION:-v1}
+NCPUS=${NCPUS:-1} # WRF will fail on au-test if run with too many cores
+BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # au-test domain is 10x10 so avoid trimming all cells
 
 RUN_ID="daily/$DOMAIN_NAME/$DOMAIN_VERSION/$START_DATE"
 DATA_PATH="$DATA_ROOT/$RUN_ID"
@@ -109,6 +111,8 @@ docker run --name="e2e-daily-prior-generate" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e CDSAPI_KEY="$CDSAPI_KEY" \
   -e CDSAPI_URL="$CDSAPI_URL" \
+  -e INVENTORY_NAME="$INVENTORY_NAME" \
+  -e INVENTORY_VERSION="$INVENTORY_VERSION" \
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \

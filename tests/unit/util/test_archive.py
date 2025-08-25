@@ -10,11 +10,24 @@ def test_monthly(mockRun, tmp_path):
     # initiate load archive for a 3 day monthly run
     monthly(
         "test-bucket-name",
+        "test-public-bucket",
         datetime.date(2022, 10, 29),
         datetime.date(2022, 10, 31),
         "test-domain",
+        "v2",
         tmp_path,
     )
+
+    # monthly must fetch the domain for create_baseline
+    mockRun.assert_has_calls([
+        call([
+            "aws", "s3", "ls", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
+        ], check=True, capture_output=False),
+        call([
+            "aws", "s3", "cp", "--no-progress", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
+            str(tmp_path),
+        ], check=True, capture_output=True, text=True),
+    ])
 
     # monthly run from 2022-10-29 to 2022-10-31 will fetch input, cmaq and mcip folders for each day
     for date in ['2022/10/29', '2022/10/30', '2022/10/31']:
@@ -89,10 +102,10 @@ def test_baseline(mockRun, tmp_path):
     # baseline must fetch the domain
     mockRun.assert_has_calls([
         call([
-            "aws", "s3", "ls", "s3://test-public-bucket/domains/test-domain/v2/domain_v2.d01.nc",
+            "aws", "s3", "ls", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
         ], check=True, capture_output=False),
         call([
-            "aws", "s3", "cp", "--no-progress", "s3://test-public-bucket/domains/test-domain/v2/domain_v2.d01.nc",
+            "aws", "s3", "cp", "--no-progress", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
             str(tmp_path),
         ], check=True, capture_output=True, text=True),
     ])
@@ -129,6 +142,6 @@ def test_fetch_domain(mockRun, tmp_path):
 
     mockRun.assert_called_with([
         "aws", "s3", "cp", "--no-progress",
-        "s3://test-bucket-name/domains/test-domain/v1/domain_v1.d01.nc",
+        "s3://test-bucket-name/domains/test-domain/v1/domain.test-domain.nc",
         str(tmp_path),
     ], check=True, capture_output=True, text=True)

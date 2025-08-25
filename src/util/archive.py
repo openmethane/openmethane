@@ -15,9 +15,11 @@ logger = get_logger(__name__)
 
 def monthly(
     daily_s3_bucket: str,
+    public_s3_bucket: str,
     start_date: datetime.date,
     end_date: datetime.date,
     domain_name: str,
+    domain_version: str,
     local_path: pathlib.Path,
 ):
     """
@@ -25,6 +27,8 @@ def monthly(
     folder for the current execution. This daily data is needed for the monthly
     workflow.
     """
+    fetch_domain(public_s3_bucket, domain_name, domain_version, local_path)
+
     for date in _date_range(start_date, end_date):  # this is inclusive of END_DATE
         destination_path = pathlib.Path(
             local_path,
@@ -116,7 +120,7 @@ def baseline(
 
 
 def fetch_domain(s3_bucket_name: str, domain_name: str, domain_version: str, output_path: pathlib.Path):
-    domain_filename = f"domain_{domain_version}.d01.nc"
+    domain_filename = f"domain.{domain_name}.nc"
 
     s3_url = _format_s3_url(
         s3_bucket_name=s3_bucket_name,
