@@ -45,8 +45,10 @@ def load_from_archive(sync: str = "monthly"):
         case "daily":
             archive.daily(
                 daily_s3_bucket=ARCHIVE_BUCKET,
+                public_s3_bucket=PUBLIC_BUCKET,
                 start_date=START_DATE,
                 domain_name=DOMAIN_NAME,
+                domain_version=DOMAIN_VERSION,
                 local_path=STORE_PATH,
                 alerts_baseline_remote=ALERTS_BASELINE_REMOTE,
             )

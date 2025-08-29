@@ -53,8 +53,10 @@ def monthly(
 
 def daily(
     daily_s3_bucket: str,
+    public_s3_bucket: str,
     start_date: datetime.date,
     domain_name: str,
+    domain_version: str,
     local_path: pathlib.Path,
     alerts_baseline_remote: pathlib.Path,
 ):
@@ -64,6 +66,8 @@ def daily(
     on the same day to skip expensive re-processing for data that isn't
     likely to change.
     """
+    fetch_domain(public_s3_bucket, domain_name, domain_version, local_path)
+
     daily_root = _get_daily_archive_path(daily_s3_bucket, domain_name, start_date)
 
     for remote_path in [
