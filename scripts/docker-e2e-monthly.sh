@@ -144,7 +144,6 @@ docker run --name="e2e-monthly-fourdvar-monthly" --rm \
 # JobName: alerts-baseline
 docker run --name="e2e-monthly-alerts-baseline" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e ALERTS_DOMAIN_FILE="$STORE_PATH/prior/outputs/prior-emissions.nc" \
   -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
   openmethane python scripts/alerts/alerts_baseline.py
