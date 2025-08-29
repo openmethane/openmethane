@@ -25,6 +25,8 @@ DATA_PATH="$DATA_ROOT/$RUN_ID"
 STORE_PATH="/opt/project/data/$RUN_ID"
 CHK_PATH="$STORE_PATH/scratch"
 
+DOMAIN_FILE="$STORE_PATH/domain.$DOMAIN_NAME.nc"
+
 TARGET_BUCKET="s3://om-dev-results"
 #TARGET_BUCKET_REDUCED="s3://om-dev-output" # WARNING: THIS WILL OVERWRITE FILES IN s3
 TARGET_BUCKET_REDUCED=""
@@ -58,6 +60,7 @@ START_DATE=$START_DATE
 END_DATE=$END_DATE
 DOMAIN_NAME=$DOMAIN_NAME
 DOMAIN_VERSION=$DOMAIN_VERSION
+DOMAIN_FILE=$DOMAIN_FILE
 STORE_PATH=$STORE_PATH
 CHK_PATH=$CHK_PATH
 NCPUS=$NCPUS
@@ -80,6 +83,12 @@ echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 #  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
 #  -e AWS_REGION="$AWS_REGION" \
 #  openmethane python scripts/load_from_archive.py --sync daily
+
+# fetch the domain file from the data store
+if [[ ! -f "$DATA_PATH/domain.$DOMAIN_NAME.nc" ]]; then
+  curl -s -o "$DATA_PATH/domain.$DOMAIN_NAME.nc" \
+    "https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
+fi
 
 if [[ ! -f "$STORE_PATH/alerts-baseline.nc" ]]; then
   if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" ]]; then
