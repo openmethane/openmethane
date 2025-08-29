@@ -21,7 +21,7 @@ from postproc import alerts
 
 
 def main():
-    domain_file = env.path("ALERTS_DOMAIN_FILE")
+    domain_file = env.path("DOMAIN_FILE")
     dir_glob = env.str("ALERTS_BASELINE_DIRS", default=None)
     dir_list = sorted(glob.glob(dir_glob))
     if dir_list is None:

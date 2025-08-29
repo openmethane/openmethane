@@ -32,7 +32,7 @@ of rst and use slightly different categories.
 
 ### 🎉 Improvements
 
-- - Update archive scripts to support new 'baseline' workflow ([#156](https://github.com/openmethane/openmethane/pulls/156))
+- Update archive scripts to support new 'baseline' workflow ([#156](https://github.com/openmethane/openmethane/pulls/156))
 - Adding archiving of first-guess simulation of observations ([#158](https://github.com/openmethane/openmethane/pulls/158))
 - Support new openmethane-prior output format ([#168](https://github.com/openmethane/openmethane/pulls/168))
 - Fix errors and inconsistencies in CF attributes and variables:
@@ -42,32 +42,38 @@ of rst and use slightly different categories.
 
   ([#168](https://github.com/openmethane/openmethane/pulls/168))
 - Add prior sector estimates to posterior output file ([#169](https://github.com/openmethane/openmethane/pulls/169))
+- Update openmethane to support new domain format ([#173](https://github.com/openmethane/openmethane/pulls/173))
+- Remove create_prior_domain script which has moved to openmethane-prior ([#173](https://github.com/openmethane/openmethane/pulls/173))
 
 ### 🐛 Bug Fixes
 
 - setting non-neg emissions and configuring via environment ([#157](https://github.com/openmethane/openmethane/pulls/157))
 - Fix typo in `do_ICs` fork of `interpolate_from_cams_to_cmaq_grid` ([#165](https://github.com/openmethane/openmethane/pulls/165))
 
+### 🔧 Trivial/Internal Changes
+
+- [#175](https://github.com/openmethane/openmethane/pulls/175)
+
 
 ## openmethane v0.9.5 (2025-03-13)
 
 ### 🐛 Bug Fixes
 
-- - Fix archive.py store path when run after a workflow failure ([#155](https://github.com/openmethane/openmethane/pulls/155))
+- Fix archive.py store path when run after a workflow failure ([#155](https://github.com/openmethane/openmethane/pulls/155))
 
 
 ## openmethane v0.9.4 (2025-03-10)
 
 ### 🐛 Bug Fixes
 
-- - Skip tropomi files with no `methane_mixing_ratio_bias_corrected` data ([#154](https://github.com/openmethane/openmethane/pulls/154))
+- Skip tropomi files with no `methane_mixing_ratio_bias_corrected` data ([#154](https://github.com/openmethane/openmethane/pulls/154))
 
 
 ## openmethane v0.9.3 (2025-03-06)
 
 ### 🐛 Bug Fixes
 
-- - Fix `long_name` attributes on CH4 and prior_CH4 variables in results file ([#152](https://github.com/openmethane/openmethane/pulls/152))
+- Fix `long_name` attributes on CH4 and prior_CH4 variables in results file ([#152](https://github.com/openmethane/openmethane/pulls/152))
 
 
 ## openmethane v0.9.2 (2025-03-04)
@@ -81,14 +87,14 @@ of rst and use slightly different categories.
 
 ### 🎉 Improvements
 
-- - Upload alerts to public data store when daily run is successful ([#150](https://github.com/openmethane/openmethane/pulls/150))
+- Upload alerts to public data store when daily run is successful ([#150](https://github.com/openmethane/openmethane/pulls/150))
 
 
 ## openmethane v0.9.0 (2025-02-27)
 
 ### 🎉 Improvements
 
-- - Add ability to filter out observations where albedo was below a threshold ([#147](https://github.com/openmethane/openmethane/pulls/147))
+- Add ability to filter out observations where albedo was below a threshold ([#147](https://github.com/openmethane/openmethane/pulls/147))
 - Adding SWIR aod filter and storing SWIR aod in obs output ([#148](https://github.com/openmethane/openmethane/pulls/148))
 
 
@@ -96,7 +102,7 @@ of rst and use slightly different categories.
 
 ### 🐛 Bug Fixes
 
-- - Fix multiple threads reading METCRO2D file simultaneously ([#146](https://github.com/openmethane/openmethane/pulls/146))
+- Fix multiple threads reading METCRO2D file simultaneously ([#146](https://github.com/openmethane/openmethane/pulls/146))
 
 ### 🔧 Trivial/Internal Changes
 
@@ -107,13 +113,13 @@ of rst and use slightly different categories.
 
 ### 🎉 Improvements
 
-- - Add common logging module which can be controlled via environment vars ([#139](https://github.com/openmethane/openmethane/pulls/139))
-- - Update alerts baseline file format to follow CF conventions ([#142](https://github.com/openmethane/openmethane/pulls/142))
+- Add common logging module which can be controlled via environment vars ([#139](https://github.com/openmethane/openmethane/pulls/139))
+- Update alerts baseline file format to follow CF conventions ([#142](https://github.com/openmethane/openmethane/pulls/142))
 
 ### 🐛 Bug Fixes
 
 - fixing indexing error ([#143](https://github.com/openmethane/openmethane/pulls/143))
-- - Fix alerts baseline creation being dependent on uncertain x, y coordinates ([#144](https://github.com/openmethane/openmethane/pulls/144))
+- Fix alerts baseline creation being dependent on uncertain x, y coordinates ([#144](https://github.com/openmethane/openmethane/pulls/144))
 
 
 ## openmethane v0.8.7 (2025-02-18)
@@ -127,21 +133,21 @@ of rst and use slightly different categories.
 
 ### 🐛 Bug Fixes
 
-- - Fix alerts baseline not handling NaN values ([#140](https://github.com/openmethane/openmethane/pulls/140))
+- Fix alerts baseline not handling NaN values ([#140](https://github.com/openmethane/openmethane/pulls/140))
 
 
 ## openmethane v0.8.5 (2025-02-13)
 
 ### 🎉 Improvements
 
-- - Update create_alerts output to follow CF Conventions ([#138](https://github.com/openmethane/openmethane/pulls/138))
+- Update create_alerts output to follow CF Conventions ([#138](https://github.com/openmethane/openmethane/pulls/138))
 
 
 ## openmethane v0.8.4 (2025-02-12)
 
 ### 🐛 Bug Fixes
 
-- - Fix incorrect s3 path if TARGET_BUCKET doesn't contain a trailing slash ([#137](https://github.com/openmethane/openmethane/pulls/137))
+- Fix incorrect s3 path if TARGET_BUCKET doesn't contain a trailing slash ([#137](https://github.com/openmethane/openmethane/pulls/137))
 
 
 ## openmethane v0.8.3 (2025-02-12)
