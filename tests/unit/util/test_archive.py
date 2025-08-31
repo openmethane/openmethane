@@ -59,11 +59,24 @@ def test_daily(mockRun, tmp_path):
     # initiate load archive for a daily run
     daily(
         "test-bucket-name",
+        "test-public-bucket",
         datetime.date(2022, 10, 29),
         "test-domain",
+        "v2",
         tmp_path,
         pathlib.Path("alerts-baseline.nc"),
     )
+
+    # fetch the domain file
+    mockRun.assert_has_calls([
+        call([
+            "aws", "s3", "ls", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
+        ], check=True, capture_output=False),
+        call([
+            "aws", "s3", "cp", "--no-progress", "s3://test-public-bucket/domains/test-domain/v2/domain.test-domain.nc",
+            str(tmp_path),
+        ], check=True, capture_output=True, text=True),
+    ])
 
     # daily run will fetch wrf and mcip folders for each day
     for path in ['wrf', 'mcip']:
