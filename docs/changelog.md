@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.1.0 (2025-08-31)
+
+### 🎉 Improvements
+
+- Fetch domain file in load_from_archive.py for daily workflow ([#176](https://github.com/openmethane/openmethane/pulls/176))
+
+
 ## openmethane v1.0.0 (2025-08-25)
 
 ### ⚠️ Breaking Changes
