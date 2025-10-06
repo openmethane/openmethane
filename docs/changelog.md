@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.1.1 (2025-10-06)
+
+### 🎉 Improvements
+
+- Allow manual_postproc.py to be configured via environment variables ([#178](https://github.com/openmethane/openmethane/pulls/178))
+
+
 ## openmethane v1.1.0 (2025-08-31)
 
 ### 🎉 Improvements
