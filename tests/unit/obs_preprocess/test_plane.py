@@ -17,7 +17,7 @@ import itertools
 
 import numpy as np
 
-from obs_preprocess.plane import Plane, Polyhedron
+from openmethane.obs_preprocess.plane import Plane, Polyhedron
 
 
 def test_plane():

@@ -42,31 +42,9 @@ default-groups = [
     "dev",
 ]
 
-[tool.hatch.build.targets.sdist]
-include = [
-    "src/util",
-    "src/fourdvar",
-    "src/obs_preprocess",
-    "src/cmaq_preprocess",
-]
-
-[tool.hatch.build.targets.wheel]
-include = [
-    "src/util",
-    "src/fourdvar",
-    "src/obs_preprocess",
-    "src/cmaq_preprocess",
-]
-
-[tool.hatch.build.targets.wheel.sources]
-"src/util" = "util"
-"src/fourdvar" = "fourdvar"
-"src/obs_preprocess" = "obs_preprocess"
-"src/cmaq_preprocess" = "cmaq_preprocess"
-
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.9.18,<0.10.0"]
+build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -127,7 +105,7 @@ known-first-party = ["src"]
 
 
 [tool.towncrier]
-package = "fourdvar"
+package = "openmethane"
 package_dir = "src"
 filename = "docs/changelog.md"
 directory = "changelog/"

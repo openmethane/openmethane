@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from fourdvar.datadef.observation_data import ObservationData, load_observations_from_file
+from openmethane.fourdvar.datadef.observation_data import ObservationData, load_observations_from_file
 
 
 @pytest.mark.parametrize(

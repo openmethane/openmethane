@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-from fourdvar.env import env
-from postproc import alerts
+from openmethane.fourdvar.env import env
+from openmethane.postproc import alerts
 
 
 def main():

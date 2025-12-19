@@ -18,12 +18,16 @@ import os
 
 import numpy as np
 
-import fourdvar.util.date_handle as dt
-import fourdvar.util.file_handle as fh
-import fourdvar.util.netcdf_handle as ncf
-from fourdvar.params import cmaq_config, date_defn, template_defn
-from fourdvar.util import cmaq_handle
-from util.logger import get_logger
+import openmethane.fourdvar.util.date_handle as dt
+import openmethane.fourdvar.util.file_handle as fh
+import openmethane.fourdvar.util.netcdf_handle as ncf
+from openmethane.fourdvar.params import (
+    cmaq_config,
+    template_defn,
+    date_defn,
+)
+from openmethane.fourdvar.util import cmaq_handle
+from openmethane.util.logger import get_logger
 
 
 def copy_file(src_template: str, dest_template: str, date: datetime.date | None):

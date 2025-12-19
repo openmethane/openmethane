@@ -22,8 +22,8 @@ import netCDF4 as nc
 import numpy as np
 from numpy.typing import NDArray
 
-from fourdvar.params import cmaq_config, template_defn
-from fourdvar.util.date_handle import replace_date
+from openmethane.fourdvar.params import cmaq_config, template_defn
+from openmethane.fourdvar.util.date_handle import replace_date
 
 KG_TO_G = 1000.0  # conversion from kg to g
 MOLAR_MASS_CH4 = 16.0  # molar mass of CH4

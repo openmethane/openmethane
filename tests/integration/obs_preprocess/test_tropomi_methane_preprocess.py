@@ -1,9 +1,8 @@
 import numpy as np
-import pytest
 from click.testing import CliRunner
 from scripts.obs_preprocess import tropomi_methane_preprocess
 
-from fourdvar.util.file_handle import load_list
+from openmethane.fourdvar.util.file_handle import load_list
 
 
 def clean(value):

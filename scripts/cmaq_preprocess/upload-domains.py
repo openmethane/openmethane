@@ -12,8 +12,8 @@ import subprocess
 import sys
 
 # Loads environment using the value of the environment variable "TARGET"
-from fourdvar.env import env
-from util.logger import get_logger
+from openmethane.fourdvar.env import env
+from openmethane.util.logger import get_logger
 
 GEO_DIR = env.str("GEO_DIR", "data/domains")
 TARGET_DIR = "s3://openmethane-prior/domains"

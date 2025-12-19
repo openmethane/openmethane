@@ -1,4 +1,4 @@
-from fourdvar.util import file_handle
+from openmethane.fourdvar.util import file_handle
 
 
 def test_load_and_unload(tmp_path):

@@ -5,8 +5,8 @@ import click
 import xarray as xr
 from netCDF4 import Dataset
 
-from postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
-from util.logger import get_logger
+from openmethane.postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
+from openmethane.util.logger import get_logger
 
 SOLUTION_FILENAME = "posterior-multipliers.nc"
 

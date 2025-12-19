@@ -5,10 +5,7 @@ import shutil
 
 import xarray as xr
 
-import cmaq_preprocess
-import cmaq_preprocess.bias
-import cmaq_preprocess.read_config_cmaq
-import cmaq_preprocess.utils
+from openmethane.cmaq_preprocess.bias import calculate_icon_bias, correct_icon_bcon
 
 
 def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch, metcro3d_file):
@@ -32,7 +29,7 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch, metcro3d_
     levels = xr.open_dataset(metcro3d_file).attrs["VGLVLS"]
 
     # calculate bias
-    bias = cmaq_preprocess.bias.calculate_icon_bias(
+    bias = calculate_icon_bias(
         icon_files=[icon_file],
         obs_file=obs_file,
         levels=levels,
@@ -45,7 +42,7 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch, metcro3d_
     assert abs(bias) > 1e-6
 
     # correct bias
-    cmaq_preprocess.bias.correct_icon_bcon(
+    correct_icon_bcon(
         species="CH4",
         bias=bias,
         icon_files=[icon_file],
@@ -53,7 +50,7 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch, metcro3d_
     )
 
     # calculate new bias - should be zero
-    new_bias = cmaq_preprocess.bias.calculate_icon_bias(
+    new_bias = calculate_icon_bias(
         icon_files=[icon_file],
         obs_file=obs_file,
         levels=levels,

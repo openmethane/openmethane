@@ -17,12 +17,11 @@ import glob
 import pathlib
 
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 
-import fourdvar.datadef as d
-from postproc.posterior_emissions_postprocess import (
+import openmethane.fourdvar.datadef as d
+from openmethane.postproc.posterior_emissions_postprocess import (
     normalise_posterior,
     posterior_emissions_postprocess,
 )

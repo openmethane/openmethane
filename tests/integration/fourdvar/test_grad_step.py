@@ -16,9 +16,9 @@
 
 import numpy as np
 
-import fourdvar.datadef as d
-from fourdvar._transform import transform
-from fourdvar.params.input_defn import obs_file, prior_file
+import openmethane.fourdvar.datadef as d
+from openmethane.fourdvar._transform import transform
+from openmethane.fourdvar.params.input_defn import obs_file, prior_file
 
 
 def test_grad_step(target_environment):

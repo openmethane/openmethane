@@ -6,8 +6,8 @@ import pytest
 from attrs import asdict
 from pytest_regressions.data_regression import RegressionYamlDumper
 
-from cmaq_preprocess.config_read_functions import load_json
-from cmaq_preprocess.read_config_cmaq import (
+from openmethane.cmaq_preprocess.config_read_functions import load_json
+from openmethane.cmaq_preprocess.read_config_cmaq import (
     create_cmaq_config_object,
     load_config_from_env,
 )
