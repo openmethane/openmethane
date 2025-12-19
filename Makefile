@@ -1,6 +1,6 @@
-ifneq (, $(shell command -v poetry))
-	RUN_CMD := poetry run
-	PYTHON_CMD := poetry run python
+ifneq (, $(shell command -v uv))
+	RUN_CMD := uv run
+	PYTHON_CMD := uv run python
 else
 	RUN_CMD :=
 	PYTHON_CMD := python
@@ -8,21 +8,13 @@ endif
 
 TEST_DIRS := tests
 
-.PHONY: virtual-environment
-virtual-environment:  ## update virtual environment, create a new one if it doesn't already exist
-	poetry lock --no-update
-	# Put virtual environments in the project
-	poetry config virtualenvs.in-project true
-	poetry install --all-extras
-	# TODO: Add last line back in when pre-commit is set up
-	# poetry run pre-commit install
+.PHONY: install
+install:  ## create virtual env and fetch project dependencies
+	uv sync
 
-.PHONY: ruff-fixes
-ruff-fixes:  # Run ruff on the project
- 	# Run the formatting first to ensure that is applied even if the checks fail
-	poetry run ruff format .
-	poetry run ruff check --fix .
-	poetry run ruff format .
+.PHONY: format
+format:  ## format project source files according to ruff config
+	uv format
 
 .PHONY: clean
 clean:  ## remove generated temporary files
@@ -79,7 +71,7 @@ prepare-templates:  ## Prepare the template files for a CMAQ run
 
 .PHONY: changelog-draft
 changelog-draft:  ## compile a draft of the next changelog
-	$(RUN_CMD) towncrier build --draft
+	uv run towncrier build --draft
 
 .PHONY: docker-test
 docker-test: build fetch-test-data ## Run the tests
