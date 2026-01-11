@@ -95,6 +95,9 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
+# Use the non-root user to run our application
+USER app
+
 # /opt/project is chosen because pycharm will automatically mount to this directory
 WORKDIR /opt/project
 
