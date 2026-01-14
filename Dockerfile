@@ -41,10 +41,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Then, use a final image without uv for our runtime environment
 FROM debian:bookworm-slim
 
-# Setup a non-root user
-RUN groupadd --system --gid 1000 app \
- && useradd --system --gid 1000 --uid 1000 --create-home app
-
 # These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
 # These must be duplicated in .github/workflows/build_docker.yaml
 LABEL org.opencontainers.image.title="Open Methane"
@@ -94,9 +90,6 @@ apt-get install -qyy \
 apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
-
-# Use the non-root user to run our application
-USER app
 
 # /opt/project is chosen because pycharm will automatically mount to this directory
 WORKDIR /opt/project
