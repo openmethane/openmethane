@@ -64,17 +64,6 @@ echo "Running om-monthly end-to-end, data will be stored in $DATA_PATH"
 
 # Transpose tasks from om-infra into local docker commands
 
-# JobName: archive-load
-# Note: this needs AWS credentials, so the script must be run using aws-vault
-#docker run --name="e2e-monthly-archive-load" --rm \
-#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e TARGET_BUCKET="$TARGET_BUCKET" \
-#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-#  -e AWS_REGION="$AWS_REGION" \
-#  openmethane python scripts/load_from_archive.py --sync monthly
-
 # fetch the domain file from the data store
 if [[ ! -f "$DATA_PATH/domain.$DOMAIN_NAME.nc" ]]; then
   curl -s -o "$DATA_PATH/domain.$DOMAIN_NAME.nc" \
@@ -129,41 +118,12 @@ docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   openmethane python runscript.py
 
-# JobName: archive-baseline-load
-# Note: this needs AWS credentials, so the script must be run using aws-vault
-#docker run --name="e2e-monthly-archive-baseline-load" --rm \
-#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e TARGET_BUCKET="$TARGET_BUCKET" \
-#  -e BASELINE_LENGTH_DAYS="3" \
-#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-#  -e AWS_REGION="$AWS_REGION" \
-#  openmethane python scripts/load_from_archive.py --sync baseline
-
 # JobName: alerts-baseline
 docker run --name="e2e-monthly-alerts-baseline" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
   openmethane python scripts/alerts/alerts_baseline.py
-
-# JobName: archive-success
-# Warning: this will delete the results folder on success!
-#docker run --name="e2e-monthly-archive-success" --rm \
-#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e SUCCESS="true" \
-#  -e RUN_TYPE="monthly" \
-#  -e EXECUTION_ID="e2e-monthly" \
-#  -e TARGET_BUCKET="$TARGET_BUCKET" \
-#  -e TARGET_BUCKET_REDUCED="" \
-#  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
-#  -e ALERTS_BASELINE_REMOTE="$DOMAIN_NAME/alerts-baseline.nc" \
-#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-#  -e AWS_REGION="$AWS_REGION" \
-#  openmethane python scripts/archive.py
 
 echo "Success: monthly run complete"
 echo "Results in: $DATA_PATH"

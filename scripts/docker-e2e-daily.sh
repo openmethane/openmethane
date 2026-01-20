@@ -72,18 +72,6 @@ echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 
 # Transpose tasks from om-infra into local docker commands
 
-# JobName: archive-load
-# Note: this needs AWS credentials, so the script must be run using aws-vault
-#docker run --name="e2e-daily-archive-load" --rm \
-#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e TARGET_BUCKET="$TARGET_BUCKET" \
-#  -e ALERTS_BASELINE_REMOTE="$DOMAIN_NAME/alerts-baseline.nc" \
-#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-#  -e AWS_REGION="$AWS_REGION" \
-#  openmethane python scripts/load_from_archive.py --sync daily
-
 # fetch the domain file from the data store
 if [[ ! -f "$DATA_PATH/domain.$DOMAIN_NAME.nc" ]]; then
   curl -s -o "$DATA_PATH/domain.$DOMAIN_NAME.nc" \
@@ -162,21 +150,6 @@ docker run --name="e2e-daily-create-alerts" --rm \
   -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
   -e ALERTS_COUNT_THRESHOLD="2" \
   openmethane python scripts/alerts/create_alerts.py
-
-# JobName: archive-success
-# Warning: this will delete the results folder on success!
-#docker run --name="e2e-daily-archive-success" --rm \
-#  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-#  -e SUCCESS="true" \
-#  -e RUN_TYPE="daily" \
-#  -e EXECUTION_ID="e2e-daily" \
-#  -e TARGET_BUCKET="$TARGET_BUCKET" \
-#  -e TARGET_BUCKET_REDUCED="$TARGET_BUCKET_REDUCED" \
-#  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
-#  -e AWS_REGION="$AWS_REGION" \
-#  openmethane python scripts/archive.py
 
 echo "Success: daily run complete"
 echo "Results in: $DATA_PATH"
