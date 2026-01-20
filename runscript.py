@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import fourdvar._main_driver as main
+from openmethane.fourdvar._main_driver import get_answer
 
 if __name__ == "__main__":
-    main.get_answer()
+    get_answer()

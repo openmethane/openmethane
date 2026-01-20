@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import xarray as xr
 
-from fourdvar import env
-from fourdvar.params import (
+from openmethane.fourdvar import env
+from openmethane.fourdvar.params import (
     archive_defn,
     cmaq_config,
     data_access,

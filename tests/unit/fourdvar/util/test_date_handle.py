@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from fourdvar.util import date_handle
+from openmethane.fourdvar.util import date_handle
 
 
 def test_get_datelist(target_environment):

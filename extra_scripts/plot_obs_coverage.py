@@ -19,11 +19,11 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
-import fourdvar.user_driver as user
-import fourdvar.util.date_handle as dt
-from fourdvar.params import date_defn
+from openmethane.fourdvar import user_driver
+import openmethane.fourdvar.util.date_handle as dt
+from openmethane.fourdvar.params import date_defn
 
-obs = user.get_observed()
+obs = user_driver.get_observed()
 
 nrow = obs.grid_attr["NROWS"]
 ncol = obs.grid_attr["NCOLS"]

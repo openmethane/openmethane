@@ -19,9 +19,9 @@
 
 import subprocess
 
-from fourdvar.params.date_defn import end_date, start_date
-from fourdvar.params.input_defn import obs_file, prior_file
-from fourdvar.util.file_handle import load_list, save_list
+from openmethane.fourdvar.params.date_defn import end_date, start_date
+from openmethane.fourdvar.params.input_defn import obs_file, prior_file
+from openmethane.fourdvar.util.file_handle import load_list, save_list
 
 inObs = load_list(obs_file)
 outObs = [inObs.pop(0)]  # first element

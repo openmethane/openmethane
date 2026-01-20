@@ -1,7 +1,7 @@
 
 import xarray as xr
 
-from util.cf import get_grid_mappings
+from openmethane.util.cf import get_grid_mappings
 
 
 def test_cf_get_grid_mappings(test_data_dir):

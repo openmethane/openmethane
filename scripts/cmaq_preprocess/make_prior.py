@@ -18,11 +18,16 @@ import os
 
 import numpy as np
 
-import fourdvar.util.date_handle as dt
-import fourdvar.util.file_handle as fh
-import fourdvar.util.netcdf_handle as ncf
-from fourdvar.params import cmaq_config, date_defn, input_defn, template_defn
-from fourdvar.uncertainty import convert_unc
+import openmethane.fourdvar.util.date_handle as dt
+import openmethane.fourdvar.util.file_handle as fh
+import openmethane.fourdvar.util.netcdf_handle as ncf
+from openmethane.fourdvar.params import (
+    cmaq_config,
+    date_defn,
+    input_defn,
+    template_defn,
+)
+from openmethane.fourdvar.uncertainty import convert_unc
 
 
 def make_prior(save_path: str, emis_template: str) -> None:

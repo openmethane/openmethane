@@ -15,14 +15,14 @@ import datetime
 
 import click
 
-from cmaq_preprocess import utils
-from cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
-from cmaq_preprocess.mcip import run_mcip
-from cmaq_preprocess.mcip_preparation import (
+from openmethane.cmaq_preprocess import utils
+from openmethane.cmaq_preprocess.cams import interpolate_from_cams_to_cmaq_grid
+from openmethane.cmaq_preprocess.mcip import run_mcip
+from openmethane.cmaq_preprocess.mcip_preparation import (
     check_input_met_and_output_folders,
 )
-from cmaq_preprocess.read_config_cmaq import CMAQConfig, load_config_from_env
-from cmaq_preprocess.run_scripts import (
+from openmethane.cmaq_preprocess.read_config_cmaq import CMAQConfig, load_config_from_env
+from openmethane.cmaq_preprocess.run_scripts import (
     prepare_template_bcon_files,
     prepare_template_icon_files,
 )

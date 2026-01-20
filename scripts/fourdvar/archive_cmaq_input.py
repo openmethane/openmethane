@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
-import fourdvar.datadef as d
-from fourdvar.params import archive_defn
-from fourdvar.util import archive_handle
+from openmethane import fourdvar.datadef as d
+from openmethane.fourdvar.params import archive_defn
+from openmethane.fourdvar.util import archive_handle
 
 # archive file name
 archive_fname = "original_CMAQ_input"

@@ -3,7 +3,7 @@ import os.path
 
 import pytest
 
-from fourdvar.params import (
+from openmethane.fourdvar.params import (
     archive_defn,
     cmaq_config,
     data_access,

@@ -15,10 +15,10 @@
 #
 import os
 
-import fourdvar.datadef as d
-from fourdvar._transform import transform
-from fourdvar.params.input_defn import obs_file, prior_file
-from fourdvar.params.root_path_defn import store_path
+import openmethane.fourdvar.datadef as d
+from openmethane.fourdvar._transform import transform
+from openmethane.fourdvar.params.input_defn import obs_file, prior_file
+from openmethane.fourdvar.params.root_path_defn import store_path
 
 
 def run_daily_flow():

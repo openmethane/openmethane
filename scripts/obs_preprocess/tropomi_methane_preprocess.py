@@ -25,12 +25,12 @@ import func_timeout
 import numpy as np
 from netCDF4 import Dataset
 
-import fourdvar.util.file_handle as fh
-from fourdvar.params import date_defn, input_defn
-from obs_preprocess.model_space import ModelSpace
-from obs_preprocess.obsESA_defn import ObsSRON
-from util.errors.InvalidInputException import InvalidInputException
-from util.logger import get_logger
+import openmethane.fourdvar.util.file_handle as fh
+from openmethane.fourdvar.params import date_defn, input_defn
+from openmethane.obs_preprocess.model_space import ModelSpace
+from openmethane.obs_preprocess.obsESA_defn import ObsSRON
+from openmethane.util.errors.InvalidInputException import InvalidInputException
+from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
 

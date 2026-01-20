@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from scripts.cmaq_preprocess import setup_for_cmaq
 
-from cmaq_preprocess.read_config_cmaq import load_config_from_env
+from openmethane.cmaq_preprocess.read_config_cmaq import load_config_from_env
 
 
 @pytest.fixture

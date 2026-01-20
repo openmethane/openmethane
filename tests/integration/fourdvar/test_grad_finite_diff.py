@@ -17,12 +17,12 @@ import time
 
 import numpy as np
 
-import fourdvar._main_driver as main
-import fourdvar.datadef as d
-import fourdvar.user_driver as user
-import fourdvar.util.archive_handle as archive
-from fourdvar._transform import transform
-from fourdvar.params import archive_defn
+import openmethane.fourdvar._main_driver as main
+import openmethane.fourdvar.datadef as d
+import openmethane.fourdvar.user_driver as user
+import openmethane.fourdvar.util.archive_handle as archive
+from openmethane.fourdvar._transform import transform
+from openmethane.fourdvar.params import archive_defn
 
 
 def test_fourdvar_grad_finite_diff(target_environment):

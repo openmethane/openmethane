@@ -165,6 +165,7 @@ jobs:
 
       - name: Run e2e test
         env:
+          STORE_PATH: /opt/project/data
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
@@ -178,6 +179,8 @@ jobs:
           make fetch-domains
           bash scripts/run-all.sh
       - name: Run fourdvar integration tests
+        env:
+          STORE_PATH: /opt/project/data
         run: |
           cd /opt/project
           # This test requires the results from the preprocessing step
