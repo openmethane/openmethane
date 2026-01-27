@@ -15,8 +15,6 @@ START_DATE=${START_DATE:-2022-10-29}
 END_DATE=${END_DATE:-2022-10-31}
 DOMAIN_NAME=${DOMAIN_NAME:-au-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
-INVENTORY_NAME=${INVENTORY_NAME:-aust10km}
-INVENTORY_VERSION=${INVENTORY_VERSION:-v1}
 NCPUS=${NCPUS:-1} # WRF will fail on au-test if run with too many cores
 BOUNDARY_TRIM=${BOUNDARY_TRIM:-1} # au-test domain is 10x10 so avoid trimming all cells
 
@@ -89,8 +87,7 @@ docker run --name="e2e-monthly-prior-generate" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e CDSAPI_KEY="$CDSAPI_KEY" \
   -e CDSAPI_URL="$CDSAPI_URL" \
-  -e INVENTORY_NAME="$INVENTORY_NAME" \
-  -e INVENTORY_VERSION="$INVENTORY_VERSION" \
+  -e INVENTORY_DOMAIN_FILE="https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc" \
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
