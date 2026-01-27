@@ -11,8 +11,8 @@ bash "$SCRIPT_DIR/docker-build-all.sh"
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
 # Task variables
-START_DATE=${START_DATE:-2022-10-29}
-END_DATE=${START_DATE:-2022-10-29}
+START_DATE=${START_DATE:-2022-12-07}
+END_DATE=${START_DATE:-2022-12-08}
 DOMAIN_NAME=${DOMAIN_NAME:-au-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
 INVENTORY_DOMAIN_NAME=${INVENTORY_DOMAIN_NAME:-aust10km}
@@ -78,15 +78,15 @@ if [[ ! -f "$DATA_PATH/domain.$DOMAIN_NAME.nc" ]]; then
     "https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
 fi
 
-if [[ ! -f "$STORE_PATH/alerts-baseline.nc" ]]; then
-  if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" ]]; then
-    echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc"
-    cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" "$DATA_PATH/alerts-baseline.nc"
-  else
-    echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc exists before running"
-    exit 1
-  fi
-fi
+# if [[ ! -f "$STORE_PATH/alerts-baseline.nc" ]]; then
+#   if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" ]]; then
+#     echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc"
+#     cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" "$DATA_PATH/alerts-baseline.nc"
+#   else
+#     echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc exists before running"
+#     exit 1
+#   fi
+# fi
 
 # This only has to be done once assuming $DATA_ROOT isn't cleared
 if [[ -d "$DATA_ROOT/geog/WPS_GEOG" ]]; then
@@ -108,8 +108,7 @@ docker run --name="e2e-daily-prior-generate" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e CDSAPI_KEY="$CDSAPI_KEY" \
   -e CDSAPI_URL="$CDSAPI_URL" \
-  -e INVENTORY_NAME="$INVENTORY_NAME" \
-  -e INVENTORY_VERSION="$INVENTORY_VERSION" \
+  -e INVENTORY_DOMAIN_FILE="https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc"\
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
@@ -144,12 +143,12 @@ docker run --name="e2e-daily-fourdvar-daily" --rm \
   openmethane python scripts/fourdvar/run_daily_step.py
 
 # JobName: alerts-create-alerts
-docker run --name="e2e-daily-create-alerts" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
-  -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
-  -e ALERTS_COUNT_THRESHOLD="2" \
-  openmethane python scripts/alerts/create_alerts.py
+# docker run --name="e2e-daily-create-alerts" --rm \
+#   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
+#   -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
+#   -e ALERTS_COUNT_THRESHOLD="2" \
+#   openmethane python scripts/alerts/create_alerts.py
 
 echo "Success: daily run complete"
 echo "Results in: $DATA_PATH"

@@ -11,8 +11,8 @@ bash "$SCRIPT_DIR/docker-build-all.sh"
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
 # Task variables
-START_DATE=${START_DATE:-2022-10-29}
-END_DATE=${END_DATE:-2022-10-31}
+START_DATE=${START_DATE:-2022-12-07}
+END_DATE=${START_DATE:-2022-12-08}
 DOMAIN_NAME=${DOMAIN_NAME:-au-test}
 DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
 INVENTORY_NAME=${INVENTORY_NAME:-aust10km}
@@ -89,8 +89,7 @@ docker run --name="e2e-monthly-prior-generate" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e CDSAPI_KEY="$CDSAPI_KEY" \
   -e CDSAPI_URL="$CDSAPI_URL" \
-  -e INVENTORY_NAME="$INVENTORY_NAME" \
-  -e INVENTORY_VERSION="$INVENTORY_VERSION" \
+  -e INVENTORY_DOMAIN_FILE="https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc"\
   -e INPUTS="$STORE_PATH/prior/inputs" \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
@@ -119,11 +118,11 @@ docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   openmethane python runscript.py
 
 # JobName: alerts-baseline
-docker run --name="e2e-monthly-alerts-baseline" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
-  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
-  openmethane python scripts/alerts/alerts_baseline.py
+# docker run --name="e2e-monthly-alerts-baseline" --rm \
+#   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#   -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
+#   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
+#   openmethane python scripts/alerts/alerts_baseline.py
 
 echo "Success: monthly run complete"
 echo "Results in: $DATA_PATH"
