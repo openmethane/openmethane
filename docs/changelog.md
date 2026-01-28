@@ -19,6 +19,21 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.2.0 (2026-01-28)
+
+### ⚠️ Breaking Changes
+
+- Archive scripts (`scripts/archive.py`, `scripts/load_from_archive.py`), which
+  are specific to Open Methane production infrastructure, have been removed and
+  are now part of the om-infra repo. ([#184](https://github.com/openmethane/openmethane/pull/184))
+- Move sub-packages in src/ into top-level "openmethane" package ([#185](https://github.com/openmethane/openmethane/pull/185))
+- Replace poetry with uv for tool and dependency management ([#185](https://github.com/openmethane/openmethane/pull/185))
+
+### 🐛 Bug Fixes
+
+- Fix docker-e2e-daily and docker-e2e-monthly using incorrect prior env vars ([#188](https://github.com/openmethane/openmethane/pull/188))
+
+
 ## openmethane v1.1.1 (2025-10-06)
 
 ### 🎉 Improvements

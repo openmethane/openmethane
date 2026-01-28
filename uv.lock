@@ -364,7 +364,7 @@ wheels = [
 
 [[package]]
 name = "openmethane"
-version = "1.1.2a0"
+version = "1.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
