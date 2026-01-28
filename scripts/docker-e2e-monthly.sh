@@ -83,32 +83,32 @@ while (( $(date -d "${COPY_TIMESTAMP}" +%s) <= $(date -d "${END_DATE}" +%s) )); 
 done
 
 # JobName: prior-generate
-docker run --name="e2e-monthly-prior-generate" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e CDSAPI_KEY="$CDSAPI_KEY" \
-  -e CDSAPI_URL="$CDSAPI_URL" \
-  -e INVENTORY_DOMAIN_FILE="https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc"\
-  -e INPUTS="$STORE_PATH/prior/inputs" \
-  -e OUTPUTS="$STORE_PATH/prior/outputs" \
-  -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
-  -e OUTPUT_FILENAME="prior-emissions.nc" \
-  "openmethane-prior" bash scripts/run.sh
+# docker run --name="e2e-monthly-prior-generate" --rm \
+#   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#   -e CDSAPI_KEY="$CDSAPI_KEY" \
+#   -e CDSAPI_URL="$CDSAPI_URL" \
+#   -e INVENTORY_DOMAIN_FILE="https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc"\
+#   -e INPUTS="$STORE_PATH/prior/inputs" \
+#   -e OUTPUTS="$STORE_PATH/prior/outputs" \
+#   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
+#   -e OUTPUT_FILENAME="prior-emissions.nc" \
+#   "openmethane-prior" bash scripts/run.sh
 
 # JobName: cmaq_preprocess-run
-docker run --name="e2e-monthly-cmaq_preprocess-run" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e CDSAPI_KEY="$CDSAPI_KEY" \
-  -e CDSAPI_URL="$CDSAPI_URL" \
-  -e NUM_PROC_COLS=1 \
-  -e NUM_PROC_ROWS=2 \
-  -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
-  -e SKIP_CMAQ_SETUP=true \
-  openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
+# docker run --name="e2e-monthly-cmaq_preprocess-run" --rm \
+#   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#   -e CDSAPI_KEY="$CDSAPI_KEY" \
+#   -e CDSAPI_URL="$CDSAPI_URL" \
+#   -e NUM_PROC_COLS=1 \
+#   -e NUM_PROC_ROWS=2 \
+#   -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
+#   -e SKIP_CMAQ_SETUP=true \
+#   openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 # JobName: cmaq_preprocess-bias_correct
-docker run --name="e2e-monthly-cmaq_preprocess-bias_correct" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python scripts/cmaq_preprocess/bias_correct_cams.py
+# docker run --name="e2e-monthly-cmaq_preprocess-bias_correct" --rm \
+#   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+#   openmethane python scripts/cmaq_preprocess/bias_correct_cams.py
 
 # JobName: fourdvar-monthly
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
