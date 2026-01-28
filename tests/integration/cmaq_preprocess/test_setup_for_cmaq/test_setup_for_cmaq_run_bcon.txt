@@ -7,7 +7,7 @@
 # ==================================================================== 
 
 #> Source the config.cmaq file to set the run environment
- source /opt/cmaq/CMAQv5.0.2_notpollen/scripts/config.cmaq
+# source /opt/scripts/config.cmaq
 
 #> Check that M3DATA is set:
 # if ( ! -e $M3DATA ) then
@@ -30,12 +30,11 @@
  set APPL     = CH4only
  set CFG      = au-test_v1
  set MECH     = CH4only
- set EXEC     = BCON_${APPL}_${EXEC_ID}_${BC}_${MECH}
+ set EXEC     = BCON_${MECH}
 #> Set the working directory
- set BASE     = $M3HOME/scripts/bcon
- set BLD      = ${BASE}/BLD_$APPL
+ set BLD      = /opt/cmaq/bin/BCON_${MECH}
 
- cd $BASE; date; set timestamp; echo " "; set echo
+ cd $BLD; date; set timestamp; echo " "; set echo
 
 #> Horizontal grid definition 
  setenv GRID_NAME au-test_v1           #> check GRIDDESC file for GRID_NAME options
@@ -76,7 +75,7 @@
 # =====================================================================
  
  if ( $BC == profile ) then
-    setenv BC_PROFILE    ${BLD}/bc_profile_CH4only.dat ## /home/563/ns0890/programs/CMAQv5.0.2_notpollen/models/BCON/prof_data/CH4only/bc_profile_CH4only.dat
+    setenv BC_PROFILE    ${BLD}/bc_profile_${MECH}.dat ## /home/563/ns0890/programs/CMAQv5.0.2_notpollen/models/BCON/prof_data/CH4only/bc_profile_CH4only.dat
  endif
 
  if ( $BC == m3conc ) then 
@@ -112,7 +111,7 @@
  
  if ( ! -d "$OUTDIR" ) mkdir -p $OUTDIR
 
- ls -l $BLD/$EXEC; size $BLD/$EXEC
+ ls -l $BLD/$EXEC
 # unlimit
 # limit
 

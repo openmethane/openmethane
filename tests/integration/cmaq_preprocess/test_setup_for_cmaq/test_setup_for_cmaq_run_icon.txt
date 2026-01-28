@@ -8,7 +8,7 @@
 # ==================================================================== 
 
 #> Source the config.cmaq file to set the run environment
- source /opt/cmaq/CMAQv5.0.2_notpollen/scripts/config.cmaq
+# source /opt/scripts/config.cmaq
 
 #> Check that M3DATA is set:
 # if ( ! -e $M3DATA ) then
@@ -31,13 +31,11 @@
  set APPL     = CH4only
  set CFG      = au-test_v1
  set MECH     = CH4only
- set EXEC     = ICON_${APPL}_${EXEC_ID}_${IC}_${MECH}
+ set EXEC     = ICON_${MECH}
+#> Set the working directory
+ set BLD      = /opt/cmaq/bin/ICON_${MECH}
 
-#> Set the working directory:
- set BASE     = $M3HOME/scripts/icon
- set BLD      = ${BASE}/BLD_$APPL
-
- cd $BASE; date; set timestamp; echo " "; set echo
+ cd $BLD; date; set timestamp; echo " "; set echo
 
 #> Horizontal grid definition 
  setenv GRID_NAME au-test_v1           #> check GRIDDESC file for GRID_NAME options
@@ -77,7 +75,7 @@
 # =====================================================================
 
  if ( $IC == profile ) then
-    setenv IC_PROFILE   ${BLD}/ic_profile_CH4only.dat
+    setenv IC_PROFILE   ${BLD}/ic_profile_${MECH}.dat
  endif
  
  if ( $IC == m3conc ) then 
@@ -111,7 +109,7 @@
  
  if ( ! -d "$OUTDIR" ) mkdir -p $OUTDIR
 
- ls -l $BLD/$EXEC; size $BLD/$EXEC
+ ls -l $BLD/$EXEC
 # unlimit
 # limit
 

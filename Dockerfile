@@ -1,45 +1,43 @@
+# Adapted from https://github.com/astral-sh/uv-docker-example/blob/main/standalone.Dockerfile
+
 # Secret management
 FROM segment/chamber:2 AS chamber
 
-# Build the required dependencies
-FROM continuumio/miniconda3 as builder
+# First, build the application in the `/app` directory
+FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
-# Install and package up the conda environment
-# Creates a standalone environment in /opt/venv
-COPY environment.yml /opt/environment.yml
-RUN conda env create -f /opt/environment.yml
-RUN conda install -c conda-forge conda-pack
-RUN conda-pack -n openmethane -o /tmp/env.tar && \
-  mkdir /opt/venv && cd /opt/venv && \
-  tar xf /tmp/env.tar && \
-  rm /tmp/env.tar
+# Configure the Python directory so it is consistent
+ENV UV_PYTHON_INSTALL_DIR=/python
 
-# We've put venv in same path it'll be in final image,
-# so now fix up paths:
-RUN /opt/venv/bin/conda-unpack
+# Only use the managed Python version
+ENV UV_PYTHON_PREFERENCE=only-managed
 
-# Install the python dependencies using uv
-COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /uvx /bin/
-ENV UV_PYTHON_DOWNLOADS=0 \
-    UV_SYSTEM_PYTHON=1 \
-    UV_COMPILE_BYTECODE=1
+# Install Python before the project for caching
+RUN uv python install 3.11
 
-# This is deliberately outside of the work directory
-# so that the local directory can be mounted as a volume of testing
-ENV VIRTUAL_ENV=/opt/venv \
+# Install the virtual environment outside the work directory so the local
+# prpject directory can be mounted as a volume during testing.
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 
-WORKDIR /opt/project
+WORKDIR /app
+
+# install dependencies from pyproject.toml without the app, to create a
+# cacheable layer that changes less frequently than the app code
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --active --no-install-project
-COPY . /opt/project
+    uv sync --locked --no-install-project --no-dev
+
+# install the app + dependencies using the uv cache from the previous step
+COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --active
+    uv sync --locked --no-dev
 
 # Then, use a final image without uv for our runtime environment
-FROM debian:bookworm-slim
+# https://github.com/openmethane/docker-cmaq-adj
+FROM ghcr.io/openmethane/cmaq-adj
 
 # These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
 # These must be duplicated in .github/workflows/build_docker.yaml
@@ -55,19 +53,6 @@ ENV OPENMETHANE_VERSION=$OPENMETHANE_VERSION
 
 LABEL org.opencontainers.image.version="${OPENMETHANE_VERSION}"
 
-# Configure Python
-ENV PYTHONFAULTHANDLER=1 \
-  PYTHONUNBUFFERED=1 \
-  PYTHONHASHSEED=random
-
-# This is deliberately outside of the work directory
-# so that the local directory can be mounted as a volume of testing
-ENV VIRTUAL_ENV=/opt/venv \
-    PATH="/opt/venv/bin:$PATH"
-
-# Preference the environment libraries over the system libraries
-ENV LD_LIBRARY_PATH="/opt/venv/lib:${LD_LIBRARY_PATH}"
-
 # Setup the environment variables required to run the project
 # These can be overwritten at runtime
 ENV TARGET=docker
@@ -79,9 +64,9 @@ apt-get install -qyy \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     ca-certificates \
+    build-essential \
     csh \
-    make \
-    nano \
+    nco \
     jq \
     curl \
     tree \
@@ -97,15 +82,18 @@ WORKDIR /opt/project
 # Secret management
 COPY --from=chamber /chamber /bin/chamber
 
-# Copy across the virtual environment
-COPY --from=builder /opt/venv /opt/venv
-
-# Copy in CMAQ binaries
-# https://github.com/openmethane/docker-cmaq
-COPY --from=ghcr.io/openmethane/cmaq:5.0.2 /opt/cmaq /opt/cmaq
+# Copy python and the virtual environment
+COPY --from=builder --chown=python:python /python /python
+COPY --from=builder --chown=python:python /opt/venv /opt/venv
 
 # Copy the application from the builder
-COPY --from=builder --chown=nonroot:nonroot /opt/project /opt/project
+COPY --from=builder --chown=nonroot:nonroot /app /opt/project
+
+# Put the venv at the start of the path so binaries there are preferenced
+ENV VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
+# Place the package root in the python import path so files in scripts/ can resolve
+ENV PYTHONPATH="/opt/project/src"
 
 # tini forwards all signals to real entrypoint
 ENTRYPOINT ["tini", "--", "/opt/project/scripts/docker-entrypoint.sh"]
