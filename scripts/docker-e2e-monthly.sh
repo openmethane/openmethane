@@ -115,7 +115,7 @@ docker run --name="e2e-monthly-cmaq_preprocess-bias_correct" --rm \
 # JobName: fourdvar-monthly
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python runscript.py
+  openmethane python tests/integration/fourdvar/test_grad_cmaq.py
 
 # JobName: alerts-baseline
 # docker run --name="e2e-monthly-alerts-baseline" --rm \
