@@ -101,8 +101,8 @@ COPY --from=chamber /chamber /bin/chamber
 COPY --from=builder /opt/venv /opt/venv
 
 # Copy in CMAQ binaries
-# https://github.com/openmethane/docker-cmaq
-COPY --from=ghcr.io/openmethane/cmaq:5.0.2 /opt/cmaq /opt/cmaq
+# https://github.com/openmethane/docker-cmaq-adj
+COPY --from=ghcr.io/openmethane/cmaq-adj /opt/cmaq/bin /opt/cmaq/bin
 
 # Copy the application from the builder
 COPY --from=builder --chown=nonroot:nonroot /opt/project /opt/project
