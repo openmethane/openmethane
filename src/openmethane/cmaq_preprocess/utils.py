@@ -150,7 +150,7 @@ def replace_and_write(lines, outfile, substitutions, strict=True, makeExecutable
 
 
 def run_command(
-    command_list: list[str],
+    command: pathlib.Path | str | list[pathlib.Path | str],
     env_overrides: dict[str, str] = None,
     log_prefix: str | None = None,
     verbose: bool = False,
@@ -158,8 +158,8 @@ def run_command(
     """
     Run an external command in a new process.
 
-    :param command_list: command to run, with arguments in a list, i.e.:
-      ["ls", "-lah"]
+    :param command: command to run. if command contains arguments, must be
+      specified as a list, i.e.: ["ls", "-lah"] instead of "ls -lah".
     :param env_overrides: a dict of environment variables and values to replace
       in the current environment.
     :param log_prefix: a string to prefix output file names like {log_prefix}.stdout
@@ -171,10 +171,10 @@ def run_command(
     command_env = {**os.environ.copy(), **env_overrides}
 
     if verbose:
-        print("Running command: " + " ".join(command_list))
+        print(f"Running command: {command}")
 
     p = subprocess.run(
-        command_list,
+        command,
         env=command_env,
         capture_output=True,
     )
