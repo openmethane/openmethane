@@ -49,44 +49,33 @@ def run_mcip(
     met_dir: pathlib.Path,
     wrf_dir: pathlib.Path,
     geo_dir: pathlib.Path,
-    mcip_source_dir: pathlib.Path,
-    scripts,
+    mcip_bin_dir: pathlib.Path,
+    mcip_run_path: pathlib.Path,
     compress_output: bool = True,
     fix_simulation_start_date: bool = True,
     truelat2: float | None = None,
     boundary_trim: int = 5,
 ):
     """
-    Run MCIP from python
+    Run external MCIP tool to convert meteorology data from WRF into a format
+    that can be read by CMAQ.
 
-    MCIP extracts the meteorology data from WRF
-    and processes it into a format that can be read by CMAQ.
-
-    Args:
-        dates: array of dates to process
-        domain: Domain of interest
-        met_dir: base directory for the MCIP output
-        wrf_dir: directory containing wrfout_* files
-        geo_dir: directory containing geo_em.* files
-        mcip_source_dir: directory containing the MCIP executable
-        scripts: dictionary of scripts, including an entry with the key 'mcipRun'
-        compress_output: Compress output using ncks?
-        fix_simulation_start_date:  Adjust the SIMULATION_START_DATE attribute in wrfout files?
-        truelat2: If not None, modify the value of truelat2 in the WRF output
-            TODO: JL: Check if this is needed anymore
-        boundary_trim
-            Number of meteorology "boundary" points to remove on each of four horizontal sides
-            of the MCIP domain.
-
-            See `templates/run.mcip` for a description of the `BTRIM` variable.
-
-    Returns:
-        Nothing
-
+    :param dates: array of dates to process
+    :param domain: domain of interest
+    :param met_dir: directory for the MCIP output
+    :param wrf_dir: directory containing wrfout_* files
+    :param geo_dir: directory containing geo_em.* files
+    :param mcip_bin_dir: directory containing the MCIP binary
+    :param mcip_run_path: path to run.mcip script
+    :param compress_output: if set to True, compress output using ncks
+    :param fix_simulation_start_date: if set to True, adjust the
+        SIMULATION_START_DATE attribute in wrfout files
+    :param truelat2: If not None, modify the value of truelat2 in the WRF output
+    :param boundary_trim: Number of meteorology "boundary" points to remove on
+        each of four horizontal sides of the MCIP domain.
+        See `scripts/cmaq/run.mcip` for a description of the `BTRIM` variable.
+    :return: None
     """
-
-    #########
-
     for idate, date in enumerate(dates):
         print("date =", date)
         yyyymmddhh = date.strftime("%Y%m%d%H")
@@ -120,57 +109,6 @@ def run_mcip(
         if truelat2 is not None:
             fix_true_lat(out_paths, truelat2)
 
-        ##
-        print("\t\tCreate temporary run.mcip script")
-        subs = [
-            ["set DataPath   = TEMPLATE", f"set DataPath   = {mcip_dir}"],
-            ["set InMetDir   = TEMPLATE", f"set InMetDir   = {mcip_dir}"],
-            ["set OutDir     = TEMPLATE", f"set OutDir     = {mcip_dir}"],
-            [
-                "set InMetFiles = ( TEMPLATE )",
-                "set InMetFiles = ( {} )".format(" ".join(out_paths)),
-            ],
-            [
-                "set InTerFile  = TEMPLATE",
-                f"set InTerFile  = {geo_dir}/geo_em.{domain.id}.nc",
-            ],
-            [
-                "set MCIP_START = TEMPLATE",
-                "set MCIP_START = {}:00:00.0000".format(date.strftime("%Y-%m-%d-%H")),
-            ],
-            [
-                "set MCIP_END   = TEMPLATE",
-                "set MCIP_END   = {}:00:00.0000".format(times[-1].strftime("%Y-%m-%d-%H")),
-            ],
-            [
-                "set INTVL      = TEMPLATE",
-                f"set INTVL      = {60}",
-            ],
-            ["set APPL       = TEMPLATE", f"set APPL       = {domain.mcip_suffix}"],
-            [
-                "set CoordName  = TEMPLATE",
-                f"set CoordName  = {domain.map_projection}",
-            ],
-            [
-                "set GridName   = TEMPLATE",
-                f"set GridName   = {domain.mcip_suffix}",
-            ],
-            ["set ProgDir    = TEMPLATE", f"set ProgDir    = {mcip_source_dir}"],
-            ["set BTRIM = TEMPLATE", f"set BTRIM = {boundary_trim}"],
-        ]
-        ##
-        tmpRunMcipPath = f"{mcip_dir}/run.mcip.{domain.id}.csh"
-        replace_and_write(
-            lines=scripts["mcipRun"]["lines"],
-            outfile=tmpRunMcipPath,
-            substitutions=subs,
-            strict=False,
-            makeExecutable=True,
-        )
-
-        command = tmpRunMcipPath
-        command_list = command.split(" ")
-        print("\t\t\t" + command)
         ## delete any existing files
         for metfile in glob.glob(f"{mcip_dir}/MET*"):
             print("rm", metfile)
@@ -180,16 +118,31 @@ def run_mcip(
             print("rm", gridfile)
             os.remove(gridfile)
 
-        print("\t\tRun temporary run.mcip script")
+        print("\t\tRun run.mcip script")
+        # construct environment variables for the run script
+        environment = {
+            "DOMAIN_GRID": domain.mcip_suffix,
+            "PROJECTION_NAME": domain.map_projection,
+            "DATA_PATH": mcip_dir,
+            "BIN_PATH": mcip_bin_dir,
+            "MET_FILES": f"( {' '.join(out_paths)} )",
+            "TERRAIN_FILE": f"{geo_dir}/geo_em.{domain.id}.nc",
+            "MCIP_START_TIME": f"{date.strftime('%Y-%m-%d-%H')}:00:00.0000",
+            "MCIP_END_TIME": f"{times[-1].strftime('%Y-%m-%d-%H')}:00:00.0000",
+            "MCIP_BTRIM": str(boundary_trim),
+        }
         try:
             stdout, stderr = run_command(
-                command_list, log_prefix=str(mcip_dir / "mcip"), verbose=True
+                mcip_run_path,
+                env_overrides=environment,
+                log_prefix=str(mcip_dir / "mcip"),
+                verbose=True,
             )
             if stdout.split("\n")[-2] != "NORMAL TERMINATION":
                 raise RuntimeError("Error from run.mcip ...")
         except Exception:
-            with open(tmpRunMcipPath) as fh:
-                print(fh.read())
+            print("MCIP failed with environment:")
+            print(environment)
             raise
         ##
 

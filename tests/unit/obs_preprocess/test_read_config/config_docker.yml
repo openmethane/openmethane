@@ -1,6 +1,7 @@
 boundary_trim: 5
 cams_to_cmaq_bias: 0.0
-cmaq_source_dir: /opt
+cmaq_bin_dir: /opt/cmaq/bin
+cmaq_scripts_dir: /opt/project/scripts/cmaq
 ctm_dir: /opt/project/data/cmaq
 domain:
   index: 1
@@ -12,16 +13,8 @@ end_date: 2022-12-07
 force_update: true
 geo_dir: /opt/project/data/wrf/au-test
 input_cams_file: /opt/project/data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
-mcip_source_dir: /opt/cmaq/bin
 mech: CH4only
 met_dir: /opt/project/data/mcip
 prepare_ic_and_bc: true
-scripts:
-  bconRun:
-    path: /opt/project/templates/cmaq_preprocess/run.bcon
-  iconRun:
-    path: /opt/project/templates/cmaq_preprocess/run.icon
-  mcipRun:
-    path: /opt/project/templates/cmaq_preprocess/run.mcip
 start_date: 2022-12-07
 wrf_dir: /opt/project/data/wrf/au-test
