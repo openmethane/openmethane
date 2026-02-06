@@ -47,8 +47,6 @@ def cmaq_config_dict():
     return {
         "cmaq_bin_dir": "/opt/cmaq/bin/",
         "cmaq_scripts_dir": "/opt/project/scripts/cmaq",
-        "cmaq_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/",
-        "mcip_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
         "met_dir": "/opt/project/data/mcip/",
         "ctm_dir": "/opt/project/data/cmaq/",
         "wrf_dir": "/opt/project/data/runs/au-test",
@@ -59,10 +57,6 @@ def cmaq_config_dict():
         "mech": "CH4only",
         "prepare_ic_and_bc": True,
         "force_update": True,
-        "scripts": {
-            "bconRun": {"path": "/opt/project/templateRunScripts/run.bcon"},
-            "iconRun": {"path": "/opt/project/templateRunScripts/run.icon"},
-        },
         "cams_to_cmaq_bias": 0.06700000000000017,
         "boundary_trim": 5,
         "domain_name": "au-test",
@@ -106,76 +100,6 @@ def test_016_domain_validators_more_than_16_characters(attribute, cmaq_config_di
 
     with pytest.raises(ValueError, match=f"Length of '{attribute}' must be <= 16"):
         create_cmaq_config_object(cmaq_config_dict)
-
-
-# Parametrized test for happy path scenarios
-@pytest.mark.parametrize(
-    "input_value, test_id",
-    [
-        (
-            {
-                "bconRun": {"path": "some/path"},
-                "iconRun": {"path": "some/path"},
-            },
-            "all_keys_present",
-        ),
-        (
-            {
-                "bconRun": {"path": "unique/path2"},
-                "iconRun": {"path": "unique/path3"},
-            },
-            "unique_paths_for_all",
-        ),
-    ],
-    ids=lambda test_id: test_id,
-)
-def test_017_scripts_validator(input_value, test_id, cmaq_config_dict):
-    cmaq_config_dict["scripts"] = input_value
-
-    try:
-        create_cmaq_config_object(cmaq_config_dict)
-    except ValueError:
-        pytest.fail("Unexpected ValueError raised.")
-
-
-@pytest.mark.parametrize(
-    "input_value, expected_exception_message, test_id",
-    [
-        (
-            {"bconRun": {}, "iconRun": {}},
-            "bconRun in configuration value scripts must have the key 'path'",
-            "missing_path_in_all",
-        ),
-        (
-            {
-                "bconRun": {"path": "some/path"},
-                "iconRun": {},
-            },
-            "iconRun in configuration value scripts must have the key 'path'",
-            "missing_path_in_one",
-        ),
-        (
-            {"bconRun": {"path": "some/path"}},
-            "scripts must have the keys ['bconRun', 'iconRun']",
-            "missing_keys",
-        ),
-        (
-            {},
-            "scripts must have the keys ['bconRun', 'iconRun']",
-            "empty_dict",
-        ),
-    ],
-    ids=lambda test_id: test_id,
-)
-def test_018_scripts_validator_error_cases(
-    input_value, expected_exception_message, test_id, cmaq_config_dict
-):
-    cmaq_config_dict["scripts"] = input_value
-
-    with pytest.raises(ValueError) as exc_info:
-        create_cmaq_config_object(cmaq_config_dict)
-    assert expected_exception_message in str(exc_info.value), f"Test ID: {test_id}"
-
 
 @pytest.mark.parametrize(
     "test_input, expected",

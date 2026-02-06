@@ -47,10 +47,6 @@ class CMAQConfig:
     """Directory containing MCIP, BCON and ICON binaries"""
     cmaq_scripts_dir: pathlib.Path
     """Directory containing run.mcip, run.bcon and run.icon scripts"""
-    cmaq_source_dir: pathlib.Path
-    """Base directory for the CMAQ model"""
-    mcip_source_dir: pathlib.Path
-    """Directory containing the MCIP executable"""
     met_dir: pathlib.Path
     """
     Base directory for the MCIP output.
@@ -131,29 +127,6 @@ class CMAQConfig:
 
     If true, then any existing MCIP, IC and BC output is ignored.
     """
-    scripts: dict[str, dict[str, str]] = field()
-    """This is a dictionary with paths to each of the run-scripts. Elements of
-    the dictionary should themselves be dictionaries, with the key 'path' and
-    the value being the path to that file. The keys of the 'scripts'
-    dictionary should be as follow:
-    bconRun - BCON run script
-    iconRun - ICON run script
-    """
-
-    @scripts.validator
-    def check_scripts(self, attribute, value):
-        expected_keys = [
-            "bconRun",
-            "iconRun",
-        ]
-        if sorted(list(value.keys())) != sorted(expected_keys):
-            raise ValueError(f"{attribute.name} must have the keys {expected_keys}")
-        for key in value:
-            if "path" not in value[key]:
-                raise ValueError(
-                    f"{key} in configuration value {attribute.name} must have the key 'path'"
-                )
-
     cams_to_cmaq_bias: float
     """
     Bias between CAMS and CMAQ
@@ -223,8 +196,6 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         force_update=env.bool("FORCE_UPDATE", True),
         cmaq_bin_dir=env.path("CMAQ_BIN"),
         cmaq_scripts_dir=root_dir / "scripts" / "cmaq",
-        cmaq_source_dir=env.path("CMAQ_SOURCE_DIR"),
-        mcip_source_dir=env.path("MCIP_SOURCE_DIR"),
         met_dir=env.path("MET_DIR"),
         ctm_dir=env.path("CTM_DIR"),
         wrf_dir=env.path("WRF_DIR"),
@@ -233,10 +204,6 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         start_date=env.date("START_DATE"),
         end_date=env.date("END_DATE"),
         mech="CH4only",
-        scripts={
-            "bconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.bcon"},
-            "iconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.icon"},
-        },
         cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 0.0),
         boundary_trim=env.int("BOUNDARY_TRIM", 5),
     )
