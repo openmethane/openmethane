@@ -43,6 +43,10 @@ class CMAQConfig:
     Configuration used to generate the CMAQ setup and run scripts.
     """
 
+    cmaq_bin_dir: pathlib.Path
+    """Directory containing MCIP, BCON and ICON binaries"""
+    cmaq_scripts_dir: pathlib.Path
+    """Directory containing run.mcip, run.bcon and run.icon scripts"""
     cmaq_source_dir: pathlib.Path
     """Base directory for the CMAQ model"""
     mcip_source_dir: pathlib.Path
@@ -132,7 +136,6 @@ class CMAQConfig:
     the dictionary should themselves be dictionaries, with the key 'path' and
     the value being the path to that file. The keys of the 'scripts'
     dictionary should be as follow:
-    mcipRun - MCIP run script
     bconRun - BCON run script
     iconRun - ICON run script
     """
@@ -140,7 +143,6 @@ class CMAQConfig:
     @scripts.validator
     def check_scripts(self, attribute, value):
         expected_keys = [
-            "mcipRun",
             "bconRun",
             "iconRun",
         ]
@@ -219,6 +221,8 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
     options = dict(
         prepare_ic_and_bc=True,
         force_update=env.bool("FORCE_UPDATE", True),
+        cmaq_bin_dir=env.path("CMAQ_BIN"),
+        cmaq_scripts_dir=root_dir / "scripts" / "cmaq",
         cmaq_source_dir=env.path("CMAQ_SOURCE_DIR"),
         mcip_source_dir=env.path("MCIP_SOURCE_DIR"),
         met_dir=env.path("MET_DIR"),
@@ -230,7 +234,6 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         end_date=env.date("END_DATE"),
         mech="CH4only",
         scripts={
-            "mcipRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.mcip"},
             "bconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.bcon"},
             "iconRun": {"path": root_dir / "templates" / "cmaq_preprocess/run.icon"},
         },

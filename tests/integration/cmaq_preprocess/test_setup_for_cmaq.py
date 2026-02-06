@@ -69,10 +69,6 @@ def test_setup_for_cmaq(
 
     # Run script regression
     file_regression.check(
-        open(mcip_run_dir / "run.mcip.d01.csh").read(),
-        basename=f"{request.node.name}_run_mcip",
-    )
-    file_regression.check(
         open(mcip_run_dir / "namelist.mcip").read(),
         basename=f"{request.node.name}_namelist",
     )

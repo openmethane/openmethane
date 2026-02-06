@@ -88,8 +88,6 @@
 #           07 Sep 2011  Corrected minor typos in error-checking (as
 #                        identified by Debra Baker, Univ. of Maryland).
 #                        Updated disclaimer.  (T. Otte)
-#           31 May 2012  Changed comment about MAX_MM to be consistent
-#                        with the change to the code.  (T. Otte)
 #=======================================================================
 
 #-----------------------------------------------------------------------
@@ -114,19 +112,18 @@
 #   WorkDir    = Working Directory for Fortran links and namelist
 #-----------------------------------------------------------------------
 
-set APPL       = au-test_v1
-set CoordName  = LamCon_34S_150E    # 16-character maximum
-set GridName   = au-test_v1         # 16-character maximum
+set APPL       = ${DOMAIN_GRID}
+set CoordName  = ${PROJECTION_NAME} # 16-character maximum
+set GridName   = ${DOMAIN_GRID}     # 16-character maximum
 
-set DataPath   = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01
-set InMetDir   = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01
+#set HomePath   = set the directory path here/MCIPv4.2
+set DataPath   = ${DATA_PATH}
+set InMetDir   = $DataPath
 set InTerDir   = $DataPath
 set InSatDir   = $DataPath/goes
-set OutDir     = /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01
-set ProgDir    = /opt/cmaq/bin
+set OutDir     = $DataPath
+set ProgDir    = ${BIN_PATH}
 set WorkDir    = $OutDir
-
-cd $InMetDir
 
 #-----------------------------------------------------------------------
 # Set name(s) of input meteorology file(s)
@@ -139,7 +136,7 @@ cd $InMetDir
 #   Fortran unit number and the explicit name via a namelist.  The
 #   files must be listed in chronological order.  The maximum number
 #   of input meteorology files must be less than or equal to the number
-#   in MAX_MM in file_mod.F (default is 367).
+#   in MAX_MM in file_mod.F (default is 300).
 #
 #   Example:
 #     set InMetFiles = ( $InMetDir/MMOUT_DOMAIN2.time1 \
@@ -147,10 +144,10 @@ cd $InMetDir
 #
 #-----------------------------------------------------------------------
 
-set InMetFiles = ( /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0400Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0500Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0600Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0700Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0800Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T0900Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1400Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1500Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1600Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1700Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1800Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T1900Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2000Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2100Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2200Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2300Z.nc /tmp/pytest-of-root/pytest-0/test_setup_for_cmaq0/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-08T0000Z.nc ) #\
+set InMetFiles = ${MET_FILES}
 
 set IfTer      = "T"
-set InTerFile  = /opt/project/data/domains/au-test/v1/geo_em.d01.nc
+set InTerFile  = ${TERRAIN_FILE}
 
 set InSatFiles = ( )
 
@@ -182,8 +179,8 @@ set LSAT    = 0
 #   INTVL:       Frequency of output [minutes]
 #-----------------------------------------------------------------------
 
-set MCIP_START = 2022-12-07-00:00:00.0000  # [UTC]
-set MCIP_END   = 2022-12-08-00:00:00.0000  # [UTC]
+set MCIP_START = ${MCIP_START_TIME}  # [UTC]
+set MCIP_END   = ${MCIP_END_TIME}    # [UTC]
 
 set INTVL      = 60 # [min]
 
@@ -219,9 +216,7 @@ set MKGRID = T
 #     information in X0, Y0, NCOLS, and NROWS.
 #-----------------------------------------------------------------------
 
-
-# TESTING: needs to be smaller otherwise no domain would remain
-set BTRIM = 1
+set BTRIM = ${MCIP_BTRIM}
 
 #-----------------------------------------------------------------------
 # Define MCIP subset domain.  (Only used if BTRIM = -1.  Otherwise,
@@ -239,10 +234,10 @@ set BTRIM = 1
 #           lateral boundaries).
 #-----------------------------------------------------------------------
 
-set X0    =  1
-set Y0    =  1
-set NCOLS =  89
-set NROWS = 104
+set X0    =   6
+set Y0    =   6 
+set NCOLS = 127
+set NROWS = 122
 
 #-----------------------------------------------------------------------
 # Set coordinates for cell for diagnostic prints on output domain.
@@ -455,8 +450,8 @@ cat >> $WorkDir/namelist.${PROG} << !
 # Set links to FORTRAN units.
 #-----------------------------------------------------------------------
 
-rm -f fort.*
-#if ( -f $FILE_GD ) rm -f $FILE_GD
+rm fort.*
+if ( -f $FILE_GD ) rm -f $FILE_GD
 
 ln -s $FILE_HDR                  fort.2
 ln -s $FILE_GD                   fort.4
@@ -495,7 +490,7 @@ setenv MET_DOT_3D           $OutDir/METDOT3D_${APPL}
 $ProgDir/${PROG}.exe
 
 if ( $status == 0 ) then
-  rm -f fort.*
+  rm fort.*
   exit 0
 else
   echo "Error running $PROG"

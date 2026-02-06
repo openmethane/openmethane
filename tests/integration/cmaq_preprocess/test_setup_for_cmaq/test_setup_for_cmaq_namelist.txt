@@ -49,9 +49,9 @@
  &END
 
  &WINDOWDEFS
-  x0         =  1
-  y0         =  1
-  ncolsin    =  89
-  nrowsin    =  104
+  x0         =  6
+  y0         =  6
+  ncolsin    =  127
+  nrowsin    =  122
  &END
 

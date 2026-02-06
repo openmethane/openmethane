@@ -45,6 +45,8 @@ def test_013_valid_config_file(target, data_regression, target_environment):
 @pytest.fixture
 def cmaq_config_dict():
     return {
+        "cmaq_bin_dir": "/opt/cmaq/bin/",
+        "cmaq_scripts_dir": "/opt/project/scripts/cmaq",
         "cmaq_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/",
         "mcip_source_dir": "/opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src",
         "met_dir": "/opt/project/data/mcip/",
@@ -58,7 +60,6 @@ def cmaq_config_dict():
         "prepare_ic_and_bc": True,
         "force_update": True,
         "scripts": {
-            "mcipRun": {"path": "/opt/project/templateRunScripts/run.mcip"},
             "bconRun": {"path": "/opt/project/templateRunScripts/run.bcon"},
             "iconRun": {"path": "/opt/project/templateRunScripts/run.icon"},
         },
@@ -113,7 +114,6 @@ def test_016_domain_validators_more_than_16_characters(attribute, cmaq_config_di
     [
         (
             {
-                "mcipRun": {"path": "some/path"},
                 "bconRun": {"path": "some/path"},
                 "iconRun": {"path": "some/path"},
             },
@@ -121,7 +121,6 @@ def test_016_domain_validators_more_than_16_characters(attribute, cmaq_config_di
         ),
         (
             {
-                "mcipRun": {"path": "unique/path1"},
                 "bconRun": {"path": "unique/path2"},
                 "iconRun": {"path": "unique/path3"},
             },
@@ -143,13 +142,12 @@ def test_017_scripts_validator(input_value, test_id, cmaq_config_dict):
     "input_value, expected_exception_message, test_id",
     [
         (
-            {"mcipRun": {}, "bconRun": {}, "iconRun": {}},
-            "mcipRun in configuration value scripts must have the key 'path'",
+            {"bconRun": {}, "iconRun": {}},
+            "bconRun in configuration value scripts must have the key 'path'",
             "missing_path_in_all",
         ),
         (
             {
-                "mcipRun": {"path": "some/path"},
                 "bconRun": {"path": "some/path"},
                 "iconRun": {},
             },
@@ -157,13 +155,13 @@ def test_017_scripts_validator(input_value, test_id, cmaq_config_dict):
             "missing_path_in_one",
         ),
         (
-            {"mcipRun": {"path": "some/path"}},
-            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun']",
+            {"bconRun": {"path": "some/path"}},
+            "scripts must have the keys ['bconRun', 'iconRun']",
             "missing_keys",
         ),
         (
             {},
-            "scripts must have the keys ['mcipRun', 'bconRun', 'iconRun']",
+            "scripts must have the keys ['bconRun', 'iconRun']",
             "empty_dict",
         ),
     ],

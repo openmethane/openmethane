@@ -1,5 +1,7 @@
 boundary_trim: 1
 cams_to_cmaq_bias: 0.0
+cmaq_bin_dir: '# unsupported'
+cmaq_scripts_dir: /opt/project/scripts/cmaq
 cmaq_source_dir: /home/563/sa6589/CMAQv5.0.2_notpollen
 ctm_dir: /home/563/pjr563/openmethane-test/openmethane/tests/test-data/cmaq
 domain:
@@ -21,7 +23,5 @@ scripts:
     path: /opt/project/templates/cmaq_preprocess/run.bcon
   iconRun:
     path: /opt/project/templates/cmaq_preprocess/run.icon
-  mcipRun:
-    path: /opt/project/templates/cmaq_preprocess/run.mcip
 start_date: 2022-12-07
 wrf_dir: /home/563/pjr563/openmethane-test/openmethane/tests/test-data/wrf/au-test
