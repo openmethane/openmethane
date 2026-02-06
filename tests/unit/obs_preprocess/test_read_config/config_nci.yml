@@ -2,7 +2,6 @@ boundary_trim: 5
 cams_to_cmaq_bias: 0.0
 cmaq_bin_dir: '# unsupported'
 cmaq_scripts_dir: /opt/project/scripts/cmaq
-cmaq_source_dir: /home/563/sa6589/CMAQv5.0.2_notpollen
 ctm_dir: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq'
 domain:
   index: 1
@@ -14,14 +13,8 @@ end_date: 2022-12-07
 force_update: true
 geo_dir: '{HOME}/scratch/openmethane-beta/run-py4dvar/domains/aust10km/v1'
 input_cams_file: '{HOME}/scratch/openmethane-beta/run-py4dvar/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc'
-mcip_source_dir: /home/563/sa6589/CMAQv5.0.2_notpollen/scripts/mcip/src
 mech: CH4only
 met_dir: '{HOME}/scratch/openmethane-beta/run-py4dvar/mcip'
 prepare_ic_and_bc: true
-scripts:
-  bconRun:
-    path: /opt/project/templates/cmaq_preprocess/run.bcon
-  iconRun:
-    path: /opt/project/templates/cmaq_preprocess/run.icon
 start_date: 2022-12-07
 wrf_dir: '{HOME}/scratch/openmethane-beta/run-py4dvar/wrf/aust10km'

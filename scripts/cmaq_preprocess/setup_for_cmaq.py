@@ -40,9 +40,6 @@ def setup_for_cmaq(config: CMAQConfig):
     ndates = (config.end_date - config.start_date).days + 1
     dates = [config.start_date + datetime.timedelta(days=d) for d in range(ndates)]
 
-    # read in the template run-scripts
-    scripts = utils.load_scripts(scripts=config.scripts)
-
     # create output destinations, if need be:
     print("Check that input meteorology files are provided and create output destinations")
     mcip_output_found = check_input_met_and_output_folders(
@@ -76,9 +73,9 @@ def setup_for_cmaq(config: CMAQConfig):
             domain=config.domain,
             ctm_dir=config.ctm_dir,
             met_dir=config.met_dir,
-            cmaq_dir=config.cmaq_source_dir,
             mech=config.mech,
-            scripts=scripts,
+            cmaq_bin_dir=config.cmaq_bin_dir,
+            bcon_run_path=config.cmaq_scripts_dir / "run.bcon",
             forceUpdate=config.force_update,
         )
         # prepare the template initial condition concentration files
@@ -88,9 +85,9 @@ def setup_for_cmaq(config: CMAQConfig):
             domain=config.domain,
             ctm_dir=config.ctm_dir,
             met_dir=config.met_dir,
-            cmaq_dir=config.cmaq_source_dir,
             mech=config.mech,
-            scripts=scripts,
+            cmaq_bin_dir=config.cmaq_bin_dir,
+            icon_run_path=config.cmaq_scripts_dir / "run.icon",
             forceUpdate=config.force_update,
         )
         # use the template initial and boundary condition concentration

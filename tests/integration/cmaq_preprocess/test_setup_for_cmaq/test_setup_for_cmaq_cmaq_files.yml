@@ -4,7 +4,5 @@
 - bcon-template.stdout
 - icon-template.stderr
 - icon-template.stdout
-- run.bcon
-- run.icon
 - template_bcon_profile_CH4only_d01.nc
 - template_icon_profile_CH4only_d01.nc

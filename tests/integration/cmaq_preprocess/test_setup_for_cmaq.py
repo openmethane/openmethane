@@ -72,14 +72,6 @@ def test_setup_for_cmaq(
         open(mcip_run_dir / "namelist.mcip").read(),
         basename=f"{request.node.name}_namelist",
     )
-    file_regression.check(
-        open(cmaq_dir / "run.bcon").read(),
-        basename=f"{request.node.name}_run_bcon",
-    )
-    file_regression.check(
-        open(cmaq_dir / "run.icon").read(),
-        basename=f"{request.node.name}_run_icon",
-    )
 
     # Compare the structure of a select set of files
     compare_dataset(
