@@ -24,6 +24,40 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn, cmaq_config, template_defn
 
+def make_cost_template( model_output, layers=None):
+    one_d_vector = model_output.get_vector()
+    tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
+    target_shape = ncf.get_variable(template_defn.conc, tmp_spc)[:].shape
+    result = np.zeros(target_shape)
+    if result.size != one_d_vector.size:
+        raise ValueError(f"inconsistent sizes: vector={one_d_vector.size},\
+        template={result.size}")
+    if layers is None:
+        result[...] = 1.
+    else:
+        result[:,layers,...] = 1.
+    return result.flatten()
+
+
+def make_pert_template( model_input, layers=None):
+    one_d_vector = model_input.get_vector()
+    tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
+    input_file = dt.replace_date(template_defn.emis, dt.get_datelist()[0])
+    print(input_file)
+    target_shape = ncf.get_variable(input_file, tmp_spc)[:].shape
+    result = np.zeros(target_shape)
+    print(result.shape)
+    if result.size != one_d_vector.size:
+        raise ValueError(f"inconsistent sizes: vector={one_d_vector.size},\
+        template={result.size}")
+    if layers is None:
+        result[...] = 1.
+    else:
+        result[:,layers,...] = 1.
+    return result.flatten()
+
+    
+
 
 def test_fourdvar_grad_cmaq(target_environment):
     target_environment("docker-test")
@@ -43,8 +77,11 @@ def _run_grad_cmaq():
     modelInput = transform(physical, d.ModelInputData)
     model_input_vector = modelInput.get_vector()
     modelOutput = transform(modelInput, d.ModelOutputData)
-    init_cost = modelOutput.sum_squares()
-    forcing_vector = modelOutput.get_vector()  # adjoint of sum_squares
+    cost_template = make_cost_template(modelOutput, layers=None)
+    model_output_vector = modelOutput.get_vector()
+    sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
+    init_cost = (sampled_output_vector @ sampled_output_vector)/2.
+    forcing_vector = sampled_output_vector   # adjoint of sum_squares
     adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
     sensitivity = transform(adjointForcing, d.SensitivityData)
     # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
@@ -92,14 +129,15 @@ def _run_grad_cmaq():
     sensitivity_vector_mole = sensitivity_vector * conversion_vector
 
     epsilon = 1e-2
-    dx_template = np.zeros_like(model_input_vector)
-    dx_template[:] = 1.0
-    dx = epsilon * dx_template
+    pert_template = make_pert_template(modelInput, layers=None)
+    dx = epsilon * pert_template
     pert_input_vector = model_input_vector + dx
     pert_model_input = d.ModelInputData.load_from_vector_template(pert_input_vector)
     pert_model_output = transform(pert_model_input, d.ModelOutputData)
-    pert_cost = pert_model_output.sum_squares()
-    print("pert cost", pert_cost)
+    pert_output_vector = pert_model_output.get_vector()
+    sampled_pert_output_vector = cost_template * pert_output_vector
+    pert_cost = (sampled_pert_output_vector @sampled_pert_output_vector)/2.
+    print("init cost", init_cost, "pert cost", pert_cost)
     print("finite diff ", pert_cost - init_cost)
     print("grad calc ", dx @ sensitivity_vector_mole)
 
