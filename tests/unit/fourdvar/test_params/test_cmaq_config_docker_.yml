@@ -7,7 +7,7 @@ avg_conc_spcs: CH4
 bcon_file: /opt/project/data/cmaq/<YYYY-MM-DD>/d01/BCON.d01.au-test_v1.CH4only.nc
 bwd_appl: ADJOINT_BWD
 bwd_logfile: /opt/project/data/run-cmaq/output/bwd_CH4_only.<YYYYMMDD>.log
-bwd_prog: /opt/cmaq/cmaq_adj/BLD_bwd_CH4only/ADJOINT_BWD
+bwd_prog: /opt/cmaq/bin/ADJOINT_BWD
 bwd_stdout_log: /opt/project/data/run-cmaq/output/bwd_stdout.<YYYYMMDD>.log
 bwd_xfirst_file: /opt/project/data/run-cmaq/output/XFIRST.bwd.<YYYYMMDD>
 chem_chk: /opt/project/data/run-cmaq/chkpnt/CHEM_CHK.<YYYYMMDD>.nc
@@ -40,7 +40,7 @@ force_file: /opt/project/data/run-cmaq/force/ADJ_FORCE.<YYYYMMDD>.nc
 force_lays: template
 fwd_appl: ADJOINT_FWD
 fwd_logfile: /opt/project/data/run-cmaq/output/fwd_CH4_only.<YYYYMMDD>.log
-fwd_prog: /opt/cmaq/cmaq_adj/BLD_fwd_CH4only/ADJOINT_FWD
+fwd_prog: /opt/cmaq/bin/ADJOINT_FWD
 fwd_stdout_log: /opt/project/data/run-cmaq/output/fwd_stdout.<YYYYMMDD>.log
 fwd_xfirst_file: /opt/project/data/run-cmaq/output/XFIRST.<YYYYMMDD>
 grid_cro_2d: /opt/project/data/mcip/<YYYY-MM-DD>/d01/GRIDCRO2D_au-test_v1
