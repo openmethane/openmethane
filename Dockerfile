@@ -86,6 +86,10 @@ COPY --from=chamber /chamber /bin/chamber
 COPY --from=builder --chown=python:python /python /python
 COPY --from=builder --chown=python:python /opt/venv /opt/venv
 
+# Copy in CMAQ binaries
+# https://github.com/openmethane/CMAQ-Adjoint
+COPY --from=cmaq-adjoint /opt/cmaq/bin /opt/cmaq/bin
+
 # Copy the application from the builder
 COPY --from=builder --chown=nonroot:nonroot /app /opt/project
 

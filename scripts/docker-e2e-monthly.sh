@@ -55,6 +55,9 @@ STORE_PATH=$STORE_PATH
 CHK_PATH=$CHK_PATH
 NCPUS=$NCPUS
 LOG_LEVEL=DEBUG
+CTM_ILDEPV=F
+CTM_ABFLUX=F
+CTM_SFC_HONO=F
 EOF
 
 
@@ -113,7 +116,7 @@ done
 # JobName: fourdvar-monthly
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python tests/integration/fourdvar/test_grad_cmaq.py
+openmethane python tests/integration/fourdvar/test_grad_cmaq.py
 
 # JobName: alerts-baseline
 # docker run --name="e2e-monthly-alerts-baseline" --rm \

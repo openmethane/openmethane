@@ -35,7 +35,7 @@ def make_cost_template( model_output, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[:,layers,...] = 1.
+        result[13,layers,4,4] = 1.
     return result.flatten()
 
 
@@ -53,7 +53,7 @@ def make_pert_template( model_input, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[:,layers,...] = 1.
+        result[12,layers,4,4] = 1.
     return result.flatten()
 
     
@@ -66,22 +66,40 @@ def test_fourdvar_grad_cmaq(target_environment):
 
 
 def _run_grad_cmaq():
+    measure_layer = 2
+    pert_layer = 0
     archive_defn.experiment = "tmp_grad_cmaq"
     archive_defn.desc_name = ""
 
     archive_path = archive.get_archive_path()
     print(f"saving results in:\n{archive_path}")
+    lay_sigma = list(ncf.get_attr(template_defn.sense_emis, "VGLVLS"))
+    # layer thickness measured in scaled pressure units
+    lay_thick = [lay_sigma[i] - lay_sigma[i + 1] for i in range(len(lay_sigma) - 1)]
+    lay_thick = np.array(lay_thick).reshape((1, len(lay_thick), 1, 1))
+    thick = lay_thick.squeeze()
 
     print("get prior in PhysicalData format")
     physical = user.get_background()
+    physical.emis['CH4'][...] = 0.
     modelInput = transform(physical, d.ModelInputData)
     model_input_vector = modelInput.get_vector()
-    modelOutput = transform(modelInput, d.ModelOutputData)
-    cost_template = make_cost_template(modelOutput, layers=None)
+    modelOutput = transform(modelInput, d.ModelOutputData) # 
+    cost_template = make_cost_template(modelOutput, layers=measure_layer)
     model_output_vector = modelOutput.get_vector()
+    model_output_vector.dump('/opt/project/data//unperturbed.pic')
+    cost_template.dump('/opt/project/data/template.pic')
+    
     sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
-    init_cost = (sampled_output_vector @ sampled_output_vector)/2.
-    forcing_vector = sampled_output_vector   # adjoint of sum_squares
+    sampled_output_vector.dump('/opt/project/data/forcing.pic')
+    init_cost = sampled_output_vector.sum()
+    forcing_vector = cost_template.copy()   # adjoint of simple sum
+    # # now we want to divide forcing_vector by layer thickness which needs some reshaping
+    # tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
+    # target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
+    # forcing_reshape = forcing_vector.reshape(target_shape)
+    # forcing_reshape /= lay_thick
+    # forcing_vector = forcing_reshape.flatten()
     adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
     sensitivity = transform(adjointForcing, d.SensitivityData)
     # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
@@ -97,11 +115,6 @@ def _run_grad_cmaq():
     # all spcs have same shape, get from 1st
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
-    # layer thickness constant between files
-    lay_sigma = list(ncf.get_attr(template_defn.sense_emis, "VGLVLS"))
-    # layer thickness measured in scaled pressure units
-    lay_thick = [lay_sigma[i] - lay_sigma[i + 1] for i in range(len(lay_sigma) - 1)]
-    lay_thick = np.array(lay_thick).reshape((1, len(lay_thick), 1, 1))
 
     for date in dt.get_datelist():
         met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
@@ -126,20 +139,23 @@ def _run_grad_cmaq():
         conversion_list.append(unit_array)
     conversion_vector = np.array(conversion_list).flatten()
     sensitivity_vector = sensitivity.get_vector()
+    sensitivity_vector.dump('/opt/project/data/sensitivity_raw.pic')
     sensitivity_vector_mole = sensitivity_vector * conversion_vector
-
-    epsilon = 1e-2
-    pert_template = make_pert_template(modelInput, layers=None)
+    sensitivity_vector_mole.dump('/opt/project/data/sensitivity.pic')
+    epsilon = 1.
+    pert_template = make_pert_template(modelInput, layers=pert_layer)
     dx = epsilon * pert_template
     pert_input_vector = model_input_vector + dx
     pert_model_input = d.ModelInputData.load_from_vector_template(pert_input_vector)
     pert_model_output = transform(pert_model_input, d.ModelOutputData)
     pert_output_vector = pert_model_output.get_vector()
+    pert_output_vector.dump('/opt/project/data/perturbed.pic')
     sampled_pert_output_vector = cost_template * pert_output_vector
-    pert_cost = (sampled_pert_output_vector @sampled_pert_output_vector)/2.
+    pert_cost = sampled_pert_output_vector.sum() 
     print("init cost", init_cost, "pert cost", pert_cost)
     print("finite diff ", pert_cost - init_cost)
-    print("grad calc ", dx @ sensitivity_vector_mole)
+    print("grad calc ", (dx @ sensitivity_vector_mole)*
+          thick[pert_layer]/thick[measure_layer])
 
 
 if __name__ == "__main__":
