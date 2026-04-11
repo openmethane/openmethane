@@ -66,7 +66,7 @@ def test_fourdvar_grad_cmaq(target_environment):
 
 
 def _run_grad_cmaq():
-    measure_layer = 2
+    measure_layer = np.s_[:]
     pert_layer = 0
     archive_defn.experiment = "tmp_grad_cmaq"
     archive_defn.desc_name = ""
@@ -92,14 +92,14 @@ def _run_grad_cmaq():
     
     sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
     sampled_output_vector.dump('/opt/project/data/forcing.pic')
-    init_cost = sampled_output_vector.sum()
-    forcing_vector = cost_template.copy()   # adjoint of simple sum
+    init_cost = (sampled_output_vector**2).sum()/2.
+    forcing_vector = sampled_output_vector.copy()   # adjoint of simple sum
     # # now we want to divide forcing_vector by layer thickness which needs some reshaping
-    # tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
-    # target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
-    # forcing_reshape = forcing_vector.reshape(target_shape)
-    # forcing_reshape /= lay_thick
-    # forcing_vector = forcing_reshape.flatten()
+    tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
+    target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
+    forcing_reshape = forcing_vector.reshape(target_shape)
+    forcing_reshape /= lay_thick
+    forcing_vector = forcing_reshape.flatten()
     adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
     sensitivity = transform(adjointForcing, d.SensitivityData)
     # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
@@ -151,11 +151,11 @@ def _run_grad_cmaq():
     pert_output_vector = pert_model_output.get_vector()
     pert_output_vector.dump('/opt/project/data/perturbed.pic')
     sampled_pert_output_vector = cost_template * pert_output_vector
-    pert_cost = sampled_pert_output_vector.sum() 
+    pert_cost = (sampled_pert_output_vector**2).sum() /2.
     print("init cost", init_cost, "pert cost", pert_cost)
     print("finite diff ", pert_cost - init_cost)
     print("grad calc ", (dx @ sensitivity_vector_mole)*
-          thick[pert_layer]/thick[measure_layer])
+          thick[pert_layer])
 
 
 if __name__ == "__main__":
