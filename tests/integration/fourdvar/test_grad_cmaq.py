@@ -24,7 +24,7 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn, cmaq_config, template_defn
 
-def make_cost_template( model_output, layers=None):
+def make_cost_template( model_output, weight, layers=None):
     one_d_vector = model_output.get_vector()
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.conc, tmp_spc)[:].shape
@@ -35,7 +35,7 @@ def make_cost_template( model_output, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[13,layers,4,4] = 1.
+        result[13,layers,4,4] = weight[layers]
     return result.flatten()
 
 
@@ -85,7 +85,7 @@ def _run_grad_cmaq():
     modelInput = transform(physical, d.ModelInputData)
     model_input_vector = modelInput.get_vector()
     modelOutput = transform(modelInput, d.ModelOutputData) # 
-    cost_template = make_cost_template(modelOutput, layers=measure_layer)
+    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer)
     model_output_vector = modelOutput.get_vector()
     model_output_vector.dump('/opt/project/data//unperturbed.pic')
     cost_template.dump('/opt/project/data/template.pic')
