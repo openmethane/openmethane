@@ -92,8 +92,8 @@ def _run_grad_cmaq():
     
     sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
     sampled_output_vector.dump('/opt/project/data/forcing.pic')
-    init_cost = (sampled_output_vector**2).sum()/2.
-    forcing_vector = sampled_output_vector.copy()   # adjoint of simple sum
+    init_cost = (sampled_output_vector.sum()**2)/2.
+    forcing_vector = cost_template*sampled_output_vector.sum()   # adjoint of squared sum
     # # now we want to divide forcing_vector by layer thickness which needs some reshaping
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
@@ -151,7 +151,7 @@ def _run_grad_cmaq():
     pert_output_vector = pert_model_output.get_vector()
     pert_output_vector.dump('/opt/project/data/perturbed.pic')
     sampled_pert_output_vector = cost_template * pert_output_vector
-    pert_cost = (sampled_pert_output_vector**2).sum() /2.
+    pert_cost = (sampled_pert_output_vector.sum()**2) /2.
     print("init cost", init_cost, "pert cost", pert_cost)
     print("finite diff ", pert_cost - init_cost)
     print("grad calc ", (dx @ sensitivity_vector_mole)*
