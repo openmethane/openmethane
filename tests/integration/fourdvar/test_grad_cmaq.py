@@ -68,6 +68,7 @@ def test_fourdvar_grad_cmaq(target_environment):
 def _run_grad_cmaq():
     measure_layer = np.s_[:]
     pert_layer = 0
+    cost_mult=1.e3
     archive_defn.experiment = "tmp_grad_cmaq"
     archive_defn.desc_name = ""
 
@@ -92,8 +93,8 @@ def _run_grad_cmaq():
     
     sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
     sampled_output_vector.dump('/opt/project/data/forcing.pic')
-    init_cost = (sampled_output_vector.sum()**2)/2.
-    forcing_vector = cost_template*sampled_output_vector.sum()   # adjoint of squared sum
+    init_cost = cost_mult*(sampled_output_vector.sum()**2)/2.
+    forcing_vector = cost_mult*cost_template*sampled_output_vector.sum()   # adjoint of squared sum
     # # now we want to divide forcing_vector by layer thickness which needs some reshaping
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
@@ -138,6 +139,7 @@ def _run_grad_cmaq():
 
         conversion_list.append(unit_array)
     conversion_vector = np.array(conversion_list).flatten()
+    conversion_vector.dump('/opt/project/data/conversion.pic')
     sensitivity_vector = sensitivity.get_vector()
     sensitivity_vector.dump('/opt/project/data/sensitivity_raw.pic')
     sensitivity_vector_mole = sensitivity_vector * conversion_vector
@@ -151,7 +153,7 @@ def _run_grad_cmaq():
     pert_output_vector = pert_model_output.get_vector()
     pert_output_vector.dump('/opt/project/data/perturbed.pic')
     sampled_pert_output_vector = cost_template * pert_output_vector
-    pert_cost = (sampled_pert_output_vector.sum()**2) /2.
+    pert_cost = cost_mult*(sampled_pert_output_vector.sum()**2) /2.
     print("init cost", init_cost, "pert cost", pert_cost)
     finite_diff = pert_cost - init_cost
     grad_diff = (dx @ sensitivity_vector_mole)*thick[pert_layer]
