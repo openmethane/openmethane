@@ -153,9 +153,9 @@ def _run_grad_cmaq():
     sampled_pert_output_vector = cost_template * pert_output_vector
     pert_cost = (sampled_pert_output_vector.sum()**2) /2.
     print("init cost", init_cost, "pert cost", pert_cost)
-    print("finite diff ", pert_cost - init_cost)
-    print("grad calc ", (dx @ sensitivity_vector_mole)*
-          thick[pert_layer])
+    finite_diff = pert_cost - init_cost
+    grad_diff = (dx @ sensitivity_vector_mole)*thick[pert_layer]
+    print(f"percentage error {100.*(grad_diff -finite_diff)/((grad_diff+finite_diff)/2.):6.2f}")
 
 
 if __name__ == "__main__":
