@@ -35,7 +35,7 @@ def make_cost_template( model_output, weight, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[13,layers,4,4] = weight[layers]
+        result[2,layers,4,4] = weight[layers]
     return result.flatten()
 
 
@@ -53,7 +53,7 @@ def make_pert_template( model_input, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[12,layers,4,4] = 1.
+        result[1,layers,4,4] = 1.
     return result.flatten()
 
     
