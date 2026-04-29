@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import os 
 import numpy as np
 
 import openmethane.fourdvar.datadef as d
@@ -24,7 +25,8 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn, cmaq_config, template_defn
 
-def make_cost_template( model_output, weight, layers=None):
+def make_cost_template( model_output, weight, layers=None,time=13):
+    print(f"make_cost_template, layers = {layers}, time={time}")
     one_d_vector = model_output.get_vector()
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.conc, tmp_spc)[:].shape
@@ -35,11 +37,13 @@ def make_cost_template( model_output, weight, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[2,layers,4,4] = weight[layers]
+        result[time,layers,4,4] = weight[layers]
     return result.flatten()
 
 
-def make_pert_template( model_input, layers=None):
+def make_pert_template( model_input, layers=None, time=12):
+    print(f"make_pert_template, layers = {layers}, time={time}")
+
     one_d_vector = model_input.get_vector()
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     input_file = dt.replace_date(template_defn.emis, dt.get_datelist()[0])
@@ -53,7 +57,7 @@ def make_pert_template( model_input, layers=None):
     if layers is None:
         result[...] = 1.
     else:
-        result[1,layers,4,4] = 1.
+        result[time,layers,4,4] = 1.
     return result.flatten()
 
     
@@ -68,6 +72,8 @@ def test_fourdvar_grad_cmaq(target_environment):
 def _run_grad_cmaq():
     measure_layer = np.s_[:]
     pert_layer = 0
+    measure_time=int(os.environ.get("TEST_GRAD_MEASURE_TIME",default="13"))
+    pert_time=int(os.environ.get("TEST_GRAD_PERT_TIME",default="12"))
     cost_mult=1.e3
     archive_defn.experiment = "tmp_grad_cmaq"
     archive_defn.desc_name = ""
@@ -86,7 +92,8 @@ def _run_grad_cmaq():
     modelInput = transform(physical, d.ModelInputData)
     model_input_vector = modelInput.get_vector()
     modelOutput = transform(modelInput, d.ModelOutputData) # 
-    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer)
+    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer,
+                                       time=measure_time)
     model_output_vector = modelOutput.get_vector()
     model_output_vector.dump('/opt/project/data//unperturbed.pic')
     cost_template.dump('/opt/project/data/template.pic')
@@ -145,7 +152,8 @@ def _run_grad_cmaq():
     sensitivity_vector_mole = sensitivity_vector * conversion_vector
     sensitivity_vector_mole.dump('/opt/project/data/sensitivity.pic')
     epsilon = 1.
-    pert_template = make_pert_template(modelInput, layers=pert_layer)
+    pert_template = make_pert_template(modelInput, layers=pert_layer,
+                                       time=pert_time)
     dx = epsilon * pert_template
     pert_input_vector = model_input_vector + dx
     pert_model_input = d.ModelInputData.load_from_vector_template(pert_input_vector)
@@ -157,6 +165,7 @@ def _run_grad_cmaq():
     print("init cost", init_cost, "pert cost", pert_cost)
     finite_diff = pert_cost - init_cost
     grad_diff = (dx @ sensitivity_vector_mole)*thick[pert_layer]
+    print(F"pert_time = {pert_time}, measure_time={measure_time}")
     print(f"percentage error {100.*(grad_diff -finite_diff)/((grad_diff+finite_diff)/2.):6.2f}")
 
 

@@ -116,6 +116,7 @@ done
 # JobName: fourdvar-monthly
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
+  -e TEST_GRAD_PERT_TIME=$TEST_GRAD_PERT_TIME -e TEST_GRAD_MEASURE_TIME=$TEST_GRAD_MEASURE_TIME \
 openmethane python tests/integration/fourdvar/test_grad_cmaq.py
 
 # JobName: alerts-baseline
