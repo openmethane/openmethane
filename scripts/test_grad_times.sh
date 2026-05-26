@@ -8,4 +8,5 @@ do
   do
     TEST_GRAD_MEASURE_TIME=$imeas TEST_GRAD_PERT_TIME=$ipert bash scripts/docker-e2e-monthly.sh |& tail -10
   done
+  docker system prune -f
 done
