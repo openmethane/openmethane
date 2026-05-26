@@ -5,7 +5,7 @@ SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 OPENMETHANE_PATH=${OPENMETHANE_PATH:-"$SCRIPT_DIR/.."}
 OPENMETHANE_PRIOR_PATH=${OPENMETHANE_PRIOR_PATH:-"$OPENMETHANE_PATH/../openmethane-prior"}
 SETUP_WRF_PATH=${SETUP_WRF_PATH:-"$OPENMETHANE_PATH/../setup-wrf"}
-CMAQ_ADJ_PATH=${CMAQ_ADJ_PATH:-"$OPENMETHANE_PATH/../cmaq-docker"}
+CMAQ_ADJ_PATH=${CMAQ_ADJ_PATH:-"$OPENMETHANE_PATH/../CMAQ-Adjoint"}
 
 # Build images
 echo "Building docker-cmaq-adj"
