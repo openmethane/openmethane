@@ -70,8 +70,9 @@ def test_fourdvar_grad_cmaq(target_environment):
 
 
 def _run_grad_cmaq():
-    measure_layer = np.s_[:]
-    pert_layer = 0
+    # measure_layer = np.s_[:]
+    measure_layer = 0
+    pert_layer = 0              # 
     measure_time=int(os.environ.get("TEST_GRAD_MEASURE_TIME",default="13"))
     pert_time=int(os.environ.get("TEST_GRAD_PERT_TIME",default="12"))
     cost_mult=1.e3
@@ -86,31 +87,6 @@ def _run_grad_cmaq():
     lay_thick = np.array(lay_thick).reshape((1, len(lay_thick), 1, 1))
     thick = lay_thick.squeeze()
 
-    print("get prior in PhysicalData format")
-    physical = user.get_background()
-    physical.emis['CH4'][...] = 0.
-    modelInput = transform(physical, d.ModelInputData)
-    model_input_vector = modelInput.get_vector()
-    modelOutput = transform(modelInput, d.ModelOutputData) # 
-    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer,
-                                       time=measure_time)
-    model_output_vector = modelOutput.get_vector()
-    model_output_vector.dump('/opt/project/data//unperturbed.pic')
-    cost_template.dump('/opt/project/data/template.pic')
-    
-    sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
-    sampled_output_vector.dump('/opt/project/data/forcing.pic')
-    init_cost = cost_mult*(sampled_output_vector.sum()**2)/2.
-    forcing_vector = cost_mult*cost_template*sampled_output_vector.sum()   # adjoint of squared sum
-    # # now we want to divide forcing_vector by layer thickness which needs some reshaping
-    tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
-    target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
-    forcing_reshape = forcing_vector.reshape(target_shape)
-    forcing_reshape /= lay_thick
-    forcing_vector = forcing_reshape.flatten()
-    adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
-    sensitivity = transform(adjointForcing, d.SensitivityData)
-    # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
     # physical constants:
     # molar weight of dry air (precision matches cmaq)
     mwair = 28.9628
@@ -127,7 +103,7 @@ def _run_grad_cmaq():
     for date in dt.get_datelist():
         met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
         # slice off any extra layers above area of interest
-        rhoj = ncf.get_variable(met_file, "DENSA_J")[:, : lay_thick.size, ...]
+        rhoj = ncf.get_variable(met_file, "DENSA_J")[ ...]
         xcell = ncf.get_attr(met_file, "XCELL")
         ycell = ncf.get_attr(met_file, "YCELL")
         cell_area = float(xcell * ycell)
@@ -147,6 +123,32 @@ def _run_grad_cmaq():
         conversion_list.append(unit_array)
     conversion_vector = np.array(conversion_list).flatten()
     conversion_vector.dump('/opt/project/data/conversion.pic')
+
+    print("get prior in PhysicalData format")
+    physical = user.get_background()
+    physical.emis['CH4'][...] = 0.
+    modelInput = transform(physical, d.ModelInputData)
+    model_input_vector = modelInput.get_vector()
+    modelOutput = transform(modelInput, d.ModelOutputData) # 
+    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer,
+                                       time=measure_time)
+    model_output_vector = modelOutput.get_vector()
+    model_output_vector.dump('/opt/project/data//unperturbed.pic')
+    cost_template.dump('/opt/project/data/template.pic')
+    
+    sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
+    sampled_output_vector.dump('/opt/project/data/forcing.pic')
+    init_cost = cost_mult*(sampled_output_vector.sum())
+    forcing_vector = cost_mult*cost_template   # adjoint of squared sum
+    # now we want to divide forcing_vector by layer thickness which needs some reshaping
+    tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
+    target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
+    forcing_reshape = forcing_vector.reshape(target_shape)
+    # forcing_reshape /= lay_thick*rhoj[measure_time,0,4,4] 
+    forcing_vector = forcing_reshape.flatten()
+    adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
+    sensitivity = transform(adjointForcing, d.SensitivityData)
+    # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
     sensitivity_vector = sensitivity.get_vector()
     sensitivity_vector.dump('/opt/project/data/sensitivity_raw.pic')
     sensitivity_vector_mole = sensitivity_vector * conversion_vector
@@ -161,11 +163,12 @@ def _run_grad_cmaq():
     pert_output_vector = pert_model_output.get_vector()
     pert_output_vector.dump('/opt/project/data/perturbed.pic')
     sampled_pert_output_vector = cost_template * pert_output_vector
-    pert_cost = cost_mult*(sampled_pert_output_vector.sum()**2) /2.
-    print("init cost", init_cost, "pert cost", pert_cost)
+    pert_cost = cost_mult*(sampled_pert_output_vector.sum()) 
     finite_diff = pert_cost - init_cost
-    grad_diff = (dx @ sensitivity_vector_mole)*thick[pert_layer]
-    print(F"pert_time = {pert_time}, measure_time={measure_time}")
+    grad_diff = (dx @ sensitivity_vector_mole)*thick[pert_layer]#*rhoj[pert_time,0,4,4]
+    percentage_error = 100.*(grad_diff -finite_diff)/((grad_diff+finite_diff)/2.)
+    print(F"pert_time = {pert_time}, measure_time={measure_time}") # 
+    print(f"pert_time {pert_time} measure_time {measure_time} init_cost {init_cost} pert_cost {pert_cost} finite_diff {finite_diff} grad_diff {grad_diff} percentage_error {percentage_error:6.2f}")
     print(f"percentage error {100.*(grad_diff -finite_diff)/((grad_diff+finite_diff)/2.):6.2f}")
 
 
