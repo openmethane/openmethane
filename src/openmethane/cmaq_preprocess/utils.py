@@ -150,15 +150,37 @@ def replace_and_write(lines, outfile, substitutions, strict=True, makeExecutable
 
 
 def run_command(
-    command_list: list[str], log_prefix: str | None = None, verbose: bool = False
+    command: pathlib.Path | str | list[pathlib.Path | str],
+    env_overrides: dict[str, str] = None,
+    log_prefix: str | None = None,
+    verbose: bool = False,
 ) -> tuple[str, str]:
-    if verbose:
-        print("Running command: " + " ".join(command_list))
+    """
+    Run an external command in a new process.
 
-    p = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    stdout = stdout.decode()
-    stderr = stderr.decode()
+    :param command: command to run. if command contains arguments, must be
+      specified as a list, i.e.: ["ls", "-lah"] instead of "ls -lah".
+    :param env_overrides: a dict of environment variables and values to replace
+      in the current environment.
+    :param log_prefix: a string to prefix output file names like {log_prefix}.stdout
+    :param verbose: if True, return code and output will be printed.
+    :return:
+    """
+    if env_overrides is None:
+        env_overrides = {}
+    command_env = {**os.environ.copy(), **env_overrides}
+
+    if verbose:
+        print(f"Running command: {command}")
+
+    p = subprocess.run(
+        command,
+        env=command_env,
+        capture_output=True,
+    )
+
+    stdout = p.stdout.decode()
+    stderr = p.stderr.decode()
 
     if log_prefix:
         with open(f"{log_prefix}.stdout", "w") as f:
