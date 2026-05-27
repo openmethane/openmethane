@@ -1,6 +1,6 @@
 boundary_trim: 1
 cams_to_cmaq_bias: 0.0
-cmaq_source_dir: /opt/cmaq/CMAQv5.0.2_notpollen
+cmaq_source_dir: /opt
 ctm_dir: /opt/project/tests/test-data/cmaq
 domain:
   index: 1
@@ -12,7 +12,7 @@ end_date: 2022-12-07
 force_update: true
 geo_dir: /opt/project/data/domains/au-test/v1
 input_cams_file: /opt/project/data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
-mcip_source_dir: /opt/cmaq/CMAQv5.0.2_notpollen/scripts/mcip/src
+mcip_source_dir: /opt/cmaq/bin
 mech: CH4only
 met_dir: /opt/project/tests/test-data/mcip
 prepare_ic_and_bc: true

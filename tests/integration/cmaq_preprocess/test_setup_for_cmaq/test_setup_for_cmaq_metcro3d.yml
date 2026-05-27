@@ -32,8 +32,7 @@ attrs:
   FTYPE: 1
   GDNAM: METCRO_au-test_v
   GDTYP: 2
-  NCO: netCDF Operators version 5.2.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco,
-    Citation = 10.1016/j.envsoft.2008.03.004)
+  NCO: netCDF Operators version 5.1.4 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco)
   NCOLS: 10
   NLAYS: 32
   NROWS: 10
