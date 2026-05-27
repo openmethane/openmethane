@@ -87,14 +87,15 @@ fetch-test-data: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc -o data/domains/aust10km/v1/geo_em.d01.nc
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc \
+		-o data/domains/aust10km/v1/geo_em.d01.nc
 
 data/domains/au-test/v1/geo_em.d01.nc:
 	mkdir -p data/domains/au-test/v1
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/au-test/geo_em.d01.nc -o data/domains/au-test/v1/geo_em.d01.nc
+	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/au-test/geo_em.d01.nc \
+		-o data/domains/au-test/v1/geo_em.d01.nc
 
 data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc:
 	mkdir -p data/cams
-	$(PYTHON_CMD) scripts/cmaq_preprocess/download_cams_input.py \
-		-s 2022-12-07 -e 2022-12-07 \
-		data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
+	curl -L https://openmethane.s3.amazonaws.com/tests/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc \
+		-o data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
