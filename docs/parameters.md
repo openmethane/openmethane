@@ -10,7 +10,7 @@ The following environment variables are configurable:
 | START_DATE         | date | Start date of the run                                              | 2022-07-01                                 |
 | END_DATE           | date | End date of the run (inclusive)                                    | 2022-07-30                                 |
 | STORE_PATH         | str  | Full path to the branch-specific data.                             | N/A                                        |          
-| EXPERIMENT         | str  | Name of the experiment being run                                   | 202207_test                                |
+| EXPERIMENT         | str  | Name of the experiment being run                                   | openmethane                                |
 | TEMPLATE_DIR       | str  | Path to the CMAQ template directory                                | {STORE_PATH}/templates                     |
 | CMAQ_SOURCE_DIR    | str  | Path to the root of the CMAQ source directory                      | N/A                                        |
 | MCIP_SOURCE_DIR    | str  | Path to the root MCIP source directory                             | N/A                                        |
