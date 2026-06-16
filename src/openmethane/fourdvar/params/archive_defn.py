@@ -22,8 +22,8 @@ from openmethane.fourdvar.params.root_path_defn import store_path
 # Settings for archive processes
 
 # location of archive directory
-# archive_path = os.path.join( store_path, 'archive' )
-archive_path = os.path.join(store_path, "archive_Pert")  # archive_Pert
+archive_path = os.path.join(store_path, 'archive' )
+
 # archive model output of each successful iteration
 iter_model_output = True
 
@@ -31,16 +31,14 @@ iter_model_output = True
 iter_obs_lite = True
 
 # experiment name & name of directory to save results in
-# experiment = 'pert_pert_test'##'example_experiment'
-# experiment = 'real_test'
-experiment = env.str("EXPERIMENT", "202207_test")
+experiment = env.str("EXPERIMENT", "openmethane")
 
 # description is copied into a txt file in the experiment directory
 description = """This is a test of the fourdvar system.
 The description here should contain details of the experiment
 and is written to the description text file."""
 # name of txt file holding the description, if empty string ('') file is not created.
-desc_name = "description.txt"
+desc_name = ""
 
 # if True, delete any existing archive with the same name.
 # if False, create a new archive name to save results into.
