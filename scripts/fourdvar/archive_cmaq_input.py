@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from openmethane import fourdvar.datadef as d
+from openmethane.fourdvar import datadef as d
 from openmethane.fourdvar.params import archive_defn
 from openmethane.fourdvar.util import archive_handle
 
