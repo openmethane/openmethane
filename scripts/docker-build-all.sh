@@ -10,7 +10,7 @@ CMAQ_ADJ_PATH=${CMAQ_ADJ_PATH:-"$OPENMETHANE_PATH/../CMAQ-Adjoint"}
 # Build images
 echo "Building docker-cmaq-adj"
 #docker rmi cmaq-adj:latest
-docker build --build-arg FORCE_BUILD=$RANDOM    "$CMAQ_ADJ_PATH" -t "cmaq-adj"
+docker build --build-arg FORCE_BUILD=$RANDOM    "$CMAQ_ADJ_PATH" -t "cmaq-adjoint"
 
 # Build images
 SETUP_WRF_VERSION=$(grep -Po '^version = "\K.*?(?=")' "$SETUP_WRF_PATH/pyproject.toml")
