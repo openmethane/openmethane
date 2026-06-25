@@ -57,7 +57,7 @@ def make_pert_template( model_input, layers=None, time=12):
     if layers is None:
         result[...] = 1.
     else:
-        result[time,layers,4,4] = 1.
+        result[time,layers,:,:] = 1.
     return result.flatten()
 
     
@@ -70,8 +70,8 @@ def test_fourdvar_grad_cmaq(target_environment):
 
 
 def _run_grad_cmaq():
-    # measure_layer = np.s_[:]
-    measure_layer = 0
+    measure_layer = np.s_[:]
+    # measure_layer = 0
     pert_layer = 0              # 
     measure_time=int(os.environ.get("TEST_GRAD_MEASURE_TIME",default="13"))
     pert_time=int(os.environ.get("TEST_GRAD_PERT_TIME",default="12"))
@@ -151,7 +151,7 @@ def _run_grad_cmaq():
     # units are now in cf/ppm/s, we need to convert to cf/mole/s which means dealing with air density
     sensitivity_vector = sensitivity.get_vector()
     sensitivity_vector.dump('/opt/project/data/sensitivity_raw.pic')
-    sensitivity_vector_mole = sensitivity_vector * conversion_vector
+    sensitivity_vector_mole = sensitivity_vector * 8
     sensitivity_vector_mole.dump('/opt/project/data/sensitivity.pic')
     epsilon = 1.
     pert_template = make_pert_template(modelInput, layers=pert_layer,
@@ -165,7 +165,7 @@ def _run_grad_cmaq():
     sampled_pert_output_vector = cost_template * pert_output_vector
     pert_cost = cost_mult*(sampled_pert_output_vector.sum()) 
     finite_diff = pert_cost - init_cost
-    grad_diff = (dx @ sensitivity_vector_mole)*thick[pert_layer]#*rhoj[pert_time,0,4,4]
+    grad_diff = (dx @ sensitivity_vector_mole)
     percentage_error = 100.*(grad_diff -finite_diff)/((grad_diff+finite_diff)/2.)
     print(F"pert_time = {pert_time}, measure_time={measure_time}") # 
     print(f"pert_time {pert_time} measure_time {measure_time} init_cost {init_cost} pert_cost {pert_cost} finite_diff {finite_diff} grad_diff {grad_diff} percentage_error {percentage_error:6.2f}")
