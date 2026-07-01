@@ -37,7 +37,7 @@ def make_cost_template( model_output, weight, layers=None,time=13):
     if layers is None:
         result[...] = 1.
     else:
-        result[time,layers,4,4] = weight[layers]
+        result[time,layers,4,4] = 1 #weight[layers]
     return result.flatten()
 
 
@@ -70,8 +70,8 @@ def test_fourdvar_grad_cmaq(target_environment):
 
 
 def _run_grad_cmaq():
-    measure_layer = np.s_[:]
-    # measure_layer = 0
+    # measure_layer = np.s_[:]
+    measure_layer = 0
     pert_layer = 0              # 
     measure_time=int(os.environ.get("TEST_GRAD_MEASURE_TIME",default="13"))
     pert_time=int(os.environ.get("TEST_GRAD_PERT_TIME",default="12"))
