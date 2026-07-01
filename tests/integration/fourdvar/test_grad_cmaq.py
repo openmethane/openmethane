@@ -57,7 +57,7 @@ def make_pert_template( model_input, layers=None, time=12):
     if layers is None:
         result[...] = 1.
     else:
-        result[time,layers,:,:] = 1.
+        result[:,layers,:,:] = 1.
     return result.flatten()
 
     
