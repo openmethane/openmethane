@@ -153,7 +153,7 @@ def _run_grad_cmaq():
     sensitivity_vector.dump('/opt/project/data/sensitivity_raw.pic')
     sensitivity_vector_mole = sensitivity_vector * 8
     sensitivity_vector_mole.dump('/opt/project/data/sensitivity.pic')
-    epsilon = 1.
+    epsilon = 10.
     pert_template = make_pert_template(modelInput, layers=pert_layer,
                                        time=pert_time)
     dx = epsilon * pert_template
