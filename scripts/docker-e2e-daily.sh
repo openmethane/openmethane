@@ -4,9 +4,16 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Build docker containers using locally checked out versions, so that local
-# changes can be easily tested
-bash "$SCRIPT_DIR/docker-build-all.sh"
+OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
+OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"ghcr.io/openmethane/openmethane-prior:stable"}
+SETUP_WRF_IMAGE=${SETUP_WRF_IMAGE:-"ghcr.io/openmethane/setup-wrf:stable"}
+
+BUILD_LOCAL_DOCKER=${BUILD_LOCAL_DOCKER:-false}
+if [[ "$BUILD_LOCAL_DOCKER" == true ]]; then
+  # Build docker containers using locally checked out versions, so that local
+  # changes can be easily tested
+  bash "$SCRIPT_DIR/docker-build-all.sh"
+fi
 
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
@@ -89,13 +96,13 @@ else
   # JobName: wrf-download_geog
   docker run --name="wrf-download_geog" --rm \
     --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-    "setup-wrf" bash ./scripts/download-geog.sh
+    "$SETUP_WRF_IMAGE" bash ./scripts/download-geog.sh
 fi
 
 # JobName: wrf-run
 docker run --name="e2e-daily-wrf-run" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  "setup-wrf" bash scripts/run-wrf.sh
+  "$SETUP_WRF_IMAGE" bash scripts/run-wrf.sh
 
 # JobName: prior-generate
 docker run --name="e2e-daily-prior-generate" --rm \
@@ -107,12 +114,12 @@ docker run --name="e2e-daily-prior-generate" --rm \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
   -e OUTPUT_FILENAME="prior-emissions.nc" \
-  "openmethane-prior" bash scripts/run.sh
+  "$OPENMETHANE_PRIOR_IMAGE" bash scripts/run.sh
 
 # JobName: obs_preprocess-fetch_tropomi
 docker run --name="e2e-daily-obs_preprocess-fetch_tropomi" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane bash scripts/obs_preprocess/fetch_tropomi.sh
+  "$OPENMETHANE_IMAGE" bash scripts/obs_preprocess/fetch_tropomi.sh
 
 # JobName: cmaq_preprocess-run
 docker run --name="e2e-daily-cmaq_preprocess-run" --rm \
@@ -122,17 +129,17 @@ docker run --name="e2e-daily-cmaq_preprocess-run" --rm \
   -e NUM_PROC_COLS=1 \
   -e NUM_PROC_ROWS=1 \
   -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
-  openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
+  "$OPENMETHANE_IMAGE" bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 # JobName: obs_preprocess-process_tropomi
 docker run --name="e2e-daily-obs_preprocess-process_tropomi" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane bash scripts/obs_preprocess/process_tropomi.sh
+  "$OPENMETHANE_IMAGE" bash scripts/obs_preprocess/process_tropomi.sh
 
 # JobName: fourdvar-daily
 docker run --name="e2e-daily-fourdvar-daily" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python scripts/fourdvar/run_daily_step.py
+  "$OPENMETHANE_IMAGE" python scripts/fourdvar/run_daily_step.py
 
 # JobName: alerts-create-alerts
 docker run --name="e2e-daily-create-alerts" --rm \
@@ -140,7 +147,7 @@ docker run --name="e2e-daily-create-alerts" --rm \
   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
   -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
   -e ALERTS_COUNT_THRESHOLD="2" \
-  openmethane python scripts/alerts/create_alerts.py
+  "$OPENMETHANE_IMAGE" python scripts/alerts/create_alerts.py
 
 echo "Success: daily run complete"
 echo "Results in: $DATA_PATH"

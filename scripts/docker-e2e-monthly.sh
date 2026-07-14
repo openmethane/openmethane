@@ -4,9 +4,15 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Build docker containers using locally checked out versions, so that local
-# changes can be easily tested
-bash "$SCRIPT_DIR/docker-build-all.sh"
+OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
+OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"ghcr.io/openmethane/openmethane-prior:stable"}
+
+BUILD_LOCAL_DOCKER=${BUILD_LOCAL_DOCKER:-false}
+if [[ "$BUILD_LOCAL_DOCKER" == true ]]; then
+  # Build docker containers using locally checked out versions, so that local
+  # changes can be easily tested
+  bash "$SCRIPT_DIR/docker-build-all.sh"
+fi
 
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
@@ -92,7 +98,7 @@ docker run --name="e2e-monthly-prior-generate" --rm \
   -e OUTPUTS="$STORE_PATH/prior/outputs" \
   -e INTERMEDIATES="$STORE_PATH/prior/intermediates" \
   -e OUTPUT_FILENAME="prior-emissions.nc" \
-  "openmethane-prior" bash scripts/run.sh
+  "$OPENMETHANE_PRIOR_IMAGE" bash scripts/run.sh
 
 # JobName: cmaq_preprocess-run
 docker run --name="e2e-monthly-cmaq_preprocess-run" --rm \
@@ -103,24 +109,24 @@ docker run --name="e2e-monthly-cmaq_preprocess-run" --rm \
   -e NUM_PROC_ROWS=2 \
   -e BOUNDARY_TRIM="$BOUNDARY_TRIM" \
   -e SKIP_CMAQ_SETUP=true \
-  openmethane bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
+  "$OPENMETHANE_IMAGE" bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 
 # JobName: cmaq_preprocess-bias_correct
 docker run --name="e2e-monthly-cmaq_preprocess-bias_correct" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python scripts/cmaq_preprocess/bias_correct_cams.py
+  "$OPENMETHANE_IMAGE" python scripts/cmaq_preprocess/bias_correct_cams.py
 
 # JobName: fourdvar-monthly
 docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  openmethane python runscript.py
+  "$OPENMETHANE_IMAGE" python runscript.py
 
 # JobName: alerts-baseline
 docker run --name="e2e-monthly-alerts-baseline" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
   -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
-  openmethane python scripts/alerts/alerts_baseline.py
+  "$OPENMETHANE_IMAGE" python scripts/alerts/alerts_baseline.py
 
 echo "Success: monthly run complete"
 echo "Results in: $DATA_PATH"
