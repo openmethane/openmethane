@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Then, use a final image without uv for our runtime environment
 # https://github.com/openmethane/CMAQ-Adjoint
-FROM ghcr.io/openmethane/cmaq-adjoint:1.0.1
+FROM ghcr.io/openmethane/cmaq-adjoint:pr-14
 
 # These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
 # These must be duplicated in .github/workflows/build_docker.yaml
