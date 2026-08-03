@@ -16,8 +16,11 @@
 #PBS -l ncpus=48
 #PBS -l wd
 ####PBS -L storage=scratch/q90
-source ../load_p4d_modules.sh
+#
+# NOTE: NCI/Gadi is no longer officially supported — see examples/nci/README.md.
+# Submit from the repository root:
+#   qsub examples/nci/submit_test_grad_step.sh
+source examples/nci/load_p4d_modules.sh
 # replace previous line with whatever you source to run py4dvar
 
-#python3 restart_script.py
-python3 test_grad_step.py
+uv run python tests/integration/fourdvar/test_grad_step.py
