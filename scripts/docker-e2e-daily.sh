@@ -79,16 +79,6 @@ if [[ ! -f "$DATA_PATH/domain.$DOMAIN_NAME.nc" ]]; then
     "https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
 fi
 
-if [[ ! -f "$STORE_PATH/alerts-baseline.nc" ]]; then
-  if [[ -f "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" ]]; then
-    echo "Copying $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc"
-    cp "$DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc" "$DATA_PATH/alerts-baseline.nc"
-  else
-    echo "Ensure $DATA_ROOT/monthly/$DOMAIN_NAME/$DOMAIN_VERSION/alerts-baseline.nc exists before running"
-    exit 1
-  fi
-fi
-
 # This only has to be done once assuming $DATA_ROOT isn't cleared
 if [[ -d "$DATA_ROOT/geog/WPS_GEOG" ]]; then
   echo "WPS_GEOG is present, skipping wrf-download_geog"
@@ -141,13 +131,6 @@ docker run --name="e2e-daily-fourdvar-daily" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   "$OPENMETHANE_IMAGE" python scripts/fourdvar/run_daily_step.py
 
-# JobName: alerts-create-alerts
-docker run --name="e2e-daily-create-alerts" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
-  -e ALERTS_OUTPUT_FILE="$STORE_PATH/alerts.nc" \
-  -e ALERTS_COUNT_THRESHOLD="2" \
-  "$OPENMETHANE_IMAGE" python scripts/alerts/create_alerts.py
-
 echo "Success: daily run complete"
 echo "Results in: $DATA_PATH"
+echo "To create alerts for this day, run: START_DATE=$START_DATE bash scripts/docker-create-alerts.sh"

@@ -121,12 +121,7 @@ docker run --name="e2e-monthly-fourdvar-monthly" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
   "$OPENMETHANE_IMAGE" python runscript.py
 
-# JobName: alerts-baseline
-docker run --name="e2e-monthly-alerts-baseline" --rm \
-  --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e ALERTS_BASELINE_DIRS="$STORE_PATH/$DOMAIN_NAME/daily/*/*/*" \
-  -e ALERTS_BASELINE_FILE="$STORE_PATH/alerts-baseline.nc" \
-  "$OPENMETHANE_IMAGE" python scripts/alerts/alerts_baseline.py
+echo "To create an alerts baseline for this period, run: START_DATE=$START_DATE END_DATE=$END_DATE bash scripts/docker-alerts-baseline.sh"
 
 echo "Success: monthly run complete"
 echo "Results in: $DATA_PATH"
