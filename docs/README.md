@@ -1,48 +1,45 @@
-"""
-README
+# Open Methane documentation
 
-Copyright 2016 University of Melbourne.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-"""
+Open Methane estimates gridded methane emissions by comparing satellite
+observations of atmospheric methane against a simulation of what the atmosphere
+*should* look like given an initial emissions estimate, then correcting the
+emissions to reduce the difference.
 
-First use guide:
+If you are new here, read [Overview](overview.md) first — it explains the
+moving parts and which repository does what.
 
-NOTE:
- The CMAQ-adj model and the benchmark data are not included in the Github repository. You will need to obtain these from another source.
+## Guides
 
-To run your first test case you will need to:
+Task-oriented walkthroughs, roughly in the order you are likely to need them.
 
-1: change the parameter files (fourdvar/params/*.py) of particular importance is:
- - root_path_defn.py
-	defines the project and storage directories, update if moving/creating a project.
- - date_defn.py
-	defines the start and end dates of the simulation, update is changing the model domain.
- - cmaq_config.py
-	defines all the parameters CMAQ will need to run,
-	of particular note is all the CMAQ-relevant file paths
-the others (template, input & archive) can be usually be left unchanged
+| Guide | Use it when |
+| --- | --- |
+| [Quickstart](guides/quickstart.md) | You want to see a complete run finish on a small test domain, using public Docker images. Start here. |
+| [Running your own domain](guides/running-a-domain.md) | You have an area and a time period you care about and want emissions estimates for it. |
+| [Creating a custom domain](guides/custom-domain.md) | Your area of interest isn't covered by an existing domain, so you need to define a new grid. |
+| [Installing locally](guides/local-install.md) | You want to run Open Methane on a Linux machine without Docker. |
+| [Development](guides/development.md) | You want to change the code, run the tests, or cut a release. |
 
-2: go to cmaq_preprocess and run (in listed order):
- - make_template.py
-	creates template files needed to for py4dvar to generate input files,
-	assumes that all the input files defined in cmaq_config (MET, emis, icon, etc) already exist
- - make_prior.py
-	creates the prior estimate of the fluxes (and initial conditions if input_defn.inc_icon is True)
-	includes modifiable parameters at the start of the file with descriptions.
+## Reference
 
-3: go to obs_preprocess and run one of:
- - sample_point_preprocess.py
-	creates a test set of instant, point source observations, with easy to edit values.
- - sample_column_preprocess.py
-	creates a test single vertical column observation, with easy to edit values.
+Look-up material, not meant to be read end to end.
 
-4: go to tests and run:
- - test_cost_verbose.py
-	runs the cost function logic with a random perturbation in the prior.
- - test_grad_verbose.py
-	runs the gradient function logic with a random perturbation in the prior.
+| Reference | Contents |
+| --- | --- |
+| [Configuration](reference/configuration.md) | How configuration is loaded: targets, `.env` files, precedence, credentials. |
+| [Parameters](reference/parameters.md) | Every environment variable, its type and default. |
+| [Scripts](reference/scripts.md) | What each script in `scripts/` does and what it expects. |
+| [CMAQ preprocessing](reference/cmaq-preprocess.md) | The MCIP/ICON/BCON/template stage in detail. |
+| [TROPOMI data](reference/tropomi.md) | Where the satellite observations come from, which products are used, and how far back they go. |
+| [Outputs](reference/outputs.md) | The files a run produces and what the variables mean. |
+| [Architecture](reference/architecture.md) | Internals of the 4D-Var inversion: data types and the transform chain. |
 
-5: run the main code via runscript.py
+## Other
+
+- [Troubleshooting](troubleshooting.md) — common failures, logging, and how to
+  inspect a run that went wrong.
+- [Changelog](changelog.md) — release history.
+- [Methodology](methodology/) — background notes on the scientific method,
+  written for a general audience.
+- [Running on NCI/Gadi](../examples/nci/README.md) — unsupported, kept for
+  reference for anyone running on an HPC system.
