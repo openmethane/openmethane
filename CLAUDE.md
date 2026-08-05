@@ -20,7 +20,7 @@ TARGET=docker-test uv run python -m pytest -r a -v tests --ignore=tests/integrat
 # Run a single test (must be run inside the Docker container)
 TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 # Or from the host:
-docker run --rm -v $(PWD):/app openmethane \
+docker run --rm -v $(PWD):/app -v /app/.venv openmethane \
   TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 
 # Lint and format
@@ -37,6 +37,17 @@ make changelog-draft
 make build
 ```
 
+## Documentation
+
+Documentation lives in `docs/`, indexed by `docs/README.md`. Task-oriented
+guides are in `docs/guides/`, look-up material in `docs/reference/`. The root
+`README.md` is deliberately kept to a project description plus signposting —
+detail belongs in `docs/`.
+
+When changing behaviour, check whether `docs/reference/parameters.md` (env vars),
+`docs/reference/scripts.md` (script inventory) or `docs/reference/outputs.md`
+(output files) need updating alongside.
+
 ## Architecture
 
 The pipeline has three major stages that run sequentially:
@@ -44,11 +55,11 @@ The pipeline has three major stages that run sequentially:
 ### 1. CMAQ Preprocessing (`scripts/cmaq_preprocess/`, `src/openmethane/cmaq_preprocess/`)
 Prepares model inputs:
 - `download_cams_input.py` — downloads CAMS CH4 boundary conditions
-- `setup_for_cmaq.py` — drives MCIP/ICON/BCON shell scripts (`mcip.run`, `icon.run`, `bcon.run`) to generate meteorological/boundary condition files
+- `setup_for_cmaq.py` — drives MCIP/ICON/BCON csh scripts (`scripts/cmaq/run.mcip`, `run.icon`, `run.bcon`) to generate meteorological/boundary condition files
 - `make_emis_template.py`, `make_template.py`, `make_prior.py` — create CMAQ emissions templates and prior flux estimate
 
 ### 2. Observation Preprocessing (`scripts/obs_preprocess/`, `src/openmethane/obs_preprocess/`)
-- `fetch_tropomi.py` — downloads TropOMI satellite data (requires EarthData credentials)
+- `fetch_tropomi.py` — finds TropOMI granules crossing the `DOMAIN_FILE` domain in the CDSE catalogue and downloads them from the public `meeo-s5p` S3 mirror (no credentials needed)
 - `tropomi_methane_preprocess.py` — converts raw TropOMI into model-compatible observation files
 
 ### 3. 4D-Var Assimilation (`src/openmethane/fourdvar/`)
@@ -72,13 +83,13 @@ Calculates posterior averages, generates alerts, and manages result archives.
 
 Configuration is environment-based, loaded at import time by `fourdvar.params`. The `TARGET` environment variable (default: `docker`) controls which `.env.${TARGET}` file is loaded from the repository root.
 
-Available targets: `docker`, `docker-test`
+Available targets: `docker`, `docker-test`, `docker-monthly`
 
 NCI/Gadi is no longer supported. Its job scripts and example `.env.nci*` files live in `examples/nci/` and are provided as-is; they are not covered by tests.
 
 For tests and local development, always set `TARGET=docker-test`. This target uses locally tracked test data under `tests/test-data/` and `data/`.
 
-Key env vars: `START_DATE`, `END_DATE`, `DOMAIN_NAME`, `STORE_PATH`, `CMAQ_SOURCE_DIR`, `ADJOINT_FWD`, `ADJOINT_BWD`. See `docs/parameters.md` for the full list.
+Key env vars: `START_DATE`, `END_DATE`, `DOMAIN_NAME`, `DOMAIN_VERSION`, `STORE_PATH`, `CMAQ_BIN`, `ADJOINT_FWD`, `ADJOINT_BWD`. See `docs/reference/parameters.md` for the full list.
 
 Sensitive credentials (EarthData, CAMS/ECMWF) go in `.env` (based on `.env.example`).
 

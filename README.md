@@ -1,176 +1,70 @@
 # Open Methane
 
-Scripts for running the adjoint of the CMAQ model for methane emissions estimation
+Open Methane is a system for estimating methane emissions over a large area
+without needing direct measurement.
 
-## Getting Started
+It uses a system called atmospheric inversion, which produces monthly gridded
+methane emissions estimates. The inversion works by producing initial bottom-up
+emission estimates (the prior), simulating the atmosphere and meteorology, and
+comparing the resulting concentrations with actual atmospheric observations
+satellites. The inversion corrects the initial estimates iteratively until it
+finds emissions which produce similar atmospheric methane to the observations.
 
-### Requirements
+This repository holds the inversion itself: it converts weather model output into
+inputs for the CMAQ atmospheric chemistry model, processes TROPOMI satellite
+observations, and runs a 4D-Var data assimilation using the CMAQ adjoint model to
+produce posterior emissions estimates.
 
-The recommended way to run Open Methane is using
-[docker](https://www.docker.com/), version 23 or later.
+Open Methane is built for Australia, but can be extended to work in any region.
+Results are published at [openmethane.org](https://openmethane.org).
 
-For development or running Open Methane locally, you will need:
-- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+## Getting started
 
-### Running locally
+The fastest way to see it work is the
+**[Quickstart](docs/guides/quickstart.md)** — a complete run on a small test
+domain using public Docker images. No compilation, no private repositories.
 
-The Open Methane prior can be installed from source into a virtual environment
-with:
+Then, depending on what you need:
 
-```bash
-uv sync
-```
+| I want to… | Start here |
+| --- | --- |
+| Understand how the pipeline fits together | [Overview](docs/overview.md) |
+| Estimate emissions for my own area and time period | [Running your own domain](docs/guides/running-a-domain.md) |
+| Model an area no existing domain covers | [Creating a custom domain](docs/guides/custom-domain.md) |
+| Run without Docker, on a Linux machine | [Installing locally](docs/guides/local-install.md) |
+| Change the code | [Development](docs/guides/development.md) |
+| Look up a setting, script or output file | [Reference](docs/README.md#reference) |
+| Work out why a run failed | [Troubleshooting](docs/troubleshooting.md) |
 
-### Docker
+Full documentation index: **[docs/](docs/README.md)**
 
-The recommended way to run Open Methane, is using the
-[published Docker images](https://github.com/openmethane/openmethane/pkgs/container/openmethane).
+## Related repositories
 
-If you need to make changes to the source code, you will need to build the
-docker image locally.
+Running the full pipeline needs two companion repositories, each of which also
+publishes a public Docker image:
 
-> [!WARNING]
-> Building the Open Methane docker image is currently not possible without
-> access to the CMAQ-Adjoint repository. If this affects you, please create
-> an issue or contact the team at inquiries@openmethane.org.
+- [openmethane-prior](https://github.com/openmethane/openmethane-prior) — builds
+  the initial (prior) emissions estimate from inventories and land-use data.
+- [setup-wrf](https://github.com/openmethane/setup-wrf) — runs the WRF weather
+  model to produce the meteorology that drives atmospheric transport, and holds
+  the domain definitions.
 
-The docker container containing CMAQ, the adjoint model and the python
-dependencies can be built locally. The required CMAQ-Adjoint docker image is
-built via the
-[openmethane/CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint)
-repository and is hosted as a private image at
-[ghcr.io/openmethane/cmaq](https://ghcr.io/openmethane/cmaq-adjoint).
-
-Since the CMAQ-Adjoint image is not public, you will need to
-[authenticate with the GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
-before building the openmethane image.
-
-Once you have logged into the GitHub Container Registry, you can build the docker image with:
-
-```shell
-make build
-```
-
-## Configuration
-
-The configuration is defined in `fourdvar.params` and the modules within that package.
-The configuration is defined at import time.
-A bulk of parameters are static, but some are dynamic and can be set via environment variables.
-
-Some sensitive environment parameters are required to be set in a `.env` file.
-These environment variables aren't checked into the repository for security reasons.
-A useful starting point for this `.env` file is the `.env.example` file.
-
-See `docs/parameters.md` for the full list of parameters that can be configured via environment variables.
-
-### Targets
-
-`fourdvar` can be run in different target environments.
-These environments typically require different configuration,
-particularly regarding the paths to the data and the CMAQ adjunct.
-
-The target environment is defined by the `TARGET` environment variable (default=`docker`).
-The value of `TARGET` is used to load a `.env.${TARGET}` file from the repository root.
-This `.env` file contains the target specific configuration values.
-
-The supported targets are `docker` and `docker-test`.
-The `docker-test` target uses locally tracked versions
-of the required input data from the `openmethane-prior` and `setup-wrf` repositories,
-and is useful for testing and development.
+The CMAQ adjoint model is built in
+[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) and bundled into this
+repository's Docker image.
 
 > [!NOTE]
-> Open Methane was previously run on the NCI (Gadi) supercomputer.
-> NCI is no longer officially supported, but the job scripts and configuration
-> are kept for reference in [`examples/nci`](examples/nci/README.md).
+> The CMAQ-Adjoint repository and its container image are not public, so the
+> `openmethane` image cannot be built from source without access. The published
+> images are public and require no credentials. If this affects you, please
+> create an issue or contact us at inquiries@openmethane.org.
 
-## First Run
+## Contributing
 
-To run your first test case you will need to:
+Bug reports and pull requests are welcome. See
+[Development](docs/guides/development.md) for how to set up, run the tests, and
+add a changelog entry.
 
+## License
 
-
-1: Run the cmaq preprocessing script (`scripts/cmaq_preprocess/run-cmaq-preprocess.sh`) to generate the
-	necessary input files for the adjoint model. This script will run the following scripts in order:
- - `scripts/cmaq_preprocess/download_cams_input.py`
-	Downloads the CAMS data for the specified date range and region
- - `scripts/cmaq_preprocess/setup_for_cmaq.py`
-	Runs MCIP, ICON and BCON to generate the input date files for the CMAQ adjoint
- - `scripts/cmaq_preprocess/make_emis_template.py`
-	Create the emission template file from the prior estimate
- - `scripts/cmaq_preprocess/make_template.py`
-	Creates template files needed to for py4dvar to generate input files,
-	Assumes that all the input files defined in cmaq_config (MET, emis, icon, etc) already exist
- - `scripts/cmaq_preprocess/make_prior.py`
-	creates the prior estimate of the fluxes (and initial conditions if input_defn.inc_icon is True)
-	includes modifiable parameters at the start of the file with descriptions.
-
-The last three scripts can also be run with 
-```bash
-make prepare-templates
-```
-
-2: fetch the TropOMI data:
- - `scripts/obs_preprocess/fetch_tropomi.py -s {start_date} -e {end_date} {output_dir}`
-	Downloads the TropOMI data for the specified date range, covering the domain
-	named by the `DOMAIN_FILE` environment variable. Needs no credentials.
- 
-3: go to `scripts/obs_preprocess` and run one of:
- - `scripts/obs_preprocess/tropomi_methane_preprocess.py --source "data/tropomi/{start_date}/*.nc"`
-	process the downloaded TropOMI data into a format that can be used by `fourdvar`.
-
-4: go to `tests/integration/fourdvar` and run:
- - `test_cost_verbose.py`
-	runs the cost function logic with a random perturbation in the prior,
-	saving the output of every step to `<archive_dir>/tmp_cost_verbose/`.
- - `test_grad_verbose.py`
-	runs the gradient function logic with a random perturbation in the prior,
-	saving the output of every step to `<archive_dir>/tmp_grad_verbose/`.
-
-5: run the main code via `runscript.py`
-
-## Running locally
-
-For local testing and development, we recommend that the docker container is used.
-
-The docker container assumes that the [openmethane-prior](https://github.com/openmethane/openmethane-prior) 
-and [setup-wrf](https://github.com/openmethane/setup-wrf) repositories have been cloned locally 
-(as `../openmethane-prior` and `../setup-wrf` respectively).
-There are artifacts from these repos that are required to be run before running the adjoint model.
-
-The docker container can be built and run with:
-
-```shell
-make start
-```
-
-This will drop you into a shell in the docker container.
-From here you can run the scripts in the order above,
-or use the following script to run the scripts in the correct order:
-
-```shell
-bash scripts/run-all.sh
-```
-### Download all domain data from the Cloudflare
-
-The `scripts/upload-domains.sh` script checks if the local directory domain is 
-synchronised with the target directory domain. If the local is not up to date
-it is neccessary to download all domain data from the Cloudflare bucket with:
-
-```bash
-make sync-domains-from-cf
-```
-
-### PyCharm
-
-Pycharm provides some support for using a 
-[remote interpreter](https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html) 
-in a docker container.
-This feature is only available for PyCharm Professional.
-
-The volumes may need to be adjusted to match the local paths for the openmethane-prior and setup-wrf repositories
-as described above.
-This will create a new docker container when running the scripts or tests.
-
-This can be a bit flakey in PyCharm. 
-Similar functionality can be achieved with VSCode in a likely more stable manner.
-
+Apache License 2.0 — see [LICENSE](LICENSE).
