@@ -10,28 +10,11 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
-
-BUILD_LOCAL_DOCKER=${BUILD_LOCAL_DOCKER:-false}
-if [[ "$BUILD_LOCAL_DOCKER" == true ]]; then
-  # Build docker containers using locally checked out versions, so that local
-  # changes can be easily tested
-  bash "$SCRIPT_DIR/docker-build-all.sh"
-fi
-
-DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
-# the location in the container where $DATA_ROOT is mounted
-STORE_ROOT="/opt/project/data"
-
-# Task variables
-START_DATE=${START_DATE:-2022-10-29}
+# a baseline is built from a period of daily runs, rather than the single day
+# docker-common assumes
 END_DATE=${END_DATE:-2022-10-31}
-DOMAIN_NAME=${DOMAIN_NAME:-au-test}
-DOMAIN_VERSION=${DOMAIN_VERSION:-v1}
 
-# The baseline is shared by every daily run of a domain, so it lives at the root
-# of $DATA_ROOT rather than in a dated run directory
-ALERTS_BASELINE_NAME=${ALERTS_BASELINE_NAME:-"alerts-baseline.$DOMAIN_NAME-$DOMAIN_VERSION.nc"}
+source "$SCRIPT_DIR/docker-common.sh"
 
 RUN_ID="alerts-baseline/$DOMAIN_NAME/$DOMAIN_VERSION/$START_DATE"
 DATA_PATH="$DATA_ROOT/$RUN_ID"
@@ -41,36 +24,15 @@ DAILY_ROOT="$DATA_ROOT/daily/$DOMAIN_NAME/$DOMAIN_VERSION"
 
 DOMAIN_FILE="$STORE_PATH/domain.$DOMAIN_NAME.nc"
 
-if [[ -f .env ]]; then
-  echo "Loading environment from .env"
-  source .env
-fi
-
 # Ensure data path exists
 mkdir -p "$DATA_PATH"
 
 # Set up env variables to pass to docker
 ENV_FILE="$DATA_PATH/.env"
-cat > "$ENV_FILE" <<EOF
-RUN_TYPE=monthly
-TARGET=docker-monthly
-START_DATE=$START_DATE
-END_DATE=$END_DATE
-DOMAIN_NAME=$DOMAIN_NAME
-DOMAIN_VERSION=$DOMAIN_VERSION
-DOMAIN_FILE=$DOMAIN_FILE
-STORE_PATH=$STORE_PATH
-LOG_LEVEL=DEBUG
-EOF
+write_env_file "$ENV_FILE" monthly
 
 
 echo "Creating alerts baseline for $START_DATE to $END_DATE from daily runs in $DAILY_ROOT"
-
-# fetch the domain file from the data store
-if [[ ! -f "$DATA_PATH/domain.$DOMAIN_NAME.nc" ]]; then
-  curl -s -o "$DATA_PATH/domain.$DOMAIN_NAME.nc" \
-    "https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
-fi
 
 # Collect the daily runs in the date range into one directory of symlinks, so
 # that alerts_baseline.py can pick them up with a single glob. Links are
@@ -106,6 +68,9 @@ EOF
 fi
 
 echo "Building baseline from $DAILY_FOUND daily run(s)"
+
+# fetch the domain file from the data store
+fetch_domain_file "$DATA_PATH"
 
 # JobName: alerts-baseline
 docker run --name="alerts-baseline" --rm \
