@@ -1,9 +1,9 @@
 """
-Download TropOMI data from the NASA GES DISC API
+Download TropOMI data from NASA Earthdata
 
-Granules are discovered with the GES DISC subsetting API, then downloaded from
-Cloud OPeNDAP with a DAP4 constraint expression that limits the download to the
-variables and scanlines we actually need.
+Granules are discovered through CMR with the `earthaccess` library, then
+downloaded from Cloud OPeNDAP with a DAP4 constraint expression that limits the
+download to the variables and scanlines we actually need.
 
 GES DISC retired the `SUBSET_LEVEL2` agent, which used to perform the spatial
 crop server-side. Its replacement, the `OPeNDAP` agent, rejects `crop: True`
@@ -15,24 +15,24 @@ import json
 import os
 import re
 import shutil
-import sys
 import urllib.parse
 import xml.etree.ElementTree as ET
-from pathlib import Path
-from time import sleep
-from typing import Any
 
 import click
 import dotenv
+import earthaccess
 import numpy as np
 import requests
+from earthaccess.exceptions import LoginStrategyUnavailable
 from netCDF4 import Dataset
 from requests.adapters import HTTPAdapter, Retry
 
 # Load environment variables from a local .env file
 dotenv.load_dotenv()
 
-API_URL = "https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
+# CMR collection for the high-resolution TropOMI methane product
+SHORT_NAME = "S5P_L2__CH4____HiR"
+VERSION = "2"
 
 DAP_NS = {"dap": "http://xml.opendap.org/ns/DAP/4.0#"}
 
@@ -83,18 +83,24 @@ COORDINATE_VARIABLES = ("/PRODUCT/level",)
 
 def create_session() -> requests.Session:
     """
-    Create a new requests session
+    Create a session authenticated with Earthdata Login
 
-    Creates the .netrc file with the Earthdata credentials if it does not exist.
-    Uses the EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables if available
-    to setup the required `~/.netrc` file.
+    Credentials come from the EARTHDATA_USERNAME and EARTHDATA_PASSWORD
+    environment variables, or from EARTHDATA_TOKEN. They are exchanged for a
+    bearer token that is held in memory rather than written to disk. Only the
+    environment strategy is used, so the script cannot block on an interactive
+    prompt when run unattended.
     See [Data Access](https://disc.gsfc.nasa.gov/information/documents?title=Data%20Access)
     for more information about accessing NASA data.
-
-    In the case where the `.netrc` file already exists,
-    users must add the required line manually.
     """
-    session = requests.Session()
+    try:
+        earthaccess.login(strategy="environment")
+    except LoginStrategyUnavailable as exc:
+        raise click.ClickException(
+            "EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing"
+        ) from exc
+
+    session = earthaccess.get_requests_https_session()
 
     # Retry on 429 (too many requests) and 500 status codes
     # Exponential backoff with jitter to avoid a thundering herd
@@ -105,151 +111,54 @@ def create_session() -> requests.Session:
     session.mount("http://", HTTPAdapter(max_retries=retries))
     session.mount("https://", HTTPAdapter(max_retries=retries))
 
-    credentials_path = Path("~/.netrc").expanduser()
-    if not credentials_path.exists():
-        # Create the .netrc file with the Earthdata credentials
-        if not os.environ.get("EARTHDATA_USERNAME") or not os.environ.get("EARTHDATA_PASSWORD"):
-            raise click.ClickException(
-                "EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing"
-            )
-
-        print("Writing .netrc file")
-
-        with open(credentials_path, "a") as file:
-            file.write(
-                "machine urs.earthdata.nasa.gov login {} password {}".format(
-                    os.environ.get("EARTHDATA_USERNAME"), os.environ.get("EARTHDATA_PASSWORD")
-                )
-            )
-
     return session
 
 
-def get_http_data(body: dict[str, Any], session: requests.Session):
-    hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
-    response = session.post(API_URL, json=body, headers=hdrs, timeout=30)
-    response.raise_for_status()
-
-    content = response.json()
-    # Check for errors
-    if content["type"] == "jsonwsp/fault":
-        print("API Error: faulty request")
-        raise RuntimeError(f"Invalid type found in {content}")
-    return content
-
-
-def search_granules(session: requests.Session, box: list[float], start, end) -> list[dict]:
+def search_granules(box: list[float], start, end) -> list[dict]:
     """
     Find the granules intersecting a bounding box and time period
 
-    Uses the GES DISC subsetting API, which returns Cloud OPeNDAP links to whole
-    granules. The bounding box only filters which granules are returned; the
-    granules themselves are not cropped.
+    The bounding box only filters which granules are returned. CMR matches on
+    each granule's bounding polygon, which is coarser than the swath itself, so
+    some of the granules returned do not actually overlap the box.
+
+    `start` and `end` are passed as datetimes rather than dates because
+    earthaccess widens a date-only bound to the end of that day.
     """
-    init_data = {
-        "methodname": "subset",
-        "args": {
-            "box": box,
-            "crop": False,
-            "start": start.strftime("%Y-%m-%dT%H:%M:%S"),
-            "end": end.strftime("%Y-%m-%dT%H:%M:%S"),
-            "agent": "OPeNDAP",
-            "role": "subset",
-            "data": [{"datasetId": "S5P_L2__CH4____HiR_2"}],
-        },
-        "type": "jsonwsp/request",
-        "version": "1.0",
-    }
+    print(f"Searching for granules between {start} and {end} within {box}")
 
-    print(f"Submitting request to the API: {init_data}")
+    granules = earthaccess.search_data(
+        short_name=SHORT_NAME,
+        version=VERSION,
+        bounding_box=tuple(box),
+        temporal=(start, end),
+    )
 
-    response = get_http_data(init_data, session)
-    myJobId = response["result"]["jobId"]
-
-    # Construct JSON WSP request for API method: GetStatus
-    status_request = {
-        "methodname": "GetStatus",
-        "version": "1.0",
-        "type": "jsonwsp/request",
-        "args": {"jobId": myJobId},
-    }
-
-    while response["result"]["Status"] in ["Accepted", "Running"]:
-        sleep(1)
-        response = get_http_data(status_request, session)
-        status = response["result"]["Status"]
-        percent = response["result"]["PercentCompleted"]
-        print("Job status: %s (%d%c complete)" % (status, percent, "%"))
-
-    if response["result"]["Status"] == "Succeeded":
-        print("Job Finished:  {}".format(response["result"]["message"]))
-    else:
-        print("Job Failed: {}".format(response["fault"]["code"]))
-        sys.exit(1)
-
-    # Construct JSON WSP request for API method: GetResult
-    batchsize = 20
-    results_request = {
-        "methodname": "GetResult",
-        "version": "1.0",
-        "type": "jsonwsp/request",
-        "args": {"jobId": myJobId, "count": batchsize, "startIndex": 0},
-    }
-
-    # Retrieve the results in JSON in multiple batches
-    # Initialize variables, then submit the first GetResults request
-    # Add the results from this batch to the list and increment the count
-    results = []
-    count = 0
-    response = get_http_data(results_request, session)
-    count = count + response["result"]["itemsPerPage"]
-    results.extend(response["result"]["items"])
-
-    # Increment the startIndex and keep asking for more results until we have them all
-    total = response["result"]["totalResults"]
-    while count < total:
-        results_request["args"]["startIndex"] += batchsize
-        response = get_http_data(results_request, session)
-        count = count + response["result"]["itemsPerPage"]
-        results.extend(response["result"]["items"])
-
-    # Check on the bookkeeping
-    print("Retrieved %d out of %d expected items" % (len(results), total))
-
-    # Sort the results into documents and URLs
-    docs = []
-    granules = []
-    for item in results:
-        try:
-            if item["start"] and item["end"]:
-                granules.append(item)
-        except Exception:
-            docs.append(item)
-
-    # Print out the documentation links, but do not download them
-    print("\nDocumentation:")
-    for item in docs:
-        print(item["label"] + ": " + item["link"])
+    print(f"Found {len(granules)} granules")
 
     return granules
 
 
-def granule_filename(label: str) -> str:
-    """
-    Derive an output filename from a Cloud OPeNDAP result label
+def opendap_url(granule: dict) -> str:
+    """Find the Cloud OPeNDAP base URL advertised in a granule's metadata"""
+    for related_url in granule["umm"]["RelatedUrls"]:
+        if related_url.get("Subtype") == "OPENDAP DATA":
+            return related_url["URL"]
 
-    Labels look like
-    `S5P_L2__CH4____HiR.2%3AS5P_OFFL_L2__CH4____20221207T011249_....nc.dap.nc4`.
+    raise RuntimeError(f"No OPeNDAP URL found for granule {granule['meta']['native-id']}")
+
+
+def granule_filename(base_url: str) -> str:
+    """
+    Derive an output filename from a Cloud OPeNDAP URL
+
+    The last path segment looks like
+    `S5P_L2__CH4____HiR.2%3AS5P_OFFL_L2__CH4____20221207T011249_....nc`.
     The `.SUB.nc4` suffix is kept for consistency with the files the retired
     `SUBSET_LEVEL2` agent produced, which downstream globs still expect.
     """
-    name = urllib.parse.unquote(label).split(":")[-1]
-    return re.sub(r"\.nc(\.dap\.nc4)?$", "", name) + ".SUB.nc4"
-
-
-def opendap_base_url(link: str) -> str:
-    """Strip the response suffix from a Cloud OPeNDAP link to get its base URL"""
-    return re.sub(r"\.dap\.nc4$", "", link)
+    name = urllib.parse.unquote(base_url.rsplit("/", 1)[-1]).split(":")[-1]
+    return re.sub(r"\.nc$", "", name) + ".SUB.nc4"
 
 
 def dap_request(session: requests.Session, url: str, constraint: str) -> requests.Response:
@@ -364,13 +273,13 @@ def fetch_data(config_file, start, end, output):
     """Fetch TropOMI data
 
     Data from the TropOMI instrument on the Sentinel-5P satellite
-    is available from the NASA GES DISC API.
+    is available from NASA Earthdata.
     """
     config = json.load(config_file)
     session = create_session()
 
     box = config["box"]
-    granules = search_granules(session, box, start, end)
+    granules = search_granules(box, start, end)
 
     os.makedirs(output, exist_ok=True)
 
@@ -394,15 +303,16 @@ def fetch_data(config_file, start, end, output):
 
     print("\nCloud OPeNDAP output:")
 
-    for item in granules:
-        base_url = opendap_base_url(item["link"])
+    for granule in granules:
+        base_url = opendap_url(granule)
 
         try:
             n_scanlines = count_scanlines(session, base_url)
             scanline_range = find_scanline_range(session, base_url, box, n_scanlines)
 
             if scanline_range is None:
-                print(f"{item['label']}: no overlap with the bounding box, skipping")
+                native_id = granule["meta"]["native-id"]
+                print(f"{native_id}: no overlap with the bounding box, skipping")
                 continue
 
             first_scanline, last_scanline = scanline_range
@@ -415,13 +325,13 @@ def fetch_data(config_file, start, end, output):
             status_code = exc.response.status_code if exc.response is not None else None
             print(f"Error! Status code is {status_code} for this URL:\n{base_url}")
             if status_code == 401:
-                print("Unauthorised: Check your Earthdata credentials in the ~/.netrc file")
+                print("Unauthorised: Check your Earthdata credentials")
             print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")
 
             # Abort if any files fail to download
             raise click.Abort() from exc
 
-        outfn = os.path.join(outDirName, granule_filename(item["label"]))
+        outfn = os.path.join(outDirName, granule_filename(base_url))
         with open(outfn, "wb") as f:
             f.write(response.content)
 

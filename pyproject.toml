@@ -23,6 +23,7 @@ dependencies = [
     "cdsapi>=0.7.3,<0.8",
     "attrs>=23.2.0,<24",
     "boto3>=1.35.11,<2",
+    "earthaccess>=0.14,<1",
 ]
 
 [dependency-groups]

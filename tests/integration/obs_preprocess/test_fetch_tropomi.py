@@ -1,10 +1,24 @@
 import os
-from pathlib import Path
 
 import click
+import earthaccess
 import pytest
 from click.testing import CliRunner
 from scripts.obs_preprocess import fetch_tropomi
+
+EARTHDATA_ENV_VARS = ("EARTHDATA_USERNAME", "EARTHDATA_PASSWORD", "EARTHDATA_TOKEN")
+
+
+@pytest.fixture
+def fresh_login(monkeypatch):
+    """
+    Discard any cached Earthdata login
+
+    earthaccess caches a successful login on a module-level singleton, so
+    without resetting it a later login attempt succeeds no matter which
+    credentials are available.
+    """
+    monkeypatch.setattr(earthaccess, "__auth__", earthaccess.Auth())
 
 
 # This hits the api
@@ -33,26 +47,21 @@ def test_fetch(tmpdir, root_dir):
     ]
 
 
-@pytest.mark.parametrize("env_var", ["EARTHDATA_USERNAME", "EARTHDATA_PASSWORD"])
-def test_fetch_missing_creds(monkeypatch, env_var):
+def test_create_session(fresh_login):
     # This should come from the .env file
-    assert env_var in os.environ
+    assert os.environ.get("EARTHDATA_USERNAME") and os.environ.get("EARTHDATA_PASSWORD")
 
-    expected_cred_file = Path("~/.netrc").expanduser()
-    if expected_cred_file.exists():
-        os.remove(expected_cred_file)
+    session = fetch_tropomi.create_session()
 
-    fetch_tropomi.create_session()
+    # The credentials are exchanged for a bearer token rather than written to disk
+    assert session.headers["Authorization"].startswith("Bearer ")
 
-    assert expected_cred_file.exists()
 
+@pytest.mark.parametrize("env_var", ["EARTHDATA_USERNAME", "EARTHDATA_PASSWORD"])
+def test_create_session_missing_creds(fresh_login, monkeypatch, env_var):
     monkeypatch.delenv(env_var)
+    monkeypatch.delenv("EARTHDATA_TOKEN", raising=False)
 
-    # Still works if the ~/.netrc file exists
-    fetch_tropomi.create_session()
-
-    # Exception is raised if the ~/.netrc file is removed and env variables aren't available
-    os.remove(expected_cred_file)
     with pytest.raises(
         click.ClickException,
         match="EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing",
@@ -60,8 +69,8 @@ def test_fetch_missing_creds(monkeypatch, env_var):
         fetch_tropomi.create_session()
 
 
-# This hits the api with invalid data
-def test_fetch_invalid_date(tmpdir, root_dir):
+# This hits the api with a period that has no data
+def test_fetch_no_granules(tmpdir, root_dir):
     runner = CliRunner()
     result = runner.invoke(
         fetch_tropomi.fetch_data,
@@ -76,8 +85,7 @@ def test_fetch_invalid_date(tmpdir, root_dir):
         ],
     )
 
-    assert result.exit_code == 1, result.output
-    assert (
-        str(result.exception)
-        == "500 Server Error: Internal Server Error for url: https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
-    )
+    # A period predating the mission returns no granules rather than an error
+    assert result.exit_code == 0, result.output
+    assert "Found 0 granules" in result.output
+    assert os.listdir(tmpdir / "1900-07-01T0000_1901-07-02T0000_148.0_-23.5_150.0_-22.0") == []

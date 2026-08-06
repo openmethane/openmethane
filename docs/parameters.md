@@ -51,6 +51,8 @@ A tutorial for creating an account and accepting the licence agreements is avail
 Once you have a login, 
 the `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables can added to the `.env` file.
 These will be used by the `fetch_tropomi.py` script to authenticate with the GES DISC data archive.
+The credentials are exchanged for a short-lived bearer token and are not written to disk.
+An `EARTHDATA_TOKEN` can be provided instead of a username and password.
 
 ## CAMS Login
 Used to fetch CAMS data during the cmaq_preprocess step.
