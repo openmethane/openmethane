@@ -121,6 +121,29 @@ def process_obs(obs: dict[str, float], model_grid: ModelSpace) -> ObsSRON:
     return obs
 
 
+def read_time_utc(product: Dataset) -> np.ndarray:
+    """
+    Read time_utc as ISO 8601 strings with shape (time, scanline)
+
+    Files fetched from Cloud OPeNDAP store time_utc as a character array with a
+    trailing string-length dimension, because the netCDF string type has no
+    equivalent in the DAP4 response format. The retired SUBSET_LEVEL2 service
+    stored it as strings, and files it produced are still used as test fixtures,
+    so both layouts are supported.
+    """
+    time_utc = product.variables["time_utc"][:]
+
+    if time_utc.ndim < 3:
+        return time_utc
+
+    # Join the characters of each timestamp, dropping the masked padding that
+    # fills each row out to the full string length.
+    characters = np.ma.filled(time_utc, b"\x00")
+    return np.char.decode(
+        np.ascontiguousarray(characters).view(f"S{time_utc.shape[-1]}")[..., 0], "utf-8"
+    )
+
+
 def process_file(
         model_grid: ModelSpace, ds: Dataset, qa_cutoff: float, swir_albedo_cutoff: float,
         swir_aod_cutoff: float,
@@ -156,7 +179,7 @@ def process_file(
     latitude_center = latitude.reshape((latitude.size,))
     longitude = instrument.variables["longitude"][:]
     longitude_center = longitude.reshape((longitude.size,))
-    timeUTC = instrument.variables["time_utc"][:]
+    timeUTC = read_time_utc(instrument)
     timeUTC = np.stack([timeUTC] * latitude.shape[2], axis=2)
     time = timeUTC.reshape((timeUTC.size,))
     latitude_bounds = geo.variables["latitude_bounds"][:]
