@@ -92,15 +92,24 @@ def create_session() -> requests.Session:
     prompt when run unattended.
     See [Data Access](https://disc.gsfc.nasa.gov/information/documents?title=Data%20Access)
     for more information about accessing NASA data.
+
+    EARTHDATA_TOKEN requires no network access to log in, whereas a username
+    and password have to be exchanged for a token at urs.earthdata.nasa.gov.
+    That host is on NASA's own network, unlike the CMR and OPeNDAP hosts, and
+    is intermittently unreachable from some CI runners.
     """
     try:
-        earthaccess.login(strategy="environment")
+        # Auth.login is used rather than earthaccess.login because the latter also
+        # builds a Store, which requests urs.earthdata.nasa.gov/profile even when
+        # EARTHDATA_TOKEN makes the rest of the login offline. The Store is only used
+        # for earthaccess.download and direct S3 access, neither of which is used here.
+        earthaccess.__auth__.login(strategy="environment")
     except LoginStrategyUnavailable as exc:
         raise click.ClickException(
-            "EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing"
+            "Set EARTHDATA_TOKEN, or both EARTHDATA_USERNAME and EARTHDATA_PASSWORD"
         ) from exc
 
-    session = earthaccess.get_requests_https_session()
+    session = earthaccess.__auth__.get_session()
 
     # Retry on 429 (too many requests) and 500 status codes
     # Exponential backoff with jitter to avoid a thundering herd

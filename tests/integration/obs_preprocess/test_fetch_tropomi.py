@@ -64,7 +64,7 @@ def test_create_session_missing_creds(fresh_login, monkeypatch, env_var):
 
     with pytest.raises(
         click.ClickException,
-        match="EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing",
+        match="Set EARTHDATA_TOKEN, or both EARTHDATA_USERNAME and EARTHDATA_PASSWORD",
     ):
         fetch_tropomi.create_session()
 
