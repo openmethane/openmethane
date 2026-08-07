@@ -119,6 +119,11 @@ jobs:
         password: ${{ secrets.github_token }}
       volumes:
         - /opt/project/data
+    env:
+      # GitHub-hosted runners have no routable IPv6; NASA Earthdata is
+      # dual-stack, so suppress AAAA lookups (glibc >= 2.36).
+      RES_OPTIONS: no-aaaa
+
     steps:
       - name: Cache test data
         uses: actions/cache@v4
@@ -152,6 +157,11 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.github_token }}
+    env:
+      # GitHub-hosted runners have no routable IPv6; NASA Earthdata is
+      # dual-stack, so suppress AAAA lookups (glibc >= 2.36).
+      RES_OPTIONS: no-aaaa
+
     steps:
       - name: Check package version
         if: startsWith(github.event.ref, 'refs/tags/v')
