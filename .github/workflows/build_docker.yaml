@@ -131,8 +131,6 @@ jobs:
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
           CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api
-          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
-          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           TARGET: docker-test
         run: |
           cd /opt/project

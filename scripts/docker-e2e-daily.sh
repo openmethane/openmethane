@@ -35,10 +35,6 @@ if [[ -f .env ]]; then
   source .env
 fi
 
-if [ -z "$EARTHDATA_USERNAME" ] || [ -z "$EARTHDATA_PASSWORD" ]; then
-  echo "EARTHDATA_USERNAME and EARTHDATA_PASSWORD env variables must be set or present in .env"
-  exit 1
-fi
 if [ -z "$CDSAPI_URL" ] || [ -z "$CDSAPI_KEY" ]; then
   echo "CDSAPI_URL and CDSAPI_KEY env variables must be set or present in .env"
   exit 1
@@ -116,8 +112,6 @@ docker run --name="e2e-daily-prior-generate" --rm \
 # JobName: obs_preprocess-fetch_tropomi
 docker run --name="e2e-daily-obs_preprocess-fetch_tropomi" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":/opt/project/data \
-  -e EARTHDATA_USERNAME="$EARTHDATA_USERNAME" \
-  -e EARTHDATA_PASSWORD="$EARTHDATA_PASSWORD" \
   openmethane bash scripts/obs_preprocess/fetch_tropomi.sh
 
 # JobName: cmaq_preprocess-run

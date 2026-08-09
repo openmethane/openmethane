@@ -41,16 +41,20 @@ the environment variable is not defined.
 `{CMAQ_BASE}` represents the directory that contains the CMAQ output (`$STORE_PATH/run-cmaq`).
 
 
-## EarthData Login
+## TropOMI data
 
-The `scripts/obs_preprocess/fetch_tropomi.py` script requires an EarthData login to download the TropOMI data
-with permission to access the GES DISC data archive.
-A tutorial for creating an account and accepting the licence agreements is available
-[here](https://disc.gsfc.nasa.gov/earthdata-login).
+The `scripts/obs_preprocess/fetch_tropomi.py` script downloads TropOMI data from the public
+`meeo-s5p` S3 bucket, which MEEO publish under the
+[AWS Open Data Sponsorship Program](https://registry.opendata.aws/sentinel5p/).
 
-Once you have a login, 
-the `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables can added to the `.env` file.
-These will be used by the `fetch_tropomi.py` script to authenticate with the GES DISC data archive.
+The bucket is anonymously readable, so no credentials are required and no
+environment variables need to be set. Requests are sent unsigned, so any AWS
+credentials in the environment are ignored.
+
+The bucket holds whole granules rather than spatial subsets. `fetch_tropomi.py`
+discards granules that do not overlap the bounding box in the config file, and
+keeps the rest intact; `tropomi_methane_preprocess.py` then drops the
+observations that fall outside the model grid.
 
 ## CAMS Login
 Used to fetch CAMS data during the cmaq_preprocess step.

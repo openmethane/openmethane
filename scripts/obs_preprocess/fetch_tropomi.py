@@ -1,83 +1,126 @@
 """
-Download TropOMI data from the NASA GES DISC API
+Download TropOMI data from the MEEO Sentinel-5P mirror on AWS
 
-Uses a bounding box to limit the required data.
+Granules are listed from the public `meeo-s5p` S3 bucket, which MEEO publish
+under the AWS Open Data Sponsorship Program. The bucket is anonymously
+readable, so no credentials are needed.
+
+The bucket serves whole granules; there is no server-side subsetting. Granules
+that do not overlap the configured bounding box are discarded after download,
+and the rest are kept intact. `tropomi_methane_preprocess.py` already drops
+observations outside the model grid, so keeping whole granules costs bandwidth
+rather than accuracy. It is also the more defensible input: `destripe_smoothing`
+takes medians along both swath axes, so its results depend on how much of the
+orbit is present.
 """
 
+import datetime as dt
 import json
 import os
+import re
 import shutil
-import sys
-from pathlib import Path
-from time import sleep
-from typing import Any
 
+import boto3
 import click
 import dotenv
-import requests
-from requests.adapters import HTTPAdapter, Retry
+import numpy as np
+from botocore import UNSIGNED
+from botocore.client import Config
+from botocore.exceptions import BotoCoreError, ClientError
+from netCDF4 import Dataset
 
 # Load environment variables from a local .env file
 dotenv.load_dotenv()
 
-API_URL = "https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
+# Public mirror of the ESA Sentinel-5P archive, maintained by MEEO
+# See https://registry.opendata.aws/sentinel5p/
+BUCKET = "meeo-s5p"
+REGION = "eu-central-1"
+
+# Offline (OFFL) methane products. The bucket also carries `NRTI` and `RPRO`
+# under the same layout, so switching timeliness is a change to this prefix.
+PREFIX = "OFFL/L2__CH4___"
+
+# S5P_OFFL_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
+GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
 
 
-def create_session() -> requests.Session:
+def create_client():
     """
-    Create a new requests session
+    Create an S3 client for anonymous access to the public bucket
 
-    Creates the .netrc file with the Earthdata credentials if it does not exist.
-    Uses the EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables if available
-    to setup the required `~/.netrc` file.
-    See [Data Access](https://disc.gsfc.nasa.gov/information/documents?title=Data%20Access)
-    for more information about accessing NASA data.
-
-    In the case where the `.netrc` file already exists,
-    users must add the required line manually.
+    Requests are unsigned so that the client works without AWS credentials, and
+    ignores any that happen to be configured in the environment.
     """
-    session = requests.Session()
+    return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
 
-    # Retry on 429 (too many requests) and 500 status codes
-    # Exponential backoff with jitter to avoid a thundering herd
-    # Maximum duration would be 5 * 2 ** 6 = 320 seconds
-    retries = Retry(
-        total=6, backoff_factor=5.0, backoff_jitter=1.0, status_forcelist=[429, 500, 502, 503, 504]
+
+def granule_period(key: str) -> tuple[dt.datetime, dt.datetime]:
+    """Read the sensing period a granule covers from its filename"""
+    match = GRANULE_TIMES.search(os.path.basename(key))
+    if match is None:
+        raise RuntimeError(f"Could not read a sensing period from the granule name {key}")
+
+    return tuple(dt.datetime.strptime(value, "%Y%m%dT%H%M%S") for value in match.groups())
+
+
+def list_granules(client, start: dt.datetime, end: dt.datetime) -> list[str]:
+    """
+    List the granules covering a period
+
+    Granules are stored under the UTC date they start on. One that starts late
+    on the preceding day can still run into the period, so that day is listed
+    too and the sensing period from each filename decides what is kept.
+    """
+    keys = []
+
+    date = start.date() - dt.timedelta(days=1)
+    while date <= end.date():
+        prefix = f"{PREFIX}/{date:%Y/%m/%d}/"
+        pages = client.get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix=prefix)
+
+        for page in pages:
+            for item in page.get("Contents", []):
+                granule_start, granule_end = granule_period(item["Key"])
+                if granule_start < end and granule_end > start:
+                    keys.append(item["Key"])
+
+        date += dt.timedelta(days=1)
+
+    return sorted(keys)
+
+
+def intersects_box(path: str, box: list[float]) -> bool:
+    """
+    Check whether a granule holds any observation inside the bounding box
+
+    Read after download rather than before, because every geolocation variable
+    is stored as a single compressed chunk spanning the whole orbit; a ranged
+    read could not fetch less than all of it.
+    """
+    lon_min, lat_min, lon_max, lat_max = box
+
+    with Dataset(path) as ds:
+        latitude = ds["/PRODUCT/latitude"][:]
+        longitude = ds["/PRODUCT/longitude"][:]
+
+    return bool(
+        np.any(
+            (longitude >= lon_min)
+            & (longitude <= lon_max)
+            & (latitude >= lat_min)
+            & (latitude <= lat_max)
+        )
     )
-    session.mount("http://", HTTPAdapter(max_retries=retries))
-    session.mount("https://", HTTPAdapter(max_retries=retries))
-
-    credentials_path = Path("~/.netrc").expanduser()
-    if not credentials_path.exists():
-        # Create the .netrc file with the Earthdata credentials
-        if not os.environ.get("EARTHDATA_USERNAME") or not os.environ.get("EARTHDATA_PASSWORD"):
-            raise click.ClickException(
-                "EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing"
-            )
-
-        print("Writing .netrc file")
-
-        with open(credentials_path, "a") as file:
-            file.write(
-                "machine urs.earthdata.nasa.gov login {} password {}".format(
-                    os.environ.get("EARTHDATA_USERNAME"), os.environ.get("EARTHDATA_PASSWORD")
-                )
-            )
-
-    return session
 
 
-def get_http_data(body: dict[str, Any], session: requests.Session):
-    hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
-    response = session.post(API_URL, json=body, headers=hdrs, timeout=30)
-    response.raise_for_status()
+def output_filename(key: str) -> str:
+    """
+    Derive an output filename from an object key
 
-    content = response.json()
-    # Check for errors
-    if content["type"] == "jsonwsp/fault":
-        print("API Error: faulty request")
-        raise RuntimeError(f"Invalid type found in {content}")
-    return content
+    The `.nc4` extension is what `tropomi_methane_preprocess.py` globs for.
+    """
+    return re.sub(r"\.nc$", "", os.path.basename(key)) + ".nc4"
 
 
 @click.command()
@@ -106,106 +149,30 @@ def get_http_data(body: dict[str, Any], session: requests.Session):
 def fetch_data(config_file, start, end, output):
     """Fetch TropOMI data
 
-    Data from the TropOMI instrument on the Sentinel-5P satellite
-    is available from the NASA GES DISC API.
+    Data from the TropOMI instrument on the Sentinel-5P satellite is available
+    from the public MEEO mirror on AWS.
     """
     config = json.load(config_file)
-    session = create_session()
+    box = config["box"]
+    client = create_client()
 
-    init_data = {
-        "methodname": "subset",
-        "args": {
-            "box": config["box"],
-            "crop": True,
-            "start": start.strftime("%Y-%m-%dT%H:%M:%S"),
-            "end": end.strftime("%Y-%m-%dT%H:%M:%S"),
-            "agent": "SUBSET_LEVEL2",
-            "presentation": "CROP",
-            "role": "subset",
-            "data": [{"datasetId": "S5P_L2__CH4____HiR_2"}],
-        },
-        "type": "jsonwsp/request",
-        "version": "1.0",
-    }
+    print(f"Listing granules between {start} and {end} in s3://{BUCKET}/{PREFIX}")
+    keys = list_granules(client, start, end)
+    print(f"Found {len(keys)} granules")
 
-    print(f"Submitting request to the API: {init_data}")
-
-    response = get_http_data(init_data, session)
-    myJobId = response["result"]["jobId"]
-
-    # Construct JSON WSP request for API method: GetStatus
-    status_request = {
-        "methodname": "GetStatus",
-        "version": "1.0",
-        "type": "jsonwsp/request",
-        "args": {"jobId": myJobId},
-    }
-
-    while response["result"]["Status"] in ["Accepted", "Running"]:
-        sleep(1)
-        response = get_http_data(status_request, session)
-        status = response["result"]["Status"]
-        percent = response["result"]["PercentCompleted"]
-        print("Job status: %s (%d%c complete)" % (status, percent, "%"))
-
-    if response["result"]["Status"] == "Succeeded":
-        print("Job Finished:  {}".format(response["result"]["message"]))
-    else:
-        print("Job Failed: {}".format(response["fault"]["code"]))
-        sys.exit(1)
-
-    # Construct JSON WSP request for API method: GetResult
-    batchsize = 20
-    results_request = {
-        "methodname": "GetResult",
-        "version": "1.0",
-        "type": "jsonwsp/request",
-        "args": {"jobId": myJobId, "count": batchsize, "startIndex": 0},
-    }
-
-    # Retrieve the results in JSON in multiple batches
-    # Initialize variables, then submit the first GetResults request
-    # Add the results from this batch to the list and increment the count
-    results = []
-    count = 0
-    response = get_http_data(results_request, session)
-    count = count + response["result"]["itemsPerPage"]
-    results.extend(response["result"]["items"])
-
-    # Increment the startIndex and keep asking for more results until we have them all
-    total = response["result"]["totalResults"]
-    while count < total:
-        results_request["args"]["startIndex"] += batchsize
-        response = get_http_data(results_request, session)
-        count = count + response["result"]["itemsPerPage"]
-        results.extend(response["result"]["items"])
-
-    # Check on the bookkeeping
-    print("Retrieved %d out of %d expected items" % (len(results), total))
-
-    # Sort the results into documents and URLs
-    docs = []
-    urls = []
-    for item in results:
-        try:
-            if item["start"] and item["end"]:
-                urls.append(item)
-        except Exception:
-            docs.append(item)
-
-    # Print out the documentation links, but do not download them
-    print("\nDocumentation:")
-    for item in docs:
-        print(item["label"] + ": " + item["link"])
-
-    # Use the requests library to submit the HTTP_Services URLs and write out the results.
-    print("\nHTTP_services output:")
+    # TropOMI covers the globe daily, so an empty period means the requested
+    # dates are outside the archive or the mirror has fallen behind. Fail here
+    # rather than leaving the preprocessing step to fail with nothing to read.
+    if not keys:
+        raise click.ClickException(
+            f"No granules found between {start} and {end} in s3://{BUCKET}/{PREFIX}"
+        )
 
     os.makedirs(output, exist_ok=True)
 
     start_str = start.strftime("%Y-%m-%dT%H%M")
     end_str = end.strftime("%Y-%m-%dT%H%M")
-    boxString = "_".join(str(x) for x in config["box"])
+    boxString = "_".join(str(x) for x in box)
     outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
 
     os.makedirs(outDirName, exist_ok=True)
@@ -221,24 +188,26 @@ def fetch_data(config_file, start, end, output):
         except Exception as e:
             print(f"Failed to delete {file_path}. Reason: {e}")
 
-    for item in urls:
-        URL = item["link"]
-        result = session.get(URL, timeout=30)
+    print(f"\nDownloading to {outDirName}:")
+
+    for key in keys:
+        outfn = os.path.join(outDirName, output_filename(key))
+
         try:
-            result.raise_for_status()
-            outfn = os.path.join(outDirName, item["label"])
-            f = open(outfn, "wb")
-            f.write(result.content)
-            f.close()
-            print(outfn)
-        except requests.exceptions.RequestException:
-            print("Error! Status code is %d for this URL:\n%s" % (result.status_code, URL))
-            if result.status_code == 401:
-                print("Unauthorised: Check your Earthdata credentials in the ~/.netrc file")
-            print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")
+            client.download_file(BUCKET, key, outfn)
+        except (BotoCoreError, ClientError) as exc:
+            print(f"Error! Failed to download this object:\ns3://{BUCKET}/{key}")
+            print("The mirror is documented at https://registry.opendata.aws/sentinel5p/")
 
             # Abort if any files fail to download
-            raise click.Abort()
+            raise click.Abort() from exc
+
+        if not intersects_box(outfn, box):
+            os.unlink(outfn)
+            print(f"{os.path.basename(key)}: no overlap with the bounding box, discarded")
+            continue
+
+        print(f"{outfn} ({os.path.getsize(outfn):,} bytes)")
 
     print("Data fetched successfully!")
 
