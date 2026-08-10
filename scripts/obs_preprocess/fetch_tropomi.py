@@ -1,33 +1,51 @@
 """
 Download TropOMI data from the MEEO Sentinel-5P mirror on AWS
 
-Granules are listed from the public `meeo-s5p` S3 bucket, which MEEO publish
-under the AWS Open Data Sponsorship Program. The bucket is anonymously
-readable, so no credentials are needed.
+Granules are found with the Copernicus Data Space Ecosystem (CDSE) catalogue,
+which supports a spatial filter, then downloaded from the public `meeo-s5p` S3
+bucket that MEEO publish under the AWS Open Data Sponsorship Program. Neither
+service needs credentials.
 
-The bucket serves whole granules; there is no server-side subsetting. Granules
-that do not overlap the configured bounding box are discarded after download,
-and the rest are kept intact. `tropomi_methane_preprocess.py` already drops
-observations outside the model grid, so keeping whole granules costs bandwidth
-rather than accuracy. It is also the more defensible input: `destripe_smoothing`
-takes medians along both swath axes, so its results depend on how much of the
-orbit is present.
+The catalogue does the work that the retired NASA GES DISC subsetting service
+used to do, apart from the crop: it matches on each granule's swath footprint,
+so only granules that cross the bounding box are downloaded.
+
+Whichever product the catalogue holds for a date is the one fetched. It keeps a
+single current product per orbit and deletes superseded ones, so it serves
+reprocessed (RPRO) products where ESA's full mission reprocessing replaced the
+originals, and offline (OFFL) products from 2022-07-26 onwards. Because two
+products for one orbit would mean two copies of the same observations, that is
+checked rather than assumed.
+
+The area to search is taken from the domain definition file named by the
+DOMAIN_FILE environment variable, the same file `scripts/alerts/alerts_baseline.py`
+reads, so the fetch follows the domain being run rather than a separately
+maintained bounding box.
+
+Granules are downloaded whole; the bucket offers no server-side subsetting.
+`tropomi_methane_preprocess.py` drops observations outside the model grid, so
+this costs bandwidth rather than accuracy. It is also the better input:
+`destripe_smoothing` estimates the stripe pattern from a median over +/-100
+scanlines along track, and a cropped granule gives that median less to work with
+near the crop boundary.
 """
 
 import datetime as dt
-import json
 import os
 import re
-import shutil
 
 import boto3
 import click
 import dotenv
-import numpy as np
+import pyproj
+import requests
 from botocore import UNSIGNED
 from botocore.client import Config
 from botocore.exceptions import BotoCoreError, ClientError
-from netCDF4 import Dataset
+from requests.adapters import HTTPAdapter, Retry
+
+from openmethane.fourdvar.env import env
+from openmethane.util.domain import domain_bounding_box
 
 # Load environment variables from a local .env file
 dotenv.load_dotenv()
@@ -37,12 +55,35 @@ dotenv.load_dotenv()
 BUCKET = "meeo-s5p"
 REGION = "eu-central-1"
 
-# Offline (OFFL) methane products. The bucket also carries `NRTI` and `RPRO`
-# under the same layout, so switching timeliness is a change to this prefix.
-PREFIX = "OFFL/L2__CH4___"
+# CDSE product catalogue. Searching needs no authentication.
+# See https://documentation.dataspace.copernicus.eu/APIs/OData.html
+CATALOGUE_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
 
-# S5P_OFFL_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
+# Offline and reprocessed methane products. Near real time (NRTI) products are
+# excluded: they cover the same orbits in much shorter granules, so including
+# them alongside the OFFL product for an orbit would fetch the same observations
+# twice.
+PRODUCT_NAMES = "contains(Name,'OFFL_L2__CH4') or contains(Name,'RPRO_L2__CH4')"
+
+# S5P_<timeliness>_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
 GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
+
+# The catalogue matches footprints in longitude and latitude
+CATALOGUE_CRS = pyproj.CRS.from_epsg(4326)
+
+
+def create_session() -> requests.Session:
+    """Create a session for catalogue requests that retries transient failures"""
+    session = requests.Session()
+
+    # Exponential backoff with jitter to avoid a thundering herd
+    # Maximum duration would be 5 * 2 ** 4 = 80 seconds
+    retries = Retry(
+        total=4, backoff_factor=5.0, backoff_jitter=1.0, status_forcelist=[429, 500, 502, 503, 504]
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+
+    return session
 
 
 def create_client():
@@ -55,82 +96,119 @@ def create_client():
     return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
 
 
-def granule_period(key: str) -> tuple[dt.datetime, dt.datetime]:
+def granule_period(name: str) -> tuple[dt.datetime, dt.datetime]:
     """Read the sensing period a granule covers from its filename"""
-    match = GRANULE_TIMES.search(os.path.basename(key))
+    match = GRANULE_TIMES.search(os.path.basename(name))
     if match is None:
-        raise RuntimeError(f"Could not read a sensing period from the granule name {key}")
+        raise RuntimeError(f"Could not read a sensing period from the granule name {name}")
 
     return tuple(dt.datetime.strptime(value, "%Y%m%dT%H%M%S") for value in match.groups())
 
 
-def list_granules(client, start: dt.datetime, end: dt.datetime) -> list[str]:
+def granule_orbit(name: str) -> str:
+    """Read the absolute orbit number from a granule's filename"""
+    return name.split("_")[-4]
+
+
+def granule_precedence(name: str) -> tuple[str, int]:
     """
-    List the granules covering a period
+    Rank a granule against others covering the same orbit
 
-    Granules are stored under the UTC date they start on. One that starts late
-    on the preceding day can still run into the period, so that day is listed
-    too and the sensing period from each filename decides what is kept.
+    Processor version comes first, since a later version supersedes an earlier
+    one. Versions are zero padded, so they compare correctly as strings. Where two
+    products share a version, the reprocessed one wins, having been produced with
+    the whole mission in view rather than within days of the overpass.
     """
-    keys = []
+    version = name.split("_")[-2]
+    timeliness = name.split("_")[1]
 
-    date = start.date() - dt.timedelta(days=1)
-    while date <= end.date():
-        prefix = f"{PREFIX}/{date:%Y/%m/%d}/"
-        pages = client.get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix=prefix)
-
-        for page in pages:
-            for item in page.get("Contents", []):
-                granule_start, granule_end = granule_period(item["Key"])
-                if granule_start < end and granule_end > start:
-                    keys.append(item["Key"])
-
-        date += dt.timedelta(days=1)
-
-    return sorted(keys)
+    return version, timeliness == "RPRO"
 
 
-def intersects_box(path: str, box: list[float]) -> bool:
+def select_one_per_orbit(names: list[str]) -> list[str]:
     """
-    Check whether a granule holds any observation inside the bounding box
+    Keep a single product for each orbit, preferring the most recent
 
-    Read after download rather than before, because every geolocation variable
-    is stored as a single compressed chunk spanning the whole orbit; a ranged
-    read could not fetch less than all of it.
+    Each product covers a whole orbit, so two products for one orbit would put the
+    same observations into the inversion twice. The catalogue publishes one current
+    product per orbit and deletes those a reprocessing supersedes, so this is not
+    expected to do anything; it warns rather than failing if it ever does, because
+    picking the better of the two is not a reason to stop a run.
+    """
+    orbits: dict[str, list[str]] = {}
+    for name in names:
+        orbits.setdefault(granule_orbit(name), []).append(name)
+
+    selected = []
+    for orbit, found in orbits.items():
+        chosen = max(found, key=granule_precedence)
+
+        if len(found) > 1:
+            print(
+                f"Warning: the catalogue returned {len(found)} products for orbit {orbit} "
+                f"({', '.join(sorted(found))}); using {chosen}"
+            )
+
+        selected.append(chosen)
+
+    return selected
+
+
+def object_key(name: str) -> str:
+    """
+    Build the bucket key for a granule the catalogue returned
+
+    The bucket is laid out by timeliness and by the UTC date a granule starts
+    on, both of which are in the filename.
+    """
+    timeliness = name.split("_")[1]
+    start, _ = granule_period(name)
+
+    return f"{timeliness}/L2__CH4___/{start:%Y/%m/%d}/{name}"
+
+
+def search_granules(
+    session: requests.Session, start: dt.datetime, end: dt.datetime, box: list[float]
+) -> list[str]:
+    """
+    Find the granules crossing a bounding box during a period
+
+    The polygon has to close on itself, and its coordinates are EPSG 4326.
     """
     lon_min, lat_min, lon_max, lat_max = box
-
-    with Dataset(path) as ds:
-        latitude = ds["/PRODUCT/latitude"][:]
-        longitude = ds["/PRODUCT/longitude"][:]
-
-    return bool(
-        np.any(
-            (longitude >= lon_min)
-            & (longitude <= lon_max)
-            & (latitude >= lat_min)
-            & (latitude <= lat_max)
-        )
+    polygon = (
+        f"POLYGON(({lon_min} {lat_min},{lon_max} {lat_min},"
+        f"{lon_max} {lat_max},{lon_min} {lat_max},{lon_min} {lat_min}))"
     )
 
+    response = session.get(
+        CATALOGUE_URL,
+        timeout=300,
+        params={
+            "$filter": " and ".join(
+                [
+                    "Collection/Name eq 'SENTINEL-5P'",
+                    f"({PRODUCT_NAMES})",
+                    f"ContentDate/Start lt {end:%Y-%m-%dT%H:%M:%S}.000Z",
+                    f"ContentDate/End gt {start:%Y-%m-%dT%H:%M:%S}.000Z",
+                    f"OData.CSC.Intersects(area=geography'SRID=4326;{polygon}')",
+                ]
+            ),
+            "$orderby": "ContentDate/Start",
+            # Around four granules a day cross the Australian domain, so this is
+            # far more than any sensible period needs and no paging is required.
+            "$top": 1000,
+            "$select": "Name",
+        },
+    )
+    response.raise_for_status()
 
-def output_filename(key: str) -> str:
-    """
-    Derive an output filename from an object key
+    names = [item["Name"] for item in response.json()["value"]]
 
-    The `.nc4` extension is what `tropomi_methane_preprocess.py` globs for.
-    """
-    return re.sub(r"\.nc$", "", os.path.basename(key)) + ".nc4"
+    return [object_key(name) for name in select_one_per_orbit(names)]
 
 
 @click.command()
-@click.option(
-    "-c",
-    "--config-file",
-    help="Path to configuration file",
-    default="config/obs_preprocess/config.json",
-    type=click.File(),
-)
 @click.option(
     "-s",
     "--start",
@@ -146,52 +224,48 @@ def output_filename(key: str) -> str:
     required=True,
 )
 @click.argument("output", type=click.Path(file_okay=False, dir_okay=True, writable=True))
-def fetch_data(config_file, start, end, output):
+def fetch_data(start, end, output):
     """Fetch TropOMI data
 
-    Data from the TropOMI instrument on the Sentinel-5P satellite is available
-    from the public MEEO mirror on AWS.
-    """
-    config = json.load(config_file)
-    box = config["box"]
-    client = create_client()
+    Data from the TropOMI instrument on the Sentinel-5P satellite is found with
+    the CDSE catalogue and downloaded from the public MEEO mirror on AWS.
 
-    print(f"Listing granules between {start} and {end} in s3://{BUCKET}/{PREFIX}")
-    keys = list_granules(client, start, end)
+    The area to fetch comes from the domain file named by DOMAIN_FILE.
+    """
+    domain_file = env.path("DOMAIN_FILE")
+    box = domain_bounding_box(domain_file, CATALOGUE_CRS)
+    print(f"Domain {domain_file} covers {box}")
+
+    print(f"Searching the CDSE catalogue between {start} and {end} within {box}")
+    keys = search_granules(create_session(), start, end, box)
     print(f"Found {len(keys)} granules")
 
     # TropOMI covers the globe daily, so an empty period means the requested
-    # dates are outside the archive or the mirror has fallen behind. Fail here
+    # dates fall outside the archive. Offline products lag acquisition by two to
+    # three days, so the most recent dates are not published yet. Fail here
     # rather than leaving the preprocessing step to fail with nothing to read.
     if not keys:
         raise click.ClickException(
-            f"No granules found between {start} and {end} in s3://{BUCKET}/{PREFIX}"
+            f"No granules found between {start} and {end} within {box}. Products are "
+            "catalogued from 2018-04-30, and lag acquisition by two to three days."
         )
+
+    client = create_client()
 
     os.makedirs(output, exist_ok=True)
 
-    start_str = start.strftime("%Y-%m-%dT%H%M")
-    end_str = end.strftime("%Y-%m-%dT%H%M")
-    boxString = "_".join(str(x) for x in box)
-    outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
-
-    os.makedirs(outDirName, exist_ok=True)
-
-    # empty output directory if necessary
-    for filename in os.listdir(outDirName):
-        file_path = os.path.join(outDirName, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
-
-    print(f"\nDownloading to {outDirName}:")
+    print(f"\nDownloading to {output}:")
 
     for key in keys:
-        outfn = os.path.join(outDirName, output_filename(key))
+        # Granules keep the name they have in the bucket, which is unique and
+        # carries the sensing period, so nothing here has to invent one.
+        outfn = os.path.join(output, os.path.basename(key))
+
+        # `download_file` writes to a temporary name and renames on success, so a
+        # file being present means it downloaded completely and can be reused.
+        if os.path.exists(outfn):
+            print(f"{outfn} already present, skipping")
+            continue
 
         try:
             client.download_file(BUCKET, key, outfn)
@@ -201,11 +275,6 @@ def fetch_data(config_file, start, end, output):
 
             # Abort if any files fail to download
             raise click.Abort() from exc
-
-        if not intersects_box(outfn, box):
-            os.unlink(outfn)
-            print(f"{os.path.basename(key)}: no overlap with the bounding box, discarded")
-            continue
 
         print(f"{outfn} ({os.path.getsize(outfn):,} bytes)")
 
