@@ -33,13 +33,21 @@ def test_object_key_rpro():
     assert fetch_tropomi.object_key(RPRO) == f"RPRO/L2__CH4___/2022/07/01/{RPRO}"
 
 
-def test_reject_duplicate_orbits_passes_distinct_orbits():
-    assert fetch_tropomi.reject_duplicate_orbits([OFFL, RPRO]) == [OFFL, RPRO]
+def test_select_one_per_orbit_keeps_distinct_orbits():
+    assert fetch_tropomi.select_one_per_orbit([OFFL, RPRO]) == [OFFL, RPRO]
 
 
-def test_reject_duplicate_orbits_rejects_two_versions_of_one_orbit():
+def test_select_one_per_orbit_prefers_the_later_processor_version(capsys):
     """Two products for one orbit would put the same observations in twice"""
     superseded = RPRO.replace("_03_020400_", "_02_020301_")
 
-    with pytest.raises(RuntimeError, match="more than one product per orbit.*orbit 24427"):
-        fetch_tropomi.reject_duplicate_orbits([RPRO, superseded])
+    assert fetch_tropomi.select_one_per_orbit([superseded, RPRO]) == [RPRO]
+    assert "2 products for orbit 24427" in capsys.readouterr().out
+
+
+def test_select_one_per_orbit_prefers_reprocessed_at_the_same_version():
+    """An offline and a reprocessed product of one orbit resolve to the latter"""
+    offline = RPRO.replace("_RPRO_", "_OFFL_")
+
+    assert fetch_tropomi.select_one_per_orbit([offline, RPRO]) == [RPRO]
+    assert fetch_tropomi.select_one_per_orbit([RPRO, offline]) == [RPRO]

@@ -17,6 +17,11 @@ originals, and offline (OFFL) products from 2022-07-26 onwards. Because two
 products for one orbit would mean two copies of the same observations, that is
 checked rather than assumed.
 
+The area to search is taken from the domain definition file named by the
+DOMAIN_FILE environment variable, the same file `scripts/alerts/alerts_baseline.py`
+reads, so the fetch follows the domain being run rather than a separately
+maintained bounding box.
+
 Granules are downloaded whole; the bucket offers no server-side subsetting.
 `tropomi_methane_preprocess.py` drops observations outside the model grid, so
 this costs bandwidth rather than accuracy. It is also the better input:
@@ -26,19 +31,21 @@ near the crop boundary.
 """
 
 import datetime as dt
-import json
 import os
 import re
-import shutil
 
 import boto3
 import click
 import dotenv
+import pyproj
 import requests
 from botocore import UNSIGNED
 from botocore.client import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from requests.adapters import HTTPAdapter, Retry
+
+from openmethane.fourdvar.env import env
+from openmethane.util.domain import domain_bounding_box
 
 # Load environment variables from a local .env file
 dotenv.load_dotenv()
@@ -60,6 +67,9 @@ PRODUCT_NAMES = "contains(Name,'OFFL_L2__CH4') or contains(Name,'RPRO_L2__CH4')"
 
 # S5P_<timeliness>_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
 GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
+
+# The catalogue matches footprints in longitude and latitude
+CATALOGUE_CRS = pyproj.CRS.from_epsg(4326)
 
 
 def create_session() -> requests.Session:
@@ -100,28 +110,48 @@ def granule_orbit(name: str) -> str:
     return name.split("_")[-4]
 
 
-def reject_duplicate_orbits(names: list[str]) -> list[str]:
+def granule_precedence(name: str) -> tuple[str, int]:
     """
-    Fail if the catalogue returned more than one product for an orbit
+    Rank a granule against others covering the same orbit
 
-    Each product covers a whole orbit, so two products for one orbit means two
-    copies of the same observations, which the inversion would count twice. The
-    catalogue keeps a single current product per orbit, but that is a property of
-    what it publishes rather than something the query guarantees.
+    Processor version comes first, since a later version supersedes an earlier
+    one. Versions are zero padded, so they compare correctly as strings. Where two
+    products share a version, the reprocessed one wins, having been produced with
+    the whole mission in view rather than within days of the overpass.
+    """
+    version = name.split("_")[-2]
+    timeliness = name.split("_")[1]
+
+    return version, timeliness == "RPRO"
+
+
+def select_one_per_orbit(names: list[str]) -> list[str]:
+    """
+    Keep a single product for each orbit, preferring the most recent
+
+    Each product covers a whole orbit, so two products for one orbit would put the
+    same observations into the inversion twice. The catalogue publishes one current
+    product per orbit and deletes those a reprocessing supersedes, so this is not
+    expected to do anything; it warns rather than failing if it ever does, because
+    picking the better of the two is not a reason to stop a run.
     """
     orbits: dict[str, list[str]] = {}
     for name in names:
         orbits.setdefault(granule_orbit(name), []).append(name)
 
-    duplicated = {orbit: found for orbit, found in orbits.items() if len(found) > 1}
-    if duplicated:
-        detail = "; ".join(
-            f"orbit {orbit}: {', '.join(sorted(found))}"
-            for orbit, found in sorted(duplicated.items())
-        )
-        raise RuntimeError(f"The catalogue returned more than one product per orbit. {detail}")
+    selected = []
+    for orbit, found in orbits.items():
+        chosen = max(found, key=granule_precedence)
 
-    return names
+        if len(found) > 1:
+            print(
+                f"Warning: the catalogue returned {len(found)} products for orbit {orbit} "
+                f"({', '.join(sorted(found))}); using {chosen}"
+            )
+
+        selected.append(chosen)
+
+    return selected
 
 
 def object_key(name: str) -> str:
@@ -175,17 +205,10 @@ def search_granules(
 
     names = [item["Name"] for item in response.json()["value"]]
 
-    return [object_key(name) for name in reject_duplicate_orbits(names)]
+    return [object_key(name) for name in select_one_per_orbit(names)]
 
 
 @click.command()
-@click.option(
-    "-c",
-    "--config-file",
-    help="Path to configuration file",
-    default="config/obs_preprocess/config.json",
-    type=click.File(),
-)
 @click.option(
     "-s",
     "--start",
@@ -201,14 +224,17 @@ def search_granules(
     required=True,
 )
 @click.argument("output", type=click.Path(file_okay=False, dir_okay=True, writable=True))
-def fetch_data(config_file, start, end, output):
+def fetch_data(start, end, output):
     """Fetch TropOMI data
 
     Data from the TropOMI instrument on the Sentinel-5P satellite is found with
     the CDSE catalogue and downloaded from the public MEEO mirror on AWS.
+
+    The area to fetch comes from the domain file named by DOMAIN_FILE.
     """
-    config = json.load(config_file)
-    box = config["box"]
+    domain_file = env.path("DOMAIN_FILE")
+    box = domain_bounding_box(domain_file, CATALOGUE_CRS)
+    print(f"Domain {domain_file} covers {box}")
 
     print(f"Searching the CDSE catalogue between {start} and {end} within {box}")
     keys = search_granules(create_session(), start, end, box)
@@ -228,29 +254,18 @@ def fetch_data(config_file, start, end, output):
 
     os.makedirs(output, exist_ok=True)
 
-    start_str = start.strftime("%Y-%m-%dT%H%M")
-    end_str = end.strftime("%Y-%m-%dT%H%M")
-    boxString = "_".join(str(x) for x in box)
-    outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
-
-    os.makedirs(outDirName, exist_ok=True)
-
-    # empty output directory if necessary
-    for filename in os.listdir(outDirName):
-        file_path = os.path.join(outDirName, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
-
-    print(f"\nDownloading to {outDirName}:")
+    print(f"\nDownloading to {output}:")
 
     for key in keys:
-        # The `.nc4` extension is what tropomi_methane_preprocess.py globs for
-        outfn = os.path.join(outDirName, re.sub(r"\.nc$", "", os.path.basename(key)) + ".nc4")
+        # Granules keep the name they have in the bucket, which is unique and
+        # carries the sensing period, so nothing here has to invent one.
+        outfn = os.path.join(output, os.path.basename(key))
+
+        # `download_file` writes to a temporary name and renames on success, so a
+        # file being present means it downloaded completely and can be reused.
+        if os.path.exists(outfn):
+            print(f"{outfn} already present, skipping")
+            continue
 
         try:
             client.download_file(BUCKET, key, outfn)

@@ -2,10 +2,13 @@ import datetime as dt
 import os
 
 import pytest
+import xarray as xr
 from click.testing import CliRunner
 from scripts.obs_preprocess import fetch_tropomi
 
-AUST_BOX = [104.0, -47.0, 162.0, -6.0]
+from openmethane.util.domain import domain_bounding_box
+
+AUST_BOX = [104.963, -47.056, 161.641, -6.621]
 
 # One orbit crosses the au-test domain on each of these dates. The catalogue
 # filters on the swath footprint, so only that orbit is returned and downloaded.
@@ -18,9 +21,8 @@ FETCH_CASES = [
         (
             "2022-07-01",
             "2022-07-02",
-            "2022-07-01T0000_2022-07-02T0000_148.0_-23.5_150.0_-22.0",
             "S5P_RPRO_L2__CH4____20220701T024730_20220701T042859_24427_03_020400"
-            "_20230131T104028.nc4",
+            "_20230131T104028.nc",
         ),
         id="reprocessed",
     ),
@@ -28,56 +30,91 @@ FETCH_CASES = [
         (
             "2022-12-07",
             "2022-12-08",
-            "2022-12-07T0000_2022-12-08T0000_148.0_-23.5_150.0_-22.0",
             "S5P_OFFL_L2__CH4____20221207T025418_20221207T043548_26683_03_020400"
-            "_20221213T140313.nc4",
+            "_20221213T140313.nc",
         ),
         id="offline",
     ),
 ]
 
 
+@pytest.fixture
+def au_test_domain(root_dir, monkeypatch):
+    """Point DOMAIN_FILE at the au-test domain, as the docker-test target does"""
+    domain_file = root_dir / "data" / "domains" / "au-test" / "v1" / "domain.au-test.nc"
+    if not domain_file.exists():
+        pytest.skip(f"{domain_file} is missing; run `make fetch-test-data`")
+
+    monkeypatch.setenv("DOMAIN_FILE", str(domain_file))
+
+    return domain_file
+
+
+def test_domain_bounding_box_covers_the_real_domain(au_test_domain):
+    """
+    The box has to cover the whole domain, not just its cell centres
+
+    tropomi_methane_preprocess.py accepts observations out to the outermost cell
+    corners, so a box drawn through the centres would exclude granules that only
+    clip the edge of the domain.
+    """
+    with xr.open_dataset(au_test_domain) as ds:
+        latitude = ds["lat"].to_numpy()
+        longitude = ds["lon"].to_numpy()
+
+    lon_min, lat_min, lon_max, lat_max = domain_bounding_box(
+        au_test_domain, fetch_tropomi.CATALOGUE_CRS
+    )
+
+    assert lon_min < longitude.min()
+    assert lat_min < latitude.min()
+    assert lon_max > longitude.max()
+    assert lat_max > latitude.max()
+
+
 # These hit the CDSE catalogue and the S3 bucket
 @pytest.mark.parametrize("case", FETCH_CASES)
-def test_fetch(tmpdir, root_dir, case):
-    start, end, output_dir, expected_granule = case
+def test_fetch(tmpdir, au_test_domain, case):
+    start, end, expected_granule = case
 
     runner = CliRunner()
     result = runner.invoke(
         fetch_tropomi.fetch_data,
-        [
-            "-c",
-            str(root_dir / "config" / "obs_preprocess" / "config.austtest.json"),
-            "-s",
-            f"{start}T00:00:00",
-            "-e",
-            f"{end}T00:00:00",
-            str(tmpdir),
-        ],
+        ["-s", f"{start}T00:00:00", "-e", f"{end}T00:00:00", str(tmpdir)],
     )
 
     assert result.exit_code == 0, result.output
     assert "Data fetched successfully!" in result.output
 
-    # Check that the expected files are created
-    assert os.listdir(tmpdir) == [output_dir]
-    assert os.listdir(tmpdir / output_dir) == [expected_granule]
+    # Granules keep their name from the bucket, directly in the output directory
+    assert os.listdir(tmpdir) == [expected_granule]
+
+
+# This hits the CDSE catalogue and the S3 bucket
+def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
+    """A granule already downloaded is left alone, so a rerun costs nothing"""
+    start, end, expected_granule = FETCH_CASES[1].values[0]
+    arguments = ["-s", f"{start}T00:00:00", "-e", f"{end}T00:00:00", str(tmpdir)]
+
+    runner = CliRunner()
+    assert runner.invoke(fetch_tropomi.fetch_data, arguments).exit_code == 0
+
+    downloaded = tmpdir / expected_granule
+    before = (downloaded.stat().size, downloaded.stat().mtime)
+
+    result = runner.invoke(fetch_tropomi.fetch_data, arguments)
+
+    assert result.exit_code == 0, result.output
+    assert "already present, skipping" in result.output
+    assert (downloaded.stat().size, downloaded.stat().mtime) == before
 
 
 # This hits the CDSE catalogue with a period outside the archive
-def test_fetch_no_granules(tmpdir, root_dir):
+def test_fetch_no_granules(tmpdir, au_test_domain):
     runner = CliRunner()
     result = runner.invoke(
         fetch_tropomi.fetch_data,
-        [
-            "-c",
-            str(root_dir / "config" / "obs_preprocess" / "config.austtest.json"),
-            "-s",
-            "1900-07-01",
-            "-e",
-            "1900-07-02",
-            str(tmpdir),
-        ],
+        ["-s", "1900-07-01", "-e", "1900-07-02", str(tmpdir)],
     )
 
     assert result.exit_code == 1, result.output

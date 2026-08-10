@@ -18,6 +18,7 @@ The following environment variables are configurable:
 | CTM_DIR            | path | Output directory for the CMAQ template files                       | N/A                                        |
 | WRF_DIR            | path | Output directory for the WRF outputs (from setup-wrf)              | N/A                                        |
 | GEO_DIR            | path | Directory containing the `geo_em.d??.nc` file (from setup-wrf)     | N/A                                        |
+| DOMAIN_FILE        | path | Path to the domain definition file (`domain.{DOMAIN_NAME}.nc`)     | N/A                                        |
 | CHK_PATH           | path | Directory to store CMAQ checkpoint files                           | {CMAQ_BASE}/chkpnt                         |
 | OBS_FILE_GLOB      | str  | Glob string to match the observation files relative to {STORE_PATH} | "input/test_obs.pic.gz"                    |
 | PRIOR_FILE         | path | Path to the concentration prior file                               | N/A                                        |
@@ -55,7 +56,14 @@ Requests to the bucket are sent unsigned, so any AWS credentials in the
 environment are ignored.
 
 The catalogue matches on each granule's swath footprint, so only granules
-crossing the bounding box in the config file are downloaded.
+crossing the domain are downloaded.
+
+The area to fetch comes from the domain definition file named by `DOMAIN_FILE`,
+the same file `scripts/alerts/alerts_baseline.py` reads, so the fetch follows the
+domain being run. `openmethane.util.domain.domain_bounding_box` reads the box from
+the `x_bounds` and `y_bounds` cell edges and converts it with the projection the
+domain declares through its CF grid mapping variable, so it covers the domain's
+full extent rather than only its cell centres.
 
 Whichever product the catalogue holds for a date is the one fetched. It keeps a
 single current product per orbit and deletes superseded ones, recording a
@@ -67,14 +75,21 @@ to be configured to choose between them.
 Near real time (`NRTI`) products are excluded, because they cover the same orbits
 in much shorter granules and would put the same observations into the inversion
 twice. Since two products for one orbit would do the same, `fetch_tropomi.py`
-checks for that and fails rather than assuming the catalogue never returns them.
+keeps only one per orbit, preferring the later processor version, and warns when it
+has to choose.
 
 Products are catalogued from 2018-04-30 and lag acquisition by about 2 to 3 days,
 so the most recent days are not yet available.
 
 Granules are downloaded whole, since the bucket offers no server-side subsetting.
 `tropomi_methane_preprocess.py` then drops the observations that fall outside the
-model grid.
+model grid, and filters them to `START_DATE` and `END_DATE`.
+
+Granules are written straight into the output directory under the names they have
+in the bucket, and any already present are left alone, so a fetch interrupted part
+way only downloads what is missing when it is run again. Pass the resulting
+directory to `tropomi_methane_preprocess.py` as a **quoted** `--source` glob, so
+that it expands the glob rather than the shell.
 
 ## CAMS Login
 Used to fetch CAMS data during the cmaq_preprocess step.
