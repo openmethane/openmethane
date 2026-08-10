@@ -45,7 +45,7 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 
 .PHONY: fetch-domains
 ## Fetch the WRF geometry and Open Methane domain files
-fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/domain.au-test.nc
+fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
@@ -83,7 +83,7 @@ docker-test: build fetch-test-data ## Run the tests
 
 ## Fetch the domain files and CAMS data required for tests
 .PHONY: fetch-test-data
-fetch-test-data: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/domain.au-test.nc
+fetch-test-data: data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
