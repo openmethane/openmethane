@@ -113,16 +113,21 @@ jobs:
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+      - name: Set up data path
+        id: data-path
+        run: |
+          mkdir $RUNNER_TEMP/data
+          echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Cache test data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
-            /data/cams
-            /data/domains
+            ${{ steps.data-path.outputs.DATA_PATH }}/cams
+            ${{ steps.data-path.outputs.DATA_PATH }}/domains
           key: test-data
       - name: Run pytest integration tests
         run: |
-          docker run --rm -v /data:/opt/project/data \
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
             -e TARGET=docker-test \
             -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
             -e CDSAPI_URL=https://ads.atmosphere.copernicus.eu/api \
@@ -141,9 +146,14 @@ jobs:
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+      - name: Set up data path
+        id: data-path
+        run: |
+          mkdir $RUNNER_TEMP/data
+          echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Run e2e test
         run: |
-          docker run --rm -v /data:/opt/project/data \
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
             -e TARGET=docker-test \
             -e STORE_PATH=/opt/project/data \
             -e NUM_PROC_COLS=1 \
@@ -162,7 +172,7 @@ jobs:
         # @see: https://github.com/openmethane/openmethane/issues/216
         if: false
         run: |
-          docker run --rm -v /data:/opt/project/data \
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
             -e STORE_PATH=/opt/project/data \
             ${{ needs.build.outputs.registry-image-id }} \
             /bin/bash -c $'
@@ -177,7 +187,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-artifacts
-          path: /data
+          path: ${{ steps.data-path.outputs.DATA_PATH }}
           retention-days: 5
 
   # Determine additional tags to apply to the image
