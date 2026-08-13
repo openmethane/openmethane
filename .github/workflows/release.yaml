@@ -28,7 +28,7 @@ jobs:
       release-version: ${{ steps.release-version.outputs.RELEASE_VERSION }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.PAT }}
@@ -38,11 +38,11 @@ jobs:
       # dependencies, which also means that we get a test that we can import
       # the package with only the compulsory dependencies installed for free)
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.0.0
         with:
           enable-cache: true
       - name: Determine release version
@@ -95,16 +95,16 @@ jobs:
     needs: bump-version
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.0.0
         with:
           enable-cache: true
       - name: Build package
@@ -112,7 +112,7 @@ jobs:
           uv build
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.bump-version.outputs.release-version }}
           body: ${{ needs.bump-version.outputs.release-notes }}
