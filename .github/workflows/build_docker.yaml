@@ -32,15 +32,15 @@ jobs:
     steps:
       # Setup repo and docker utils
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Login to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Extract version from pyproject.toml
         id: version
@@ -49,7 +49,7 @@ jobs:
           echo "version=v$PACKAGE_VERSION" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
           # tag as `build-XYZ` since images need to be tagged to push
@@ -66,7 +66,7 @@ jobs:
             org.opencontainers.image.vendor="The Superpower Institute"
 
       - name: Build and push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         id: build
         with:
           platforms: ${{ matrix.platform }}
@@ -89,7 +89,7 @@ jobs:
     needs: build
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Check built container package version
         if: startsWith(github.event.ref, 'refs/tags/v')
         run: |
@@ -112,7 +112,7 @@ jobs:
     needs: build
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up data path
         id: data-path
         run: |
@@ -145,7 +145,7 @@ jobs:
     needs: build
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up data path
         id: data-path
         run: |
@@ -184,7 +184,7 @@ jobs:
 
       - name: Upload CMAQ artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-artifacts
           path: ${{ steps.data-path.outputs.DATA_PATH }}
@@ -198,7 +198,7 @@ jobs:
       tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # check if the triggering ref is a vX.Y.Z tag and NOT vX.Y.Za0 (prerelease)
       - name: Check for stable release
@@ -211,7 +211,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
           tags: |
@@ -229,7 +229,7 @@ jobs:
       packages: write
     steps:
       - name: Login to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -279,7 +279,7 @@ jobs:
       ECR_REGISTRY: ${{ matrix.account_id }}.dkr.ecr.ap-southeast-2.amazonaws.com
     steps:
       - name: Login to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
