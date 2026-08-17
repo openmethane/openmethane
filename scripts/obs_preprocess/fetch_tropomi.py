@@ -2,32 +2,13 @@
 Download TropOMI data from the MEEO Sentinel-5P mirror on AWS
 
 Granules are found with the Copernicus Data Space Ecosystem (CDSE) catalogue,
-which supports a spatial filter, then downloaded from the public `meeo-s5p` S3
-bucket that MEEO publish under the AWS Open Data Sponsorship Program. Neither
-service needs credentials.
+which is queried for granules that intersect with the domain bounding box in
+the period of interest. Granules are then downloaded by name from the public
+`meeo-s5p` S3 bucket published by MEEO under the AWS Open Data Sponsorship
+Program. Neither service needs credentials.
 
-The catalogue does the work that the retired NASA GES DISC subsetting service
-used to do, apart from the crop: it matches on each granule's swath footprint,
-so only granules that cross the bounding box are downloaded.
-
-Whichever product the catalogue holds for a date is the one fetched. It keeps a
-single current product per orbit and deletes superseded ones, so it serves
-reprocessed (RPRO) products where ESA's full mission reprocessing replaced the
-originals, and offline (OFFL) products from 2022-07-26 onwards. Because two
-products for one orbit would mean two copies of the same observations, that is
-checked rather than assumed.
-
-The area to search is taken from the domain definition file named by the
-DOMAIN_FILE environment variable, the same file `scripts/alerts/alerts_baseline.py`
-reads, so the fetch follows the domain being run rather than a separately
-maintained bounding box.
-
-Granules are downloaded whole; the bucket offers no server-side subsetting.
-`tropomi_methane_preprocess.py` drops observations outside the model grid, so
-this costs bandwidth rather than accuracy. It is also the better input:
-`destripe_smoothing` estimates the stripe pattern from a median over +/-100
-scanlines along track, and a cropped granule gives that median less to work with
-near the crop boundary.
+Granules are downloaded whole, unlike the previous NASA GES DISC subsetting
+service.
 """
 
 import datetime as dt
@@ -58,17 +39,6 @@ REGION = "eu-central-1"
 # CDSE product catalogue. Searching needs no authentication.
 # See https://documentation.dataspace.copernicus.eu/APIs/OData.html
 CATALOGUE_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-
-# Offline and reprocessed methane products. Near real time (NRTI) products are
-# excluded: they cover the same orbits in much shorter granules, so including
-# them alongside the OFFL product for an orbit would fetch the same observations
-# twice.
-PRODUCT_NAMES = "contains(Name,'OFFL_L2__CH4') or contains(Name,'RPRO_L2__CH4')"
-
-# S5P_<timeliness>_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
-GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
-
-# The catalogue matches footprints in longitude and latitude
 CATALOGUE_CRS = pyproj.CRS.from_epsg(4326)
 
 
@@ -95,6 +65,8 @@ def create_client():
     """
     return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
 
+# S5P_<timeliness>_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
+GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
 
 def granule_period(name: str) -> tuple[dt.datetime, dt.datetime]:
     """Read the sensing period a granule covers from its filename"""
@@ -181,6 +153,12 @@ def search_granules(
         f"{lon_max} {lat_max},{lon_min} {lat_max},{lon_min} {lat_min}))"
     )
 
+    # Offline (OFFL) and reprocessed (RPRO) methane products. OFFL is how each
+    # granule is initially released. If a granule appears in RPRO it means a
+    # major improvement to the model, and OFFL is deprecated for that granule.
+    # Near real time (NRTI) products are excluded.
+    product_names = "contains(Name,'OFFL_L2__CH4') or contains(Name,'RPRO_L2__CH4')"
+
     response = session.get(
         CATALOGUE_URL,
         timeout=300,
@@ -188,7 +166,7 @@ def search_granules(
             "$filter": " and ".join(
                 [
                     "Collection/Name eq 'SENTINEL-5P'",
-                    f"({PRODUCT_NAMES})",
+                    f"({product_names})",
                     f"ContentDate/Start lt {end:%Y-%m-%dT%H:%M:%S}.000Z",
                     f"ContentDate/End gt {start:%Y-%m-%dT%H:%M:%S}.000Z",
                     f"OData.CSC.Intersects(area=geography'SRID=4326;{polygon}')",
