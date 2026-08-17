@@ -15,7 +15,7 @@ WGS84 = pyproj.CRS.from_epsg(4326)
 # Continental scale, like the aust10km domain. The projected edges of a domain
 # this size curve appreciably in a geographic CRS, which the conversion has to
 # account for.
-CELL = 1_000_000.0
+CELL = 1000000.0
 X_CENTRES = np.arange(-2, 3) * CELL
 Y_CENTRES = np.arange(-2, 3) * CELL
 
