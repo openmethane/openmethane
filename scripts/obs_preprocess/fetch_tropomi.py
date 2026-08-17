@@ -169,7 +169,7 @@ def search_granules(
                     f"({product_names})",
                     f"ContentDate/Start lt {end:%Y-%m-%dT%H:%M:%S}.000Z",
                     f"ContentDate/End gt {start:%Y-%m-%dT%H:%M:%S}.000Z",
-                    f"OData.CSC.Intersects(area=geography'SRID=4326;{polygon}')",
+                    f"OData.CSC.Intersects(area=geography'SRID={CATALOGUE_CRS.to_epsg()};{polygon}')",
                 ]
             ),
             "$orderby": "ContentDate/Start",
