@@ -18,6 +18,7 @@ The following environment variables are configurable:
 | CTM_DIR            | path | Output directory for the CMAQ template files                       | N/A                                        |
 | WRF_DIR            | path | Output directory for the WRF outputs (from setup-wrf)              | N/A                                        |
 | GEO_DIR            | path | Directory containing the `geo_em.d??.nc` file (from setup-wrf)     | N/A                                        |
+| DOMAIN_FILE        | path | Path to the domain definition file (`domain.{DOMAIN_NAME}.nc`)     | N/A                                        |
 | CHK_PATH           | path | Directory to store CMAQ checkpoint files                           | {CMAQ_BASE}/chkpnt                         |
 | OBS_FILE_GLOB      | str  | Glob string to match the observation files relative to {STORE_PATH} | "input/test_obs.pic.gz"                    |
 | PRIOR_FILE         | path | Path to the concentration prior file                               | N/A                                        |
@@ -39,18 +40,6 @@ For values with a default of N/A an exception will be raised if
 the environment variable is not defined.
 
 `{CMAQ_BASE}` represents the directory that contains the CMAQ output (`$STORE_PATH/run-cmaq`).
-
-
-## EarthData Login
-
-The `scripts/obs_preprocess/fetch_tropomi.py` script requires an EarthData login to download the TropOMI data
-with permission to access the GES DISC data archive.
-A tutorial for creating an account and accepting the licence agreements is available
-[here](https://disc.gsfc.nasa.gov/earthdata-login).
-
-Once you have a login, 
-the `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables can added to the `.env` file.
-These will be used by the `fetch_tropomi.py` script to authenticate with the GES DISC data archive.
 
 ## CAMS Login
 Used to fetch CAMS data during the cmaq_preprocess step.

@@ -27,6 +27,5 @@
 module use /g/data3/hh5/public/modules
 module load conda/analysis3
 python3 fetch_tropomi.py \
-  --config-file ../../config/obs_preprocess/config.json \
   --start-date 2022-07-01 \
   --end-date 2022-07-30

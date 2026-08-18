@@ -1,93 +1,192 @@
 """
-Download TropOMI data from the NASA GES DISC API
+Download TropOMI data from the MEEO Sentinel-5P mirror on AWS
 
-Uses a bounding box to limit the required data.
+Granules are found with the Copernicus Data Space Ecosystem (CDSE) catalogue,
+which is queried for granules that intersect with the domain bounding box in
+the period of interest. Granules are then downloaded by name from the public
+`meeo-s5p` S3 bucket published by MEEO under the AWS Open Data Sponsorship
+Program. Neither service needs credentials.
+
+Granules are downloaded whole, unlike the previous NASA GES DISC subsetting
+service.
 """
 
-import json
+import datetime as dt
 import os
-import shutil
-import sys
-from pathlib import Path
-from time import sleep
-from typing import Any
+import re
 
+import boto3
 import click
 import dotenv
+import pyproj
 import requests
+from botocore import UNSIGNED
+from botocore.client import Config
+from botocore.exceptions import BotoCoreError, ClientError
 from requests.adapters import HTTPAdapter, Retry
+
+from openmethane.fourdvar.env import env
+from openmethane.util.domain import domain_bounding_box
 
 # Load environment variables from a local .env file
 dotenv.load_dotenv()
 
-API_URL = "https://disc.gsfc.nasa.gov/service/subset/jsonwsp"
+# Public mirror of the ESA Sentinel-5P archive, maintained by MEEO
+# See https://registry.opendata.aws/sentinel5p/
+BUCKET = "meeo-s5p"
+REGION = "eu-central-1"
+
+# CDSE product catalogue. Searching needs no authentication.
+# See https://documentation.dataspace.copernicus.eu/APIs/OData.html
+CATALOGUE_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+CATALOGUE_CRS = pyproj.CRS.from_epsg(4326)
 
 
 def create_session() -> requests.Session:
-    """
-    Create a new requests session
-
-    Creates the .netrc file with the Earthdata credentials if it does not exist.
-    Uses the EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables if available
-    to setup the required `~/.netrc` file.
-    See [Data Access](https://disc.gsfc.nasa.gov/information/documents?title=Data%20Access)
-    for more information about accessing NASA data.
-
-    In the case where the `.netrc` file already exists,
-    users must add the required line manually.
-    """
+    """Create a session for catalogue requests that retries transient failures"""
     session = requests.Session()
 
-    # Retry on 429 (too many requests) and 500 status codes
     # Exponential backoff with jitter to avoid a thundering herd
-    # Maximum duration would be 5 * 2 ** 6 = 320 seconds
+    # Maximum duration would be 5 * 2 ** 4 = 80 seconds
     retries = Retry(
-        total=6, backoff_factor=5.0, backoff_jitter=1.0, status_forcelist=[429, 500, 502, 503, 504]
+        total=4, backoff_factor=5.0, backoff_jitter=1.0, status_forcelist=[429, 500, 502, 503, 504]
     )
-    session.mount("http://", HTTPAdapter(max_retries=retries))
     session.mount("https://", HTTPAdapter(max_retries=retries))
-
-    credentials_path = Path("~/.netrc").expanduser()
-    if not credentials_path.exists():
-        # Create the .netrc file with the Earthdata credentials
-        if not os.environ.get("EARTHDATA_USERNAME") or not os.environ.get("EARTHDATA_PASSWORD"):
-            raise click.ClickException(
-                "EARTHDATA_USERNAME or EARTHDATA_PASSWORD environment variables missing"
-            )
-
-        print("Writing .netrc file")
-
-        with open(credentials_path, "a") as file:
-            file.write(
-                "machine urs.earthdata.nasa.gov login {} password {}".format(
-                    os.environ.get("EARTHDATA_USERNAME"), os.environ.get("EARTHDATA_PASSWORD")
-                )
-            )
 
     return session
 
 
-def get_http_data(body: dict[str, Any], session: requests.Session):
-    hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
-    response = session.post(API_URL, json=body, headers=hdrs, timeout=30)
+def create_client():
+    """
+    Create an S3 client for anonymous access to the public bucket
+
+    Requests are unsigned so that the client works without AWS credentials, and
+    ignores any that happen to be configured in the environment.
+    """
+    return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
+
+# S5P_<timeliness>_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
+GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
+
+def granule_period(name: str) -> tuple[dt.datetime, dt.datetime]:
+    """Read the sensing period a granule covers from its filename"""
+    match = GRANULE_TIMES.search(os.path.basename(name))
+    if match is None:
+        raise RuntimeError(f"Could not read a sensing period from the granule name {name}")
+
+    return tuple(dt.datetime.strptime(value, "%Y%m%dT%H%M%S") for value in match.groups())
+
+
+def granule_orbit(name: str) -> str:
+    """Read the absolute orbit number from a granule's filename"""
+    return name.split("_")[-4]
+
+
+def granule_precedence(name: str) -> tuple[str, int]:
+    """
+    Rank a granule against others covering the same orbit
+
+    Processor version comes first, since a later version supersedes an earlier
+    one. Versions are zero padded, so they compare correctly as strings. Where two
+    products share a version, the reprocessed one wins, having been produced with
+    the whole mission in view rather than within days of the overpass.
+    """
+    version = name.split("_")[-2]
+    timeliness = name.split("_")[1]
+
+    return version, timeliness == "RPRO"
+
+
+def select_one_per_orbit(names: list[str]) -> list[str]:
+    """
+    Keep a single product for each orbit, preferring the most recent
+
+    Each product covers a whole orbit, so two products for one orbit would put the
+    same observations into the inversion twice. The catalogue publishes one current
+    product per orbit and deletes those a reprocessing supersedes, so this is not
+    expected to do anything; it warns rather than failing if it ever does, because
+    picking the better of the two is not a reason to stop a run.
+    """
+    orbits: dict[str, list[str]] = {}
+    for name in names:
+        orbits.setdefault(granule_orbit(name), []).append(name)
+
+    selected = []
+    for orbit, found in orbits.items():
+        chosen = max(found, key=granule_precedence)
+
+        if len(found) > 1:
+            print(
+                f"Warning: the catalogue returned {len(found)} products for orbit {orbit} "
+                f"({', '.join(sorted(found))}); using {chosen}"
+            )
+
+        selected.append(chosen)
+
+    return selected
+
+
+def object_key(name: str) -> str:
+    """
+    Build the bucket key for a granule the catalogue returned
+
+    The bucket is laid out by timeliness and by the UTC date a granule starts
+    on, both of which are in the filename.
+    """
+    timeliness = name.split("_")[1]
+    start, _ = granule_period(name)
+
+    return f"{timeliness}/L2__CH4___/{start:%Y/%m/%d}/{name}"
+
+
+def search_granules(
+    session: requests.Session, start: dt.datetime, end: dt.datetime, box: list[float]
+) -> list[str]:
+    """
+    Find the granules crossing a bounding box during a period
+
+    The polygon has to close on itself, and its coordinates are EPSG 4326.
+    """
+    lon_min, lat_min, lon_max, lat_max = box
+    polygon = (
+        f"POLYGON(({lon_min} {lat_min},{lon_max} {lat_min},"
+        f"{lon_max} {lat_max},{lon_min} {lat_max},{lon_min} {lat_min}))"
+    )
+
+    # Offline (OFFL) and reprocessed (RPRO) methane products. OFFL is how each
+    # granule is initially released. If a granule appears in RPRO it means a
+    # major improvement to the model, and OFFL is deprecated for that granule.
+    # Near real time (NRTI) products are excluded.
+    product_names = "contains(Name,'OFFL_L2__CH4') or contains(Name,'RPRO_L2__CH4')"
+
+    response = session.get(
+        CATALOGUE_URL,
+        timeout=300,
+        params={
+            "$filter": " and ".join(
+                [
+                    "Collection/Name eq 'SENTINEL-5P'",
+                    f"({product_names})",
+                    f"ContentDate/Start lt {end:%Y-%m-%dT%H:%M:%S}.000Z",
+                    f"ContentDate/End gt {start:%Y-%m-%dT%H:%M:%S}.000Z",
+                    f"OData.CSC.Intersects(area=geography'SRID={CATALOGUE_CRS.to_epsg()};{polygon}')",
+                ]
+            ),
+            "$orderby": "ContentDate/Start",
+            # Around four granules a day cross the Australian domain, so this is
+            # far more than any sensible period needs and no paging is required.
+            "$top": 1000,
+            "$select": "Name",
+        },
+    )
     response.raise_for_status()
 
-    content = response.json()
-    # Check for errors
-    if content["type"] == "jsonwsp/fault":
-        print("API Error: faulty request")
-        raise RuntimeError(f"Invalid type found in {content}")
-    return content
+    names = [item["Name"] for item in response.json()["value"]]
+
+    return [object_key(name) for name in select_one_per_orbit(names)]
 
 
 @click.command()
-@click.option(
-    "-c",
-    "--config-file",
-    help="Path to configuration file",
-    default="config/obs_preprocess/config.json",
-    type=click.File(),
-)
 @click.option(
     "-s",
     "--start",
@@ -103,142 +202,59 @@ def get_http_data(body: dict[str, Any], session: requests.Session):
     required=True,
 )
 @click.argument("output", type=click.Path(file_okay=False, dir_okay=True, writable=True))
-def fetch_data(config_file, start, end, output):
+def fetch_data(start, end, output):
     """Fetch TropOMI data
 
-    Data from the TropOMI instrument on the Sentinel-5P satellite
-    is available from the NASA GES DISC API.
+    Data from the TropOMI instrument on the Sentinel-5P satellite is found with
+    the CDSE catalogue and downloaded from the public MEEO mirror on AWS.
+
+    The area to fetch comes from the domain file named by DOMAIN_FILE.
     """
-    config = json.load(config_file)
-    session = create_session()
+    domain_file = env.path("DOMAIN_FILE")
+    box = domain_bounding_box(domain_file, CATALOGUE_CRS)
+    print(f"Domain {domain_file} covers {box}")
 
-    init_data = {
-        "methodname": "subset",
-        "args": {
-            "box": config["box"],
-            "crop": True,
-            "start": start.strftime("%Y-%m-%dT%H:%M:%S"),
-            "end": end.strftime("%Y-%m-%dT%H:%M:%S"),
-            "agent": "SUBSET_LEVEL2",
-            "presentation": "CROP",
-            "role": "subset",
-            "data": [{"datasetId": "S5P_L2__CH4____HiR_2"}],
-        },
-        "type": "jsonwsp/request",
-        "version": "1.0",
-    }
+    print(f"Searching the CDSE catalogue between {start} and {end} within {box}")
+    keys = search_granules(create_session(), start, end, box)
+    print(f"Found {len(keys)} granules")
 
-    print(f"Submitting request to the API: {init_data}")
+    # TropOMI covers the globe daily, so an empty period means the requested
+    # dates fall outside the archive. Offline products lag acquisition by two to
+    # three days, so the most recent dates are not published yet. Fail here
+    # rather than leaving the preprocessing step to fail with nothing to read.
+    if not keys:
+        raise click.ClickException(
+            f"No granules found between {start} and {end} within {box}. Products are "
+            "catalogued from 2018-04-30, and lag acquisition by two to three days."
+        )
 
-    response = get_http_data(init_data, session)
-    myJobId = response["result"]["jobId"]
-
-    # Construct JSON WSP request for API method: GetStatus
-    status_request = {
-        "methodname": "GetStatus",
-        "version": "1.0",
-        "type": "jsonwsp/request",
-        "args": {"jobId": myJobId},
-    }
-
-    while response["result"]["Status"] in ["Accepted", "Running"]:
-        sleep(1)
-        response = get_http_data(status_request, session)
-        status = response["result"]["Status"]
-        percent = response["result"]["PercentCompleted"]
-        print("Job status: %s (%d%c complete)" % (status, percent, "%"))
-
-    if response["result"]["Status"] == "Succeeded":
-        print("Job Finished:  {}".format(response["result"]["message"]))
-    else:
-        print("Job Failed: {}".format(response["fault"]["code"]))
-        sys.exit(1)
-
-    # Construct JSON WSP request for API method: GetResult
-    batchsize = 20
-    results_request = {
-        "methodname": "GetResult",
-        "version": "1.0",
-        "type": "jsonwsp/request",
-        "args": {"jobId": myJobId, "count": batchsize, "startIndex": 0},
-    }
-
-    # Retrieve the results in JSON in multiple batches
-    # Initialize variables, then submit the first GetResults request
-    # Add the results from this batch to the list and increment the count
-    results = []
-    count = 0
-    response = get_http_data(results_request, session)
-    count = count + response["result"]["itemsPerPage"]
-    results.extend(response["result"]["items"])
-
-    # Increment the startIndex and keep asking for more results until we have them all
-    total = response["result"]["totalResults"]
-    while count < total:
-        results_request["args"]["startIndex"] += batchsize
-        response = get_http_data(results_request, session)
-        count = count + response["result"]["itemsPerPage"]
-        results.extend(response["result"]["items"])
-
-    # Check on the bookkeeping
-    print("Retrieved %d out of %d expected items" % (len(results), total))
-
-    # Sort the results into documents and URLs
-    docs = []
-    urls = []
-    for item in results:
-        try:
-            if item["start"] and item["end"]:
-                urls.append(item)
-        except Exception:
-            docs.append(item)
-
-    # Print out the documentation links, but do not download them
-    print("\nDocumentation:")
-    for item in docs:
-        print(item["label"] + ": " + item["link"])
-
-    # Use the requests library to submit the HTTP_Services URLs and write out the results.
-    print("\nHTTP_services output:")
+    client = create_client()
 
     os.makedirs(output, exist_ok=True)
 
-    start_str = start.strftime("%Y-%m-%dT%H%M")
-    end_str = end.strftime("%Y-%m-%dT%H%M")
-    boxString = "_".join(str(x) for x in config["box"])
-    outDirName = os.path.join(output, f"{start_str}_{end_str}_{boxString}")
+    print(f"\nDownloading to {output}:")
 
-    os.makedirs(outDirName, exist_ok=True)
+    for key in keys:
+        # Granules keep the name they have in the bucket, which is unique and
+        # carries the sensing period, so nothing here has to invent one.
+        outfn = os.path.join(output, os.path.basename(key))
 
-    # empty output directory if necessary
-    for filename in os.listdir(outDirName):
-        file_path = os.path.join(outDirName, filename)
+        # `download_file` writes to a temporary name and renames on success, so a
+        # file being present means it downloaded completely and can be reused.
+        if os.path.exists(outfn):
+            print(f"{outfn} already present, skipping")
+            continue
+
         try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
-
-    for item in urls:
-        URL = item["link"]
-        result = session.get(URL, timeout=30)
-        try:
-            result.raise_for_status()
-            outfn = os.path.join(outDirName, item["label"])
-            f = open(outfn, "wb")
-            f.write(result.content)
-            f.close()
-            print(outfn)
-        except requests.exceptions.RequestException:
-            print("Error! Status code is %d for this URL:\n%s" % (result.status_code, URL))
-            if result.status_code == 401:
-                print("Unauthorised: Check your Earthdata credentials in the ~/.netrc file")
-            print("Help for downloading data is at https://disc.gsfc.nasa.gov/data-access")
+            client.download_file(BUCKET, key, outfn)
+        except (BotoCoreError, ClientError) as exc:
+            print(f"Error! Failed to download this object:\ns3://{BUCKET}/{key}")
+            print("The mirror is documented at https://registry.opendata.aws/sentinel5p/")
 
             # Abort if any files fail to download
-            raise click.Abort()
+            raise click.Abort() from exc
+
+        print(f"{outfn} ({os.path.getsize(outfn):,} bytes)")
 
     print("Data fetched successfully!")
 

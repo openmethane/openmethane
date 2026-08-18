@@ -44,8 +44,8 @@ run: build clean fetch-domains  ## Run the test domain in the docker container u
 		bash scripts/run-all.sh
 
 .PHONY: fetch-domains
-## Fetch the latest WRF geometry domain data from setup-wrf
-fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
+## Fetch the WRF geometry and Open Methane domain files
+fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
@@ -81,9 +81,9 @@ docker-test: build fetch-test-data ## Run the tests
 		openmethane \
 		make test
 
-## Fetch the latest WRF geometry domain data and CAMS data required for tests
+## Fetch the domain files and CAMS data required for tests
 .PHONY: fetch-test-data
-fetch-test-data: data/domains/aust10km/v1/geo_em.d01.nc data/domains/au-test/v1/geo_em.d01.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
+fetch-test-data: data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
@@ -94,6 +94,16 @@ data/domains/au-test/v1/geo_em.d01.nc:
 	mkdir -p data/domains/au-test/v1
 	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/au-test/geo_em.d01.nc \
 		-o data/domains/au-test/v1/geo_em.d01.nc
+
+data/domains/aust10km/v1/domain.aust10km.nc:
+	mkdir -p data/domains/aust10km/v1
+	curl -L https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc \
+		-o data/domains/aust10km/v1/domain.aust10km.nc
+
+data/domains/au-test/v1/domain.au-test.nc:
+	mkdir -p data/domains/au-test/v1
+	curl -L https://openmethane.s3.amazonaws.com/domains/au-test/v1/domain.au-test.nc \
+		-o data/domains/au-test/v1/domain.au-test.nc
 
 data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc:
 	mkdir -p data/cams

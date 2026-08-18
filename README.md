@@ -104,12 +104,12 @@ make prepare-templates
 ```
 
 2: fetch the TropOMI data:
- - `scripts/obs_preprocess/fetch_tropomi.py -c config/obs_preprocess/config.{grid}.json -s {start_date} -e {end_date} {output_dir}`
-	Downloads the TropOMI data for the specified date range and region.
-	Requires a EarthData login. See the script for more details about how to set this up.
+ - `scripts/obs_preprocess/fetch_tropomi.py -s {start_date} -e {end_date} {output_dir}`
+	Downloads the TropOMI data for the specified date range, covering the domain
+	named by the `DOMAIN_FILE` environment variable. Needs no credentials.
  
 3: go to `scripts/obs_preprocess` and run one of:
- - `scripts/obs_preprocess/tropomi_methane_preprocess.py --source data/tropomi/*`
+ - `scripts/obs_preprocess/tropomi_methane_preprocess.py --source "data/tropomi/{start_date}/*.nc"`
 	process the downloaded TropOMI data into a format that can be used by `fourdvar`.
 
 4: go to `tests/integration/fourdvar` and run:
