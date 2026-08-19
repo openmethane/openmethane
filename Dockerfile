@@ -13,15 +13,16 @@ ENV UV_PYTHON_INSTALL_DIR=/python
 # Only use the managed Python version
 ENV UV_PYTHON_PREFERENCE=only-managed
 
-# Install Python before the project for caching
-RUN uv python install 3.11
-
 # Install the virtual environment outside the work directory so the local
 # prpject directory can be mounted as a volume during testing.
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
+
+# Install Python before the project for caching
+RUN --mount=type=bind,source=.python-version,target=.python-version \
+    uv python install
 
 # install dependencies from pyproject.toml without the app, to create a
 # cacheable layer that changes less frequently than the app code
