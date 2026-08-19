@@ -20,7 +20,7 @@ TARGET=docker-test uv run python -m pytest -r a -v tests --ignore=tests/integrat
 # Run a single test (must be run inside the Docker container)
 TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 # Or from the host:
-docker run --rm -v $(PWD):/opt/project openmethane \
+docker run --rm -v $(PWD):/app openmethane \
   TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 
 # Lint and format

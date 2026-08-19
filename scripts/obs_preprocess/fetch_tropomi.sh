@@ -24,4 +24,4 @@ export END_DATE=${END_DATE:-2022-12-07} # Only running a single day
 python scripts/obs_preprocess/fetch_tropomi.py \
       -s ${START_DATE} \
       -e ${END_DATE}T23:59:59 \
-      "/opt/project/data/tropomi/$START_DATE"
+      "/app/data/tropomi/$START_DATE"

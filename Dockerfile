@@ -76,12 +76,6 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
-# Use the non-root user to run our application
-USER app
-
-# /opt/project is chosen because pycharm will automatically mount to this directory
-WORKDIR /opt/project
-
 # Secret management
 COPY --from=chamber /chamber /bin/chamber
 
@@ -93,13 +87,18 @@ ENV PYTHONFAULTHANDLER=1 \
   PYTHONHASHSEED=random
 
 # Copy the application from the builder
-COPY --from=builder --chown=app:app /app /opt/project
+COPY --from=builder --chown=app:app /app /app
 
 # Place executables in the environment at the front of the path
-ENV PATH="/opt/project/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH"
 # Place the package root in the python import path so files in scripts/ can resolve
-ENV PYTHONPATH="/opt/project/src"
+ENV PYTHONPATH="/app/src"
+
+# Use the non-root user to run our application
+USER app
+
+WORKDIR /app
 
 # tini forwards all signals to real entrypoint
-ENTRYPOINT ["tini", "--", "/opt/project/scripts/docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "/app/scripts/docker-entrypoint.sh"]
 CMD ["/bin/bash"]

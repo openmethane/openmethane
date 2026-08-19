@@ -1,4 +1,4 @@
-archive_path: /opt/project/data/archive
+archive_path: /app/data/archive
 conc_file: conc.<YYYYMMDD>.nc
 desc_name: ''
 description: 'This is a test of the fourdvar system.

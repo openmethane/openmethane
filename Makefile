@@ -28,9 +28,9 @@ build:  ## Build the docker container locally
 start: build  ## Start the docker container locally
 	# Requires local clones of setup-wrf and openmethane-prior
 	docker run --rm -it \
-		-v $(PWD):/opt/project \
-		-v /opt/project/.venv \
-		-v $(PWD)/../results:/opt/project/data \
+		-v $(PWD):/app \
+		-v /app/.venv \
+		-v $(PWD)/../results:/app/data \
 		-v ~/.cdsapirc:/root/.cdsapirc \
 		openmethane
 
@@ -38,9 +38,9 @@ start: build  ## Start the docker container locally
 run: build clean fetch-domains  ## Run the test domain in the docker container using the bundled test-data
 	# This requires a valid `~/.cdsapirc` file
 	docker run --rm -it \
-		-v $(PWD):/opt/project \
-		-v /opt/project/.venv \
-		-v $(PWD)/../results:/opt/project/data \
+		-v $(PWD):app \
+		-v app/.venv \
+		-v $(PWD)/../results:app/data \
 		-v ~/.cdsapirc:/root/.cdsapirc \
 		openmethane \
 		bash scripts/run-all.sh
@@ -78,8 +78,8 @@ changelog-draft:  ## compile a draft of the next changelog
 .PHONY: docker-test
 docker-test: build fetch-test-data ## Run the tests
 	docker run --rm -it \
-		-v $(PWD):/opt/project \
-		-v /opt/project/.venv \
+		-v $(PWD):/app \
+		-v /app/.venv \
 		-v ~/.cdsapirc:/root/.cdsapirc \
 		openmethane \
 		make test

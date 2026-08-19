@@ -28,7 +28,7 @@ fi
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
 
 # the location in the container where $DATA_ROOT is mounted
-STORE_ROOT="/opt/project/data"
+STORE_ROOT="/app/data"
 
 # Task variables
 START_DATE=${START_DATE:-2022-10-29}

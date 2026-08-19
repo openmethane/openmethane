@@ -129,13 +129,13 @@ jobs:
           key: test-data
       - name: Run pytest integration tests
         run: |
-          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
             -e TARGET=docker-test \
             -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
             -e CDSAPI_URL=https://ads.atmosphere.copernicus.eu/api \
             ${{ needs.build.outputs.registry-image-id }} \
             /bin/bash -c $'
-              cd /opt/project
+              cd /app
               make fetch-test-data
               env
               python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
@@ -157,16 +157,16 @@ jobs:
           echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Run e2e test
         run: |
-          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
             -e TARGET=docker-test \
-            -e STORE_PATH=/opt/project/data \
+            -e STORE_PATH=/app/data \
             -e NUM_PROC_COLS=1 \
             -e NUM_PROC_ROWS=2 \
             -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
             -e CDSAPI_URL=https://ads.atmosphere.copernicus.eu/api \
             ${{ needs.build.outputs.registry-image-id }} \
             /bin/bash -c $'
-              cd /opt/project
+              cd /app
               make fetch-test-data
               bash scripts/run-all.sh
             '
@@ -176,11 +176,11 @@ jobs:
         # @see: https://github.com/openmethane/openmethane/issues/216
         if: false
         run: |
-          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
-            -e STORE_PATH=/opt/project/data \
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
+            -e STORE_PATH=/app/data \
             ${{ needs.build.outputs.registry-image-id }} \
             /bin/bash -c $'
-              cd /opt/project
+              cd /app
               # This test requires the results from the preprocessing step
               # Verbosity is set to A to show all test results
               python -m pytest -r A -v tests/integration/fourdvar
