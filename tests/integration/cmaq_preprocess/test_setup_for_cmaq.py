@@ -67,9 +67,17 @@ def test_setup_for_cmaq(
         basename=f"{request.node.name}_griddesc",
     )
 
-    # Run script regression
+    # Run script regression.
+    # The namelist embeds absolute paths that vary by run (pytest's tmpdir is
+    # named after the current user) so they are replaced with placeholders.
+    namelist = (
+        open(mcip_run_dir / "namelist.mcip")
+        .read()
+        .replace(str(tmpdir), "<tmpdir>")
+        .replace(str(root_dir), "<root_dir>")
+    )
     file_regression.check(
-        open(mcip_run_dir / "namelist.mcip").read(),
+        namelist,
         basename=f"{request.node.name}_namelist",
     )
 

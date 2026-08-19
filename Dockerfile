@@ -57,7 +57,11 @@ LABEL org.opencontainers.image.version="${OPENMETHANE_VERSION}"
 # These can be overwritten at runtime
 ENV TARGET=docker
 
-# Install the bare minimum software requirements on top of bookworm-slim
+# Setup a non-root user
+RUN groupadd --system --gid 1000 app \
+ && useradd --system --gid 1000 --uid 1000 --create-home app
+
+# Install the bare minimum software requirements on top of cmaq-adjoint
 RUN <<EOT
 apt-get update -qy
 apt-get install -qyy \
@@ -76,6 +80,9 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
+# Use the non-root user to run our application
+USER app
+
 # /opt/project is chosen because pycharm will automatically mount to this directory
 WORKDIR /opt/project
 
@@ -87,7 +94,7 @@ COPY --from=builder --chown=python:python /python /python
 COPY --from=builder --chown=python:python /opt/venv /opt/venv
 
 # Copy the application from the builder
-COPY --from=builder --chown=nonroot:nonroot /app /opt/project
+COPY --from=builder --chown=app:app /app /opt/project
 
 # Put the venv at the start of the path so binaries there are preferenced
 ENV VIRTUAL_ENV=/opt/venv \
