@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 import datetime
 import gzip
-import itertools
 import multiprocessing
 import os
 import pathlib
@@ -22,6 +22,7 @@ import pickle
 
 import numpy as np
 import xarray as xr
+from scipy.spatial import cKDTree
 
 from openmethane.util.cf import get_grid_mappings
 from openmethane.util.logger import get_logger
@@ -47,13 +48,19 @@ def read_obs_file(
 ) -> list:
     """read obs from file
     remove keys specified by pop_keys if present."""
-    result = [_ for _ in iterPickle(path)]
+    records = iterPickle(path)
     # throw away domain spec as first element
-    result.pop(0)
-    if pop_keys is not None:
-        for b in result:
-            for k in pop_keys:
-                b.pop(k)
+    next(records)
+    if pop_keys is None:
+        return list(records)
+    # drop the unwanted keys as each record arrives rather than afterwards, so
+    # the discarded values are never all resident at once. weight_grid alone is
+    # about two thirds of an observation record.
+    result = []
+    for record in records:
+        for k in pop_keys:
+            record.pop(k)
+        result.append(record)
     return result
 
 
@@ -65,6 +72,10 @@ def get_obs_sim(
     """
     reads obs and simulations from dir/obs_template_file and dir/sim_template_file,
     checks for consistency of coordinates
+
+    Returns a row per observation of (latitude, longitude, observed value,
+    simulated value), along with the period the observations cover. Only these
+    fields are needed downstream, so the full records are not retained.
     """
     logger.debug(f"Loading observation data from {dir}")
 
@@ -78,14 +89,21 @@ def get_obs_sim(
     period_start: datetime.datetime | None = None
     period_end: datetime.datetime | None = None
 
-    for obs, sim in zip(obs_list, sim_list):
+    obs_sim = np.empty((len(obs_list), 4))
+    for n, (obs, sim) in enumerate(zip(obs_list, sim_list)):
         if (period_start is None) or (period_start > obs["time"]):
             period_start = obs["time"]
         if (period_end is None) or (period_end < obs["time"]):
             period_end = obs["time"]
         if obs["lite_coord"] != sim["lite_coord"]:
             raise ValueError("inconsistent lite coord")
-    return obs_list, sim_list, period_start, period_end
+        obs_sim[n] = (
+            obs["latitude_center"],
+            obs["longitude_center"],
+            obs["value"],
+            sim["value"],
+        )
+    return obs_sim, period_start, period_end
 
 
 def calculate_baseline_statistics(
@@ -96,9 +114,9 @@ def calculate_baseline_statistics(
     local enhancement along with number of valid samples for each spatial point.
     """
     logger.info("calculating baseline statistics")
-    # enforce types
-    near_fields_array = np.array(near_fields_array)
-    far_fields_array = np.array(far_fields_array)
+    # enforce types, without copying arrays that are already the right type
+    near_fields_array = np.asarray(near_fields_array)
+    far_fields_array = np.asarray(far_fields_array)
     # check consistent masking
     if (np.isnan(near_fields_array) != np.isnan(far_fields_array)).any():
         raise ValueError("inconsistent masking of near and far fields")
@@ -115,6 +133,26 @@ def calculate_baseline_statistics(
         sim_baseline_std_diff,
         baseline_count,
     )
+
+
+def _day_enhancement(task):
+    """
+    Near and far fields for a single day, as a worker for create_alerts_baseline.
+    Takes its arguments as one tuple so it can be used with multiprocessing.
+    """
+    (
+        dir,
+        obs_file_template,
+        sim_file_template,
+        lats,
+        lons,
+        land_mask,
+        near_threshold,
+        far_threshold,
+    ) = task
+    obs_sim, period_start, period_end = get_obs_sim(dir, obs_file_template, sim_file_template)
+    near, far = map_enhance(lats, lons, land_mask, obs_sim, near_threshold, far_threshold)
+    return near, far, period_start, period_end
 
 
 def create_alerts_baseline( # noqa: PLR0913
@@ -157,40 +195,53 @@ def create_alerts_baseline( # noqa: PLR0913
     near_fields = []
     far_fields = []
 
-    logger.info(f"Creating alerts baseline from {len(dir_list)} observations")
+    logger.info(f"Creating alerts baseline from {len(dir_list)} days of observations")
 
     obs_period_start: datetime.datetime | None = None
     obs_period_end: datetime.datetime | None = None
 
-    for dir in dir_list:
-        obs_list, sim_list, period_start, period_end = get_obs_sim(
-            dir, obs_file_template, sim_file_template
-        )
-        obs_sim = [
-            (
-                o["latitude_center"],
-                o["longitude_center"],
-                o["value"],
-                s["value"],
-            )
-            for o, s in zip(obs_list, sim_list)
-        ]
-        obs_sim_array = np.array(obs_sim)
-        near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
-        near_fields.append(near)
-        far_fields.append(far)
+    tasks = [
+        (dir, obs_file_template, sim_file_template, lats, lons, land_mask, near_threshold,
+         far_threshold)
+        for dir in dir_list
+    ]
 
-        # record the dates of the first and last observation being examined
-        if (obs_period_start is None) or (obs_period_start > period_start):
-            obs_period_start = period_start
-        if (obs_period_end is None) or (obs_period_end < period_end):
-            obs_period_end = period_end
+    # Each day is independent and reading its observations dominates its cost,
+    # so the days are what is worth spreading over NCPUS. Only the two field
+    # arrays come back from each worker, which keeps the data sent between
+    # processes proportional to the number of days rather than to the work done.
+    # Don't use more CPUs than there are days to process.
+    n_cpus = max(1, min(int(os.environ.get("NCPUS", "1")), len(dir_list)))
+    logger.debug(f"Calculating daily enhancements using {n_cpus} process(es)")
+
+    # Use ExitStack to enter multiple contexts, and make sure they all get
+    # cleaned up properly, even in the event of exceptions or signals.
+    with contextlib.ExitStack() as stack:
+        if n_cpus > 1:
+            pool = stack.enter_context(multiprocessing.Pool(n_cpus))
+            # imap keeps the results in dir_list order, so the baseline is
+            # reproducible regardless of the order the days finish in
+            results = pool.imap(_day_enhancement, tasks)
+        else:
+            results = map(_day_enhancement, tasks)
+
+        for near, far, period_start, period_end in results:
+            near_fields.append(near)
+            far_fields.append(far)
+
+            # record the dates of the first and last observation being examined
+            if (obs_period_start is None) or (obs_period_start > period_start):
+                obs_period_start = period_start
+            if (obs_period_end is None) or (obs_period_end < period_end):
+                obs_period_end = period_end
 
     logger.info("Constructing near_fields_array")
-    near_fields_array = np.array(near_fields)
+    near_fields_array = np.stack(near_fields)
+    near_fields.clear()
 
     logger.info("Constructing far_fields_array")
-    far_fields_array = np.array(far_fields)
+    far_fields_array = np.stack(far_fields)
+    far_fields.clear()
 
     (
         obs_baseline_mean_diff,
@@ -381,21 +432,11 @@ def create_alerts( # noqa: PLR0913
         far_threshold = alerts_baseline_ds.attrs["alerts_far_threshold"]
         ds.close()
 
-    obs_list, sim_list, obs_period_start, obs_period_end = get_obs_sim(
+    obs_sim, obs_period_start, obs_period_end = get_obs_sim(
         daily_dir, obs_file_template, sim_file_template
     )
-    obs_sim = [
-        (
-            o["latitude_center"],
-            o["longitude_center"],
-            o["value"],
-            s["value"],
-        )
-        for o, s in zip(obs_list, sim_list)
-    ]
-    obs_sim_array = np.array(obs_sim)
 
-    near, far = map_enhance(lats, lons, land_mask, obs_sim_array, near_threshold, far_threshold)
+    near, far = map_enhance(lats, lons, land_mask, obs_sim, near_threshold, far_threshold)
     enhancement = near - far
     obs_enhancement = enhancement[0, ...]
     alerts = np.zeros(resultShape)
@@ -523,54 +564,91 @@ def create_alerts( # noqa: PLR0913
     alerts_ds.to_netcdf(output_file)
 
 
-def map_enhance(lat, lon, land_mask, concs, nearThreshold, farThreshold): # noqa: PLR0913
+def map_enhance( # noqa: PLR0913
+    lat,
+    lon,
+    land_mask,
+    concs,
+    nearThreshold,
+    farThreshold,
+    chunk_size=4096,
+):
+    """
+    Average each concentration record over the observations surrounding every
+    land cell in the domain, for a near field (distance < nearThreshold) and a
+    far field (nearThreshold < distance < farThreshold).
+
+    Distances are Euclidean in degrees of latitude/longitude, matching the units
+    of the thresholds. Cells with no near-field or no far-field observations are
+    left as nan.
+
+    The observations are indexed in a k-d tree so that each land cell only ever
+    looks at the observations near it. Scanning every observation once per land
+    cell instead makes this quadratic in the size of the domain, which dominates
+    the runtime of the whole baseline for a continental grid.
+    """
     logger.debug("Calculating enhancements in map_enhance")
     nConcs = concs.shape[1] - 2  # number of concentration records, the -2 removes lat,lon
     n_rows = land_mask.shape[0]
     n_cols = land_mask.shape[1]
     resultShape = (nConcs, n_rows, n_cols)
-    near_field = np.zeros(resultShape)
-    near_field[...] = np.nan
-    far_field = np.zeros(resultShape)
-    far_field[...] = np.nan
+    near_field = np.full(resultShape, np.nan)
+    far_field = np.full(resultShape, np.nan)
 
-    # now build the input queue for multiprocessing points
-    logger.debug(f"Building input_proc_list for shape {resultShape}")
-    input_proc_list = []
-    for i, j in itertools.product(range(0, n_rows, 1), range(0, n_cols, 1)):
-        if land_mask[i, j] > 0.5:  # land point
-            input_proc_list.append((i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold))
+    land = land_mask > 0.5
+    if concs.shape[0] == 0 or not land.any():
+        return near_field, far_field
 
-    nCPUs = int(os.environ.get("NCPUS", "1"))
-    logger.debug(f"Spawning {nCPUs} processes")
-    with multiprocessing.Pool(nCPUs) as pool:
-        processOutput = pool.imap_unordered(point_enhance, input_proc_list)
-        for obs in processOutput:
-            i, j = obs[0:2]
-            near_field[:, i, j], far_field[:, i, j] = obs[2:]
+    obs_coords = np.ascontiguousarray(concs[:, 0:2], dtype=np.float64)
+    obs_values = np.ascontiguousarray(concs[:, 2:], dtype=np.float64)
+
+    rows, cols = np.nonzero(land)
+    land_coords = np.stack([lat[rows, cols], lon[rows, cols]], axis=1).astype(np.float64)
+    n_land = land_coords.shape[0]
+    logger.debug(f"Averaging {concs.shape[0]} observations over {n_land} land cells")
+
+    # Use an efficient structure to store observation coordinates, making it
+    # easy to quickly locate observations in neighbouring cells when calculating
+    # near and far fields.
+    obs_tree = cKDTree(obs_coords)
+
+    near_sum = np.zeros((n_land, nConcs))
+    far_sum = np.zeros((n_land, nConcs))
+    near_count = np.zeros(n_land, dtype=np.int64)
+    far_count = np.zeros(n_land, dtype=np.int64)
+
+    # work through the land cells in chunks so the neighbour list stays bounded
+    # regardless of how many observations the day contains
+    for start in range(0, n_land, chunk_size):
+        stop = min(start + chunk_size, n_land)
+        chunk_tree = cKDTree(land_coords[start:stop])
+        pairs = chunk_tree.sparse_distance_matrix(obs_tree, farThreshold, output_type="ndarray")
+        if pairs.size == 0:
+            continue
+        cell_index = pairs["i"] + start
+        obs_index = pairs["j"]
+        dist = pairs["v"]
+
+        for selected, sums, counts in (
+            (dist < nearThreshold, near_sum, near_count),
+            ((dist > nearThreshold) & (dist < farThreshold), far_sum, far_count),
+        ):
+            cells = cell_index[selected]
+            if cells.size == 0:
+                continue
+            counts[:] += np.bincount(cells, minlength=n_land)
+            observations = obs_index[selected]
+            for k in range(nConcs):
+                sums[:, k] += np.bincount(
+                    cells, weights=obs_values[observations, k], minlength=n_land
+                )
+
+    # an enhancement is only defined where both fields saw observations
+    valid = (near_count > 0) & (far_count > 0)
+    valid_rows = rows[valid]
+    valid_cols = cols[valid]
+    for k in range(nConcs):
+        near_field[k, valid_rows, valid_cols] = near_sum[valid, k] / near_count[valid]
+        far_field[k, valid_rows, valid_cols] = far_sum[valid, k] / far_count[valid]
+
     return near_field, far_field
-
-
-def point_enhance(val):
-    i, j, lat, lon, land_mask, concs, nearThreshold, farThreshold = val
-
-    if land_mask[i, j] < 0.5:  # ocean point
-        return i, j, np.nan, np.nan
-    else:
-        dist = calc_dist(concs, (lat[i, j], lon[i, j]))
-        near = dist < nearThreshold
-        far = (dist > nearThreshold) & (dist < farThreshold)
-        nearCount = near.sum()
-        farCount = far.sum()
-        if (nearCount == 0) or (farCount == 0):
-            return i, j, np.nan, np.nan
-        else:
-            near_field = concs[near, 2:].mean(axis=0)
-            far_field = concs[far, 2:].mean(axis=0)
-            return i, j, near_field, far_field
-
-
-def calc_dist(concs, loc):
-    diff = concs[:, 0:2] - np.array(loc)
-    dist = (diff[:, 0] ** 2 + diff[:, 1] ** 2) ** 0.5
-    return dist
