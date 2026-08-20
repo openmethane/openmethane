@@ -13,11 +13,6 @@ ENV UV_PYTHON_INSTALL_DIR=/python
 # Only use the managed Python version
 ENV UV_PYTHON_PREFERENCE=only-managed
 
-# Install the virtual environment outside the work directory so the local
-# prpject directory can be mounted as a volume during testing.
-ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
-    PATH="/opt/venv/bin:$PATH"
-
 WORKDIR /app
 
 # Install Python before the project for caching
@@ -92,14 +87,16 @@ COPY --from=chamber /chamber /bin/chamber
 
 # Copy python and the virtual environment
 COPY --from=builder --chown=python:python /python /python
-COPY --from=builder --chown=python:python /opt/venv /opt/venv
+
+ENV PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random
 
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /opt/project
 
-# Put the venv at the start of the path so binaries there are preferenced
-ENV VIRTUAL_ENV=/opt/venv \
-    PATH="/opt/venv/bin:$PATH"
+# Place executables in the environment at the front of the path
+ENV PATH="/opt/project/.venv/bin:$PATH"
 # Place the package root in the python import path so files in scripts/ can resolve
 ENV PYTHONPATH="/opt/project/src"
 
