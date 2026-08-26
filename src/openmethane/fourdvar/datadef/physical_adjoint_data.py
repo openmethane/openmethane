@@ -24,6 +24,6 @@ class PhysicalAdjointData(PhysicalAbstractData):
     """
 
     archive_name = "physical_sensitivity.ncf"
-    emis_units = "CF/(mol/s)"
+    emis_units = "CF/(mol/(s*m^2))"
     if inc_icon is True:
         icon_units = "CF/ppm"
