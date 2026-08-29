@@ -32,3 +32,14 @@ so the most recent days are not yet available.
 Granules are downloaded whole, since the bucket offers no server-side subsetting.
 `tropomi_methane_preprocess.py` then drops the observations that fall outside the
 model grid, and filters them to `START_DATE` and `END_DATE`.
+
+## The observation operator
+
+`tropomi_methane_preprocess.py` does more than reformat the retrieval: it builds
+the observation operator, which fourdvar then applies as a weighted sum over the
+CMAQ concentration field plus a constant. The vertical part of that operator —
+mapping the model onto the retrieval's pressure levels, applying the column
+averaging kernel, and filling the part of the column above the CMAQ model top —
+lives in `openmethane.obs_preprocess.column_operator`, which documents the
+equations and the conventions. `tropomi_averaging_kernel_operator.md` in the
+repository root records why the operator is built this way and what it replaced.

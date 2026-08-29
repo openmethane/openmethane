@@ -33,6 +33,11 @@ from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Bumped when the meaning of the fields in an observation file changes.
+# 1: light-path pressure weights only, no averaging kernel, no offset term.
+# 2: full column operator - averaging kernel applied, `offset_term` present.
+OBS_OPERATOR_VERSION = 2
+
 
 @attrs.define
 class ObservationCollection:
@@ -106,8 +111,10 @@ class ObservationData(FourDVarData):
     length = None
     uncertainty = None
     weight_grid = None
-    alpha_scale = None
-    ref_profile = None
+    offset_term = None
+    # the operator version the current data was built with, so that data read
+    # from an old file is not archived as though it were current
+    operator_version = OBS_OPERATOR_VERSION
     misc_meta = None
     grid_attr = None
     ind_by_date = None
@@ -161,16 +168,16 @@ class ObservationData(FourDVarData):
             domain["is_lite"] = True
         else:
             domain["is_lite"] = self.is_lite
+        domain["obs_operator_version"] = self.operator_version
 
         obs_list = []
         for i in range(self.length):
             odict = deepcopy(self.misc_meta[i])
             odict["value"] = self.value[i]
             odict["uncertainty"] = self.uncertainty[i]
-            # odict[ 'alpha_scale' ] = self.alpha_scale[i]
-            # odict[ 'ref_profile' ] = self.ref_profile[i]
             odict["lite_coord"] = self.lite_coord[i]
             if domain["is_lite"] is False:
+                odict["offset_term"] = self.offset_term[i]
                 odict["weight_grid"] = self.weight_grid[i]
             obs_list.append(odict)
 
@@ -225,6 +232,18 @@ class ObservationData(FourDVarData):
             is_lite = obs.domain.pop("is_lite")
         else:
             is_lite = False
+        # popped so that it is not compared against the concentration file in
+        # check_grid, which only knows about grid attributes
+        file_version = obs.domain.pop("obs_operator_version", 1)
+        cls.operator_version = file_version
+        if is_lite is False and file_version < OBS_OPERATOR_VERSION:
+            logger.warning(
+                f"{filename} was written by observation operator version {file_version}, "
+                f"this is version {OBS_OPERATOR_VERSION}. Its weights do not include the "
+                "TROPOMI column averaging kernel and it has no a-priori offset term, so "
+                "simulated observations made with it will be wrong. Re-run "
+                "scripts/obs_preprocess/tropomi_methane_preprocess.py to regenerate it."
+            )
         if cls.grid_attr is not None:
             logger.warning("Overwriting ObservationData.grid_attr")
         cls.grid_attr = obs.domain
@@ -232,8 +251,7 @@ class ObservationData(FourDVarData):
 
         unc = [odict.pop("uncertainty") for odict in obs.observations]
         val = [odict.pop("value") for odict in obs.observations]
-        # alp = [ odict.pop('alpha_scale') for odict in obs_list ]
-        # ref = [ odict.pop('ref_profile') for odict in obs_list ]
+        offset = [float(odict.pop("offset_term", 0.0)) for odict in obs.observations]
         if is_lite is False:
             weight = [odict.pop("weight_grid") for odict in obs.observations]
         # create default 'lite_coord' if not available
@@ -262,12 +280,9 @@ class ObservationData(FourDVarData):
         if cls.uncertainty is not None:
             logger.warning("Overwriting ObservationData.uncertainty")
         cls.uncertainty = unc
-        if cls.alpha_scale is not None:
-            logger.warning("Overwriting ObservationData.alpha_scale")
-        # cls.alpha_scale = alp
-        if cls.ref_profile is not None:
-            logger.warning("Overwriting ObservationData.ref_profile")
-        # cls.ref_profile = ref
+        if cls.offset_term is not None:
+            logger.warning("Overwriting ObservationData.offset_term")
+        cls.offset_term = offset
         if cls.lite_coord is not None:
             logger.warning("Overwriting ObservationData.lite_coord")
         cls.lite_coord = coord
@@ -323,13 +338,13 @@ class ObservationData(FourDVarData):
         """
         assert cls.length is not None, "length is not set"
         assert cls.uncertainty is not None, "uncertainty is not set"
-        # assert cls.alpha_scale is not None, 'alpha_scale is not set'
-        # assert cls.ref_profile is not None, 'ref_profile is not set'
+        assert cls.offset_term is not None, "offset_term is not set"
         assert cls.lite_coord is not None, "lite_coord is not set"
         assert cls.misc_meta is not None, "misc_meta is not set"
         assert cls.grid_attr is not None, "grid_attr is not set"
         assert cls.spcs is not None, "spcs is not set"
         assert len(cls.uncertainty) == cls.length, "invalid uncertainty length"
+        assert len(cls.offset_term) == cls.length, "invalid offset_term length"
         assert len(cls.lite_coord) == cls.length, "invalid lite_coord length"
         assert len(cls.misc_meta) == cls.length, "invalid misc_meta length"
         if need_weight is True:

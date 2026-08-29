@@ -26,6 +26,10 @@ def calc_forcing(w_residual):
     input: ObservationData  (weighted residuals)
     output: AdjointForcingData.
     """
+    # The simulated observation is affine in the model state,
+    # y = sum( weight_grid * conc ) + offset_term, so dy/dconc is the
+    # weight_grid and the offset drops out of the adjoint entirely. Nothing
+    # here needs to know about the offset.
     kwargs = AdjointForcingData.get_kwargs_dict()
     for ymd, ilist in ObservationData.ind_by_date.items():
         spc_dict = kwargs["force." + ymd]

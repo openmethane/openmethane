@@ -26,6 +26,7 @@ import numpy as np
 from netCDF4 import Dataset
 
 import openmethane.fourdvar.util.file_handle as fh
+from openmethane.fourdvar.datadef.observation_data import OBS_OPERATOR_VERSION
 from openmethane.fourdvar.params import date_defn, input_defn
 from openmethane.obs_preprocess.model_space import ModelSpace
 from openmethane.obs_preprocess.obsESA_defn import ObsSRON
@@ -173,6 +174,10 @@ def process_file(
     viewing_azimuth_angle = viewing_azimuth_deg.reshape((viewing_azimuth_deg.size,))
     pressure_interval = meteo.variables["pressure_interval"][:, :]
     pressure_interval = pressure_interval.reshape(pressure_interval.size)
+    psurf = meteo.variables["surface_pressure"][:]
+    surface_pressure = psurf.reshape(psurf.size)
+    dry_air = meteo.variables["dry_air_subcolumns"][...]
+    dry_air_subcolumns = dry_air.reshape((-1, dry_air.shape[-1]))
 
     ch4 = product.variables["methane_mixing_ratio_bias_corrected"][...]
 
@@ -188,7 +193,8 @@ def process_file(
     averaging_kernel = np.reshape(ch4_averaging_kernel, (-1, ch4_averaging_kernel.shape[-1]))
     #        ch4_column_apriori = product.variables['ch4_column_apriori'][:]
     temp = meteo.variables["methane_profile_apriori"][...]
-    ch4_profile_apriori = temp.reshape(temp.size, -1)
+    # one row per sounding, one column per retrieval layer
+    ch4_profile_apriori = temp.reshape((-1, temp.shape[-1]))
     qa = diag.variables["qa_value"][:]
     qa_value = qa.reshape((qa.size,))
     swir = detailed_results.variables["surface_albedo_SWIR"][:]
@@ -241,9 +247,15 @@ def process_file(
         if tsec < time0 or tsec > time1:
             continue
 
-        press_levels = (
-            np.arange(n_levels) * pressure_interval[i]
-        )  ## we need to put pressure=0 at the first leveli
+        # The retrieval grid is equidistant in pressure and is ordered top of
+        # atmosphere first (level 0 is ~65 km, the last level is the surface),
+        # so build it down from the reported surface pressure. Anchoring on
+        # surface_pressure rather than n_layers * pressure_interval keeps the
+        # grid consistent with the pressure weights the retrieval used.
+        press_levels = surface_pressure[i] - (n_levels - 1 - np.arange(n_levels)) * (
+            pressure_interval[i]
+        )
+        press_levels = np.maximum(press_levels, 0.0)
 
         obs_variables = {
             "time": dt.datetime.strptime(time[i][0:19], "%Y-%m-%dT%H:%M:%S"),
@@ -263,6 +275,7 @@ def process_file(
             "surface_albedo_SWIR": swir_albedo[i],
             "aerosol_aod_SWIR": swir_aod[i],
             "ch4_profile_apriori": ch4_profile_apriori[i, :],
+            "dry_air_subcolumns": dry_air_subcolumns[i, :],
         }
 
         obs_collection.append((obs_variables, model_grid))
@@ -411,6 +424,7 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, s
     if len(obs_list) > 0:
         domain = model_grid.get_domain()
         domain["is_lite"] = False
+        domain["obs_operator_version"] = OBS_OPERATOR_VERSION
         datalist = [domain] + [o.out_dict for o in obs_list]
         fh.save_list(datalist, output_file)
         print(f"recorded observations to {output_file}")

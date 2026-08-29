@@ -29,7 +29,12 @@ def obs_operator(model_output):
     """
     ObservationData.assert_params()
 
-    val_list = [0] * ObservationData.length
+    # The operator is affine: the weight_grid carries the part of the column
+    # that depends on the model state, and offset_term carries the rest (the
+    # retrieval's (1 - A) * prior term, and whatever fills the column above the
+    # model top). The offset belongs to the observation, not to any one day, so
+    # it is added once here rather than inside the loop over dates.
+    val_list = list(ObservationData.offset_term)
     for ymd, ilist in ObservationData.ind_by_date.items():
         conc_file = model_output.file_data["conc." + ymd]["actual"]
         var_dict = ncf.get_variable(conc_file, ObservationData.spcs)
@@ -38,10 +43,6 @@ def obs_operator(model_output):
                 if str(coord[0]) == ymd:
                     step, lay, row, col, spc = coord[1:]
                     conc = var_dict[spc][step, lay, row, col]
-                    #     val_list[i] += (weight * conc * ObservationData.ref_profile[i][lay]) #dot product
                     val_list[i] += convFac * weight * conc
-            #     denom += weight*(ObservationData.ref_profile[i][lay])**2
-            # val_list[i] /= denom
-    # val_list = [ v/ObservationData.alpha_scale[i] for i,v in enumerate(val_list) ]
 
     return ObservationData(val_list)

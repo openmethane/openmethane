@@ -9,10 +9,11 @@
 - longitude_corners
 - latitude_center
 - longitude_center
-- ref_profile
-- model_pweight
+- offset_term
 - obs_kernel
+- prior_profile
+- sat_pressure_weight
+- model_coverage
 - model_vis
-- alpha_scale
 - weight_grid
 - lite_coord
