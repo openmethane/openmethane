@@ -61,6 +61,10 @@ class ObsSRON(ObsMultiRay):
         newobs = cls(obstype="ESA_co_obs")
 
         newobs.out_dict["value"] = kwargs["ch4_column"]
+        # The retrieval's own precision, kept for its own sake: the inversion
+        # currently weights every observation by a constant uncertainty instead
+        # (see add_visibility), so without this the precision would be lost.
+        newobs.out_dict["ch4_column_precision"] = kwargs["ch4_column_precision"]
         newobs.out_dict["uncertainty"] = kwargs["ch4_column_precision"]
         newobs.out_dict["time"] = kwargs["time"]
         newobs.out_dict["qa_value"] = kwargs["qa_value"]
@@ -132,7 +136,10 @@ class ObsSRON(ObsMultiRay):
             fill=FILL_PRIOR_OFFSET,
         )
 
-        # this is the parameter that is used for the next process
+        # The uncertainty the inversion weights residuals by. This is a
+        # constant standing in for the whole error budget - retrieval
+        # precision, representativeness and model error - not the retrieval
+        # precision alone, which is kept separately in ch4_column_precision.
         model_unc = 20.0  # arbitrary constant unc in ppb
         self.out_dict["uncertainty"] = model_unc
 

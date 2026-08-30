@@ -60,3 +60,8 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
     obs = obs_list[1]
 
     data_regression.check(list(obs.keys()), basename="tropomi_methane_obs")
+
+    # The retrieval precision is stored alongside the uncertainty the inversion
+    # weights by, which is a constant standing in for the whole error budget.
+    assert 0.0 < obs["ch4_column_precision"] < 100.0
+    assert obs["ch4_column_precision"] != obs["uncertainty"]

@@ -110,6 +110,22 @@ def test_observation_data_column_operator(test_data_dir, target_environment):
         assert np.all(coverage[1:] == pytest.approx(1.0))
 
 
+def test_observation_data_retains_retrieval_precision(test_data_dir, target_environment):
+    """The retrieval precision must survive into the loaded observations."""
+    target_environment("docker-test")
+
+    obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
+
+    precision = [meta["ch4_column_precision"] for meta in obs.misc_meta]
+    assert len(precision) == obs.length
+    assert all(0.0 < value < 100.0 for value in precision)
+
+    # it is kept alongside, not in place of, the uncertainty the inversion uses,
+    # which is a constant standing in for the whole error budget
+    assert set(obs.uncertainty) == {20.0}
+    assert any(value != 20.0 for value in precision)
+
+
 def test_observation_data_legacy_file_warns(test_data_dir, target_environment, caplog):
     """A file written before the kernel was applied must be flagged loudly."""
     target_environment("docker-test")

@@ -316,6 +316,15 @@ is unrelated to the averaging kernel and changing the error model in the same
 change as the operator would make the effect of either impossible to see. It is
 still worth revisiting: see §6.1.
 
+What did change is that the retrieval's own precision is no longer thrown away.
+`methane_mixing_ratio_precision` was used to initialise `uncertainty` and then
+overwritten by the 20 ppb constant, so it never reached the observation file. It
+is now stored in its own `ch4_column_precision` field and archived with the
+observations. Nothing reads it yet; it is there so that a real error model can be
+built without reprocessing. For the 2022-12-07 test granule it runs from 1.5 to
+2.2 ppb — an order of magnitude below the 20 ppb assumed, which says the constant
+is dominated by representativeness and model error rather than retrieval noise.
+
 ### 4.3 `src/openmethane/obs_preprocess/obsESA_defn.py`
 
 * `required` is now `("value", "uncertainty", "weight_grid", "offset_term")`;
@@ -339,6 +348,7 @@ still worth revisiting: see §6.1.
   | `prior_profile` | `x_a,j` in ppb on the retrieval grid (replaces `ref_profile`) |
   | `sat_pressure_weight` | `pw_j` (new) |
   | `model_coverage` | `f_j` (new — quantifies the model-top gap) |
+  | `ch4_column_precision` | the retrieval precision in ppb (new — see §4.2) |
   | `model_vis` | `w_i` (kept, meaning changed) |
   | `alpha_scale`, `ref_profile`, `model_pweight` | removed |
 
@@ -503,8 +513,9 @@ with the errors being removed here.
 ## 7. Follow-ups not done here
 
 1. The observation uncertainty is still a hard-coded 20 ppb (§4.2). Revisit it
-   against the new residual statistics, and consider making it configurable with
-   `methane_mixing_ratio_precision` plus a representativeness term.
+   against the new residual statistics, and consider making it configurable,
+   built from the now-stored `ch4_column_precision` plus a representativeness
+   term.
 2. `extra_scripts/cost_function.py` needs updating or deleting (§4.7).
 3. Consider a mass-conserving reconstruction of the prior, or a CAMS-based fill,
    if the fill term ever proves to matter more than the ~2 ppb it does now
