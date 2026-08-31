@@ -175,6 +175,9 @@ jobs:
           make fetch-test-data
           bash scripts/run-all.sh
       - name: Run fourdvar integration tests
+        # Skip integration tests that make no assertions
+        # @see: https://github.com/openmethane/openmethane/issues/216
+        if: false
         env:
           STORE_PATH: /opt/project/data
         run: |
