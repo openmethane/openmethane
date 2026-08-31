@@ -24,27 +24,6 @@ clean:  ## remove generated temporary files
 build:  ## Build the docker container locally
 	docker build --platform=linux/amd64 -t openmethane .
 
-.PHONY: start
-start: build  ## Start the docker container locally
-	# Requires local clones of setup-wrf and openmethane-prior
-	docker run --rm -it \
-		-v $(PWD):/app \
-		-v /app/.venv \
-		-v $(PWD)/../results:/app/data \
-		-v ~/.cdsapirc:/root/.cdsapirc \
-		openmethane
-
-.PHONY: run
-run: build clean fetch-domains  ## Run the test domain in the docker container using the bundled test-data
-	# This requires a valid `~/.cdsapirc` file
-	docker run --rm -it \
-		-v $(PWD):app \
-		-v app/.venv \
-		-v $(PWD)/../results:app/data \
-		-v ~/.cdsapirc:/root/.cdsapirc \
-		openmethane \
-		bash scripts/run-all.sh
-
 .PHONY: fetch-domains
 ## Fetch the WRF geometry and Open Methane domain files
 fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc
@@ -80,7 +59,7 @@ docker-test: build fetch-test-data ## Run the tests
 	docker run --rm -it \
 		-v $(PWD):/app \
 		-v /app/.venv \
-		-v ~/.cdsapirc:/root/.cdsapirc \
+		-v ~/.cdsapirc:/home/app/.cdsapirc \
 		openmethane \
 		make test
 
