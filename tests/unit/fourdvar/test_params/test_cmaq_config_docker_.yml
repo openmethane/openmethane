@@ -57,7 +57,7 @@ ipr3_file: /app/data/run-cmaq/output/PA_3.<YYYYMMDD>.nc
 irr1_file: /app/data/run-cmaq/output/IRR_1.<YYYYMMDD>.nc
 irr2_file: /app/data/run-cmaq/output/IRR_2.<YYYYMMDD>.nc
 irr3_file: /app/data/run-cmaq/output/IRR_3.<YYYYMMDD>.nc
-jproc_path: /scratch/q90/sa6589/test_Sougol/run_cmaq
+jproc_path: /app/data/run-cmaq/jproc
 kzmin: false
 last_grid_file: /app/data/run-cmaq/output/CGRID.<YYYYMMDD>.nc
 layerfile: /app/data/mcip/<YYYY-MM-DD>/d01/METCRO3D_au-test_v1
@@ -143,4 +143,4 @@ wipeout_fwd_list:
 - /app/data/run-cmaq/output/RJ_1.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/RJ_2.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/fwd_stdout.<YYYYMMDD>.log
-xj_data: /scratch/q90/sa6589/test_Sougol/run_cmaq/JTABLE_<YYYYDDD>
+xj_data: /app/data/run-cmaq/jproc/JTABLE_<YYYYDDD>
