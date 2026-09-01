@@ -16,34 +16,31 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         platform:
           #          - linux/arm64
           - linux/amd64
-
     permissions:
       contents: read
       packages: write
-
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       registry-image-id: ${{ steps.remote-image-id.outputs.REMOTE_ID }}
-
     # Builds and pushes the image
     # Tags the image with the PR that it is linked to
     steps:
+      # Setup repo and docker utils
       - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: actions/checkout@v7
       - name: Login to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
       - name: Extract version from pyproject.toml
         id: version
@@ -52,7 +49,7 @@ jobs:
           echo "version=v$PACKAGE_VERSION" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
           # tag as `build-XYZ` since images need to be tagged to push
@@ -67,8 +64,9 @@ jobs:
             org.opencontainers.image.description="Open Methane model and tools"
             org.opencontainers.image.authors="Peter Rayner <peter.rayner@superpowerinstitute.com.au>, Jared Lewis <jared.lewis@climate-resource.com>"
             org.opencontainers.image.vendor="The Superpower Institute"
+
       - name: Build and push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         id: build
         with:
           platforms: ${{ matrix.platform }}
@@ -89,109 +87,107 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      contents: read
-      packages: read
-    container:
-      image: ${{ needs.build.outputs.registry-image-id }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.github_token }}
     steps:
-      - name: Run pytest
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Check built container package version
+        if: startsWith(github.event.ref, 'refs/tags/v')
         run: |
-          cd /opt/project
-          python -m pytest -r a -v tests/unit
-        env:
-          TARGET: docker-test
+          TAG_REF="${{ github.event.ref }}"
+          TAG_VERSION=${TAG_REF#"refs/tags/"}
+          docker run --rm -e TAG_VERSION=$TAG_VERSION ${{ needs.build.outputs.registry-image-id }} /bin/bash -c $'
+            if [ "$OPENMETHANE_VERSION" != "$TAG_VERSION" ]; then
+              echo "OPENMETHANE_VERSION is $OPENMETHANE_VERSION; expected version is $TAG_VERSION"
+              exit 1
+            fi
+          '
+      - name: Run pytest unit tests
+        run: |
+          docker run --rm -e TARGET=docker-test ${{ needs.build.outputs.registry-image-id }} \
+            /bin/bash -c $'python -m pytest -r a -v tests/unit'
 
   test-integration:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      contents: read
-      packages: read
-    container:
-      image: ${{ needs.build.outputs.registry-image-id }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.github_token }}
-      volumes:
-        - /opt/project/data
     steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up data path
+        id: data-path
+        run: |
+          mkdir $RUNNER_TEMP/data
+          echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Cache test data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
-            /opt/project/data/cams
-            /opt/project/data/domains
+            ${{ steps.data-path.outputs.DATA_PATH }}/cams
+            ${{ steps.data-path.outputs.DATA_PATH }}/domains
           key: test-data
-      - name: Run pytest
-        env:
-          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api
-          TARGET: docker-test
+      - name: Run pytest integration tests
         run: |
-          cd /opt/project
-          make fetch-test-data
-          env
-          python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
+            -e TARGET=docker-test \
+            -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
+            -e CDSAPI_URL=https://ads.atmosphere.copernicus.eu/api \
+            ${{ needs.build.outputs.registry-image-id }} \
+            /bin/bash -c $'
+              cd /opt/project
+              make fetch-test-data
+              env
+              python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
+            '
 
   test-e2e:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      contents: read
-      packages: read
-    container:
-      image: ${{ needs.build.outputs.registry-image-id }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.github_token }}
     steps:
-      - name: Check package version
-        if: startsWith(github.event.ref, 'refs/tags/v')
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up data path
+        id: data-path
         run: |
-          TAG_REF="${{ github.event.ref }}"
-          TAG_VERSION=${TAG_REF#"refs/tags/"}
-          if [ "$OPENMETHANE_VERSION" != "$TAG_VERSION" ]; then
-            echo "OPENMETHANE_VERSION is $OPENMETHANE_VERSION; expected version is $TAG_VERSION"
-            exit 1
-          fi
-
+          mkdir $RUNNER_TEMP/data
+          echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Run e2e test
-        env:
-          STORE_PATH: /opt/project/data
-          CDSAPI_KEY: ${{ secrets.CDSAPI_ADS_KEY }}
-          CDSAPI_URL: https://ads.atmosphere.copernicus.eu/api
-          # Uses the local checked-in WRF and prior data
-          TARGET: docker-test
-          NUM_PROC_COLS: 1
-          NUM_PROC_ROWS: 2
         run: |
-          cd /opt/project
-          make fetch-test-data
-          bash scripts/run-all.sh
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
+            -e TARGET=docker-test \
+            -e STORE_PATH=/opt/project/data \
+            -e NUM_PROC_COLS=1 \
+            -e NUM_PROC_ROWS=2 \
+            -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
+            -e CDSAPI_URL=https://ads.atmosphere.copernicus.eu/api \
+            ${{ needs.build.outputs.registry-image-id }} \
+            /bin/bash -c $'
+              cd /opt/project
+              make fetch-test-data
+              bash scripts/run-all.sh
+            '
+
       - name: Run fourdvar integration tests
         # Skip integration tests that make no assertions
         # @see: https://github.com/openmethane/openmethane/issues/216
         if: false
-        env:
-          STORE_PATH: /opt/project/data
         run: |
-          cd /opt/project
-          # This test requires the results from the preprocessing step
-          # Verbosity is set to A to show all test results
-          python -m pytest -r A -v tests/integration/fourdvar
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/opt/project/data \
+            -e STORE_PATH=/opt/project/data \
+            ${{ needs.build.outputs.registry-image-id }} \
+            /bin/bash -c $'
+              cd /opt/project
+              # This test requires the results from the preprocessing step
+              # Verbosity is set to A to show all test results
+              python -m pytest -r A -v tests/integration/fourdvar
+            '
 
       - name: Upload CMAQ artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-artifacts
-          path: /opt/project/data
+          path: ${{ steps.data-path.outputs.DATA_PATH }}
           retention-days: 5
 
   # Determine additional tags to apply to the image
@@ -202,7 +198,7 @@ jobs:
       tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # check if the triggering ref is a vX.Y.Z tag and NOT vX.Y.Za0 (prerelease)
       - name: Check for stable release
@@ -215,7 +211,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: "${{ env.REGISTRY }}/${{ env.IMAGE }}"
           tags: |
@@ -233,7 +229,7 @@ jobs:
       packages: write
     steps:
       - name: Login to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -283,7 +279,7 @@ jobs:
       ECR_REGISTRY: ${{ matrix.account_id }}.dkr.ecr.ap-southeast-2.amazonaws.com
     steps:
       - name: Login to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
