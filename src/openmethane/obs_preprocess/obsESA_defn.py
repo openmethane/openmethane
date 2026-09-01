@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+
 import numpy as np
 
 from openmethane.obs_preprocess.column_operator import (
@@ -24,6 +26,24 @@ from openmethane.obs_preprocess.ray_trace import Point, Ray
 
 # mol mol-1 to ppb, for the retrieval prior
 ppb_scale = 1e9
+
+# Uncertainty in ppb standing for everything in the error budget that is not
+# retrieval noise: transport error, representativeness of a model cell for a
+# satellite footprint, and the rest of the model's error.
+DEFAULT_MODEL_UNCERTAINTY = 10.0
+
+# The reported retrieval precision is known to be optimistic, so it is inflated
+# by this factor before entering the error budget.
+PRECISION_INFLATION = 2.0
+
+
+def model_uncertainty() -> float:
+    """The model-side observation uncertainty in ppb.
+
+    Read from `OPENMETHANE_MODEL_UNCERTAINTY` on each call rather than at import
+    time, so that it follows the environment the observations are processed in.
+    """
+    return float(os.environ.get("OPENMETHANE_MODEL_UNCERTAINTY", DEFAULT_MODEL_UNCERTAINTY))
 
 
 class ObsSRON(ObsMultiRay):
@@ -61,10 +81,10 @@ class ObsSRON(ObsMultiRay):
         newobs = cls(obstype="ESA_co_obs")
 
         newobs.out_dict["value"] = kwargs["ch4_column"]
-        # The retrieval's own precision, kept for its own sake: the inversion
-        # currently weights every observation by a constant uncertainty instead
-        # (see add_visibility), so without this the precision would be lost.
+        # The retrieval's own precision, kept in its own right and used by
+        # add_visibility to build the uncertainty the inversion weights by.
         newobs.out_dict["ch4_column_precision"] = kwargs["ch4_column_precision"]
+        # provisional; add_visibility replaces this with the full error budget
         newobs.out_dict["uncertainty"] = kwargs["ch4_column_precision"]
         newobs.out_dict["time"] = kwargs["time"]
         newobs.out_dict["qa_value"] = kwargs["qa_value"]
@@ -136,12 +156,14 @@ class ObsSRON(ObsMultiRay):
             fill=FILL_PRIOR_OFFSET,
         )
 
-        # The uncertainty the inversion weights residuals by. This is a
-        # constant standing in for the whole error budget - retrieval
-        # precision, representativeness and model error - not the retrieval
-        # precision alone, which is kept separately in ch4_column_precision.
-        model_unc = 20.0  # arbitrary constant unc in ppb
-        self.out_dict["uncertainty"] = model_unc
+        # The uncertainty the inversion weights residuals by: the model side of
+        # the error budget combined in quadrature with the inflated retrieval
+        # precision.
+        model_unc = model_uncertainty()
+        precision = float(self.out_dict["ch4_column_precision"])
+        self.out_dict["uncertainty"] = (
+            model_unc**2 + (PRECISION_INFLATION * precision) ** 2
+        ) ** 0.5
 
         self.out_dict["offset_term"] = operator.offset
         self.out_dict["obs_kernel"] = np.asarray(self.src_data["obs_kernel"])

@@ -9,6 +9,10 @@ from openmethane.fourdvar.datadef.observation_data import (
     ObservationData,
     load_observations_from_file,
 )
+from openmethane.obs_preprocess.obsESA_defn import (
+    DEFAULT_MODEL_UNCERTAINTY,
+    PRECISION_INFLATION,
+)
 
 
 @pytest.mark.parametrize(
@@ -120,10 +124,12 @@ def test_observation_data_retains_retrieval_precision(test_data_dir, target_envi
     assert len(precision) == obs.length
     assert all(0.0 < value < 100.0 for value in precision)
 
-    # it is kept alongside, not in place of, the uncertainty the inversion uses,
-    # which is a constant standing in for the whole error budget
-    assert set(obs.uncertainty) == {20.0}
-    assert any(value != 20.0 for value in precision)
+    # the uncertainty the inversion weights by is built from it: the model
+    # uncertainty combined in quadrature with the inflated retrieval precision
+    for value, unc in zip(precision, obs.uncertainty):
+        expected = (DEFAULT_MODEL_UNCERTAINTY**2 + (PRECISION_INFLATION * value) ** 2) ** 0.5
+        assert unc == pytest.approx(expected)
+        assert unc > value
 
 
 def test_observation_data_legacy_file_warns(test_data_dir, target_environment, caplog):

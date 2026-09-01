@@ -21,6 +21,7 @@ The following environment variables are configurable:
 | DOMAIN_FILE        | path | Path to the domain definition file (`domain.{DOMAIN_NAME}.nc`)     | N/A                                        |
 | CHK_PATH           | path | Directory to store CMAQ checkpoint files                           | {CMAQ_BASE}/chkpnt                         |
 | OBS_FILE_GLOB      | str  | Glob string to match the observation files relative to {STORE_PATH} | "input/test_obs.pic.gz"                    |
+| OPENMETHANE_MODEL_UNCERTAINTY | float | Model-side observation uncertainty in ppb, combined in quadrature with twice the TropOMI retrieval precision to give each observation's uncertainty | 10.0 |
 | PRIOR_FILE         | path | Path to the concentration prior file                               | N/A                                        |
 | CAMS_FILE          | path | Path to the CAMS CH4 emissions file                                | N/A                                        |
 | ICON_FILE          | path | Path to ICON template file                                         | N/A                                        |
