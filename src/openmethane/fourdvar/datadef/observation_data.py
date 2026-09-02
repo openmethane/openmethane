@@ -36,7 +36,9 @@ logger = get_logger(__name__)
 # Bumped when the meaning of the fields in an observation file changes.
 # 1: light-path pressure weights only, no averaging kernel, no offset term.
 # 2: full column operator - averaging kernel applied, `offset_term` present.
-OBS_OPERATOR_VERSION = 2
+# 3: weights converted from CMAQ's moist-air mixing ratio to the dry-air mole
+#    fraction TROPOMI reports.
+OBS_OPERATOR_VERSION = 3
 
 
 @attrs.define
@@ -237,11 +239,21 @@ class ObservationData(FourDVarData):
         file_version = obs.domain.pop("obs_operator_version", 1)
         cls.operator_version = file_version
         if is_lite is False and file_version < OBS_OPERATOR_VERSION:
+            missing = {
+                1: (
+                    "Its weights do not include the TROPOMI column averaging kernel, it has "
+                    "no a-priori offset term, and its weights are not converted to a dry-air "
+                    "mole fraction"
+                ),
+                2: (
+                    "Its weights are not converted from CMAQ's moist-air mixing ratio to the "
+                    "dry-air mole fraction TROPOMI reports"
+                ),
+            }.get(file_version, "Its weights have a meaning this version does not know about")
             logger.warning(
                 f"{filename} was written by observation operator version {file_version}, "
-                f"this is version {OBS_OPERATOR_VERSION}. Its weights do not include the "
-                "TROPOMI column averaging kernel and it has no a-priori offset term, so "
-                "simulated observations made with it will be wrong. Re-run "
+                f"this is version {OBS_OPERATOR_VERSION}. {missing}, so simulated "
+                "observations made with it will be wrong. Re-run "
                 "scripts/obs_preprocess/tropomi_methane_preprocess.py to regenerate it."
             )
         if cls.grid_attr is not None:

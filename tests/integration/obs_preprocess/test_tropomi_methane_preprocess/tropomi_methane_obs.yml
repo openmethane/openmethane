@@ -15,6 +15,7 @@
 - prior_profile
 - sat_pressure_weight
 - model_coverage
+- dry_air_factor
 - model_vis
 - weight_grid
 - lite_coord

@@ -75,13 +75,19 @@ class ModelSpace:
         METCRO2D = cmaq_config.met_cro_2d
         CONC = template_defn.conc
         date_range = [sdate, edate]
-        return cls(METCRO3D, METCRO2D, CONC, date_range)
+        # the un-substituted path, so that water vapour can be read for any date
+        return cls(METCRO3D, METCRO2D, CONC, date_range, cmaq_config.met_cro_3d)
 
-    def __init__(self, METCRO3D, METCRO2D, CONC, date_range):
+    def __init__(  # noqa: PLR0913 - one path argument per met file, plus the date range
+        self, METCRO3D, METCRO2D, CONC, date_range, met_cro_3d_template=None
+    ):
         """METCRO3D = path to any single METCRO3D file
         METCRO2D = path to any single METCRO2D file
         CONC = path to any concentration file output by CMAQ
-        date_range = [ start_date, end_date ] (as datetime objects).
+        date_range = [ start_date, end_date ] (as datetime objects)
+        met_cro_3d_template = METCRO3D path with date tags still in it, used to
+            read per-date fields. Defaults to METCRO3D, which is correct only
+            for a single-date run.
         """
         self.logger = get_logger(__name__)
 
@@ -96,6 +102,10 @@ class ModelSpace:
         self.psurf_file = METCRO2D
         self.psurf_date = None
         self.psurf_arr = None
+
+        self.qv_file = met_cro_3d_template if met_cro_3d_template is not None else METCRO3D
+        self.qv_date = None
+        self.qv_arr = None
 
         # date co-ords are int YYYYMMDD format
         self.sdate = int(date_range[0].strftime("%Y%m%d"))
@@ -226,6 +236,59 @@ class ModelSpace:
         vglvl = np.array(self.gridmeta["VGLVLS"])
         vgtop = float(self.gridmeta["VGTOP"])
         return vglvl[:] * (vgbot - vgtop) + vgtop
+
+    def update_qv(self, date_int):
+        # replace the water vapour array with the new file
+        new_date = dt.datetime.strptime(str(date_int), "%Y%m%d")
+        new_file = date_handle.replace_date(self.qv_file, new_date)
+        with Dataset(new_file, "r") as f:
+            self.qv_arr = f.variables["QV"][:, : self.nlay, :, :]
+        self.qv_date = date_int
+
+    def get_dry_air_factor(self, target_coord):
+        """Factor converting a CMAQ mixing ratio to a dry-air mole fraction.
+
+        TROPOMI reports a *dry*-air column mixing ratio, whereas CMAQ's ppmV is
+        moles of species per mole of moist air, where "mole of air" is CMAQ's
+        own definition: the total (moist) air density divided by the molar mass
+        of *dry* air. That is the convention `prepare_model.build_unit_dict`
+        uses to turn emissions in mol into ppmV, so it is the convention the
+        concentration field is on.
+
+        Writing CMAQ's air molar density as `n_c = rho_moist / M_dry` and the
+        true dry-air molar density as `n_d = rho_dry / M_dry`, a species with
+        molar density `n_x` has
+
+            x_cmaq = n_x / n_c    and    x_dry = n_x / n_d
+
+        so that
+
+            x_dry = x_cmaq * n_c / n_d = x_cmaq * rho_moist / rho_dry
+
+        METCRO3D's `QV` is the water vapour *mass* mixing ratio in kg per kg of
+        dry air, i.e. `rho_vapour / rho_dry`, so `rho_moist / rho_dry = 1 + QV`
+        and the conversion is simply `x_dry = x_cmaq * (1 + QV)`.
+
+        Note this cancels CMAQ's use of the dry-air molar mass against the moist
+        air density, so the answer does not depend on the molar mass of water.
+
+        Returns
+        -------
+            Per-layer factor, surface first, one value per CMAQ layer. Always
+            at least one; typically 1.01 in a moist boundary layer and 1.000 in
+            the upper troposphere.
+        """
+        date = target_coord[0]
+        time = target_coord[1]
+        row = target_coord[3]
+        col = target_coord[4]
+        if date != self.qv_date:
+            if self.qv_date is not None:
+                self.logger.warning(
+                    "update_qv is not thread-safe and may cause issues reading METCRO3D"
+                )
+            self.update_qv(date)
+        return 1.0 + np.asarray(self.qv_arr[time, :, row, col], dtype=float)
 
     def get_pressure_weight(self, target_coord):
         pbound = self.get_pressure_bounds(target_coord)

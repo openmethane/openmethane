@@ -43,3 +43,17 @@ averaging kernel, and filling the part of the column above the CMAQ model top â€
 lives in `openmethane.obs_preprocess.column_operator`, which documents the
 equations and the conventions. `tropomi_averaging_kernel_operator.md` in the
 repository root records why the operator is built this way and what it replaced.
+
+### Dry air
+
+TROPOMI reports a *dry*-air column mixing ratio. CMAQ's ppmV is moles of species
+per mole of moist air, using CMAQ's own definition of a mole of air (the moist
+air density divided by the molar mass of dry air â€” the convention
+`prepare_model.build_unit_dict` uses to turn emissions into ppmV). The two
+differ by `1 + QV`, the water vapour mass mixing ratio from METCRO3D, which is
+about 1% in a moist boundary layer.
+
+The observation operator absorbs that factor into its per-layer weights, so the
+simulated column is a dry-air mole fraction directly comparable with the
+retrieval. Folding it into the weights rather than converting concentrations
+keeps the operator linear in the model state, so the adjoint is unaffected.

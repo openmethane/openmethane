@@ -156,6 +156,15 @@ class ObsSRON(ObsMultiRay):
             fill=FILL_PRIOR_OFFSET,
         )
 
+        # The operator is built for a dry-air mole fraction, which is what
+        # TROPOMI reports and what `prior_profile` puts the a-priori on. CMAQ
+        # concentrations are moist-air mixing ratios, so each layer's weight
+        # absorbs that layer's conversion. Folding it into the weights rather
+        # than converting concentrations keeps the operator linear in the model
+        # state, so the adjoint and `obs_operator` are untouched.
+        dry_air_factor = model_space.get_dry_air_factor(coord)
+        weights = operator.weights * dry_air_factor
+
         # The uncertainty the inversion weights residuals by: the model side of
         # the error budget combined in quadrature with the inflated retrieval
         # precision.
@@ -170,12 +179,13 @@ class ObsSRON(ObsMultiRay):
         self.out_dict["prior_profile"] = prior
         self.out_dict["sat_pressure_weight"] = operator.pressure_weight
         self.out_dict["model_coverage"] = operator.coverage
-        self.out_dict["model_vis"] = operator.weights
+        self.out_dict["dry_air_factor"] = dry_air_factor
+        self.out_dict["model_vis"] = weights
 
         # spread each layer's weight over the cells the light path crosses in
         # that layer, keeping the layer total equal to the operator weight
         weight_grid = {}
-        for lay, weight in enumerate(operator.weights):
+        for lay, weight in enumerate(weights):
             layer_slice = {c: v for c, v in proportion.items() if c[2] == lay}
             layer_sum = sum(layer_slice.values())
             if layer_sum == 0.0:

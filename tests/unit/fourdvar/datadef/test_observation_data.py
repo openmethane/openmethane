@@ -95,13 +95,26 @@ def test_observation_data_column_operator(test_data_dir, target_environment):
         meta = obs.misc_meta[i]
         avker = np.asarray(meta["obs_kernel"])
         pressure_weight = np.asarray(meta["sat_pressure_weight"])
+        dry_air_factor = np.asarray(meta["dry_air_factor"])
+        model_vis = np.asarray(meta["model_vis"])
 
         # TROPOMI column kernels are normalised so that their pressure-weighted
         # mean is one; the model weights inherit that, since the part of the
-        # column above the model top is filled from the model's own top layer
-        assert sum(obs.weight_grid[i].values()) == pytest.approx(
+        # column above the model top is filled from the model's own top layer.
+        # The weights also carry the moist-to-dry-air conversion, so it has to
+        # be divided back out before that normalisation shows up.
+        assert float((model_vis / dry_air_factor).sum()) == pytest.approx(
             float(pressure_weight @ avker), rel=1e-6
         )
+
+        # the light path covers every layer, so the weight grid totals the
+        # per-layer weights
+        assert sum(obs.weight_grid[i].values()) == pytest.approx(float(model_vis.sum()), rel=1e-6)
+
+        # converting to a dry-air mole fraction can only raise the simulated
+        # column, and by a fraction of a percent over a whole column
+        assert np.all(dry_air_factor >= 1.0)
+        assert 1.0 < model_vis.sum() / float(pressure_weight @ avker) < 1.02
 
         # the offset is the retrieval prior's contribution, which is nowhere
         # near zero once the kernel is applied
