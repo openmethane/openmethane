@@ -108,7 +108,7 @@ credentials.
 The PBS directives in these job scripts request the `q90` project. Change the
 `#PBS -P` line in each script to your own project code.
 
-See [`docs/parameters.md`](../../docs/parameters.md) for the full list of
+See [`docs/reference/parameters.md`](../../docs/reference/parameters.md) for the full list of
 configurable parameters.
 
 ### 5. Fetch the domain files
