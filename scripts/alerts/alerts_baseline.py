@@ -23,9 +23,11 @@ from openmethane.postproc import alerts
 def main():
     domain_file = env.path("DOMAIN_FILE")
     dir_glob = env.str("ALERTS_BASELINE_DIRS", default=None)
-    dir_list = sorted(glob.glob(dir_glob))
-    if dir_list is None:
+    if dir_glob is None:
         raise ValueError("must specify environment variable ALERTS_BASELINE_DIRS")
+    dir_list = sorted(glob.glob(dir_glob))
+    if not dir_list:
+        raise ValueError(f"ALERTS_BASELINE_DIRS matched no directories: {dir_glob}")
     obs_file_template = env.str("ALERTS_OBS_FILE_TEMPLATE", default="input/test_obs.pic.gz")
     sim_file_template = env.str("ALERTS_SIM_FILE_TEMPLATE", default="simulobs.pic.gz")
     near_threshold = env.float("ALERTS_NEAR_THRESHOLD", 0.2)
