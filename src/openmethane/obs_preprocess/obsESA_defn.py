@@ -13,18 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+
 import numpy as np
 
+from openmethane.obs_preprocess.column_operator import (
+    FILL_PRIOR_OFFSET,
+    build_column_operator,
+)
 from openmethane.obs_preprocess.obs_defn import ObsMultiRay
 from openmethane.obs_preprocess.ray_trace import Point, Ray
 
-# physical constants
-grav = 9.807
-mwair = 28.9628
-avo = 6.022e23
-kg_scale = 1000.0
-cm_scale = 100.0 * 100.0
-ppm_scale = 1000000.0
+# mol mol-1 to ppb, for the retrieval prior
+ppb_scale = 1e9
+
+# Uncertainty in ppb standing for everything in the error budget that is not
+# retrieval noise: transport error, representativeness of a model cell for a
+# satellite footprint, and the rest of the model's error.
+DEFAULT_MODEL_UNCERTAINTY = 10.0
+
+# The reported retrieval precision is known to be optimistic, so it is inflated
+# by this factor before entering the error budget.
+PRECISION_INFLATION = 2.0
+
+
+def model_uncertainty() -> float:
+    """The model-side observation uncertainty in ppb.
+
+    Read from `OPENMETHANE_MODEL_UNCERTAINTY` on each call rather than at import
+    time, so that it follows the environment the observations are processed in.
+    """
+    return float(os.environ.get("OPENMETHANE_MODEL_UNCERTAINTY", DEFAULT_MODEL_UNCERTAINTY))
 
 
 class ObsSRON(ObsMultiRay):
@@ -33,9 +52,7 @@ class ObsSRON(ObsMultiRay):
     This observation class only works for 1 species.
     """
 
-    required = ("value", "uncertainty", "weight_grid", "alpha_scale")
-    # remove offset_term from default dict for obs.
-    default = {"lite_coord": None}
+    required = ("value", "uncertainty", "weight_grid", "offset_term")
 
     @classmethod
     def create(cls, **kwargs):
@@ -51,17 +68,23 @@ class ObsSRON(ObsMultiRay):
         - viewing_zenith_angle : float (degrees)
         - solar_azimuth_angle : float (degrees)
         - viewing_azimuth_angle : float (degrees)
-        - pressure_levels : array[ float ] (length=levels, units=Pa)
-        - co_column : float (molec. cm-2)
-        - co_column_precision : float (molec. cm-2)
-        - co_column_apriori : float (molec. cm-2)
-        - co_profile_apriori : array[ float ] (length=levels, units=molec. cm-2)
+        - pressure_levels : array[ float ] (length=levels, units=Pa, top of
+          atmosphere first)
+        - ch4_column : float (ppb)
+        - ch4_column_precision : float (ppb)
+        - ch4_profile_apriori : array[ float ] (length=layers, units=mol m-2)
+        - dry_air_subcolumns : array[ float ] (length=layers, units=mol m-2)
+        - obs_kernel : array[ float ] (length=layers, unitless)
         - qa_value : float (unitless)
         - surface_albedo_SWIR : float (unitless).
         """
         newobs = cls(obstype="ESA_co_obs")
 
         newobs.out_dict["value"] = kwargs["ch4_column"]
+        # The retrieval's own precision, kept in its own right and used by
+        # add_visibility to build the uncertainty the inversion weights by.
+        newobs.out_dict["ch4_column_precision"] = kwargs["ch4_column_precision"]
+        # provisional; add_visibility replaces this with the full error budget
         newobs.out_dict["uncertainty"] = kwargs["ch4_column_precision"]
         newobs.out_dict["time"] = kwargs["time"]
         newobs.out_dict["qa_value"] = kwargs["qa_value"]
@@ -75,10 +98,15 @@ class ObsSRON(ObsMultiRay):
         newobs.src_data = kwargs.copy()
         return newobs
 
-    def _convert_ppm(self, value, pressure_interval):
-        """Convert mole m-2 to ppm."""
-        ppm_value = value / ((pressure_interval * kg_scale) / (grav * mwair * ppm_scale))
-        return ppm_value
+    def prior_profile(self):
+        """The retrieval a-priori profile as a dry-air mole fraction in ppb.
+
+        Uses the retrieval's own dry air subcolumns, so no assumption about the
+        water vapour content of the column is needed.
+        """
+        prior_mole = np.asarray(self.src_data["ch4_profile_apriori"], dtype=float)
+        dry_air = np.asarray(self.src_data["dry_air_subcolumns"], dtype=float)
+        return ppb_scale * prior_mole / dry_air
 
     def model_process(self, model_space):
         ObsMultiRay.model_process(self, model_space)
@@ -100,44 +128,63 @@ class ObsSRON(ObsMultiRay):
             self.ready = True
 
     def add_visibility(self, proportion, model_space):
-        obs_pressure_bounds = np.array(self.src_data["pressure_levels"])
-        obs_pressure_center = 0.5 * (obs_pressure_bounds[1:] + obs_pressure_bounds[:-1])
-        obs_pressure_interval = obs_pressure_bounds[1:] - obs_pressure_bounds[:-1]
-        self.src_data["ch4_column_precision"]
+        """Apply the column averaging kernel to the light-path weights.
 
-        # get sample model coordinate at surface
-        coord = next(c for c in list(proportion.keys()) if c[2] == 0)
+        `proportion` gives the fraction of the observation's light path that
+        falls in each model cell, normalised so that the whole path sums to one.
+        This method replaces those proportions with the weights of the column
+        operator, so that the simulated observation is
 
-        # need to save the ref. profile concentration & obs. uncertainty.
-        model_pweight = model_space.get_pressure_weight(coord)
-        ref_profile_mole = self.src_data["ch4_profile_apriori"]
-        ref_profile_ppm = self._convert_ppm(ref_profile_mole, obs_pressure_interval)
-        model_ref_profile = model_space.pressure_interp(obs_pressure_center, ref_profile_ppm, coord)
-        model_unc = 20.0  # arbitrary constant unc in ppb
-        self.out_dict["uncertainty"] = (
-            model_unc  ##this is the parameter that is used for the next process
+            sum(weight_grid values * concentration) + offset_term
+
+        See `openmethane.obs_preprocess.column_operator` for the operator
+        itself. The averaging kernel, the pressure weights and the a-priori
+        profile all belong to the retrieval, so the model is mapped onto the
+        retrieval's vertical grid rather than the other way around.
+        """
+        # a sample model coordinate at the surface, used to locate the column of
+        # CMAQ layer pressures this sounding is compared against
+        coord = next(c for c in proportion if c[2] == 0)
+        model_edge = model_space.get_pressure_bounds(coord)
+
+        prior = self.prior_profile()
+        operator = build_column_operator(
+            sat_edge=self.src_data["pressure_levels"],
+            avker=self.src_data["obs_kernel"],
+            prior=prior,
+            model_edge=model_edge,
+            fill=FILL_PRIOR_OFFSET,
         )
-        self.out_dict["ref_profile"] = model_ref_profile
-        self.out_dict["model_pweight"] = model_pweight
-        self.out_dict["obs_kernel"] = self.src_data["obs_kernel"]
 
-        # ref profile used in obs_operator & alpha_scale, not here.
-        model_vis = model_pweight  # * model_ref_profile
-        self.out_dict["model_vis"] = model_vis
+        # The uncertainty the inversion weights residuals by: the model side of
+        # the error budget combined in quadrature with the inflated retrieval
+        # precision.
+        model_unc = model_uncertainty()
+        precision = float(self.out_dict["ch4_column_precision"])
+        self.out_dict["uncertainty"] = (
+            model_unc**2 + (PRECISION_INFLATION * precision) ** 2
+        ) ** 0.5
 
+        self.out_dict["offset_term"] = operator.offset
+        self.out_dict["obs_kernel"] = np.asarray(self.src_data["obs_kernel"])
+        self.out_dict["prior_profile"] = prior
+        self.out_dict["sat_pressure_weight"] = operator.pressure_weight
+        self.out_dict["model_coverage"] = operator.coverage
+        self.out_dict["model_vis"] = operator.weights
+
+        # spread each layer's weight over the cells the light path crosses in
+        # that layer, keeping the layer total equal to the operator weight
         weight_grid = {}
-        for l, weight in enumerate(model_vis):
-            layer_slice = {c: v for c, v in list(proportion.items()) if c[2] == l}
+        for lay, weight in enumerate(operator.weights):
+            layer_slice = {c: v for c, v in proportion.items() if c[2] == lay}
             layer_sum = sum(layer_slice.values())
-            weight_slice = {c: weight * v / layer_sum for c, v in list(layer_slice.items())}
+            if layer_sum == 0.0:
+                # the light path misses this layer entirely; nothing to spread
+                weight_grid.update(dict.fromkeys(layer_slice, 0.0))
+                continue
+            weight_slice = {c: weight * v / layer_sum for c, v in layer_slice.items()}
             weight_grid.update(weight_slice)
 
-        # alpha-scale denominator must use the same weight-grid as the obs-op
-        a_scale = 0
-        for coord, weight in list(weight_grid.items()):
-            lay = coord[2]
-            a_scale += (weight * model_ref_profile[lay]) ** 2
-        self.out_dict["alpha_scale"] = a_scale
         self.out_dict["weight_grid"] = weight_grid
 
         return weight_grid
