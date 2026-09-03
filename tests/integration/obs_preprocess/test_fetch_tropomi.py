@@ -109,6 +109,26 @@ def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
     assert (downloaded.stat().size, downloaded.stat().mtime) == before
 
 
+# This hits the CDSE catalogue and the S3 bucket. It documents a real granule
+# found empty in the mirror (reported to MEEO); if it ever starts passing, the
+# mirror has been fixed and this can be replaced with a mocked case instead.
+def test_fetch_reports_granules_empty_in_the_mirror(tmpdir, au_test_domain):
+    empty_granule = (
+        "S5P_OFFL_L2__CH4____20240108T035030_20240108T053200_32316_03_020600_20240109T200605.nc"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        fetch_tropomi.fetch_data,
+        ["-s", "2024-01-08T00:00:00", "-e", "2024-01-09T00:00:00", str(tmpdir)],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "empty in the MEEO mirror" in result.output
+    assert empty_granule in result.output
+    assert empty_granule not in os.listdir(tmpdir)
+
+
 # This hits the CDSE catalogue with a period outside the archive
 def test_fetch_no_granules(tmpdir, au_test_domain):
     """A day with no granules (outage, or outside the archive) must not fail the run"""

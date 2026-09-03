@@ -1,4 +1,5 @@
 import datetime as dt
+from unittest import mock
 
 import pytest
 from scripts.obs_preprocess import fetch_tropomi
@@ -51,3 +52,40 @@ def test_select_one_per_orbit_prefers_reprocessed_at_the_same_version():
 
     assert fetch_tropomi.select_one_per_orbit([offline, RPRO]) == [RPRO]
     assert fetch_tropomi.select_one_per_orbit([RPRO, offline]) == [RPRO]
+
+
+def test_download_from_mirror_raises_on_empty_object(tmp_path):
+    """A zero-byte object in the mirror is a known failure mode, not a transfer to retry"""
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 0}
+
+    with pytest.raises(fetch_tropomi.EmptySourceObject, match="some/key.nc"):
+        fetch_tropomi.download_from_mirror(client, "some/key.nc", str(tmp_path / "out.nc"))
+
+    client.download_file.assert_not_called()
+
+
+def test_download_from_mirror_accepts_a_correctly_sized_download(tmp_path):
+    outfn = tmp_path / "out.nc"
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 4}
+    client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"data")
+
+    fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn))
+
+    assert outfn.read_bytes() == b"data"
+    assert client.download_file.call_count == 1
+
+
+def test_download_from_mirror_retries_a_short_download_once(tmp_path):
+    """A download that lands short of the expected size is retried once before failing"""
+    outfn = tmp_path / "out.nc"
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 4}
+    client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"da")
+
+    with pytest.raises(RuntimeError, match="did not download to its expected size"):
+        fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn))
+
+    assert client.download_file.call_count == 2
+    assert not outfn.exists()
