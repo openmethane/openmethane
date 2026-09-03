@@ -84,7 +84,15 @@ def compare_dataset(data_regression):
                 "groups": {k: _extract_group(ds[k]) for k in ds.groups},
                 "attrs": _clean_attrs(ds.attrs),
             }
-        data_regression.check(content, basename=basename)
+        try:
+            data_regression.check(content, basename=basename)
+        except AssertionError as exc:
+            # pytest-regressions puts the bare string "FILES DIFFER" on the first
+            # line and only names its temporary copies of the fixture. Since a
+            # single test may compare several datasets, name the failing fixture
+            # (and its tracked location) up front so the summary line is useful.
+            expected = data_regression.original_datadir / f"{basename}.yml"
+            raise AssertionError(f"{basename} differs from {expected}\n{exc}") from None
 
     return compare
 

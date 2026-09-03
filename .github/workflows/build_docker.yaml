@@ -117,6 +117,8 @@ jobs:
         id: data-path
         run: |
           mkdir $RUNNER_TEMP/data
+          # Make the folder writable by user 1000 in the docker container
+          sudo chmod a+w $RUNNER_TEMP/data
           echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Cache test data
         uses: actions/cache@v6
@@ -150,6 +152,8 @@ jobs:
         id: data-path
         run: |
           mkdir $RUNNER_TEMP/data
+          # Make the folder writable by user 1000 in the docker container
+          sudo chmod a+w $RUNNER_TEMP/data
           echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
       - name: Run e2e test
         run: |

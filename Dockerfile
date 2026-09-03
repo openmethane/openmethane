@@ -4,7 +4,7 @@
 FROM segment/chamber:2 AS chamber
 
 # First, build the application in the `/app` directory
-FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 # Configure the Python directory so it is consistent
@@ -13,15 +13,11 @@ ENV UV_PYTHON_INSTALL_DIR=/python
 # Only use the managed Python version
 ENV UV_PYTHON_PREFERENCE=only-managed
 
-# Install Python before the project for caching
-RUN uv python install 3.11
-
-# Install the virtual environment outside the work directory so the local
-# prpject directory can be mounted as a volume during testing.
-ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
-    PATH="/opt/venv/bin:$PATH"
-
 WORKDIR /app
+
+# Install Python before the project for caching
+RUN --mount=type=bind,source=.python-version,target=.python-version \
+    uv python install
 
 # install dependencies from pyproject.toml without the app, to create a
 # cacheable layer that changes less frequently than the app code
@@ -37,7 +33,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Then, use a final image without uv for our runtime environment
 # https://github.com/openmethane/CMAQ-Adjoint
-FROM ghcr.io/openmethane/cmaq-adjoint:2.0.0
+FROM ghcr.io/openmethane/cmaq-adjoint:2.0.1
 
 # These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
 # These must be duplicated in .github/workflows/build_docker.yaml
@@ -57,7 +53,11 @@ LABEL org.opencontainers.image.version="${OPENMETHANE_VERSION}"
 # These can be overwritten at runtime
 ENV TARGET=docker
 
-# Install the bare minimum software requirements on top of bookworm-slim
+# Setup a non-root user
+RUN groupadd --system --gid 1000 app \
+ && useradd --system --gid 1000 --uid 1000 --create-home app
+
+# Install the bare minimum software requirements on top of cmaq-adjoint
 RUN <<EOT
 apt-get update -qy
 apt-get install -qyy \
@@ -76,6 +76,9 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
+# Use the non-root user to run our application
+USER app
+
 # /opt/project is chosen because pycharm will automatically mount to this directory
 WORKDIR /opt/project
 
@@ -84,14 +87,16 @@ COPY --from=chamber /chamber /bin/chamber
 
 # Copy python and the virtual environment
 COPY --from=builder --chown=python:python /python /python
-COPY --from=builder --chown=python:python /opt/venv /opt/venv
+
+ENV PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random
 
 # Copy the application from the builder
-COPY --from=builder --chown=nonroot:nonroot /app /opt/project
+COPY --from=builder --chown=app:app /app /opt/project
 
-# Put the venv at the start of the path so binaries there are preferenced
-ENV VIRTUAL_ENV=/opt/venv \
-    PATH="/opt/venv/bin:$PATH"
+# Place executables in the environment at the front of the path
+ENV PATH="/opt/project/.venv/bin:$PATH"
 # Place the package root in the python import path so files in scripts/ can resolve
 ENV PYTHONPATH="/opt/project/src"
 
