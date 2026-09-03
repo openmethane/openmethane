@@ -19,6 +19,102 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.3.0 (2026-09-03)
+
+### ⚠️ Breaking Changes
+
+- Update Dockerfile to use base image based on openmethane/CMAQ
+
+  If using the Dockerfile, no manual changes should be necessary. If running
+  locally or in an environment that doesn't support docker, CMAQ will need
+  to be provided in such a way that all CMAQ tools (MCIP, BCON, ICON) are built
+  into a single location, specified in CMAQ_BIN.
+
+  See https://github.com/openmethane/CMAQ Dockerfile for an example of how to
+  configure and build CMAQ binaries into a single location like /opt/cmaq/bin. ([#190](https://github.com/openmethane/openmethane/pull/190))
+- Fetch TropOMI methane data from the public `meeo-s5p` S3 bucket instead of the
+  NASA GES DISC subsetting API, which no longer performs spatial cropping.
+
+  The bucket is anonymously readable, so `EARTHDATA_USERNAME` and
+  `EARTHDATA_PASSWORD` are no longer needed and have been removed from
+  the project.
+
+  Granules are now downloaded whole rather than cropped to the bounding box,
+  and `tropomi_methane_preprocess.py` drops out-of-domain observations
+  as it already did.
+
+  This changes retrieved methane values for small domains. `destripe_smoothing`
+  estimates the stripe pattern from a median over +/-100 scanlines along track, so
+  only pixels within 100 scanlines of a crop boundary can change; pixels further
+  in are unaffected. The practical effect is that there is no change to processed
+  observations in the `aust10km` domain where the boundaries fall over ocean.
+  For a domain shorter than 200 scanlines, such as `au-test`, every pixel is
+  within the band and values shift by of order the single-pixel precision. The
+  `destripe_smoothing` was actually intended for whole granules, so the new
+  values are the more correct ones.
+
+  Take the area to fetch TropOMI data for from the domain definition file named by
+  the `DOMAIN_FILE` environment variable, as `scripts/alerts/alerts_baseline.py`
+  already does, rather than from a bounding box in `config/obs_preprocess/`. ([#209](https://github.com/openmethane/openmethane/pull/209))
+- Fetched TROPOMI files now go directly into the specified output directory with
+  no nested directories, instead of into a subdirectory named after the period
+  and bounding box, since whole granules are now fetched.
+
+  The output directory is no longer emptied before a fetch, which could have
+  deleted the contents of a directory chosen by the caller. Granules already
+  present are skipped instead, so a rerun after a failure only fetches what is
+  missing. This is possible because S3 fetches write files to a temp location and
+  only move them to the destination when they're complete, so incomplete fetches
+  will never appear in the output folder. ([#209](https://github.com/openmethane/openmethane/pull/209))
+- The `fetch_tropomi` script now uses the bounding box of the domain for its
+  search constraint instead of generic bounds in `config/obs_preprocess/config.json`.
+  Domain path should be specified in the `DOMAIN_FILE` environment variable.
+  Config files in `config/obs_preprocess` are no longer needed and are removed. ([#209](https://github.com/openmethane/openmethane/pull/209))
+- Commands in the docker container now run as `app` user (uid: 1000, gid: 1000) ([#213](https://github.com/openmethane/openmethane/pull/213))
+- Required python version is now 3.12. Realistically everything still works with 3.10 and 3.11, but the project will only officially support newer versions moving forward. ([#213](https://github.com/openmethane/openmethane/pull/213))
+- Project is moved from `/opt/project` to `/app` in the docker image, to ensure no downstream breakage:
+  - data directory should now be mounted under `/app/data`
+  - external references to `/opt/project` should be replaced with `/app`
+
+  ([#214](https://github.com/openmethane/openmethane/pull/214))
+- Apply the TropOMI column averaging kernel when simulating observations. ([#222](https://github.com/openmethane/openmethane/pull/222))
+
+### 🎉 Improvements
+
+- Replace templated run scripts with environment variables ([#191](https://github.com/openmethane/openmethane/pull/191))
+- Change default output folder to "archive/openmethane" from "archive_Pert/202207_test" ([#195](https://github.com/openmethane/openmethane/pull/195))
+- Official docker images from GitHub Container Registry are now the default for
+  `docker-e2e-daily.sh` and `docker-e2e-monthly.sh` scripts. The scripts can be
+  configured to build and use local images (the previous behaviour) with:
+  ```shell
+  OPENMETHANE_IMAGE=openmethane OPENMETHANE_PRIOR_IMAGE=openmethane-prior \
+    SETUP_WRF_IMAGE=setup-wrf BUILD_LOCAL_DOCKER=true \
+    scripts/docker-e2e-daily.sh
+  ``` ([#197](https://github.com/openmethane/openmethane/pull/197))
+- Move alerts-baseline and create-alerts out of docker-e2e scripts into their own workflows. Resolves #202. ([#206](https://github.com/openmethane/openmethane/pull/206))
+- Sped up the alerts baseline by two to three orders of magnitude. Observations
+  are now indexed spatially instead of being scanned once per grid cell, and
+  `NCPUS` spreads the work over days rather than over grid cells, where it was
+  previously sending hundreds of gigabytes between processes and made the run
+  slower than using a single core. A month of `aust10km` inputs takes minutes
+  rather than hours. ([#217](https://github.com/openmethane/openmethane/pull/217))
+- Store the TropOMI column mixing ratio precision with each observation, and build
+  the observation uncertainty from it as
+  `sqrt(model_uncertainty**2 + (2 * ch4_column_precision)**2)`. The model term
+  covers everything that is not retrieval noise, defaults to 10 ppb and is set by
+  the new `OPENMETHANE_MODEL_UNCERTAINTY` environment variable, replacing the
+  hard-coded 20 ppb. This reweights every observation in the cost function. ([#222](https://github.com/openmethane/openmethane/pull/222))
+
+### 🐛 Bug Fixes
+
+- Fix "patch" version bump adding an extra increment during release ([#193](https://github.com/openmethane/openmethane/pull/193))
+- generalised test_grad_cmaq.py and matched sensitivity units to CMAQ-Adjoint-2.0.0 ([#215](https://github.com/openmethane/openmethane/pull/215))
+- `alerts_baseline` now fails with a clear error when `ALERTS_BASELINE_DIRS` is
+  unset or matches no directories, instead of failing later with a confusing
+  error. ([#217](https://github.com/openmethane/openmethane/pull/217))
+- fix emission sensitivity units to match new CMAQ ([#219](https://github.com/openmethane/openmethane/pull/219))
+
+
 ## openmethane v1.2.0 (2026-01-28)
 
 ### ⚠️ Breaking Changes
