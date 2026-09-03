@@ -46,12 +46,12 @@ def test_013_valid_config_file(target, data_regression, target_environment):
 def cmaq_config_dict():
     return {
         "cmaq_bin_dir": "/opt/cmaq/bin/",
-        "cmaq_scripts_dir": "/opt/project/scripts/cmaq",
-        "met_dir": "/opt/project/data/mcip/",
-        "ctm_dir": "/opt/project/data/cmaq/",
-        "wrf_dir": "/opt/project/data/runs/au-test",
-        "geo_dir": "/opt/project/domains/au-test/v1.0.0/",
-        "input_cams_file": "/opt/project/data/inputs/cams_eac4_methane.nc",
+        "cmaq_scripts_dir": "/app/scripts/cmaq",
+        "met_dir": "/app/data/mcip/",
+        "ctm_dir": "/app/data/cmaq/",
+        "wrf_dir": "/app/data/runs/au-test",
+        "geo_dir": "/app/domains/au-test/v1.0.0/",
+        "input_cams_file": "/app/data/inputs/cams_eac4_methane.nc",
         "start_date": "2022-07-01",
         "end_date": "2022-07-01",
         "mech": "CH4only",

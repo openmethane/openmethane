@@ -120,7 +120,7 @@ if chk_path == "/mnt/scratch":
 
 mcip_met_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
 mcip_grid_path = os.path.join(mcip_output_path, "<YYYY-MM-DD>", "d01")
-jproc_path = os.path.join("/scratch/q90/sa6589/test_Sougol/run_cmaq")  # Sougol
+jproc_path = os.path.join(cmaq_base, "jproc")
 emis_path = os.path.join(cmaq_base, "emissions")
 # horizontal grid definition file
 

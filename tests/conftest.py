@@ -115,7 +115,7 @@ def target_environment(monkeypatch):
     default_variables = {
         # Docker target requires some additional env variables
         "docker": {
-            "STORE_PATH": "/opt/project/data",
+            "STORE_PATH": "/app/data",
             "START_DATE": "2022-12-07",
             "END_DATE": "2022-12-07",
             "DOMAIN_NAME": "au-test",

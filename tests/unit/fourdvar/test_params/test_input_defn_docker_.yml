@@ -1,3 +1,3 @@
 inc_icon: false
-obs_file: /opt/project/data/input/test_obs.pic.gz
-prior_file: /opt/project/data/input/prior.nc
+obs_file: /app/data/input/test_obs.pic.gz
+prior_file: /app/data/input/prior.nc

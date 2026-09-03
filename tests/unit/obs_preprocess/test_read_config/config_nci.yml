@@ -1,7 +1,7 @@
 boundary_trim: 5
 cams_to_cmaq_bias: 0.0
 cmaq_bin_dir: '# unsupported'
-cmaq_scripts_dir: /opt/project/scripts/cmaq
+cmaq_scripts_dir: /app/scripts/cmaq
 ctm_dir: '{HOME}/scratch/openmethane-beta/run-py4dvar/cmaq'
 domain:
   index: 1
