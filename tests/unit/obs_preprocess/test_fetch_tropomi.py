@@ -89,3 +89,51 @@ def test_download_from_mirror_retries_a_short_download_once(tmp_path):
 
     assert client.download_file.call_count == 2
     assert not outfn.exists()
+
+
+def test_cdse_access_token_requires_credentials(monkeypatch):
+    monkeypatch.delenv("CDSE_USERNAME", raising=False)
+    monkeypatch.delenv("CDSE_PASSWORD", raising=False)
+
+    with pytest.raises(fetch_tropomi.click.ClickException, match="CDSE_USERNAME"):
+        fetch_tropomi.cdse_access_token(mock.Mock())
+
+
+def test_cdse_access_token_posts_credentials_from_the_environment(monkeypatch):
+    monkeypatch.setenv("CDSE_USERNAME", "someone@example.com")
+    monkeypatch.setenv("CDSE_PASSWORD", "hunter2")
+
+    session = mock.Mock()
+    session.post.return_value.json.return_value = {"access_token": "a-token"}
+
+    assert fetch_tropomi.cdse_access_token(session) == "a-token"
+
+    _, kwargs = session.post.call_args
+    assert kwargs["data"]["username"] == "someone@example.com"
+    assert kwargs["data"]["password"] == "hunter2"  # noqa: S105 - a test fixture, not a real secret
+
+
+def test_find_product_id_raises_when_not_found():
+    session = mock.Mock()
+    session.get.return_value.json.return_value = {"value": []}
+
+    with pytest.raises(fetch_tropomi.click.ClickException, match="not found in the CDSE"):
+        fetch_tropomi.find_product_id(session, "missing.nc")
+
+
+def test_download_from_cdse_writes_the_response_body(tmp_path):
+    outfn = tmp_path / "out.nc"
+
+    session = mock.Mock()
+    session.get.return_value.json.return_value = {"value": [{"Id": "some-id"}]}
+    session.get.return_value.iter_content.return_value = [b"chunk-a", b"chunk-b"]
+
+    fetch_tropomi.download_from_cdse(
+        session, "a-token", "OFFL/L2__CH4___/2024/01/08/x.nc", str(outfn)
+    )
+
+    assert outfn.read_bytes() == b"chunk-achunk-b"
+    assert not (tmp_path / "out.nc.part").exists()
+
+    download_call = session.get.call_args_list[-1]
+    assert download_call.kwargs["headers"] == {"Authorization": "Bearer a-token"}
