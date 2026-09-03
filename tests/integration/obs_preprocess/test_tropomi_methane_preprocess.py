@@ -65,3 +65,34 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
     # weights by, which is a constant standing in for the whole error budget.
     assert 0.0 < obs["ch4_column_precision"] < 100.0
     assert obs["ch4_column_precision"] != obs["uncertainty"]
+
+
+def test_preprocess_no_input_files(tmp_path, root_dir, test_data_dir, target_environment):
+    """A day with no TROPOMI granules must still produce a domain-metadata file.
+
+    Downstream steps (ObservationData.from_file, the obs operator) read this
+    file unconditionally, so a day with an instrument outage or no overpass
+    must not be silently skipped.
+    """
+    target_environment("docker-test")
+
+    output_file = tmp_path / "out.pkl.gz"
+    runner = CliRunner()
+    result = runner.invoke(
+        tropomi_methane_preprocess.run_tropomi_preprocess,
+        [
+            "--source",
+            str(tmp_path / "no-such-dir" / "*.nc4"),
+            "--output-file",
+            str(output_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output_file.exists()
+
+    obs_list = load_list(output_file)
+    assert len(obs_list) == 1
+
+    domain = obs_list[0]
+    assert domain["is_lite"] is False
