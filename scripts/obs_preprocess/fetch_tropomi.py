@@ -65,6 +65,40 @@ def create_client():
     """
     return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
 
+
+class EmptySourceObject(RuntimeError):
+    """A granule exists in the mirror but its object holds no data"""
+
+
+def download_from_mirror(client, key: str, outfn: str) -> None:
+    """
+    Download one granule from the MEEO mirror to outfn
+
+    The mirror has been found to hold a handful of zero-byte objects for
+    granules that never synced correctly from ESA, so the object's size is
+    checked before spending time on the transfer. `download_file` writes to a
+    temporary name and renames onto `outfn` on success, so a truncated
+    transfer should not be possible; the download is still re-checked and
+    retried once, since the mirror is outside our control.
+    """
+    remote_size = client.head_object(Bucket=BUCKET, Key=key)["ContentLength"]
+
+    if remote_size == 0:
+        raise EmptySourceObject(key)
+
+    for attempt in range(2):
+        client.download_file(BUCKET, key, outfn)
+
+        if os.path.getsize(outfn) == remote_size:
+            return
+
+        os.remove(outfn)
+
+    raise RuntimeError(
+        f"{key} did not download to its expected size of {remote_size:,} bytes "
+        f"after {attempt + 1} attempts"
+    )
+
 # S5P_<timeliness>_L2__CH4____<start>_<end>_<orbit>_<collection>_<version>_<produced>.nc
 GRANULE_TIMES = re.compile(r"_(\d{8}T\d{6})_(\d{8}T\d{6})_")
 
@@ -236,19 +270,27 @@ def fetch_data(start, end, output):
 
     print(f"\nDownloading to {output}:")
 
+    empty_in_mirror = []
+
     for key in keys:
         # Granules keep the name they have in the bucket, which is unique and
         # carries the sensing period, so nothing here has to invent one.
         outfn = os.path.join(output, os.path.basename(key))
 
-        # `download_file` writes to a temporary name and renames on success, so a
-        # file being present means it downloaded completely and can be reused.
-        if os.path.exists(outfn):
+        # A file being present and non-empty means it downloaded completely and
+        # can be reused. A zero-byte file is never treated as done, so a granule
+        # left behind by an older bug (or genuinely empty in the mirror) is
+        # retried instead of being skipped forever.
+        if os.path.exists(outfn) and os.path.getsize(outfn) > 0:
             print(f"{outfn} already present, skipping")
             continue
 
         try:
-            client.download_file(BUCKET, key, outfn)
+            download_from_mirror(client, key, outfn)
+        except EmptySourceObject:
+            print(f"Warning: {key} is an empty (0 byte) object in the {BUCKET} mirror")
+            empty_in_mirror.append(key)
+            continue
         except (BotoCoreError, ClientError) as exc:
             print(f"Error! Failed to download this object:\ns3://{BUCKET}/{key}")
             print("The mirror is documented at https://registry.opendata.aws/sentinel5p/")
@@ -257,6 +299,12 @@ def fetch_data(start, end, output):
             raise click.Abort() from exc
 
         print(f"{outfn} ({os.path.getsize(outfn):,} bytes)")
+
+    if empty_in_mirror:
+        raise click.ClickException(
+            "The following granules are empty in the MEEO mirror and could not be "
+            "downloaded:\n" + "\n".join(f"  s3://{BUCKET}/{key}" for key in empty_in_mirror)
+        )
 
     print("Data fetched successfully!")
 
