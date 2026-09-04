@@ -59,8 +59,21 @@ def test_download_from_mirror_raises_on_empty_object(tmp_path):
     client = mock.Mock()
     client.head_object.return_value = {"ContentLength": 0}
 
-    with pytest.raises(fetch_tropomi.EmptySourceObject, match="some/key.nc"):
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="some/key.nc"):
         fetch_tropomi.download_from_mirror(client, "some/key.nc", str(tmp_path / "out.nc"))
+
+    client.download_file.assert_not_called()
+
+
+def test_download_from_mirror_raises_on_a_size_mismatch_with_the_catalogue(tmp_path):
+    """A non-zero but wrong-sized object in the mirror is also a known failure mode"""
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 4}
+
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="4 bytes.*40 bytes"):
+        fetch_tropomi.download_from_mirror(
+            client, "some/key.nc", str(tmp_path / "out.nc"), expected_size=40
+        )
 
     client.download_file.assert_not_called()
 
@@ -71,7 +84,7 @@ def test_download_from_mirror_accepts_a_correctly_sized_download(tmp_path):
     client.head_object.return_value = {"ContentLength": 4}
     client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"data")
 
-    fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn))
+    fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn), expected_size=4)
 
     assert outfn.read_bytes() == b"data"
     assert client.download_file.call_count == 1
