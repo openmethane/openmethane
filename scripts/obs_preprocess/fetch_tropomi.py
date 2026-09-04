@@ -7,10 +7,13 @@ the period of interest. Granules are then downloaded by name from the public
 `meeo-s5p` S3 bucket published by MEEO under the AWS Open Data Sponsorship
 Program. Neither service needs credentials.
 
-A small number of granules are known to be empty (0 byte) objects in the
-mirror, having never synced correctly from ESA. These are instead downloaded
-directly from CDSE, which does need an account's credentials
-(CDSE_USERNAME/CDSE_PASSWORD).
+A small number of granules are known to be unreliable objects in the mirror,
+having never synced correctly from ESA - either zero bytes, or a non-zero size
+that is still short of what the granule really is. Both are detected by
+comparing the mirror's reported size against the size CDSE's catalogue has for
+the same granule, before spending time on the transfer. Either way, the
+granule is instead downloaded directly from CDSE, which does need an
+account's credentials (CDSE_USERNAME/CDSE_PASSWORD).
 
 Granules are downloaded whole, unlike the previous NASA GES DISC subsetting
 service.
@@ -79,17 +82,20 @@ def create_client():
     return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
 
 
-class EmptySourceObject(RuntimeError):
-    """A granule exists in the mirror but its object holds no data"""
+class UnreliableMirrorObject(RuntimeError):
+    """A granule's object in the mirror cannot be trusted to hold the whole granule"""
 
 
-def download_from_mirror(client, key: str, outfn: str) -> None:
+def download_from_mirror(client, key: str, outfn: str, expected_size: int | None = None) -> None:
     """
     Download one granule from the MEEO mirror to outfn
 
-    The mirror has been found to hold a handful of zero-byte objects for
-    granules that never synced correctly from ESA, so the object's size is
-    checked before spending time on the transfer. `download_file` writes to a
+    The mirror has been found to hold a handful of unreliable objects for
+    granules that never synced correctly from ESA - some report zero bytes,
+    others a non-zero size that is still wrong - so the object's size is
+    checked before spending time on the transfer. Passing `expected_size` (the
+    granule's real size, from the CDSE catalogue) catches the latter case too;
+    without it, only a zero-byte object is caught. `download_file` writes to a
     temporary name and renames onto `outfn` on success, so a truncated
     transfer should not be possible; the download is still re-checked and
     retried once, since the mirror is outside our control.
@@ -97,7 +103,13 @@ def download_from_mirror(client, key: str, outfn: str) -> None:
     remote_size = client.head_object(Bucket=BUCKET, Key=key)["ContentLength"]
 
     if remote_size == 0:
-        raise EmptySourceObject(key)
+        raise UnreliableMirrorObject(f"{key} is an empty (0 byte) object in the {BUCKET} mirror")
+
+    if expected_size is not None and remote_size != expected_size:
+        raise UnreliableMirrorObject(
+            f"{key} is {remote_size:,} bytes in the {BUCKET} mirror but {expected_size:,} "
+            "bytes in the CDSE catalogue"
+        )
 
     for attempt in range(2):
         client.download_file(BUCKET, key, outfn)
@@ -270,9 +282,13 @@ def object_key(name: str) -> str:
 
 def search_granules(
     session: requests.Session, start: dt.datetime, end: dt.datetime, box: list[float]
-) -> list[str]:
+) -> list[tuple[str, int]]:
     """
     Find the granules crossing a bounding box during a period
+
+    Returns each granule's bucket key alongside its size in the CDSE
+    catalogue, so a caller can tell whether the mirror's copy of it is
+    trustworthy before downloading it.
 
     The polygon has to close on itself, and its coordinates are EPSG 4326.
     """
@@ -305,14 +321,14 @@ def search_granules(
             # Around four granules a day cross the Australian domain, so this is
             # far more than any sensible period needs and no paging is required.
             "$top": 1000,
-            "$select": "Name",
+            "$select": "Name,ContentLength",
         },
     )
     response.raise_for_status()
 
-    names = [item["Name"] for item in response.json()["value"]]
+    sizes = {item["Name"]: item["ContentLength"] for item in response.json()["value"]}
 
-    return [object_key(name) for name in select_one_per_orbit(names)]
+    return [(object_key(name), sizes[name]) for name in select_one_per_orbit(list(sizes))]
 
 
 @click.command()
@@ -346,15 +362,15 @@ def fetch_data(start, end, output):
     session = create_session()
 
     print(f"Searching the CDSE catalogue between {start} and {end} within {box}")
-    keys = search_granules(session, start, end, box)
-    print(f"Found {len(keys)} granules")
+    granules = search_granules(session, start, end, box)
+    print(f"Found {len(granules)} granules")
 
     # An empty result can mean the requested dates fall outside the archive,
     # that offline products haven't caught up yet (they lag acquisition by two
     # to three days), or a genuine instrument outage. None of those should
     # fail the daily workflow: downstream steps cope with there being no
     # TROPOMI data for the day, so just carry on with nothing to download.
-    if not keys:
+    if not granules:
         print(
             f"No granules found between {start} and {end} within {box}. Products are "
             "catalogued from 2018-04-30 and lag acquisition by two to three days; this "
@@ -370,7 +386,7 @@ def fetch_data(start, end, output):
     unrecoverable = []
     cdse_token = None
 
-    for key in keys:
+    for key, expected_size in granules:
         # Granules keep the name they have in the bucket, which is unique and
         # carries the sensing period, so nothing here has to invent one.
         outfn = os.path.join(output, os.path.basename(key))
@@ -384,9 +400,9 @@ def fetch_data(start, end, output):
             continue
 
         try:
-            download_from_mirror(client, key, outfn)
-        except EmptySourceObject:
-            print(f"Warning: {key} is an empty (0 byte) object in the {BUCKET} mirror")
+            download_from_mirror(client, key, outfn, expected_size)
+        except UnreliableMirrorObject as exc:
+            print(f"Warning: {exc}")
             print(f"Falling back to CDSE for {os.path.basename(key)}")
 
             try:
@@ -414,7 +430,7 @@ def fetch_data(start, end, output):
 
     if unrecoverable:
         raise click.ClickException(
-            "The following granules are empty in the MEEO mirror and could not be "
+            "The following granules are unreliable in the MEEO mirror and could not be "
             "downloaded from CDSE either:\n"
             + "\n".join(f"  s3://{BUCKET}/{key}" for key in unrecoverable)
         )

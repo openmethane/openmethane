@@ -139,6 +139,40 @@ def test_fetch_falls_back_to_cdse_for_a_granule_empty_in_the_mirror(tmpdir, au_t
     assert downloaded.size() == EMPTY_IN_MIRROR_SIZE
 
 
+# This documents a real granule whose mirror object is not empty, but is still the
+# wrong size (a partial sync from ESA, reported to MEEO); if it ever starts passing
+# without the CDSE fallback, the mirror has been fixed and this can be replaced with
+# a mocked case instead. It does not cross the au-test domain used by the other
+# fetch_data tests, so it is exercised directly rather than through the CLI.
+WRONG_SIZE_IN_MIRROR_GRANULE = (
+    "S5P_OFFL_L2__CH4____20240117T060410_20240117T074540_32445_03_020600_20240118T222604.nc"
+)
+WRONG_SIZE_IN_MIRROR_KEY = fetch_tropomi.object_key(WRONG_SIZE_IN_MIRROR_GRANULE)
+WRONG_SIZE_IN_MIRROR_SIZE = 69_528_923  # the granule's real size, per the CDSE catalogue
+
+
+# This hits the S3 bucket
+def test_download_from_mirror_raises_for_a_granule_the_wrong_size_in_the_mirror():
+    client = fetch_tropomi.create_client()
+
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="in the meeo-s5p mirror but"):
+        fetch_tropomi.download_from_mirror(
+            client, WRONG_SIZE_IN_MIRROR_KEY, "unused.nc", WRONG_SIZE_IN_MIRROR_SIZE
+        )
+
+
+# This hits CDSE's own download API
+@pytest.mark.skipif(not _has_cdse_credentials(), reason="CDSE_USERNAME/CDSE_PASSWORD not set")
+def test_download_from_cdse_recovers_a_granule_the_wrong_size_in_the_mirror(tmp_path):
+    session = fetch_tropomi.create_session()
+    token = fetch_tropomi.cdse_access_token(session)
+    outfn = tmp_path / "out.nc"
+
+    fetch_tropomi.download_from_cdse(session, token, WRONG_SIZE_IN_MIRROR_KEY, str(outfn))
+
+    assert outfn.stat().st_size == WRONG_SIZE_IN_MIRROR_SIZE
+
+
 # This hits the CDSE catalogue and the S3 bucket
 def test_fetch_reports_a_clear_error_when_cdse_has_no_credentials(
     tmpdir, au_test_domain, monkeypatch
@@ -194,17 +228,20 @@ def test_search_returns_one_product_per_orbit(start):
     the likeliest source, since they cover the same orbits as the offline ones in
     much shorter granules.
     """
-    keys = fetch_tropomi.search_granules(
+    granules = fetch_tropomi.search_granules(
         fetch_tropomi.create_session(), start, start + dt.timedelta(days=1), AUST_BOX
     )
 
-    assert keys
+    assert granules
 
-    orbits = [fetch_tropomi.granule_orbit(os.path.basename(key)) for key in keys]
+    orbits = [fetch_tropomi.granule_orbit(os.path.basename(key)) for key, _ in granules]
     assert len(orbits) == len(set(orbits))
 
     # NRTI granules would resolve to their own prefix
-    assert all(key.startswith(("OFFL/", "RPRO/")) for key in keys)
+    assert all(key.startswith(("OFFL/", "RPRO/")) for key, _ in granules)
+
+    # Each granule's real size comes along with it, for comparison against the mirror
+    assert all(size > 0 for _, size in granules)
 
 
 @pytest.mark.parametrize("env_var", ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"])
