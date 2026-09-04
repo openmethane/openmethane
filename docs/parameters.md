@@ -46,3 +46,10 @@ the environment variable is not defined.
 Used to fetch CAMS data during the cmaq_preprocess step.
  
 This requires a CAMS account, which can be created at the ECMWF [Atmosphere Data Store](https://ads.atmosphere.copernicus.eu/).
+
+## CDSE Login
+Used by `fetch_tropomi.py` (`CDSE_USERNAME`/`CDSE_PASSWORD`) as a fallback to download a granule
+directly from the Copernicus Data Space Ecosystem when it is empty in the MEEO mirror. Not
+required otherwise, since the catalogue search and the mirror download need no authentication.
+
+This requires a free CDSE account, which can be created at the [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu/).

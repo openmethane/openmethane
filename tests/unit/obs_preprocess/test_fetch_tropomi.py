@@ -1,4 +1,5 @@
 import datetime as dt
+from unittest import mock
 
 import pytest
 from scripts.obs_preprocess import fetch_tropomi
@@ -51,3 +52,101 @@ def test_select_one_per_orbit_prefers_reprocessed_at_the_same_version():
 
     assert fetch_tropomi.select_one_per_orbit([offline, RPRO]) == [RPRO]
     assert fetch_tropomi.select_one_per_orbit([RPRO, offline]) == [RPRO]
+
+
+def test_download_from_mirror_raises_on_empty_object(tmp_path):
+    """A zero-byte object in the mirror is a known failure mode, not a transfer to retry"""
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 0}
+
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="some/key.nc"):
+        fetch_tropomi.download_from_mirror(client, "some/key.nc", str(tmp_path / "out.nc"))
+
+    client.download_file.assert_not_called()
+
+
+def test_download_from_mirror_raises_on_a_size_mismatch_with_the_catalogue(tmp_path):
+    """A non-zero but wrong-sized object in the mirror is also a known failure mode"""
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 4}
+
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="4 bytes.*40 bytes"):
+        fetch_tropomi.download_from_mirror(
+            client, "some/key.nc", str(tmp_path / "out.nc"), expected_size=40
+        )
+
+    client.download_file.assert_not_called()
+
+
+def test_download_from_mirror_accepts_a_correctly_sized_download(tmp_path):
+    outfn = tmp_path / "out.nc"
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 4}
+    client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"data")
+
+    fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn), expected_size=4)
+
+    assert outfn.read_bytes() == b"data"
+    assert client.download_file.call_count == 1
+
+
+def test_download_from_mirror_retries_a_short_download_once(tmp_path):
+    """A download that lands short of the expected size is retried once before failing"""
+    outfn = tmp_path / "out.nc"
+    client = mock.Mock()
+    client.head_object.return_value = {"ContentLength": 4}
+    client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"da")
+
+    with pytest.raises(RuntimeError, match="did not download to its expected size"):
+        fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn))
+
+    assert client.download_file.call_count == 2
+    assert not outfn.exists()
+
+
+def test_cdse_access_token_requires_credentials(monkeypatch):
+    monkeypatch.delenv("CDSE_USERNAME", raising=False)
+    monkeypatch.delenv("CDSE_PASSWORD", raising=False)
+
+    with pytest.raises(fetch_tropomi.click.ClickException, match="CDSE_USERNAME"):
+        fetch_tropomi.cdse_access_token(mock.Mock())
+
+
+def test_cdse_access_token_posts_credentials_from_the_environment(monkeypatch):
+    monkeypatch.setenv("CDSE_USERNAME", "someone@example.com")
+    monkeypatch.setenv("CDSE_PASSWORD", "hunter2")
+
+    session = mock.Mock()
+    session.post.return_value.json.return_value = {"access_token": "a-token"}
+
+    assert fetch_tropomi.cdse_access_token(session) == "a-token"
+
+    _, kwargs = session.post.call_args
+    assert kwargs["data"]["username"] == "someone@example.com"
+    assert kwargs["data"]["password"] == "hunter2"  # noqa: S105 - a test fixture, not a real secret
+
+
+def test_find_product_id_raises_when_not_found():
+    session = mock.Mock()
+    session.get.return_value.json.return_value = {"value": []}
+
+    with pytest.raises(fetch_tropomi.click.ClickException, match="not found in the CDSE"):
+        fetch_tropomi.find_product_id(session, "missing.nc")
+
+
+def test_download_from_cdse_writes_the_response_body(tmp_path):
+    outfn = tmp_path / "out.nc"
+
+    session = mock.Mock()
+    session.get.return_value.json.return_value = {"value": [{"Id": "some-id"}]}
+    session.get.return_value.iter_content.return_value = [b"chunk-a", b"chunk-b"]
+
+    fetch_tropomi.download_from_cdse(
+        session, "a-token", "OFFL/L2__CH4___/2024/01/08/x.nc", str(outfn)
+    )
+
+    assert outfn.read_bytes() == b"chunk-achunk-b"
+    assert not (tmp_path / "out.nc.part").exists()
+
+    download_call = session.get.call_args_list[-1]
+    assert download_call.kwargs["headers"] == {"Authorization": "Bearer a-token"}

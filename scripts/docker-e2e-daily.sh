@@ -65,6 +65,8 @@ docker run --name="e2e-daily-prior-generate" --rm \
 # JobName: obs_preprocess-fetch_tropomi
 docker run --name="e2e-daily-obs_preprocess-fetch_tropomi" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":"$STORE_ROOT" \
+  -e CDSE_USERNAME="$CDSE_USERNAME" \
+  -e CDSE_PASSWORD="$CDSE_PASSWORD" \
   "$OPENMETHANE_IMAGE" bash scripts/obs_preprocess/fetch_tropomi.sh
 
 # JobName: cmaq_preprocess-run
