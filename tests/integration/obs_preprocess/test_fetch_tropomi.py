@@ -174,6 +174,7 @@ def test_download_from_cdse_recovers_a_granule_the_wrong_size_in_the_mirror(tmp_
 
 
 # This hits the CDSE catalogue and the S3 bucket
+@pytest.mark.skip(reason="Target date data fixed in S3 mirror")
 def test_fetch_reports_a_clear_error_when_cdse_has_no_credentials(
     tmpdir, au_test_domain, monkeypatch
 ):
