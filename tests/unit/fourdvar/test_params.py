@@ -13,7 +13,7 @@ from openmethane.fourdvar.params import (
     template_defn,
 )
 
-targets = pytest.mark.parametrize("target", ("nci", "docker"))
+targets = pytest.mark.parametrize("target", ("docker",))
 
 
 def _extract_params(module, attributes):
@@ -104,7 +104,7 @@ def test_data_access(data_regression, target_environment, target):
 
 
 def test_overrides(target_environment):
-    target = "nci"
+    target = "docker-test"
 
     target_environment(target)
 
@@ -112,7 +112,7 @@ def test_overrides(target_environment):
 
     os.environ.clear()
     os.environ["END_DATE"] = (
-        "2024-01-01"  # This value will take precedence over the value in .env.nci
+        "2024-01-01"  # This value will take precedence over the value in .env.docker-test
     )
 
     # Reload the params, but don't clear the environment first which would negate the line above

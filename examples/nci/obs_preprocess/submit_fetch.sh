@@ -1,5 +1,6 @@
 #!/bin/bash
-# submit.sh
+# """
+# submit_fetch.sh
 #
 #
 # Copyright 2023 Superpower Institute.
@@ -17,14 +18,21 @@
 # limitations under the License.
 #
 #PBS -P q90
-#PBS -q normal
-#PBS -N obs_preproc
-#PBS -l walltime=24:00:00,mem=128GB
-#PBS -l ncpus=48
+#PBS -q copyq
+#PBS -N tropomi_download
+#PBS -l walltime=10:00:00,mem=32GB
+#PBS -l storage=gdata/sx70+gdata/hh5+gdata/ua8+gdata/ub4
+#PBS -l ncpus=1
 #PBS -l wd
-cd ~/openmethane-beta/py4dvar/obs_preprocess
-source ../load_p4d_modules.sh
-# replace previous line with whatever you source to run py4dvar
+#
+# NOTE: NCI/Gadi is no longer officially supported — see examples/nci/README.md.
+# Submit from the repository root:
+#   qsub examples/nci/obs_preprocess/submit_fetch.sh
+#
+# Adjust the config file and date range below to suit your run.
 
-#python3 restart_script.py
-python3 tropomi_methane_preprocess.py --source "/home/563/pjr563/scratch/tmp/202207/S5P_RPRO_L2__CH4____202207*.nc"
+source examples/nci/load_p4d_modules.sh
+
+uv run python scripts/obs_preprocess/fetch_tropomi.py \
+  --start-date 2022-07-01 \
+  --end-date 2022-07-30

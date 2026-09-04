@@ -2,7 +2,7 @@
 # submit.sh
 #
 #
-# Copyright 2016 University of Melbourne.
+# Copyright 2023 Superpower Institute.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,15 +17,20 @@
 # limitations under the License.
 #
 #PBS -P q90
-#PBS -q hugemem
-#PBS -N test_grad
-#PBS -l walltime=48:00:00,mem=999GB
+#PBS -q normal
+#PBS -N obs_preproc
+#PBS -l walltime=24:00:00,mem=128GB
 #PBS -l ncpus=48
 #PBS -l wd
-#PBS -l jobfs=1400GB
-####PBS -L storage=scratch/q90
-source ../load_p4d_modules.sh
-# replace previous line with whatever you source to run py4dvar
+#
+# NOTE: NCI/Gadi is no longer officially supported — see examples/nci/README.md.
+# Submit from the repository root:
+#   qsub examples/nci/obs_preprocess/submit_tropomi_methane_preprocess.sh
+#
+# Set TROPOMI_SOURCE to a glob matching the raw TROPOMI files to preprocess.
 
-#python3 restart_script.py
-python3 test_grad_finite_diff.py
+source examples/nci/load_p4d_modules.sh
+
+TROPOMI_SOURCE=${TROPOMI_SOURCE:-"${STORE_PATH:?STORE_PATH must be set}/tropomi/*/*.nc4"}
+
+uv run python scripts/obs_preprocess/tropomi_methane_preprocess.py --source "${TROPOMI_SOURCE}"

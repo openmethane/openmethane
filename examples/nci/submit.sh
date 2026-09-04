@@ -1,9 +1,6 @@
 #!/bin/bash
-# """
-# submit_fetch.sh
 #
-#
-# Copyright 2023 Superpower Institute.
+# Copyright 2016 University of Melbourne.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,15 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#
 #PBS -P q90
-#PBS -q copyq
-#PBS -N tropomi_download
-#PBS -l walltime=10:00:00,mem=32GB
-#PBS -l storage=gdata/sx70+gdata/hh5+gdata/ua8+gdata/ub4
-#PBS -l ncpus=1
+#PBS -q hugemem
+#PBS -N test_py4dvar
+#PBS -l walltime=48:00:00,mem=999GB
+#PBS -l ncpus=96
 #PBS -l wd
-module use /g/data3/hh5/public/modules
-module load conda/analysis3
-python3 fetch_tropomi.py \
-  --start-date 2022-07-01 \
-  --end-date 2022-07-30
+#PBS -l jobfs=1400GB
+#
+# NOTE: NCI/Gadi is no longer officially supported — see examples/nci/README.md.
+# Submit with `qsub examples/nci/submit.sh` from the repository root.
+source examples/nci/load_p4d_modules.sh
+# replace previous line with whatever you source to run py4dvar
+
+uv run python runscript.py
