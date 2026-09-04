@@ -1,14 +1,17 @@
 import datetime
 import logging
+import shutil
 
 import numpy as np
 import pytest
 
+import openmethane.fourdvar.util.file_handle as fh
 from openmethane.fourdvar.datadef.observation_data import (
     OBS_OPERATOR_VERSION,
     ObservationData,
     load_observations_from_file,
 )
+from openmethane.fourdvar.util.file_handle import load_list
 from openmethane.obs_preprocess.obsESA_defn import (
     DEFAULT_MODEL_UNCERTAINTY,
     PRECISION_INFLATION,
@@ -152,6 +155,39 @@ def test_observation_data_legacy_file_warns(test_data_dir, target_environment, c
         end_date=datetime.date(2022, 12, 8),
     )
     assert all("offset_term" not in observation for observation in legacy.observations)
+
+
+def test_observation_data_handles_a_day_with_no_observations(
+    tmp_path, test_data_dir, target_environment
+):
+    """A monthly run glob must tolerate a day with a metadata-only obs file.
+
+    scripts/obs_preprocess/tropomi_methane_preprocess.py writes a file with
+    just the domain (no observations) for a day with no TROPOMI data, e.g. an
+    instrument outage. The monthly OBS_FILE_GLOB
+    (.env.docker-monthly: STORE_PATH/DOMAIN_NAME/daily/*/*/*/input/test_obs.pic.gz)
+    picks up every day's file together, so loading must not choke when one of
+    them is empty.
+    """
+    target_environment("docker-test")
+
+    real_file = test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz"
+    domain, *_real_observations = load_list(real_file)
+
+    # Both files need to live under one glob, as they would under a monthly
+    # run's OBS_FILE_GLOB (.env.docker-monthly).
+    shutil.copy(real_file, tmp_path / "test_obs_2022-12-07.pic.gz")
+
+    # Mimic the metadata-only file tropomi_methane_preprocess.py now writes
+    # for a day with no observations, reusing the real domain so its schema
+    # matches what a genuine day would produce.
+    fh.save_list([dict(domain)], tmp_path / "test_obs_empty_day.pic.gz")
+
+    obs = ObservationData.from_file(tmp_path / "test_obs_*.pic.gz")
+    obs.assert_params()
+
+    # The empty day contributed nothing; the real day's observations are untouched.
+    assert obs.length == 165
 
 
 def test_observation_data_missing(test_data_dir, target_environment):

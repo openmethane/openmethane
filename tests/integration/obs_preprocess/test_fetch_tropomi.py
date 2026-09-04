@@ -111,14 +111,16 @@ def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
 
 # This hits the CDSE catalogue with a period outside the archive
 def test_fetch_no_granules(tmpdir, au_test_domain):
+    """A day with no granules (outage, or outside the archive) must not fail the run"""
     runner = CliRunner()
     result = runner.invoke(
         fetch_tropomi.fetch_data,
         ["-s", "1900-07-01", "-e", "1900-07-02", str(tmpdir)],
     )
 
-    assert result.exit_code == 1, result.output
+    assert result.exit_code == 0, result.output
     assert "No granules found" in result.output
+    assert os.listdir(tmpdir) == []
 
 
 # These hit the CDSE catalogue

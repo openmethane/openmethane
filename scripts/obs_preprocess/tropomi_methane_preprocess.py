@@ -421,15 +421,20 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, s
             raise
 
     print(f"found {n_valid_obs} valid soundings from {n_total_obs} possible")
+
+    # Always write an output file, even with no observations: a day with no
+    # TROPOMI data (instrument outage, no overpass, all soundings filtered
+    # out) still needs to produce a file with the domain metadata so that
+    # downstream steps have something to read.
+    domain = model_grid.get_domain()
+    domain["is_lite"] = False
+    domain["obs_operator_version"] = OBS_OPERATOR_VERSION
+    datalist = [domain] + [o.out_dict for o in obs_list]
+    fh.save_list(datalist, output_file)
     if len(obs_list) > 0:
-        domain = model_grid.get_domain()
-        domain["is_lite"] = False
-        domain["obs_operator_version"] = OBS_OPERATOR_VERSION
-        datalist = [domain] + [o.out_dict for o in obs_list]
-        fh.save_list(datalist, output_file)
         print(f"recorded observations to {output_file}")
     else:
-        print("No valid observations found, no output file generated.")
+        print(f"no valid observations found, recorded metadata-only file to {output_file}")
 
 
 if __name__ == "__main__":

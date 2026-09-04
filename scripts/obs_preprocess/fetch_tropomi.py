@@ -218,14 +218,16 @@ def fetch_data(start, end, output):
     keys = search_granules(create_session(), start, end, box)
     print(f"Found {len(keys)} granules")
 
-    # TropOMI covers the globe daily, so an empty period means the requested
-    # dates fall outside the archive. Offline products lag acquisition by two to
-    # three days, so the most recent dates are not published yet. Fail here
-    # rather than leaving the preprocessing step to fail with nothing to read.
+    # An empty result can mean the requested dates fall outside the archive,
+    # that offline products haven't caught up yet (they lag acquisition by two
+    # to three days), or a genuine instrument outage. None of those should
+    # fail the daily workflow: downstream steps cope with there being no
+    # TROPOMI data for the day, so just carry on with nothing to download.
     if not keys:
-        raise click.ClickException(
+        print(
             f"No granules found between {start} and {end} within {box}. Products are "
-            "catalogued from 2018-04-30, and lag acquisition by two to three days."
+            "catalogued from 2018-04-30 and lag acquisition by two to three days; this "
+            "may also mean an instrument outage. Continuing with no TROPOMI data."
         )
 
     client = create_client()
