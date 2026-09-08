@@ -20,6 +20,7 @@ conc_out_lays: template
 conc_sense_file: /app/data/run-cmaq/output/LGRID.bwd_CH4only.<YYYYMMDD>.nc
 conc_spcs: CH4
 cpl_chk: /app/data/run-cmaq/chkpnt/CPL_CHK.<YYYYMMDD>.nc
+create_chk: true
 curdir: /path/to/curdir
 cwd_logs:
 - /path/to/curdir/CTM_LOG_*

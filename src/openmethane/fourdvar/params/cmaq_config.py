@@ -140,6 +140,10 @@ bwd_stdout_log = os.path.join(output_path, "bwd_stdout.<YYYYMMDD>.log")
 # floor file
 floor_file = os.path.join(output_path, "FLOOR_bnmk")
 
+# Whether ADJOINT_FWD writes the checkpoints ADJOINT_BWD replays. Forward-only
+# steps turn this off via cmaq_handle.checkpointing_disabled.
+create_chk = True
+
 # checkpoint files
 chem_chk = os.path.join(chk_path, "CHEM_CHK.<YYYYMMDD>.nc")
 vdiff_chk = os.path.join(chk_path, "VDIFF_CHK.<YYYYMMDD>.nc")
