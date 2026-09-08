@@ -72,7 +72,7 @@ def test_domain_bounding_box_covers_the_real_domain(au_test_domain):
     assert lat_max > latitude.max()
 
 
-# These hit the CDSE catalogue and the S3 bucket
+@pytest.mark.network
 @pytest.mark.parametrize("case", FETCH_CASES)
 def test_fetch(tmpdir, au_test_domain, case):
     start, end, expected_granule = case
@@ -102,7 +102,7 @@ def test_fetch(tmpdir, au_test_domain, case):
     assert (tmpdir / expected_granule).stat().size == catalogue_size
 
 
-# This hits the CDSE catalogue and the S3 bucket
+@pytest.mark.network
 def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
     """A granule already downloaded is left alone, so a rerun costs nothing"""
     start, end, expected_granule = FETCH_CASES[1].values[0]
@@ -121,7 +121,7 @@ def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
     assert (downloaded.stat().size, downloaded.stat().mtime) == before
 
 
-# This hits the CDSE catalogue with a period outside the archive
+@pytest.mark.network
 def test_fetch_no_granules(tmpdir, au_test_domain):
     """A day with no granules (outage, or outside the archive) must not fail the run"""
     runner = CliRunner()
@@ -135,7 +135,7 @@ def test_fetch_no_granules(tmpdir, au_test_domain):
     assert os.listdir(tmpdir) == []
 
 
-# These hit the CDSE catalogue
+@pytest.mark.network
 @pytest.mark.parametrize(
     "start",
     [
