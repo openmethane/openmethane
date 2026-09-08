@@ -3,7 +3,7 @@ import pytest
 from openmethane.fourdvar.util.decomposition import (
     HALO_WIDTH,
     Decomposition,
-    parse_griddesc,
+    read_grid_size,
     resolve_decomposition,
     solve_decomposition,
 )
@@ -40,10 +40,10 @@ def uncached_decomposition():
     ),
 )
 def test_solves_the_decompositions_we_run(grid, target_ranks, expected):
-    ncols, nrows = grid
+    grid_cols, grid_rows = grid
 
     decomposition = solve_decomposition(
-        ncols=ncols, nrows=nrows, target_ranks=target_ranks, min_cells_per_rank=10
+        grid_cols=grid_cols, grid_rows=grid_rows, target_ranks=target_ranks, min_cells_per_rank=10
     )
 
     assert decomposition == Decomposition(*expected)
@@ -51,33 +51,38 @@ def test_solves_the_decompositions_we_run(grid, target_ranks, expected):
 
 @pytest.mark.parametrize("target_ranks", range(1, 65))
 def test_every_subdomain_is_at_least_the_minimum(target_ranks):
-    ncols, nrows = AUST10KM
+    grid_cols, grid_rows = AUST10KM
     min_cells = 10
 
     decomposition = solve_decomposition(
-        ncols=ncols, nrows=nrows, target_ranks=target_ranks, min_cells_per_rank=min_cells
+        grid_cols=grid_cols,
+        grid_rows=grid_rows,
+        target_ranks=target_ranks,
+        min_cells_per_rank=min_cells,
     )
 
     # SUBHDOMAIN gives the leftovers of an uneven split to the leading
     # subdomains, so the floor of the division is the smallest subdomain.
-    assert ncols // decomposition.npcol >= min_cells
-    assert nrows // decomposition.nprow >= min_cells
+    assert grid_cols // decomposition.npcol >= min_cells
+    assert grid_rows // decomposition.nprow >= min_cells
     assert decomposition.ranks <= target_ranks
 
 
 def test_uses_as_many_of_the_ranks_as_the_domain_allows():
-    ncols, nrows = AUST10KM
+    grid_cols, grid_rows = AUST10KM
 
     # 45x43 subdomains: any finer split in either direction drops below 40 cells.
     decomposition = solve_decomposition(
-        ncols=ncols, nrows=nrows, target_ranks=1000, min_cells_per_rank=40
+        grid_cols=grid_cols, grid_rows=grid_rows, target_ranks=1000, min_cells_per_rank=40
     )
 
     assert decomposition == Decomposition(11, 10)
 
 
 def test_falls_back_to_serial_for_a_domain_below_the_minimum(caplog):
-    decomposition = solve_decomposition(ncols=5, nrows=5, target_ranks=24, min_cells_per_rank=10)
+    decomposition = solve_decomposition(
+        grid_cols=5, grid_rows=5, target_ranks=24, min_cells_per_rank=10
+    )
 
     assert decomposition == Decomposition(1, 1)
     assert decomposition.is_serial
@@ -87,13 +92,19 @@ def test_falls_back_to_serial_for_a_domain_below_the_minimum(caplog):
 def test_rejects_a_minimum_below_the_halo_width():
     with pytest.raises(ValueError, match=f"at least the halo width {HALO_WIDTH}"):
         solve_decomposition(
-            ncols=454, nrows=430, target_ranks=24, min_cells_per_rank=HALO_WIDTH - 1
+            grid_cols=454, grid_rows=430, target_ranks=24, min_cells_per_rank=HALO_WIDTH - 1
         )
 
 
 def test_rejects_a_target_of_no_ranks():
     with pytest.raises(ValueError, match="target_ranks must be positive"):
-        solve_decomposition(ncols=454, nrows=430, target_ranks=0, min_cells_per_rank=10)
+        solve_decomposition(grid_cols=454, grid_rows=430, target_ranks=0, min_cells_per_rank=10)
+
+
+@pytest.mark.parametrize("npcol, nprow", ((0, 4), (4, 0), (-1, 4)))
+def test_a_decomposition_needs_a_rank_in_each_direction(npcol, nprow):
+    with pytest.raises(ValueError, match="must be > 0"):
+        Decomposition(npcol, nprow)
 
 
 def test_ranks_is_the_product_of_the_decomposition():
@@ -103,33 +114,10 @@ def test_ranks_is_the_product_of_the_decomposition():
     assert str(Decomposition(6, 4)) == "6x4"
 
 
-def test_reads_the_grid_size_from_griddesc(test_data_dir):
-    griddesc = test_data_dir / "mcip" / "2022-12-07" / "d01" / "GRIDDESC"
+def test_reads_the_grid_size_from_the_mcip_output(test_data_dir):
+    grid_cro_2d = test_data_dir / "mcip" / "2022-12-07" / "d01" / "GRIDCRO2D_au-test_v1"
 
-    assert parse_griddesc(str(griddesc), "au-test_v1") == AU_TEST
-
-
-def test_griddesc_without_the_grid_is_an_error(test_data_dir):
-    griddesc = test_data_dir / "mcip" / "2022-12-07" / "d01" / "GRIDDESC"
-
-    with pytest.raises(ValueError, match="no definition of grid 'aust10km_v1'"):
-        parse_griddesc(str(griddesc), "aust10km_v1")
-
-
-def test_griddesc_coordinate_system_is_not_mistaken_for_a_grid(tmp_path):
-    # The coordinate system and the grid share a name, which GRIDDESC allows.
-    griddesc = tmp_path / "GRIDDESC"
-    griddesc.write_text(
-        "' '\n"
-        "'shared_name'\n"
-        "  2       -40.000       -15.000       133.302       133.302       -27.500\n"
-        "' '\n"
-        "'shared_name'\n"
-        "'shared_name'   1480000.375    314369.500     10000.000     10000.000  10  10   1\n"
-        "' '\n"
-    )
-
-    assert parse_griddesc(str(griddesc), "shared_name") == (10, 10)
+    assert read_grid_size(str(grid_cro_2d)) == AU_TEST
 
 
 def test_configured_decomposition_is_used_as_given(uncached_decomposition, monkeypatch):
@@ -148,17 +136,17 @@ def test_half_a_configured_decomposition_means_one_rank_across(uncached_decompos
     assert uncached_decomposition() == Decomposition(4, 1)
 
 
-def test_rank_target_is_split_across_the_domain_in_griddesc(
+def test_rank_target_is_split_across_the_grid_cmaq_is_given(
     uncached_decomposition, monkeypatch, test_data_dir
 ):
-    griddesc = test_data_dir / "mcip" / "<YYYY-MM-DD>" / "d01" / "GRIDDESC"
+    grid_cro_2d = test_data_dir / "mcip" / "<YYYY-MM-DD>" / "d01" / "GRIDCRO2D_au-test_v1"
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.npcol", 0)
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.nprow", 0)
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.num_proc_total", 24)
-    monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.griddesc", str(griddesc))
-    monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.gridname", "au-test_v1")
+    monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.grid_cro_2d", str(grid_cro_2d))
 
-    # au-test is 10x10, too small to gain from being split at all.
+    # The MCIP output is on the 10x10 au-test grid, which is too small to gain
+    # from being split at all.
     assert uncached_decomposition() == Decomposition(1, 1)
 
 

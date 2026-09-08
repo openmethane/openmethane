@@ -1,18 +1,3 @@
-#
-# Copyright 2016 University of Melbourne.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
 """Choose how to split the model domain across MPI ranks.
 
 CMAQ is told its decomposition as NPCOL x NPROW, and the two numbers have to
@@ -23,9 +8,12 @@ of ranks they want to run on and let `resolve_decomposition` pick the shape.
 
 import functools
 import math
-import re
+
+import attrs
+import attrs.validators
 
 import openmethane.fourdvar.util.date_handle as dt
+import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar.params import cmaq_config, date_defn
 from openmethane.util.logger import get_logger
 
@@ -37,23 +25,13 @@ logger = get_logger(__name__)
 # floor on cells per rank in either direction.
 HALO_WIDTH = 3
 
-# One quoted name alone on a line, as GRIDDESC introduces both coordinate
-# systems and grids.
-_NAME_LINE = re.compile(r"^'([^']*)'$")
-# A grid definition: coordinate system name, four grid offsets/sizes, then the
-# column and row counts.
-_GRID_LINE = re.compile(r"^'[^']*'\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+)\s+(\d+)")
 
-
+@attrs.frozen
 class Decomposition:
     """A horizontal domain decomposition, as CMAQ's NPCOL and NPROW."""
 
-    def __init__(self, npcol: int, nprow: int):
-        if npcol < 1 or nprow < 1:
-            raise ValueError(f"decomposition must be positive, got {npcol}x{nprow}")
-
-        self.npcol = npcol
-        self.nprow = nprow
+    npcol: int = attrs.field(validator=attrs.validators.gt(0))
+    nprow: int = attrs.field(validator=attrs.validators.gt(0))
 
     @property
     def ranks(self) -> int:
@@ -65,22 +43,11 @@ class Decomposition:
         """Whether this runs CMAQ in serial rather than under mpirun."""
         return self.ranks == 1
 
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, Decomposition):
-            return NotImplemented
-        return (self.npcol, self.nprow) == (other.npcol, other.nprow)
-
-    def __hash__(self) -> int:
-        return hash((self.npcol, self.nprow))
-
-    def __repr__(self) -> str:
-        return f"Decomposition(npcol={self.npcol}, nprow={self.nprow})"
-
     def __str__(self) -> str:
         return f"{self.npcol}x{self.nprow}"
 
 
-def _rank_cost(ncols: int, nrows: int, decomposition: Decomposition) -> int:
+def _rank_cost(grid_cols: int, grid_rows: int, decomposition: Decomposition) -> int:
     """
     Estimate the work the busiest rank does under a decomposition.
 
@@ -89,8 +56,8 @@ def _rank_cost(ncols: int, nrows: int, decomposition: Decomposition) -> int:
     communication that splitting adds. Uses the largest subdomain, since every
     rank waits on the slowest.
     """
-    width = math.ceil(ncols / decomposition.npcol)
-    height = math.ceil(nrows / decomposition.nprow)
+    width = math.ceil(grid_cols / decomposition.npcol)
+    height = math.ceil(grid_rows / decomposition.nprow)
 
     interior = width * height
     # A halo on each of the four sides, exchanged every advection step.
@@ -100,8 +67,8 @@ def _rank_cost(ncols: int, nrows: int, decomposition: Decomposition) -> int:
 
 
 def solve_decomposition(
-    ncols: int,
-    nrows: int,
+    grid_cols: int,
+    grid_rows: int,
     target_ranks: int,
     min_cells_per_rank: int,
 ) -> Decomposition:
@@ -124,9 +91,9 @@ def solve_decomposition(
 
     Parameters
     ----------
-    ncols
+    grid_cols
         Number of columns in the grid.
-    nrows
+    grid_rows
         Number of rows in the grid.
     target_ranks
         Most ranks to use, normally the cores the job has been given.
@@ -151,19 +118,19 @@ def solve_decomposition(
     for npcol in range(1, target_ranks + 1):
         # Subdomains only get narrower as npcol grows, so once one direction is
         # too fine no larger value of it can qualify.
-        if ncols // npcol < min_cells_per_rank:
+        if grid_cols // npcol < min_cells_per_rank:
             break
 
         for nprow in range(1, target_ranks // npcol + 1):
-            if nrows // nprow < min_cells_per_rank:
+            if grid_rows // nprow < min_cells_per_rank:
                 break
 
             candidate = Decomposition(npcol, nprow)
             # Two decompositions can cost the same, most obviously a domain's
             # own transpose. Break the tie on the squarest subdomains and then
             # on npcol, so the choice doesn't depend on iteration order.
-            skew = abs(math.log((ncols / npcol) / (nrows / nprow)))
-            score = (_rank_cost(ncols, nrows, candidate), skew, npcol)
+            skew = abs(math.log((grid_cols / npcol) / (grid_rows / nprow)))
+            score = (_rank_cost(grid_cols, grid_rows, candidate), skew, npcol)
 
             if best_score is None or score < best_score:
                 best = candidate
@@ -173,44 +140,28 @@ def solve_decomposition(
         # The grid is smaller than the minimum in at least one direction. Serial
         # runs swap no halo, so 1x1 is still valid, just not parallel.
         logger.warning(
-            f"{ncols}x{nrows} grid is too small to split into subdomains of at least"
-            f" {min_cells_per_rank} cells, running CMAQ in serial"
+            f"{grid_cols}x{grid_rows} grid is too small to split into subdomains of at"
+            f" least {min_cells_per_rank} cells, running CMAQ in serial"
         )
         return Decomposition(1, 1)
 
     return best
 
 
-def parse_griddesc(path: str, gridname: str) -> tuple[int, int]:
+def read_grid_size(path: str) -> tuple[int, int]:
     """
-    Read the size of a grid out of an IO/API GRIDDESC file.
+    Read the size of the grid an IO/API file is on.
 
     Parameters
     ----------
     path
-        Path of the GRIDDESC file.
-    gridname
-        Name of the grid to look up, as CMAQ's GRID_NAME.
+        Path of the file, which must carry the IO/API grid attributes.
 
     Returns
     -------
     The grid's column and row counts.
     """
-    with open(path) as f:
-        lines = [line.strip() for line in f]
-
-    for index, line in enumerate(lines[:-1]):
-        name = _NAME_LINE.match(line)
-        if name is None or name.group(1) != gridname:
-            continue
-
-        # Coordinate systems are named the same way as grids but followed by
-        # numbers alone, so only a grid definition matches here.
-        grid = _GRID_LINE.match(lines[index + 1])
-        if grid is not None:
-            return int(grid.group(1)), int(grid.group(2))
-
-    raise ValueError(f"no definition of grid {gridname!r} in {path}")
+    return int(ncf.get_attr(path, "NCOLS")), int(ncf.get_attr(path, "NROWS"))
 
 
 @functools.cache
@@ -238,21 +189,22 @@ def resolve_decomposition() -> Decomposition:
         logger.info("no decomposition configured, running CMAQ in serial")
         return Decomposition(1, 1)
 
-    # GRIDDESC lives with the MCIP output, so its path carries a date. Any day
-    # of the run describes the same grid.
-    griddesc = dt.replace_date(cmaq_config.griddesc, date_defn.start_date)
-    ncols, nrows = parse_griddesc(griddesc, cmaq_config.gridname)
+    # Take the grid from the MCIP output rather than the domain file, since this
+    # is the grid CMAQ itself is given. The path carries a date, and every day
+    # of a run is on the same grid.
+    grid_file = dt.replace_date(cmaq_config.grid_cro_2d, date_defn.start_date)
+    grid_cols, grid_rows = read_grid_size(grid_file)
 
     decomposition = solve_decomposition(
-        ncols=ncols,
-        nrows=nrows,
+        grid_cols=grid_cols,
+        grid_rows=grid_rows,
         target_ranks=cmaq_config.num_proc_total,
         min_cells_per_rank=cmaq_config.min_cells_per_rank,
     )
     logger.info(
-        f"decomposed the {ncols}x{nrows} {cmaq_config.gridname} grid as {decomposition}"
+        f"decomposed the {grid_cols}x{grid_rows} grid as {decomposition}"
         f" ({decomposition.ranks} of {cmaq_config.num_proc_total} ranks,"
-        f" subdomains of {ncols // decomposition.npcol}x{nrows // decomposition.nprow}"
-        " cells or larger)"
+        f" subdomains of {grid_cols // decomposition.npcol}"
+        f"x{grid_rows // decomposition.nprow} cells or larger)"
     )
     return decomposition
