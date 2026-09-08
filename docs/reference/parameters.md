@@ -70,11 +70,29 @@ simulation day — see
 | `CMAQ_BIN` | path | Directory containing `mcip`, `ICON_CH4only`, `BCON_CH4only` and their `.nml` files | *required* |
 | `ADJOINT_FWD` | path | CMAQ forward model executable | *required* |
 | `ADJOINT_BWD` | path | CMAQ adjoint (backward) model executable | *required* |
-| `NUM_PROC_ROWS` | int | MPI decomposition of the grid, rows | `1` |
-| `NUM_PROC_COLS` | int | MPI decomposition of the grid, columns | `1` |
+| `NUM_PROC_TOTAL` | int | Number of MPI ranks to decompose the grid across. The shape of the decomposition is derived from the domain size — see [MPI domain decomposition](#mpi-domain-decomposition). | `1` |
+| `NUM_PROC_ROWS` | int | MPI decomposition of the grid, rows. Pins the decomposition instead of deriving it. | derived |
+| `NUM_PROC_COLS` | int | MPI decomposition of the grid, columns. Pins the decomposition instead of deriving it. | derived |
+| `MIN_CELLS_PER_RANK` | int | Fewest grid cells a subdomain may span in either direction | `10` |
 | `NCPUS` | int | Parallelism for TROPOMI preprocessing and alerts | `1` |
 | `USE_JOBFS` | bool | Put checkpoints on PBS job-local storage (`$PBS_JOBFS`). HPC only; warns and falls back if not run under `qsub`. | `false` |
 | `EXECUTION_ID` | str | Unique identifier for this execution. Only required when `CHK_PATH` is exactly `/mnt/scratch`, where it is appended to keep concurrent runs apart. | *conditionally required* |
+
+### MPI domain decomposition
+
+CMAQ splits the domain into a grid of `NUM_PROC_COLS` x `NUM_PROC_ROWS`
+subdomains and runs one MPI rank per subdomain.
+
+Normally only `NUM_PROC_TOTAL` needs to be set, to the number of cores the run
+has available. The shape is then derived from the size of the domain, keeping
+subdomains as square as possible and no smaller than `MIN_CELLS_PER_RANK` cells
+in either direction. Fewer ranks than requested are used if the domain is too
+small to be split that finely, down to a single rank for a domain that is
+smaller than the minimum. This means the same `NUM_PROC_TOTAL` can be used for
+every domain.
+
+Setting `NUM_PROC_COLS` or `NUM_PROC_ROWS` pins the decomposition instead, and
+`NUM_PROC_TOTAL` is then ignored. If neither is set, CMAQ runs in serial.
 
 ## Inversion
 
