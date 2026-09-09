@@ -309,3 +309,47 @@ def test_rejects_badly_ordered_input():
         build_column_operator(sat_edge, avker[:-1], prior, model_edge)
     with pytest.raises(ValueError, match="unknown fill strategy"):
         build_column_operator(sat_edge, avker, prior, model_edge, fill="nonsense")
+
+
+def test_default_fill_is_the_prior():
+    """The operator must not depend on CMAQ's top layer unless asked to.
+
+    This is the production choice: CMAQ has no top boundary condition, so a fill
+    anchored to its topmost layer feeds that layer's drift into every simulated
+    column. See https://github.com/openmethane/openmethane/issues/236.
+    """
+    sat_edge = sat_edges()
+    model_edge = cmaq_edges()
+    avker = np.ones(N_SAT)
+    prior = np.linspace(1000.0, 1850.0, N_SAT)
+
+    default = build_column_operator(sat_edge, avker, prior, model_edge)
+    explicit = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR)
+
+    assert default.weights == pytest.approx(explicit.weights)
+    assert default.offset == pytest.approx(explicit.offset)
+
+
+def test_prior_fill_weights_the_top_layer_by_its_air_mass():
+    """The top model layer must carry its own pressure share and nothing more.
+
+    Under FILL_PRIOR_OFFSET the topmost layer additionally carries the whole
+    uncovered column, which is where the 4.4x over-weighting measured on the
+    Australian domain came from.
+    """
+    sat_edge = sat_edges()
+    model_edge = cmaq_edges()
+    avker = np.ones(N_SAT)
+    prior = np.linspace(1000.0, 1850.0, N_SAT)
+
+    prior_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR)
+    offset_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR_OFFSET)
+
+    # the pressure share of the top model layer, as a fraction of the retrieval column
+    air_mass_share = prior_fill.overlap[:, -1].sum() / (sat_edge[-1] - sat_edge[0])
+    assert prior_fill.weights[-1] == pytest.approx(air_mass_share)
+
+    # the uncovered column is what the offset fill adds on top of that share
+    gap = (1.0 - prior_fill.coverage) @ prior_fill.pressure_weight
+    assert offset_fill.weights[-1] == pytest.approx(prior_fill.weights[-1] + gap)
+    assert offset_fill.weights[-1] > prior_fill.weights[-1]

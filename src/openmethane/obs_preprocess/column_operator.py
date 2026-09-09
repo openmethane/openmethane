@@ -41,7 +41,14 @@ fraction ``f_j``, and the uncovered part must be filled from somewhere:
 
 Three fill strategies are supported, selected by ``fill``:
 
-``"prior_offset"`` (default)
+``"prior"`` (default)
+    ``x_fill,j = u_j``, with ``u_j`` the prior averaged over the uncovered part
+    of layer j: trust the retrieval prior above the model top and make no claim
+    about air the model does not simulate. The fill does not depend on the model
+    state at all, so each CMAQ layer carries only the weight its own air mass
+    earns and the whole fill lands in the constant ``c`` of (3).
+
+``"prior_offset"``
     Assume CMAQ gets the vertical *structure* right up to its top and the
     retrieval prior gets the structure but not the magnitude right above it.
     The prior profile is shifted by the constant needed to make it continuous
@@ -49,14 +56,24 @@ Three fill strategies are supported, selected by ``fill``:
 
         x_fill,j = u_j + ( x_top - a_top )
 
-    where ``u_j`` is the prior averaged over the uncovered part of layer j,
-    ``x_top`` is the topmost CMAQ layer, and ``a_top`` is the prior averaged
-    over that same CMAQ layer (so that like is compared with like). The fill
-    still depends linearly on the model state, through ``x_top``, so (3) holds.
+    where ``x_top`` is the topmost CMAQ layer and ``a_top`` is the prior
+    averaged over that same CMAQ layer (so that like is compared with like).
+    The fill still depends linearly on the model state, through ``x_top``, so
+    (3) holds.
 
-``"prior"``
-    ``x_fill,j = u_j``: trust the retrieval prior above the model top and make
-    no claim about air the model does not simulate.
+    This was the default until it was measured against the Australian domain,
+    where it makes the simulated column depend on the one layer CMAQ cannot
+    hold. Anchoring the fill to ``x_top`` gives layer 31 of 32 a weight of
+    around 4.4x its share of the air mass. That layer is the least constrained
+    one in the model: BCON prescribes CH4 only around the lateral perimeter, the
+    domain top is a rigid lid with nothing prescribed above it, and CH4 is
+    carried as an inert tracer, so once vertical mixing erodes the gradient ICON
+    established there nothing restores it. It drifts more than 100 ppb over a
+    month, and the 4.4x weight carries that drift into the simulated column as a
+    spatially coherent error: regional means over ~500 km blocks spread 3.55 ppb,
+    where independent noise of the same size per sounding would give 0.15 ppb. An
+    inversion reads that as emissions. See
+    https://github.com/openmethane/openmethane/issues/236.
 
 ``"model_top"``
     ``x_fill,j = x_top``: extend the topmost model layer to the top of the
@@ -160,7 +177,7 @@ def build_column_operator(
     avker: np.ndarray,
     prior: np.ndarray,
     model_edge: np.ndarray,
-    fill: str = FILL_PRIOR_OFFSET,
+    fill: str = FILL_PRIOR,
 ) -> ColumnOperator:
     """Build the affine column operator for a single sounding.
 

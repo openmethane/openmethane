@@ -54,4 +54,4 @@ YCELL: 10000.0
 YCENT: -27.5
 YORIG: 314369.5
 is_lite: false
-obs_operator_version: 2
+obs_operator_version: 3

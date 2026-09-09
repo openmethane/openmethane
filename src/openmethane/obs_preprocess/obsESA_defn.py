@@ -18,7 +18,7 @@ import os
 import numpy as np
 
 from openmethane.obs_preprocess.column_operator import (
-    FILL_PRIOR_OFFSET,
+    FILL_PRIOR,
     build_column_operator,
 )
 from openmethane.obs_preprocess.obs_defn import ObsMultiRay
@@ -148,12 +148,18 @@ class ObsSRON(ObsMultiRay):
         model_edge = model_space.get_pressure_bounds(coord)
 
         prior = self.prior_profile()
+        # The ~3.4% of the column above VGTOP comes from the retrieval prior, not
+        # from CMAQ's top layer. BCON prescribes CH4 around the lateral perimeter
+        # only; the domain top is a rigid lid with nothing prescribed above it, so
+        # the topmost layer is unconstrained and drifts. Anchoring the fill to it
+        # would feed that drift into every simulated column. See the fill
+        # strategies in `column_operator`.
         operator = build_column_operator(
             sat_edge=self.src_data["pressure_levels"],
             avker=self.src_data["obs_kernel"],
             prior=prior,
             model_edge=model_edge,
-            fill=FILL_PRIOR_OFFSET,
+            fill=FILL_PRIOR,
         )
 
         # The uncertainty the inversion weights residuals by: the model side of
