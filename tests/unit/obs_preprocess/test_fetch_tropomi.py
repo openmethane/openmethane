@@ -60,7 +60,7 @@ def test_download_from_mirror_raises_on_empty_object(tmp_path):
     client = mock.Mock()
     client.head_object.return_value = {"ContentLength": 0}
 
-    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="some/key.nc"):
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObjectError, match="some/key.nc"):
         fetch_tropomi.download_from_mirror(client, "some/key.nc", str(tmp_path / "out.nc"))
 
     client.download_file.assert_not_called()
@@ -71,7 +71,7 @@ def test_download_from_mirror_raises_on_a_size_mismatch_with_the_catalogue(tmp_p
     client = mock.Mock()
     client.head_object.return_value = {"ContentLength": 4}
 
-    with pytest.raises(fetch_tropomi.UnreliableMirrorObject, match="4 bytes.*40 bytes"):
+    with pytest.raises(fetch_tropomi.UnreliableMirrorObjectError, match="4 bytes.*40 bytes"):
         fetch_tropomi.download_from_mirror(
             client, "some/key.nc", str(tmp_path / "out.nc"), expected_size=40
         )
@@ -248,7 +248,7 @@ def test_fetch_falls_back_to_cdse_for_an_unreliable_mirror_object(
     monkeypatch.setattr(
         fetch_tropomi,
         "download_from_mirror",
-        _raises(fetch_tropomi.UnreliableMirrorObject("an empty (0 byte) object")),
+        _raises(fetch_tropomi.UnreliableMirrorObjectError("an empty (0 byte) object")),
     )
     monkeypatch.setattr(fetch_tropomi, "cdse_access_token", lambda _: "a-token")
     monkeypatch.setattr(fetch_tropomi, "download_from_cdse", _cdse_writes(GRANULE_BODY))
@@ -269,7 +269,7 @@ def test_fetch_requests_one_cdse_token_for_the_whole_run(catalogue_holds, output
     monkeypatch.setattr(
         fetch_tropomi,
         "download_from_mirror",
-        _raises(fetch_tropomi.UnreliableMirrorObject("unreliable")),
+        _raises(fetch_tropomi.UnreliableMirrorObjectError("unreliable")),
     )
     monkeypatch.setattr(fetch_tropomi, "cdse_access_token", token)
     monkeypatch.setattr(fetch_tropomi, "download_from_cdse", _cdse_writes(GRANULE_BODY))
@@ -290,7 +290,7 @@ def test_fetch_reports_a_clear_error_when_cdse_has_no_credentials(
     monkeypatch.setattr(
         fetch_tropomi,
         "download_from_mirror",
-        _raises(fetch_tropomi.UnreliableMirrorObject("unreliable")),
+        _raises(fetch_tropomi.UnreliableMirrorObjectError("unreliable")),
     )
 
     result = CliRunner().invoke(fetch_tropomi.fetch_data, [*FETCH_ARGS, str(output)])
@@ -306,7 +306,7 @@ def test_fetch_reports_every_granule_it_could_not_recover(catalogue_holds, outpu
     monkeypatch.setattr(
         fetch_tropomi,
         "download_from_mirror",
-        _raises(fetch_tropomi.UnreliableMirrorObject("unreliable")),
+        _raises(fetch_tropomi.UnreliableMirrorObjectError("unreliable")),
     )
     monkeypatch.setattr(fetch_tropomi, "cdse_access_token", lambda _: "a-token")
     monkeypatch.setattr(fetch_tropomi, "download_from_cdse", _raises(RuntimeError("CDSE said no")))

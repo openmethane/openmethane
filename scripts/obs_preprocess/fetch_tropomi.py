@@ -82,8 +82,8 @@ def create_client():
     return boto3.client("s3", region_name=REGION, config=Config(signature_version=UNSIGNED))
 
 
-class UnreliableMirrorObject(RuntimeError):
-    """A granule's object in the mirror cannot be trusted to hold the whole granule"""
+class UnreliableMirrorObjectError(RuntimeError):
+    """Thrown when a granule's object in the mirror does not hold the whole granule"""
 
 
 def download_from_mirror(client, key: str, outfn: str, expected_size: int | None = None) -> None:
@@ -103,10 +103,10 @@ def download_from_mirror(client, key: str, outfn: str, expected_size: int | None
     remote_size = client.head_object(Bucket=BUCKET, Key=key)["ContentLength"]
 
     if remote_size == 0:
-        raise UnreliableMirrorObject(f"{key} is an empty (0 byte) object in the {BUCKET} mirror")
+        raise UnreliableMirrorObjectError(f"{key} is an empty (0 byte) object in the {BUCKET} mirror")
 
     if expected_size is not None and remote_size != expected_size:
-        raise UnreliableMirrorObject(
+        raise UnreliableMirrorObjectError(
             f"{key} is {remote_size:,} bytes in the {BUCKET} mirror but {expected_size:,} "
             "bytes in the CDSE catalogue"
         )
@@ -401,7 +401,7 @@ def fetch_data(start, end, output):
 
         try:
             download_from_mirror(client, key, outfn, expected_size)
-        except UnreliableMirrorObject as exc:
+        except UnreliableMirrorObjectError as exc:
             print(f"Warning: {exc}")
             print(f"Falling back to CDSE for {os.path.basename(key)}")
 
