@@ -72,7 +72,7 @@ def test_domain_bounding_box_covers_the_real_domain(au_test_domain):
     assert lat_max > latitude.max()
 
 
-# These hit the CDSE catalogue and the S3 bucket
+@pytest.mark.network
 @pytest.mark.parametrize("case", FETCH_CASES)
 def test_fetch(tmpdir, au_test_domain, case):
     start, end, expected_granule = case
@@ -89,8 +89,20 @@ def test_fetch(tmpdir, au_test_domain, case):
     # Granules keep their name from the bucket, directly in the output directory
     assert os.listdir(tmpdir) == [expected_granule]
 
+    # The mirror's object has to hold the whole granule. That is checked against
+    # the size the catalogue reports in this same run, rather than a size
+    # recorded here: a new processing baseline changes what the granule weighs,
+    # but never the agreement between the two sources.
+    [(_, catalogue_size)] = fetch_tropomi.search_granules(
+        fetch_tropomi.create_session(),
+        dt.datetime.fromisoformat(start),
+        dt.datetime.fromisoformat(end),
+        domain_bounding_box(au_test_domain, fetch_tropomi.CATALOGUE_CRS),
+    )
+    assert (tmpdir / expected_granule).stat().size == catalogue_size
 
-# This hits the CDSE catalogue and the S3 bucket
+
+@pytest.mark.network
 def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
     """A granule already downloaded is left alone, so a rerun costs nothing"""
     start, end, expected_granule = FETCH_CASES[1].values[0]
@@ -109,7 +121,7 @@ def test_fetch_skips_granules_already_present(tmpdir, au_test_domain):
     assert (downloaded.stat().size, downloaded.stat().mtime) == before
 
 
-# This hits the CDSE catalogue with a period outside the archive
+@pytest.mark.network
 def test_fetch_no_granules(tmpdir, au_test_domain):
     """A day with no granules (outage, or outside the archive) must not fail the run"""
     runner = CliRunner()
@@ -123,7 +135,7 @@ def test_fetch_no_granules(tmpdir, au_test_domain):
     assert os.listdir(tmpdir) == []
 
 
-# These hit the CDSE catalogue
+@pytest.mark.network
 @pytest.mark.parametrize(
     "start",
     [
@@ -146,17 +158,20 @@ def test_search_returns_one_product_per_orbit(start):
     the likeliest source, since they cover the same orbits as the offline ones in
     much shorter granules.
     """
-    keys = fetch_tropomi.search_granules(
+    granules = fetch_tropomi.search_granules(
         fetch_tropomi.create_session(), start, start + dt.timedelta(days=1), AUST_BOX
     )
 
-    assert keys
+    assert granules
 
-    orbits = [fetch_tropomi.granule_orbit(os.path.basename(key)) for key in keys]
+    orbits = [fetch_tropomi.granule_orbit(os.path.basename(key)) for key, _ in granules]
     assert len(orbits) == len(set(orbits))
 
     # NRTI granules would resolve to their own prefix
-    assert all(key.startswith(("OFFL/", "RPRO/")) for key in keys)
+    assert all(key.startswith(("OFFL/", "RPRO/")) for key, _ in granules)
+
+    # Each granule's real size comes along with it, for comparison against the mirror
+    assert all(size > 0 for _, size in granules)
 
 
 @pytest.mark.parametrize("env_var", ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"])

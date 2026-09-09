@@ -50,6 +50,11 @@ build-backend = "uv_build"
 addopts = [
     "--import-mode=importlib",
 ]
+markers = [
+    # Deselect with `-m "not network"` to run offline, or when a third-party
+    # outage should not be allowed to fail the suite.
+    "network: hits a third-party service over the network",
+]
 
 [tool.ruff]
 src = ["src"]
