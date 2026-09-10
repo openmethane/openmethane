@@ -36,7 +36,23 @@ logger = get_logger(__name__)
 # Bumped when the meaning of the fields in an observation file changes.
 # 1: light-path pressure weights only, no averaging kernel, no offset term.
 # 2: full column operator - averaging kernel applied, `offset_term` present.
-OBS_OPERATOR_VERSION = 2
+# 3: column above the model top filled from the retrieval prior alone, so the
+#    weights no longer over-weight CMAQ's top layer.
+OBS_OPERATOR_VERSION = 3
+
+# What is wrong with a file written by each superseded version, so that the
+# warning below can say something specific rather than just quoting numbers.
+_OPERATOR_VERSION_CHANGES = {
+    1: (
+        "its weights do not include the TROPOMI column averaging kernel, it has no "
+        "a-priori offset term, and it fills the column above the model top from CMAQ's "
+        "top layer."
+    ),
+    2: (
+        "it fills the column above the model top from CMAQ's top layer, which "
+        "over-weights that layer by around 4.4x its share of the air mass."
+    ),
+}
 
 
 @attrs.define
@@ -237,11 +253,13 @@ class ObservationData(FourDVarData):
         file_version = obs.domain.pop("obs_operator_version", 1)
         cls.operator_version = file_version
         if is_lite is False and file_version < OBS_OPERATOR_VERSION:
+            what_changed = _OPERATOR_VERSION_CHANGES.get(
+                file_version, "its fields have a different meaning."
+            )
             logger.warning(
                 f"{filename} was written by observation operator version {file_version}, "
-                f"this is version {OBS_OPERATOR_VERSION}. Its weights do not include the "
-                "TROPOMI column averaging kernel and it has no a-priori offset term, so "
-                "simulated observations made with it will be wrong. Re-run "
+                f"this is version {OBS_OPERATOR_VERSION}: {what_changed} "
+                "Simulated observations made with it will be wrong. Re-run "
                 "scripts/obs_preprocess/tropomi_methane_preprocess.py to regenerate it."
             )
         if cls.grid_attr is not None:

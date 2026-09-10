@@ -18,7 +18,7 @@ import os
 import numpy as np
 
 from openmethane.obs_preprocess.column_operator import (
-    FILL_PRIOR_OFFSET,
+    FILL_PRIOR,
     build_column_operator,
 )
 from openmethane.obs_preprocess.obs_defn import ObsMultiRay
@@ -153,7 +153,10 @@ class ObsSRON(ObsMultiRay):
             avker=self.src_data["obs_kernel"],
             prior=prior,
             model_edge=model_edge,
-            fill=FILL_PRIOR_OFFSET,
+            # 'prior' fill mode works best with CMAQ adjoint due to issues
+            # modelling methane at the top of atmosphere.
+            # @see: https://github.com/openmethane/openmethane/issues/236
+            fill=FILL_PRIOR,
         )
 
         # The uncertainty the inversion weights residuals by: the model side of
