@@ -29,10 +29,14 @@
 # Submit from the repository root:
 #   qsub examples/nci/obs_preprocess/submit_fetch.sh
 #
-# Adjust the config file and date range below to suit your run.
+# Adjust the date range and output directory below to suit your run.
 
 source examples/nci/load_p4d_modules.sh
 
+OUTPUT_DIR="${STORE_PATH:?STORE_PATH must be set}/tropomi/2022-07-01"
+mkdir -p "${OUTPUT_DIR}"
+
 uv run python scripts/obs_preprocess/fetch_tropomi.py \
-  --start-date 2022-07-01 \
-  --end-date 2022-07-30
+  -s 2022-07-01 \
+  -e 2022-07-30T23:59:59 \
+  "${OUTPUT_DIR}"

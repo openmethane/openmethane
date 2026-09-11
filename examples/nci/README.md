@@ -102,8 +102,9 @@ CMAQ-Adjoint builds (defaulting to `~/cmaq_adjoint`), which must contain
 adjust them for your project and scratch space.
 
 You will also need a `.env` file in the repository root, based on
-[`.env.example`](../../.env.example), containing your EarthData and CAMS
-credentials.
+[`.env.example`](../../.env.example), containing your CAMS credentials. The
+optional `CDSE_USERNAME`/`CDSE_PASSWORD` there are only used as a fallback when
+fetching TROPOMI data; see [Observation preprocessing](#observation-preprocessing).
 
 The PBS directives in these job scripts request the `q90` project. Change the
 `#PBS -P` line in each script to your own project code.
@@ -159,9 +160,15 @@ qsub examples/nci/obs_preprocess/submit_fetch.sh
 qsub examples/nci/obs_preprocess/submit_tropomi_methane_preprocess.sh
 ```
 
-`submit_fetch.sh` has a hard-coded config file and date range — edit these
-before submitting. `submit_tropomi_methane_preprocess.sh` reads its input glob
-from `TROPOMI_SOURCE`, defaulting to `${STORE_PATH}/tropomi/*/*.nc4`.
+`submit_fetch.sh` has a hard-coded date range and output directory — edit them
+before submitting. It finds granules with the CDSE catalogue and downloads them
+from the public MEEO mirror, neither of which needs credentials; only the
+fallback for granules missing from the mirror does, using
+`CDSE_USERNAME`/`CDSE_PASSWORD` from `.env`. See
+[`docs/tropomi.md`](../../docs/tropomi.md).
+
+`submit_tropomi_methane_preprocess.sh` reads its input glob from
+`TROPOMI_SOURCE`, defaulting to `${STORE_PATH}/tropomi/*/*.nc4`.
 
 ### Gradient verification
 
