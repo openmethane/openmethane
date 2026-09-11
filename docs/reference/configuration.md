@@ -109,6 +109,7 @@ cp .env.example .env
 | Variable | For |
 | --- | --- |
 | `CDSAPI_KEY`, `CDSAPI_URL` | Downloading CAMS methane fields for boundary conditions. Requires a Copernicus [Atmosphere Data Store](https://ads.atmosphere.copernicus.eu/) account. |
+| `CDSE_USERNAME`, `CDSE_PASSWORD` | Optional. Only used as a fallback when a TROPOMI granule is unusable in the MEEO mirror and has to be downloaded from CDSE directly — see [TROPOMI data](tropomi.md). Requires a free [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu/) account. |
 
 > [!NOTE]
 > `CDSAPI_KEY` must hold credentials for the Atmosphere Data Store (**ADS**), not

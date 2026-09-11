@@ -32,21 +32,29 @@ Note that variables used in expansions inside a `.env.${TARGET}` file
 
 ### Credentials rejected
 
-Only CAMS needs credentials. Check that `CDSAPI_KEY` holds **Atmosphere** Data Store (ADS)
-credentials, not Climate Data Store (CDS). The two services share a login and a
-credentials format, and each dataset has terms that must be accepted separately
-from its download page.
+CAMS is the only step that always needs credentials. Check that `CDSAPI_KEY` holds
+**Atmosphere** Data Store (ADS) credentials, not Climate Data Store (CDS). The two
+services share a login and a credentials format, and each dataset has terms that
+must be accepted separately from its download page.
 
-TROPOMI needs no credentials: the CDSE catalogue is searched anonymously and the
-S3 requests are unsigned, so any AWS credentials in the environment are ignored.
+The TROPOMI fetch needs none for its normal path: the CDSE catalogue is searched
+anonymously and the S3 requests are unsigned, so any AWS credentials in the
+environment are ignored. `CDSE_USERNAME`/`CDSE_PASSWORD` are only consulted when a
+granule has to be downloaded from CDSE directly — see
+[Unreliable objects in the mirror](reference/tropomi.md#unreliable-objects-in-the-mirror).
 
 ### The TROPOMI fetch finds no granules
 
-`fetch_tropomi.py` fails rather than leaving the next step nothing to read.
-Usually the date is outside the archive: products are catalogued from
-**2018-04-30** and lag acquisition by two to three days. Otherwise, check that
-`DOMAIN_FILE` points at the domain you meant — the search area comes from it.
-See [TROPOMI data](reference/tropomi.md).
+This does not fail the run. A day can legitimately have no data — an instrument
+outage, or no overpass — so `fetch_tropomi.py` prints a warning and downloads
+nothing, and `tropomi_methane_preprocess.py` still writes an observation file
+carrying the domain metadata and no observations, so the rest of the day's
+workflow can proceed.
+
+If you did expect granules, the usual cause is a date outside the archive:
+products are catalogued from **2018-04-30** and lag acquisition by two to three
+days. Otherwise, check that `DOMAIN_FILE` points at the domain you meant — the
+search area comes from it. See [TROPOMI data](reference/tropomi.md).
 
 ### Paths inside a container resolve to nothing
 
@@ -116,7 +124,9 @@ two causes:
   at the prior. Check coverage for the period before concluding anything.
 - **The optimiser stopped early.** Check whether it hit `MAX_ITERATIONS`
   (default 20) rather than converging. The cost, bias and chi-squared for each
-  iteration are logged.
+  iteration are logged;
+  [Assessing convergence](reference/assessing-convergence.md) explains how to
+  read them.
 
 ### Disk fills up during a run
 

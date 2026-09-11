@@ -6,9 +6,11 @@ The `scripts/obs_preprocess/fetch_tropomi.py` script finds granules with the
 and downloads them from the public `meeo-s5p` S3 bucket, which MEEO publish under the
 [AWS Open Data Sponsorship Program](https://registry.opendata.aws/sentinel5p/).
 
-Neither service requires credentials, so no environment variables need to be
-set. Searching the CDSE catalogue is unauthenticated, and requests to the
-bucket are sent unsigned, so any AWS credentials in the environment are ignored.
+Neither service requires credentials for the normal path. Searching the CDSE
+catalogue is unauthenticated, and requests to the bucket are sent unsigned, so
+any AWS credentials in the environment are ignored. Only the fallback described
+in [Unreliable objects in the mirror](#unreliable-objects-in-the-mirror) needs a
+login.
 
 The catalogue matches on each granule's swath footprint, so only granules
 crossing the bounding box of the `DOMAIN_FILE` domain are downloaded.
@@ -32,6 +34,19 @@ so the most recent days are not yet available.
 Granules are downloaded whole, since the bucket offers no server-side subsetting.
 `tropomi_methane_preprocess.py` then drops the observations that fall outside the
 model grid, and filters them to `START_DATE` and `END_DATE`.
+
+## Unreliable objects in the mirror
+
+A small number of granules never synced correctly from ESA into the mirror, and
+are either zero bytes or a non-zero size still short of the real granule. Both
+are caught before the transfer, by comparing the size the mirror reports for an
+object against the size the CDSE catalogue records for the same granule.
+
+Such a granule is downloaded directly from CDSE instead. That is the one part of
+the fetch that needs an account: set `CDSE_USERNAME` and `CDSE_PASSWORD` in
+`.env` (see [Configuration](configuration.md#credentials)) to enable it. Without
+them the fetch fails and names the objects it could not retrieve, rather than
+silently leaving a day short of observations.
 
 ## The observation operator
 

@@ -33,6 +33,7 @@ Look-up material, not meant to be read end to end.
 | [TROPOMI data](reference/tropomi.md) | Where the satellite observations come from, which products are used, and how far back they go. |
 | [Outputs](reference/outputs.md) | The files a run produces and what the variables mean. |
 | [Architecture](reference/architecture.md) | Internals of the 4D-Var inversion: data types and the transform chain. |
+| [Assessing convergence](reference/assessing-convergence.md) | What the optimiser is minimising, when to stop it, and how to read the chi-squared statistic. |
 
 ## Other
 

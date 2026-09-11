@@ -66,7 +66,7 @@ MCIP, ICON or BCON fail — the arguments passed to them come from
 
 | Script | Description |
 | --- | --- |
-| `scripts/obs_preprocess/fetch_tropomi.py` | Finds TROPOMI methane granules crossing the domain in the CDSE catalogue and downloads them whole from the public `meeo-s5p` S3 mirror. Takes `-s`/`-e` datetimes and an output directory; the area comes from `DOMAIN_FILE`. Needs no credentials. |
+| `scripts/obs_preprocess/fetch_tropomi.py` | Finds TROPOMI methane granules crossing the domain in the CDSE catalogue and downloads them whole from the public `meeo-s5p` S3 mirror. Takes `-s`/`-e` datetimes and an output directory; the area comes from `DOMAIN_FILE`. Needs no credentials, except to fall back to CDSE for a granule that is unusable in the mirror. |
 | `scripts/obs_preprocess/fetch_tropomi.sh` | Wrapper used by the daily workflow. Fetches into `data/tropomi/${START_DATE}`. |
 | `scripts/obs_preprocess/tropomi_methane_preprocess.py` | Converts raw granules into the observation format `fourdvar` reads, dropping observations outside the model grid. Takes `--source` as a glob. |
 | `scripts/obs_preprocess/process_tropomi.sh` | Wrapper used by the daily workflow. |
@@ -117,6 +117,11 @@ the current code:
 (Gadi). NCI is no longer supported — see
 [`examples/nci/README.md`](../../examples/nci/README.md).
 
+`src/analysis/` holds diagnostics for looking at a run's inputs and outputs —
+currently `analyse_iters.py`, which reads the archived iterations and derives
+quantities such as the local enhancement. Useful, but held to a lower standard
+than the rest of the codebase.
+
 ## Make targets
 
 `make` wraps the most common invocations. `make help` is not defined, so the
@@ -126,8 +131,6 @@ the current code:
 | --- | --- |
 | `install` | `uv sync` |
 | `build` | Build the `openmethane` Docker image. Needs the private base image. |
-| `start` | Build and drop into a shell in the container. |
-| `run` | Run the full pipeline on the test domain in the container. |
 | `test` | Run the test suite. Requires the container. |
 | `docker-test` | Build the image, then run the tests inside it. |
 | `test-regen` | Regenerate regression fixtures. |

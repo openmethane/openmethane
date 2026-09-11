@@ -182,7 +182,9 @@ Two things worth checking before drawing conclusions from a run:
 
 - **Did the inversion converge, or did it hit `MAX_ITERATIONS`?** The
   optimisation log records this. Hitting the cap means the answer is wherever
-  the optimiser happened to be, not a converged solution.
+  the optimiser happened to be, not a converged solution. See
+  [Assessing convergence](../reference/assessing-convergence.md) for what the
+  per-iteration cost, gradient norm and chi-squared are telling you.
 - **How much observational coverage did the period actually have?** Cells the
   satellite never saw are unconstrained, and their posterior will sit at or near
   the prior. That is the correct behaviour, but it means "no change from prior"

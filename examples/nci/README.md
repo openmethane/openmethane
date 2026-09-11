@@ -165,7 +165,7 @@ before submitting. It finds granules with the CDSE catalogue and downloads them
 from the public MEEO mirror, neither of which needs credentials; only the
 fallback for granules missing from the mirror does, using
 `CDSE_USERNAME`/`CDSE_PASSWORD` from `.env`. See
-[`docs/tropomi.md`](../../docs/tropomi.md).
+[`docs/reference/tropomi.md`](../../docs/reference/tropomi.md).
 
 `submit_tropomi_methane_preprocess.sh` reads its input glob from
 `TROPOMI_SOURCE`, defaulting to `${STORE_PATH}/tropomi/*/*.nc4`.

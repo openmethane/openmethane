@@ -64,8 +64,17 @@ docker run --rm -v $(PWD):/app -v /app/.venv openmethane \
 ```
 
 Always set `TARGET=docker-test`. That target points at test data tracked in the
-repository under `tests/test-data/` and `data/`, so tests do not depend on
-network access or on a previous run's output.
+repository under `tests/test-data/` and `data/`, so tests do not depend on a
+previous run's output.
+
+A handful of tests do reach third-party services, and are marked `network`.
+Deselect them to run offline, or to keep somebody else's outage from failing the
+suite:
+
+```shell
+TARGET=docker-test uv run python -m pytest -r a -v tests \
+  --ignore=tests/integration/fourdvar -m "not network"
+```
 
 Two categories of test will not pass outside the container:
 

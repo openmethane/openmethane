@@ -160,6 +160,7 @@ OPENMETHANE_IMAGE=ghcr.io/openmethane/openmethane:1.2.0 \
 ## If something fails
 
 See [Troubleshooting](../troubleshooting.md). The most common first-run problems
-are missing or misspelled ADS credentials in `.env`, an ADS account that has not
-accepted the dataset's terms, and choosing a date with no TROPOMI granules
-published yet — the archive lags acquisition by two to three days.
+are missing or misspelled ADS credentials in `.env` and an ADS account that has
+not accepted the dataset's terms. Choosing a date with no TROPOMI granules
+published yet — the archive lags acquisition by two to three days — will not
+fail, but produces a run with nothing to constrain the prior.

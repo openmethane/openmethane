@@ -147,6 +147,7 @@ files to the data store. Requires CloudFlare R2 credentials.
 | Variable | Description |
 | --- | --- |
 | `CDSAPI_KEY`, `CDSAPI_URL` | Copernicus **Atmosphere** Data Store (ADS) API credentials, for downloading CAMS data. Create an account at [ads.atmosphere.copernicus.eu](https://ads.atmosphere.copernicus.eu/). Not interchangeable with Climate Data Store (CDS) credentials. |
+| `CDSE_USERNAME`, `CDSE_PASSWORD` | Copernicus Data Space Ecosystem account, used by `fetch_tropomi.py` only to download a granule directly from CDSE when the copy in the MEEO mirror is unusable. Optional: neither the catalogue search nor the mirror download needs credentials. Create a free account at [dataspace.copernicus.eu](https://dataspace.copernicus.eu/). |
 
 These belong in `.env`, not in a target file — see
 [Configuration](configuration.md#credentials).
