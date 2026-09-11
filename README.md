@@ -69,13 +69,19 @@ See `docs/parameters.md` for the full list of parameters that can be configured 
 These environments typically require different configuration,
 particularly regarding the paths to the data and the CMAQ adjunct.
 
-The target environment is defined by the `TARGET` environment variable (default=`nci`).
-The value of `TARGET` is used to load a `.env.${TARGET}` file.
+The target environment is defined by the `TARGET` environment variable (default=`docker`).
+The value of `TARGET` is used to load a `.env.${TARGET}` file from the repository root.
 This `.env` file contains the target specific configuration values.
 
-A `docker-test` target has been provided which uses locally tracked versions
-of the required input data from the `openmethane-prior` and `setup-wrf` repositories.
-This target is useful for testing and development.
+The supported targets are `docker` and `docker-test`.
+The `docker-test` target uses locally tracked versions
+of the required input data from the `openmethane-prior` and `setup-wrf` repositories,
+and is useful for testing and development.
+
+> [!NOTE]
+> Open Methane was previously run on the NCI (Gadi) supercomputer.
+> NCI is no longer officially supported, but the job scripts and configuration
+> are kept for reference in [`examples/nci`](examples/nci/README.md).
 
 ## First Run
 
@@ -114,9 +120,11 @@ make prepare-templates
 
 4: go to `tests/integration/fourdvar` and run:
  - `test_cost_verbose.py`
-	runs the cost function logic with a random perturbation in the prior.
+	runs the cost function logic with a random perturbation in the prior,
+	saving the output of every step to `<archive_dir>/tmp_cost_verbose/`.
  - `test_grad_verbose.py`
-	runs the gradient function logic with a random perturbation in the prior.
+	runs the gradient function logic with a random perturbation in the prior,
+	saving the output of every step to `<archive_dir>/tmp_grad_verbose/`.
 
 5: run the main code via `runscript.py`
 

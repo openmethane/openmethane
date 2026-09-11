@@ -26,7 +26,7 @@ def create_env():
     )
 
     # Load environment variables from a file
-    target_env = env.str("TARGET", "nci")
+    target_env = env.str("TARGET", "docker")
 
     logger.info("Loading environment variables from .env.%s", target_env)
     env.read_env(f".env.{target_env}", verbose=True, override=False)

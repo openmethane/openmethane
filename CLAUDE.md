@@ -70,9 +70,11 @@ Calculates posterior averages, generates alerts, and manages result archives.
 
 ## Configuration & Targets
 
-Configuration is environment-based, loaded at import time by `fourdvar.params`. The `TARGET` environment variable (default: `nci`) controls which `.env.${TARGET}` file is loaded.
+Configuration is environment-based, loaded at import time by `fourdvar.params`. The `TARGET` environment variable (default: `docker`) controls which `.env.${TARGET}` file is loaded from the repository root.
 
-Available targets: `nci`, `docker`, `docker-test`
+Available targets: `docker`, `docker-test`
+
+NCI/Gadi is no longer supported. Its job scripts and example `.env.nci*` files live in `examples/nci/` and are provided as-is; they are not covered by tests.
 
 For tests and local development, always set `TARGET=docker-test`. This target uses locally tracked test data under `tests/test-data/` and `data/`.
 

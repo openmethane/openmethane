@@ -24,8 +24,19 @@
 #PBS -l storage=gdata/sx70+gdata/hh5+gdata/ua8+gdata/ub4
 #PBS -l ncpus=1
 #PBS -l wd
-module use /g/data3/hh5/public/modules
-module load conda/analysis3
-python3 fetch_tropomi.py \
-  --start-date 2022-07-01 \
-  --end-date 2022-07-30
+#
+# NOTE: NCI/Gadi is no longer officially supported — see examples/nci/README.md.
+# Submit from the repository root:
+#   qsub examples/nci/obs_preprocess/submit_fetch.sh
+#
+# Adjust the date range and output directory below to suit your run.
+
+source examples/nci/load_p4d_modules.sh
+
+OUTPUT_DIR="${STORE_PATH:?STORE_PATH must be set}/tropomi/2022-07-01"
+mkdir -p "${OUTPUT_DIR}"
+
+uv run python scripts/obs_preprocess/fetch_tropomi.py \
+  -s 2022-07-01 \
+  -e 2022-07-30T23:59:59 \
+  "${OUTPUT_DIR}"
