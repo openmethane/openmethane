@@ -165,6 +165,19 @@ existing file will be moved, following a pattern like:
 
 `OM_LOGGING_FILE` is a deprecated alias for `LOG_FILE` and logs a warning if set.
 
+### Resource metrics
+
+The image currently starts through a temporary debugging entrypoint, so every
+container logs a line prefixed `[om-metrics]` when the command starts and
+another when it finishes, recording
+how long it took, how many cores it kept busy, how much memory it used and
+whether it was held at a CPU or memory limit.
+
+These are the first thing to look at for a step that was killed without an
+error, ran far slower than expected, or appears not to be using the cores it
+was given. [Measuring a run](reference/performance.md#measuring-a-run) explains
+the fields.
+
 ## Debugging the inversion
 
 `scripts/fourdvar/singlestep.py` runs one full pass — forward simulation,

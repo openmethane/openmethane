@@ -94,6 +94,10 @@ every domain.
 Setting `NUM_PROC_COLS` or `NUM_PROC_ROWS` pins the decomposition instead, and
 `NUM_PROC_TOTAL` is then ignored. If neither is set, CMAQ runs in serial.
 
+[Performance and hardware](performance.md) covers how to choose
+`NUM_PROC_TOTAL` for a machine and how to measure whether it is the right
+value.
+
 ## Inversion
 
 | Variable | Type | Description | Default |
@@ -146,6 +150,8 @@ See [Outputs](outputs.md#alerts) for what the resulting file contains.
 | `LOG_LEVEL` | str | One of the standard Python [logging levels](https://docs.python.org/3/library/logging.html#logging-levels) | `INFO` |
 | `LOG_FILE` | path | Write logs to this file in addition to stdout. Absolute, or relative to `STORE_PATH`. Existing files are rotated to `000.filename`, `001.filename`, … | unset |
 | `OM_LOGGING_FILE` | path | **Deprecated.** Use `LOG_FILE`. Logs a warning if set. | unset |
+| `OM_METRICS` | bool | Log a `[om-metrics]` resource usage line when a container starts and finishes. Temporary, see [Measuring a run](performance.md#measuring-a-run). Set to `0` to turn off. | `1` |
+| `OM_METRICS_INTERVAL` | int | Seconds between memory samples taken for those lines | `30` |
 
 See [Troubleshooting](../troubleshooting.md#logging).
 

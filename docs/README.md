@@ -28,6 +28,7 @@ Look-up material, not meant to be read end to end.
 | --- | --- |
 | [Configuration](reference/configuration.md) | How configuration is loaded: targets, `.env` files, precedence, credentials. |
 | [Parameters](reference/parameters.md) | Every environment variable, its type and default. |
+| [Performance and hardware](reference/performance.md) | Choosing how many cores to give CMAQ, what a run costs in memory and disk, and how to measure it on your own hardware. |
 | [Scripts](reference/scripts.md) | What each script in `scripts/` does and what it expects. |
 | [CMAQ preprocessing](reference/cmaq-preprocess.md) | The MCIP/ICON/BCON/template stage in detail. |
 | [TROPOMI data](reference/tropomi.md) | Where the satellite observations come from, which products are used, and how far back they go. |

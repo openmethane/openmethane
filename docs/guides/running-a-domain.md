@@ -110,7 +110,9 @@ Relevant settings:
 | `BOUNDARY_TRIM` | Cells removed from each edge of the domain for boundary conditions. `5` for `aust10km`; small domains need a smaller value or MCIP will trim the domain away entirely. |
 | `CHK_PATH` | Where CMAQ checkpoint files go. These are large and written repeatedly — put them on fast local disk. |
 
-See [Parameters](../reference/parameters.md) for the full list.
+See [Parameters](../reference/parameters.md) for the full list, and
+[Performance and hardware](../reference/performance.md) for choosing
+`NUM_PROC_TOTAL` and sizing a machine for your domain.
 
 ## 4. Run the daily workflow for each day
 
