@@ -19,6 +19,21 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.4.0 (2026-09-11)
+
+### 🎉 Improvements
+
+- Add fallback TROPOMI granule fetch from authenticated CDSE data store when a granule in the MEEO S3 mirror is empty or does not match its expected size ([#228](https://github.com/openmethane/openmethane/pull/228))
+- adding documentation of convergence criteria ([#233](https://github.com/openmethane/openmethane/pull/233))
+- adding analysis functions for openmethane, especially local enhancements ([#239](https://github.com/openmethane/openmethane/pull/239))
+
+### 🐛 Bug Fixes
+
+- The daily workflow no longer fails when TROPOMI has no data for the day (e.g. an instrument outage). A metadata-only observation file is produced instead, so WRF, prior and simulated observation outputs are still generated. ([#227](https://github.com/openmethane/openmethane/pull/227))
+- Use offset_term from observations in bias_correct ([#231](https://github.com/openmethane/openmethane/pull/231))
+- Fill the column above CMAQ's top from the retrieval prior rather than from CMAQ's topmost layer, so the simulated column no longer depends on the one layer CMAQ cannot hold. Observation files must be regenerated; `OBS_OPERATOR_VERSION` is bumped to 3 so that stale files are flagged on load. ([#238](https://github.com/openmethane/openmethane/pull/238))
+
+
 ## openmethane v1.3.0 (2026-09-03)
 
 ### ⚠️ Breaking Changes
