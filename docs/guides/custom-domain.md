@@ -1,8 +1,14 @@
+# Creating a custom domain
 
-# Domain of interest
+A domain defines the area Open Methane will model, the grid it is divided into,
+and the map projection that grid sits on. A domain is identified by
+`DOMAIN_NAME` and `DOMAIN_VERSION`, and the same pair is used by all three
+repositories in the pipeline.
 
-Open Methane operates on a domain of interest, which defines the area that
-will be modelled, and the size and orientation of grid cells to be modelled.
+Check whether an [existing domain](running-a-domain.md#1-choose-or-create-a-domain)
+already covers your area before creating one. Existing domains are already
+validated against WRF, MCIP and the prior, and building a new one is the most
+involved part of setting up a run.
 
 ## Default domain: aust10km
 
@@ -115,3 +121,26 @@ reduce the input meteorology domain by 2*BTRIM + 2*NTHIK + 1
 The `BTRIM` value of `5` ends up reducing the grid size by `13` in both
 dimensions, so keep this in mind when specifying your grid size to WRF. Our
 final grid dimensions for `aust10km` are `454` x `430`.
+
+> [!WARNING]
+> On a small domain, the default trim can consume the entire grid. The `au-test`
+> domain is only 10 x 10 cells, so it sets `BOUNDARY_TRIM=1`. Set
+> `BOUNDARY_TRIM` to suit your grid size, not to the `aust10km` default.
+
+## Using your domain
+
+Once the domain file exists, the pipeline needs to be pointed at it:
+
+- Set `DOMAIN_NAME` and `DOMAIN_VERSION` to match the names you used.
+- Set `DOMAIN_FILE` to the path of the `domain.{DOMAIN_NAME}.nc` file produced by
+  `create_prior_domain.py`. The workflow scripts expect it inside `STORE_PATH`.
+- Set `BOUNDARY_TRIM` as discussed above.
+
+Domain files for existing domains are served from the public data store at
+`https://openmethane.s3.amazonaws.com/domains/{DOMAIN_NAME}/{DOMAIN_VERSION}/domain.{DOMAIN_NAME}.nc`,
+which is where the end-to-end scripts fetch them from. A custom domain has to be
+placed in the expected location manually prior to running workflows.
+
+Before committing to a long run, do a single day on the new domain and confirm
+the MCIP output has the grid dimensions you expect. Grid geometry mistakes are
+much cheaper to find at that point than after a month of daily runs.
