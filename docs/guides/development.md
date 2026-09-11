@@ -19,16 +19,10 @@ uv sync
 `uv sync` creates a `.venv` with the locked dependencies, which is enough for
 linting, unit tests that don't touch the models, and editor tooling.
 
-> [!WARNING]
-> Building the `openmethane` Docker image requires access to the private
-> CMAQ-Adjoint base image (`ghcr.io/openmethane/cmaq-adjoint`). Without it you
-> can still develop against the published images, but `make build` and anything
-> depending on it will fail. If this affects you, please create an issue or
-> contact the team at inquiries@openmethane.org.
->
-> Once you have access,
-> [authenticate with the GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic)
-> before building.
+> [!NOTE]
+> Building the `openmethane` image pulls `ghcr.io/openmethane/cmaq-adjoint` as
+> its base. That image is public and needs no authentication, but it is large,
+> so the first `make build` on a machine takes a while.
 
 ## Running the tests
 
@@ -192,9 +186,8 @@ extension, then add `.devcontainer/devcontainer.json`:
 
 Then run **Dev Containers: Reopen in Container** from the command palette.
 
-Use `"image": "ghcr.io/openmethane/openmethane:stable"` instead if you cannot
-build locally — you can still edit and run the Python code, since only the image
-build needs the private base image.
+Use `"image": "ghcr.io/openmethane/openmethane:stable"` instead to skip building
+locally — you can still edit and run the Python code.
 
 Tests run as normal once attached, without the `docker run` wrapper:
 

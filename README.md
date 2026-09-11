@@ -22,7 +22,7 @@ Results are published at [openmethane.org](https://openmethane.org).
 
 The fastest way to see it work is the
 **[Quickstart](docs/guides/quickstart.md)** — a complete run on a small test
-domain using public Docker images. No compilation, no private repositories.
+domain using published Docker images. Nothing to compile.
 
 Then, depending on what you need:
 

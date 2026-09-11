@@ -130,7 +130,7 @@ than the rest of the codebase.
 | Target | Description |
 | --- | --- |
 | `install` | `uv sync` |
-| `build` | Build the `openmethane` Docker image. Needs the private base image. |
+| `build` | Build the `openmethane` Docker image on top of `ghcr.io/openmethane/cmaq-adjoint`. |
 | `test` | Run the test suite. Requires the container. |
 | `docker-test` | Build the image, then run the tests inside it. |
 | `test-regen` | Regenerate regression fixtures. |

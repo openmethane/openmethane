@@ -33,7 +33,7 @@ make test-regen
 # Draft changelog (before release)
 make changelog-draft
 
-# Build Docker image (requires access to private CMAQ-Adjoint base image)
+# Build Docker image
 make build
 ```
 

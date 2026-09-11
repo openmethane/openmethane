@@ -43,9 +43,8 @@ not need to install any of them from source to run the pipeline. See the
 
 The CMAQ adjoint model itself is built in
 [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) and baked into this
-repository's Docker image. That repository and its image are private; see
-[Installing locally](guides/local-install.md) if you need the binaries outside
-the published image.
+repository's Docker image. See [Installing locally](guides/local-install.md) if
+you need the binaries outside the published image.
 
 ## Two workflows
 

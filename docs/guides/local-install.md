@@ -10,15 +10,15 @@ debug the models, integrate with a system that cannot run containers, or run on
 an HPC cluster where containers are unavailable.
 
 > [!IMPORTANT]
-> **The CMAQ adjoint binaries are the blocker.** Everything else on this page is
-> installable from public sources, but the adjoint model is built from
-> [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint), which is a private
-> repository, and its compiled image
-> (`ghcr.io/openmethane/cmaq-adjoint`) is not publicly pullable.
+> **The CMAQ adjoint binaries are the hard part.** Everything else on this page
+> installs from packages or from source in the usual way, but the adjoint model
+> has to be built from
+> [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint), which is slow and
+> particular about its compilers and NetCDF build.
 >
-> If you do not already have these binaries, you cannot complete a local
-> install. Please open an issue or contact the team at
-> inquiries@openmethane.org.
+> If you would rather not build it, the compiled binaries can be copied out of
+> `ghcr.io/openmethane/cmaq-adjoint`, which is public — see
+> [Taking the binaries from the image](#taking-the-binaries-from-the-image).
 
 ## What you need to provide
 
@@ -26,20 +26,39 @@ Open Methane calls out to compiled models. Under Docker these are already
 present at `/opt/cmaq/bin`; locally you must supply them and point
 [`CMAQ_BIN`](../reference/parameters.md) at the directory containing them:
 
-| Binary | Used for |
+| Path under `CMAQ_BIN` | Used for |
 | --- | --- |
-| `mcip` | Converting WRF meteorology onto the CMAQ grid. |
-| `ICON_CH4only` | Initial conditions. |
-| `BCON_CH4only` | Boundary conditions. |
+| `mcip.exe` | Converting WRF meteorology onto the CMAQ grid. |
+| `ICON_CH4only/ICON_CH4only` | Initial conditions. |
+| `BCON_CH4only/BCON_CH4only` | Boundary conditions. |
 | `ADJOINT_FWD` | The CMAQ forward model. |
 | `ADJOINT_BWD` | The CMAQ adjoint (backward) model. |
 
-`ICON_CH4only` and `BCON_CH4only` must be built against the `CH4only` chemical
-mechanism, and the run scripts also expect `GC_CH4only.nml` and `AE_CH4only.nml`
-alongside them in `CMAQ_BIN`.
+ICON and BCON must be built against the `CH4only` chemical mechanism, and are
+each expected in a build directory named after the mechanism rather than as a
+bare executable. `run.icon` and `run.bcon` read `GC_CH4only.nml`,
+`AE_CH4only.nml`, `NR_CH4only.nml` and `Species_Table_TR_0.nml` from that same
+directory, which is where the build leaves them.
 
 `ADJOINT_FWD` and `ADJOINT_BWD` are configured separately by absolute path, so
 they may live elsewhere.
+
+### Taking the binaries from the image
+
+Building CMAQ-Adjoint from source is the supported path, but if you only need
+the binaries you can lift them out of the published image, which is public:
+
+```shell
+CONTAINER=$(docker create ghcr.io/openmethane/cmaq-adjoint:2.0.1)
+docker cp "${CONTAINER}:/opt/cmaq/bin" ./cmaq-bin
+docker rm "${CONTAINER}"
+```
+
+Then point `CMAQ_BIN` at `./cmaq-bin` and `ADJOINT_FWD`/`ADJOINT_BWD` at the two
+executables inside it. They are dynamically linked against the libraries in that
+image, so this only works on a compatible host — check with `ldd`, and build from
+source if anything is missing. The tag must match the base image in the
+[`Dockerfile`](../../Dockerfile).
 
 Running the full pipeline additionally needs WRF itself, from
 [setup-wrf](https://github.com/openmethane/setup-wrf), and the prior, from

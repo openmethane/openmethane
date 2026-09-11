@@ -2,7 +2,7 @@
 
 This guide runs Open Methane end to end on `au-test` — a deliberately tiny
 10 x 10 cell domain — using the published Docker images. Nothing is built from
-source, and you don't need access to any private repositories.
+source.
 
 The point of this guide is to confirm your machine, credentials and data
 directories all work before you commit to a real domain. On consumer hardware
@@ -146,8 +146,8 @@ this repository and build:
 BUILD_LOCAL_DOCKER=true bash scripts/docker-e2e-daily.sh
 ```
 
-Building the `openmethane` image requires access to the private CMAQ-Adjoint
-base image — see [Development](development.md).
+Building the `openmethane` image pulls the CMAQ-Adjoint base image, which takes
+a while the first time — see [Development](development.md).
 
 Individual images can also be pinned without building, which is useful for
 reproducing a specific run:
