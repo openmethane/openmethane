@@ -9,6 +9,7 @@ import numpy as np
 import xarray as xr
 
 import openmethane.fourdvar.datadef as d
+import openmethane.fourdvar.util.cmaq_handle as cmaq
 from openmethane.fourdvar._transform import transform
 from openmethane.util.logger import get_logger
 
@@ -172,10 +173,10 @@ def calculate_emissions_bias(
     """Calculate the concentration the prior emissions add to the simulated columns.
 
     Runs the forward model with and without the prior emissions and differences
-    the mean simulated observations. The offset term is the same in both runs,
-    so it cancels; what remains is divided by the mean operator weight to
-    express it, like the ICON bias, as a shift in ppm of the concentration
-    field.
+    the mean simulated observations, with adjoint checkpointing suppressed.
+    The offset term is the same in both runs, so it cancels; what remains is
+    divided by the mean operator weight to express it, like the ICON bias, as a
+    shift in ppm of the concentration field.
 
     inputs: prior_file, path to prior emissions file,
     obs_file, path to observation file,
@@ -183,9 +184,12 @@ def calculate_emissions_bias(
     returns: the emissions' contribution as a concentration in ppm.
     """
     prior = d.PhysicalData.from_file(prior_file)
-    mean_obs_emis = calculate_mean_obs(prior, obs_file)
-    prior.emis[species] *= 0.0  # zeroing emissions while preserving shape
-    mean_obs_no_emis = calculate_mean_obs(prior, obs_file)
+    # neither run is followed by an adjoint run, so the checkpoints would be
+    # written and never read; on the full domain they dominate the runtime
+    with cmaq.checkpointing_disabled():
+        mean_obs_emis = calculate_mean_obs(prior, obs_file)
+        prior.emis[species] *= 0.0  # zeroing emissions while preserving shape
+        mean_obs_no_emis = calculate_mean_obs(prior, obs_file)
     # calculate_mean_obs has just loaded obs_file, so this reads the same data
     weight_sum = mean_weight_sum(d.ObservationData.from_file(obs_file))
     return (mean_obs_emis - mean_obs_no_emis) / (ppm2ppb * weight_sum)

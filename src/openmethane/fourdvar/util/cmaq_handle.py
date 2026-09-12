@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import contextlib
 import datetime
 import glob
 import os
@@ -107,6 +108,10 @@ def setup_run():
     # Ensure the directory for the checkpoint files already exists
     fh.ensure_path(cmaq_config.chk_path)
 
+    # CHK_FILE_OPEN and CHK_FILE_WRITE both return early when this is false, so
+    # the ADJ_*_CHK paths below are set either way
+    env_dict["CREATE_CHK"] = "T" if cmaq_config.create_chk else "F"
+
     env_dict["ADJ_CHEM_CHK"] = cmaq_config.chem_chk + " -v"
     env_dict["ADJ_VDIFF_CHK"] = cmaq_config.vdiff_chk + " -v"
     env_dict["ADJ_AERO_CHK"] = cmaq_config.aero_chk + " -v"
@@ -152,6 +157,27 @@ def setup_run():
     env_dict["CTM_RJ_1"] = cmaq_config.rj1_file + " -v"
     env_dict["CTM_RJ_2"] = cmaq_config.rj2_file + " -v"
     return env_dict
+
+
+@contextlib.contextmanager
+def checkpointing_disabled():
+    """Suppress the adjoint checkpoints for forward runs made inside the block.
+
+    Only safe where no adjoint run follows. `allow_fwd_skip` lets a gradient
+    calculation reuse the checkpoints an earlier cost function evaluation wrote,
+    so an adjoint run following a forward run is not always visible at the call
+    site.
+
+    `setup_run` reads the flag as each day's run is launched, and every day is a
+    fresh ADJOINT_FWD process, so mutating the module global reaches the model
+    without threading the flag through the transform chain.
+    """
+    previous = cmaq_config.create_chk
+    cmaq_config.create_chk = False
+    try:
+        yield
+    finally:
+        cmaq_config.create_chk = previous
 
 
 def build_cmd(executable: str, stdout_filename: str) -> str:
