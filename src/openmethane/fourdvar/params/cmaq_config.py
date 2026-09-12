@@ -26,11 +26,18 @@ logger = get_logger(__name__)
 
 use_jobfs = env.bool("USE_JOBFS", False)
 
-# No. of processors per column
-npcol = env.int("NUM_PROC_COLS", 1)  # pert
-# No. of processors per row
-nprow = env.int("NUM_PROC_ROWS", 1)  # pert
-# note: if npcol and nprow are 1 then cmaq is run in serial mode
+# No. of processors per column, 0 if not configured
+npcol = env.int("NUM_PROC_COLS", 0)  # pert
+# No. of processors per row, 0 if not configured
+nprow = env.int("NUM_PROC_ROWS", 0)  # pert
+# No. of ranks to decompose the domain across, used when npcol and nprow are
+# not set. util.decomposition works out the shape from the size of the domain.
+num_proc_total = env.int("NUM_PROC_TOTAL", 0)
+# Fewest cells a subdomain may span in either direction. The default is the
+# smallest domain we run whole (au-test, 10x10), so a domain that size or
+# smaller stays serial; it is also comfortably above the 3-cell advection halo.
+min_cells_per_rank = env.int("MIN_CELLS_PER_RANK", 10)
+# note: if none of these are set then cmaq is run in serial mode
 
 # extra ioapi write logging
 ioapi_logging = False

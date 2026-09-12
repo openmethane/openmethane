@@ -100,5 +100,7 @@ USER app
 WORKDIR /app
 
 # tini forwards all signals to real entrypoint
-ENTRYPOINT ["tini", "--", "/app/scripts/docker-entrypoint.sh"]
+# The debug entrypoint is temporary, and wraps docker-entrypoint.sh to log what
+# each container costs. Point this back at docker-entrypoint.sh to remove it.
+ENTRYPOINT ["tini", "--", "/app/scripts/docker-entrypoint-debug.sh"]
 CMD ["/bin/bash"]
