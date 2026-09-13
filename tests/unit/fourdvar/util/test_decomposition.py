@@ -110,8 +110,11 @@ def test_a_decomposition_needs_a_rank_in_each_direction(npcol, nprow):
 def test_ranks_is_the_product_of_the_decomposition():
     assert Decomposition(6, 4).ranks == 24
     assert not Decomposition(6, 4).is_serial
-    assert Decomposition(1, 1).is_serial
     assert str(Decomposition(6, 4)) == "6x4"
+
+    assert Decomposition(1, 1).ranks == 1
+    assert Decomposition(1, 1).is_serial
+    assert str(Decomposition(1, 1)) == "1x1"
 
 
 def test_reads_the_grid_size_from_the_mcip_output(test_data_dir):
