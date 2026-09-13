@@ -126,6 +126,7 @@ def test_reads_the_grid_size_from_the_mcip_output(test_data_dir):
 def test_configured_decomposition_is_used_as_given(uncached_decomposition, monkeypatch):
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.npcol", 8)
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.nprow", 6)
+    # not used when npcol / nprow is specified
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.num_proc_total", 24)
 
     # An explicit pair wins over a rank target, even one it disagrees with.
