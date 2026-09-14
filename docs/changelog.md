@@ -19,6 +19,49 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.5.0 (2026-09-14)
+
+### 🗑️ Deprecations
+
+- Moved the NCI (Gadi) job scripts and example configuration into `examples/nci`, where they are
+  provided as-is and are no longer officially supported. The default `TARGET` is now `docker`
+  instead of `nci`, and the `.env.nci`, `.env.nci-nsw` and `.env.nci-test` files must be copied
+  from `examples/nci` to the repository root to be used. See `examples/nci/README.md` for details. ([#201](https://github.com/openmethane/openmethane/pull/201))
+
+### 🆕 Features
+
+- CMAQ MP ranks can now be specified as a single number with the `NUM_PROC_TOTAL`
+  env var, as an alternative to setting `NUM_PROC_COLS` and `NUM_PROC_ROWS`.
+  `NUM_PROC_TOTAL` is treated as a maximum number of desired cores, and is used
+  to calculate an optimal `NUM_PROC_COLS` and `NUM_PROC_ROWS` decomposition based
+  on the size of the domain. ([#235](https://github.com/openmethane/openmethane/pull/235))
+- Added `MPI_EXTRA_ARGS`, passed through to `mpirun` ahead of the CMAQ executable,
+  so ranks can be bound to cores with `MPI_EXTRA_ARGS="-bind-to core"`. Binding
+  stays off by default; `docs/reference/performance.md` covers when it helps. ([#241](https://github.com/openmethane/openmethane/pull/241))
+
+### 🎉 Improvements
+
+- Stop the bias correction writing adjoint checkpoints nothing reads ([#234](https://github.com/openmethane/openmethane/pull/234))
+- The Docker image temporarily starts through a debugging entrypoint,
+  `scripts/docker-entrypoint-debug.sh`, which logs resource metrics. Set `OM_METRICS=0` to turn the
+  logging off. ([#235](https://github.com/openmethane/openmethane/pull/235))
+
+### 📚 Improved Documentation
+
+- Removed the warnings that building the `openmethane` Docker image needs access to a private
+  CMAQ-Adjoint base image, which has since been made public, and documented copying the compiled
+  binaries out of that image as an alternative to building them for a local install. ([#205](https://github.com/openmethane/openmethane/pull/205))
+- Restructured the documentation around running Open Methane rather than developing it.
+  `README.md` is now a short project description with signposting, and `docs/` is split into
+  task-oriented guides (`docs/guides/`) and look-up reference (`docs/reference/`), indexed by
+  `docs/README.md`. Added a quickstart for running the published Docker images, a guide to
+  running your own domain and time period, a guide to installing locally without Docker, and
+  references for configuration, scripts, outputs and the inversion architecture. The convergence notes moved to `docs/reference/assessing-convergence.md`. Corrected the
+  parameter reference, which was missing around half of the supported environment variables and
+  listed several that no longer exist. ([#205](https://github.com/openmethane/openmethane/pull/205))
+- Added a performance and hardware reference (`docs/reference/performance.md`). ([#235](https://github.com/openmethane/openmethane/pull/235))
+
+
 ## openmethane v1.4.0 (2026-09-11)
 
 ### 🎉 Improvements
