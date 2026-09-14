@@ -33,14 +33,15 @@ from shutil import copyfile
 
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
 from openmethane.cmaq_preprocess.utils import (
-  compress_nc_file,
-  nested_dir,
-  replace_and_write,
-  run_command,
+    compress_nc_file,
+    nested_dir,
+    replace_and_write,
+    run_command,
 )
 
+
 def to_wrf_filename(domain: str, time: datetime.datetime) -> str:
-    return f'WRFOUT_{domain}_{time.strftime("%Y-%m-%dT%H%M")}Z.nc'
+    return f"WRFOUT_{domain}_{time.strftime('%Y-%m-%dT%H%M')}Z.nc"
 
 
 def run_mcip(
@@ -173,8 +174,7 @@ def fix_wrf_start_dates(out_paths: list[str], date: datetime.date):
     wrf_start_time = date.strftime("%Y-%m-%d_%H:%M:%S")
     for outPath in out_paths:
         command = (
-            f"ncatted -O -a SIMULATION_START_DATE,global,m,c,"
-            f"{wrf_start_time} {outPath} {outPath}"
+            f"ncatted -O -a SIMULATION_START_DATE,global,m,c,{wrf_start_time} {outPath} {outPath}"
         )
         command_list = command.split(" ")
 

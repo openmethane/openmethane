@@ -15,6 +15,7 @@
 #
 import xarray as xr
 
+
 def get_grid_mappings(ds: xr.Dataset) -> list[str]:
     grid_mapping_vars = []
     for var_name in ds.data_vars:

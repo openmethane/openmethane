@@ -37,7 +37,7 @@ def iterPickle(filename, compressed=True):
     with gzip.open(filename) if compressed else open(filename, "rb") as f:
         while True:
             try:
-                yield pickle.load(f) # noqa: S301
+                yield pickle.load(f)  # noqa: S301
             except EOFError:
                 break
 
@@ -155,7 +155,7 @@ def _day_enhancement(task):
     return near, far, period_start, period_end
 
 
-def create_alerts_baseline( # noqa: PLR0913
+def create_alerts_baseline(  # noqa: PLR0913
     domain_file: pathlib.Path,
     dir_list: list[str],
     obs_file_template: str = "input/test_obs.pic.gz",
@@ -201,8 +201,16 @@ def create_alerts_baseline( # noqa: PLR0913
     obs_period_end: datetime.datetime | None = None
 
     tasks = [
-        (dir, obs_file_template, sim_file_template, lats, lons, land_mask, near_threshold,
-         far_threshold)
+        (
+            dir,
+            obs_file_template,
+            sim_file_template,
+            lats,
+            lons,
+            land_mask,
+            near_threshold,
+            far_threshold,
+        )
         for dir in dir_list
     ]
 
@@ -270,10 +278,14 @@ def create_alerts_baseline( # noqa: PLR0913
         coords={
             "x": domain_ds.coords["x"],
             "y": domain_ds.coords["y"],
-            "time": (("time"), [baseline_period_start], {
-                "standard_name": "time",
-                "bounds": "time_bounds",
-            }),
+            "time": (
+                ("time"),
+                [baseline_period_start],
+                {
+                    "standard_name": "time",
+                    "bounds": "time_bounds",
+                },
+            ),
         },
         data_vars={
             # bounds
@@ -281,22 +293,19 @@ def create_alerts_baseline( # noqa: PLR0913
             "x_bounds": domain_ds.variables["x_bounds"],
             "y_bounds": domain_ds.variables["y_bounds"],
             "time_bounds": (("time", "bounds_t"), [[baseline_period_start, baseline_period_end]]),
-
             # georeferencing
             "lat": domain_ds.variables["lat"],
             "lon": domain_ds.variables["lon"],
             # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
             projection_var_name: domain_ds.variables[projection_var_name],
-
             # copied data
             "land_mask": domain_ds.variables["land_mask"],
-
             # baseline data
             "obs_baseline_mean_diff": (
                 ("time", "y", "x"),
                 [obs_baseline_mean_diff],
                 {
-                    "long_name": "Average observed difference between near and far field concentrations", # noqa: E501
+                    "long_name": "Average observed difference between near and far field concentrations",  # noqa: E501
                     "units": "1e-9",
                     "grid_mapping": projection_var_name,
                 },
@@ -305,7 +314,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 ("time", "y", "x"),
                 [obs_baseline_std_diff],
                 {
-                    "long_name": "Standard deviation of observed difference between near and far field concentrations", # noqa: E501
+                    "long_name": "Standard deviation of observed difference between near and far field concentrations",  # noqa: E501
                     "units": "1e-9",
                     "grid_mapping": projection_var_name,
                 },
@@ -314,7 +323,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 ("time", "y", "x"),
                 [sim_baseline_mean_diff],
                 {
-                    "long_name": "Average simulated difference between near and far field concentrations'", # noqa: E501
+                    "long_name": "Average simulated difference between near and far field concentrations'",  # noqa: E501
                     "units": "1e-9",
                     "grid_mapping": projection_var_name,
                 },
@@ -323,7 +332,7 @@ def create_alerts_baseline( # noqa: PLR0913
                 ("time", "y", "x"),
                 [sim_baseline_std_diff],
                 {
-                    "long_name": "Standard deviation of simulated difference between near and far field concentrations", # noqa: E501
+                    "long_name": "Standard deviation of simulated difference between near and far field concentrations",  # noqa: E501
                     "units": "1e-9",
                     "grid_mapping": projection_var_name,
                 },
@@ -345,17 +354,14 @@ def create_alerts_baseline( # noqa: PLR0913
             "YCELL": domain_ds.YCELL,
             "alerts_near_threshold": near_threshold,
             "alerts_far_threshold": far_threshold,
-
             # domain
             "domain_name": domain_ds.domain_name,
             "domain_version": domain_ds.domain_version,
             "domain_slug": domain_ds.domain_slug,
-
             # common
             "title": "Open Methane methane alerts baseline",
             "history": get_timestamped_command(),
             "openmethane_version": get_version(),
-
             "Conventions": "CF-1.12",
         },
     )
@@ -376,7 +382,7 @@ def create_alerts_baseline( # noqa: PLR0913
     alerts_baseline_ds.to_netcdf(output_file)
 
 
-def create_alerts( # noqa: PLR0913
+def create_alerts(  # noqa: PLR0913
     baseline_file: pathlib.Path,
     daily_dir: pathlib.Path,
     obs_file_template: str = "input/test_obs.pic.gz",
@@ -478,10 +484,14 @@ def create_alerts( # noqa: PLR0913
         coords={
             "x": alerts_baseline_ds.coords["x"],
             "y": alerts_baseline_ds.coords["y"],
-            "time": (("time"), [period_start], {
-                "standard_name": "time",
-                "bounds": "time_bounds",
-            }),
+            "time": (
+                ("time"),
+                [period_start],
+                {
+                    "standard_name": "time",
+                    "bounds": "time_bounds",
+                },
+            ),
         },
         data_vars={
             # bounds
@@ -489,13 +499,11 @@ def create_alerts( # noqa: PLR0913
             "x_bounds": alerts_baseline_ds.variables["x_bounds"],
             "y_bounds": alerts_baseline_ds.variables["y_bounds"],
             "time_bounds": (("time", "bounds_t"), [[period_start, period_end]]),
-
             # georeferencing
             "lat": alerts_baseline_ds.variables["lat"],
             "lon": alerts_baseline_ds.variables["lon"],
             # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_lambert_conformal
             projection_var_name: alerts_baseline_ds.variables[projection_var_name],
-
             # copied data
             "land_mask": alerts_baseline_ds.variables["land_mask"],
             "obs_baseline_mean_diff": alerts_baseline_ds.variables["obs_baseline_mean_diff"],
@@ -503,7 +511,6 @@ def create_alerts( # noqa: PLR0913
             "sim_baseline_mean_diff": alerts_baseline_ds.variables["sim_baseline_mean_diff"],
             "sim_baseline_std_diff": alerts_baseline_ds.variables["sim_baseline_std_diff"],
             "baseline_count": alerts_baseline_ds.variables["baseline_count"],
-
             # results data
             "alerts": (
                 ("time", "y", "x"),
@@ -534,17 +541,14 @@ def create_alerts( # noqa: PLR0913
             "alerts_threshold": alerts_threshold,
             "alerts_significance_threshold": significance_threshold,
             "alerts_count_threshold": count_threshold,
-
             # domain
             "domain_name": alerts_baseline_ds.domain_name,
             "domain_version": alerts_baseline_ds.domain_version,
             "domain_slug": alerts_baseline_ds.domain_slug,
-
             # common
             "title": "Open Methane daily methane alerts",
             "history": get_timestamped_command(),
             "openmethane_version": get_version(),
-
             "Conventions": "CF-1.12",
         },
     )
@@ -564,7 +568,7 @@ def create_alerts( # noqa: PLR0913
     alerts_ds.to_netcdf(output_file)
 
 
-def map_enhance( # noqa: PLR0913
+def map_enhance(  # noqa: PLR0913
     lat,
     lon,
     land_mask,

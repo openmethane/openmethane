@@ -29,4 +29,4 @@ def get_timestamped_command():
 
 
 def get_version():
-    return os.getenv('OPENMETHANE_VERSION', importlib.metadata.version('openmethane'))
+    return os.getenv("OPENMETHANE_VERSION", importlib.metadata.version("openmethane"))

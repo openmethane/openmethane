@@ -244,9 +244,9 @@ class PhysicalAbstractData(FourDVarData):
             sense_lay = ncf.get_attr(template_defn.sense_conc, "NLAYS")
             assert icon_lay == sense_lay, "Must get conc sensitivities for all layers"
 
-        assert (
-            max(daysec, tsec_bcon) % min(daysec, tsec_bcon) == 0
-        ), "tsec_bcon must be a factor or multiple of No. seconds in a day."
+        assert max(daysec, tsec_bcon) % min(daysec, tsec_bcon) == 0, (
+            "tsec_bcon must be a factor or multiple of No. seconds in a day."
+        )
         assert len(dt.get_datelist()) == tday_emis * estep, "invalid emission tstep/tday"
         for spc in spcs_list:
             msg = "Uncertainty values are invalid for this data."

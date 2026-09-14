@@ -33,7 +33,7 @@ save_list(outObs, obs_file.replace(".gz", "_reset.gz"))
 SDATE = 1000 * start_date.timetuple().tm_year + start_date.timetuple().tm_yday
 EDATE = 1000 * end_date.timetuple().tm_year + end_date.timetuple().tm_yday
 
-command = f"ncatted -O -a TDAY,emis,m,l,{EDATE-SDATE+1} -a SDATE,global,m,l,{SDATE} -a EDATE,global,m,l,{EDATE} {prior_file} {prior_file}.reset"  # noqa
+command = f"ncatted -O -a TDAY,emis,m,l,{EDATE - SDATE + 1} -a SDATE,global,m,l,{SDATE} -a EDATE,global,m,l,{EDATE} {prior_file} {prior_file}.reset"  # noqa
 print("\t\t\t" + command)
 commandList = command.split(" ")
 ##

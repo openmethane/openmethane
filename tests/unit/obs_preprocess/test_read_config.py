@@ -101,6 +101,7 @@ def test_016_domain_validators_more_than_16_characters(attribute, cmaq_config_di
     with pytest.raises(ValueError, match=f"Length of '{attribute}' must be <= 16"):
         create_cmaq_config_object(cmaq_config_dict)
 
+
 @pytest.mark.parametrize(
     "test_input, expected",
     [

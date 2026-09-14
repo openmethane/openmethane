@@ -41,7 +41,6 @@ background = None
 iter_num = 0
 
 
-
 def setup():
     """application: setup any requirements for minimizer to run (eg: check resources, etc.)
     input: None
@@ -109,10 +108,13 @@ def callback_func(current_vector):
     logger.info(f"iter_num = {iter_num}")
 
 
-def minim(cost_func, grad_func,
-          init_guess: np.ndarray,
-          allow_negative_emissions: bool = True,
-          physical_template = None,):
+def minim(
+    cost_func,
+    grad_func,
+    init_guess: np.ndarray,
+    allow_negative_emissions: bool = True,
+    physical_template=None,
+):
     """application: the minimizer function
     input: cost function, gradient function, prior estimate / background
     output: list (1st element is numpy.ndarray of solution, the rest are user-defined).
@@ -127,15 +129,15 @@ def minim(cost_func, grad_func,
     if allow_negative_emissions is True:
         bounds = None
     else:
-        species =physical_template.spcs
+        species = physical_template.spcs
         if len(species) != 1:
             raise ValueError("bounds only works for one species")
-        len_bcon = physical_template.bcon[ species[0]].size
+        len_bcon = physical_template.bcon[species[0]].size
         len_emis = init_guess.size - len_bcon
         # now assign zero as lower bound for emissions
         bounds = len_emis * [(0, None)]
         # now add no bounds for bcon
-        bounds += len_bcon * [(None, None)] 
+        bounds += len_bcon * [(None, None)]
     maxiter = env.int("MAX_ITERATIONS", 20)
     logger.info(f"Running minimiser with a maximum of {maxiter} iteration")
     answer = minimize(

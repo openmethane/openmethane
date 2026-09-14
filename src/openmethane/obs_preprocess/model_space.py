@@ -220,7 +220,9 @@ class ModelSpace:
         col = target_coord[4]
         if date != self.psurf_date:
             if self.psurf_date is not None:
-                self.logger.warning("update_psurf is not thread-safe and may cause issues reading METCRO2D")
+                self.logger.warning(
+                    "update_psurf is not thread-safe and may cause issues reading METCRO2D"
+                )
             self.update_psurf(date)
         vgbot = self.psurf_arr[time, row, col]
         vglvl = np.array(self.gridmeta["VGLVLS"])

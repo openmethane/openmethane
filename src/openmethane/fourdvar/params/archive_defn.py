@@ -22,7 +22,7 @@ from openmethane.fourdvar.params.root_path_defn import store_path
 # Settings for archive processes
 
 # location of archive directory
-archive_path = os.path.join(store_path, 'archive' )
+archive_path = os.path.join(store_path, "archive")
 
 # archive model output of each successful iteration
 iter_model_output = True

@@ -46,7 +46,7 @@ def _setup_logger():
             log_level = log_levels[LOG_LEVEL]
             logging.basicConfig(level=log_level)
         else:
-            valid_levels = ', '.join(log_levels.keys())
+            valid_levels = ", ".join(log_levels.keys())
             logging.warning(
                 f"LOG_LEVEL={LOG_LEVEL} is not a valid log level, must be one of: {valid_levels}"
             )

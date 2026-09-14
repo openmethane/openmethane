@@ -29,6 +29,7 @@ def clean(value):
             value = round(value, 3)
     return value
 
+
 def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_regression):
     target_environment("docker-test")
 

@@ -7,7 +7,7 @@ NEAR_THRESHOLD = 0.2
 FAR_THRESHOLD = 1.0
 
 
-def reference_map_enhance(lat, lon, land_mask, concs, near_threshold, far_threshold): # noqa: PLR0913
+def reference_map_enhance(lat, lon, land_mask, concs, near_threshold, far_threshold):  # noqa: PLR0913
     """
     Straightforward implementation of map_enhance: scan every observation once
     per land cell. Too slow for a real domain, but unambiguous, so the
