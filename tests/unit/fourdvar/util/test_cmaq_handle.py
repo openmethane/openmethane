@@ -40,6 +40,43 @@ def test_more_than_one_rank_runs_under_mpirun(decomposition):
     assert cmd.endswith("ADJOINT_FWD")
 
 
+def test_extra_mpi_arguments_are_passed_to_mpirun(decomposition, monkeypatch):
+    decomposition(6, 4)
+    monkeypatch.setattr(cmaq_config, "mpi_extra_args", "-bind-to core")
+
+    cmd = cmaq_handle.build_cmd("ADJOINT_FWD", "logs/fwd_stdout.log")
+
+    # mpirun takes its own options before the executable, not after it.
+    assert cmd.endswith("-bind-to core ADJOINT_FWD")
+
+
+def test_extra_mpi_arguments_are_omitted_when_unset(decomposition, monkeypatch):
+    """An empty string must not leave a stray argument for mpirun to reject."""
+    decomposition(6, 4)
+    monkeypatch.setattr(cmaq_config, "mpi_extra_args", "  ")
+
+    cmd = cmaq_handle.build_cmd("ADJOINT_FWD", "logs/fwd_stdout.log")
+
+    assert cmd.endswith(".stderr ADJOINT_FWD")
+
+
+def test_extra_mpi_arguments_are_ignored_in_serial(decomposition, monkeypatch):
+    """There is no mpirun to give them to."""
+    decomposition(1, 1)
+    monkeypatch.setattr(cmaq_config, "mpi_extra_args", "-bind-to core")
+
+    cmd = cmaq_handle.build_cmd("ADJOINT_FWD", "logs/fwd_stdout.log")
+
+    assert "-bind-to" not in cmd
+
+
+def test_ranks_are_unbound_by_default(target_environment):
+    """Binding is opt-in until it has been timed on a production domain."""
+    target_environment("docker")
+
+    assert cmaq_config.mpi_extra_args == ""
+
+
 @pytest.mark.parametrize("npcol, nprow", ((1, 4), (4, 1)))
 def test_a_decomposition_in_one_direction_still_uses_mpirun(decomposition, npcol, nprow):
     decomposition(npcol, nprow)

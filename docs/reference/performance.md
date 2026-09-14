@@ -75,10 +75,61 @@ of ranks — and so the memory and the halo exchanges.
   safe value. If you control the machine, this is the simpler configuration —
   on AWS, `CpuOptions ThreadsPerCore=1`.
 
-Rank placement matters too. If ranks are not bound to cores, two can land on
-the two threads of one core while another core sits idle, which shows up as
-unexplained run-to-run variation. Check what your MPI defaults to and bind
-explicitly if it does not.
+Rank placement matters too, which is the next section.
+
+## Rank binding
+
+Whether a rank stays on the core it started on is up to the MPI library. MPICH's
+Hydra, which is what the runtime image uses, does not bind at all: every rank is
+free to run on every CPU the container can see, so the kernel may migrate them
+between cores and sockets and they lose their cache and NUMA locality. Two ranks
+can also end up on the two threads of one core while another core sits idle,
+which shows up as unexplained run-to-run variation.
+
+`MPI_EXTRA_ARGS` is passed to `mpirun` ahead of the executable, so a binding
+policy can be set without changing the code:
+
+```shell
+MPI_EXTRA_ARGS="-bind-to core"
+```
+
+That gives each rank one physical core — both of its threads, so a rank is never
+sharing a core with another rank while a core sits empty. `-bind-to hwthread`
+pins to a single thread instead, and is what you want only if you have measured
+that running two ranks per core pays, which for CMAQ it usually does not.
+
+Leave the mapping alone unless you have checked what it does on the machine in
+front of you. Adding `-map-by socket` is the usual advice for spreading
+consecutive ranks over the sockets, but on a **single-socket** host it does the
+opposite of what you want: Hydra wraps within the one socket, so 8 ranks land
+two-per-core on 4 cores while the rest of the machine is idle. Confirm any
+policy before trusting it:
+
+```shell
+mpirun -np 8 -bind-to core sh -c 'grep Cpus_allowed_list /proc/self/status' | sort
+```
+
+One distinct CPU list per rank is what you are looking for; a repeated list
+means two ranks are sharing a core.
+
+Binding is **not** on by default, for two reasons:
+
+- It has not yet been timed on a production domain. Do that first — it is the
+  same experiment as
+  [finding the best rank count](#finding-the-best-rank-count-for-a-domain), run
+  with and without the variable set.
+- It is the wrong default where the run does not have the machine to itself. A
+  container restricted with `--cpuset-cpus`, a Slurm or PBS job with a cpuset,
+  or a machine you are the only user of are all cases where binding is safe:
+  hwloc sees only the CPUs the run is allowed, and Hydra binds within them. A
+  container restricted by a CPU *quota* instead — `--cpus=`, or the vCPU count
+  an AWS Batch job asks for — still sees every CPU on the host, so each
+  co-tenant container binds to the same low-numbered cores and they contend
+  while the rest of the machine is idle. Unbound, the kernel spreads them.
+
+The distinction is visible in the metrics line described in
+[Measuring a run](#measuring-a-run): `cpus_visible` above `cpus_quota` is the
+quota case, where binding should be left off.
 
 ## Memory
 
@@ -161,6 +212,8 @@ you intend to run:
    from the log.
 3. Pick the smallest rank count within a few percent of the best wall time.
    Ranks past that point cost memory and give nothing back.
+4. Repeat the winner with `MPI_EXTRA_ARGS="-bind-to core"` to see whether
+   [binding](#rank-binding) is worth having on that machine.
 
 Fitting `memory_anon_bytes` against rank count gives roughly a straight line:
 the intercept is the domain's own memory and the slope is the per-rank

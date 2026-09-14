@@ -188,12 +188,15 @@ def build_cmd(executable: str, stdout_filename: str) -> str:
     Creates the command to run the executable.
 
     If the resolved decomposition needs more than one rank, `mpirun` will be
-    used to execute the CMAQ binary.
+    used to execute the CMAQ binary. `cmaq_config.mpi_extra_args` is passed
+    through to it, which is how rank binding is configured.
 
     Parameters
     ----------
     executable
         Binary to be executed
+    stdout_filename
+        Log file the run writes to, used as the prefix for the per-rank stderr
     """
     decomposition = resolve_decomposition()
 
@@ -208,6 +211,10 @@ def build_cmd(executable: str, stdout_filename: str) -> str:
         run_cmd += (
             f"mpirun -np {decomposition.ranks} -errfile-pattern={stdout_filename}.%r-%h.stderr "
         )
+
+        extra_args = cmaq_config.mpi_extra_args.strip()
+        if extra_args:
+            run_cmd += f"{extra_args} "
     run_cmd += executable
 
     return run_cmd

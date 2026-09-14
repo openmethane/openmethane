@@ -74,6 +74,7 @@ simulation day — see
 | `NUM_PROC_ROWS` | int | MPI decomposition of the grid, rows. Pins the decomposition instead of deriving it. | derived |
 | `NUM_PROC_COLS` | int | MPI decomposition of the grid, columns. Pins the decomposition instead of deriving it. | derived |
 | `MIN_CELLS_PER_RANK` | int | Fewest grid cells a subdomain may span in either direction | `10` |
+| `MPI_EXTRA_ARGS` | str | Extra arguments passed to `mpirun`, ahead of the CMAQ executable. Used to bind ranks to cores — see [Rank binding](performance.md#rank-binding). Ignored for a serial run. | unset |
 | `NCPUS` | int | Parallelism for TROPOMI preprocessing and alerts | `1` |
 | `USE_JOBFS` | bool | Put checkpoints on PBS job-local storage (`$PBS_JOBFS`). HPC only; warns and falls back if not run under `qsub`. | `false` |
 | `EXECUTION_ID` | str | Unique identifier for this execution. Only required when `CHK_PATH` is exactly `/mnt/scratch`, where it is appended to keep concurrent runs apart. | *conditionally required* |
