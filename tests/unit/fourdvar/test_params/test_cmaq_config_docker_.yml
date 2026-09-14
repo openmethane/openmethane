@@ -70,9 +70,11 @@ met_bdy_3d: /app/data/mcip/<YYYY-MM-DD>/d01/METBDY3D_au-test_v1
 met_cro_2d: /app/data/mcip/<YYYY-MM-DD>/d01/METCRO2D_au-test_v1
 met_cro_3d: /app/data/mcip/<YYYY-MM-DD>/d01/METCRO3D_au-test_v1
 met_dot_3d: /app/data/mcip/<YYYY-MM-DD>/d01/METDOT3D_au-test_v1
+min_cells_per_rank: 10
 minsync: 300
-npcol: 1
-nprow: 1
+npcol: 0
+nprow: 0
+num_proc_total: 0
 output_path: /app/data/run-cmaq/output
 pertcols: '1'
 pertdelt: '1.00'

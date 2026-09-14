@@ -104,13 +104,15 @@ Relevant settings:
 
 | Setting | Effect |
 | --- | --- |
-| `NUM_PROC_ROWS`, `NUM_PROC_COLS` | Decompose the CMAQ grid across MPI processes. Their product is the number of processes CMAQ uses. |
+| `NUM_PROC_TOTAL` | Number of MPI processes to run CMAQ across. The grid is decomposed to suit the domain size, so the same value works for any domain. Set `NUM_PROC_ROWS`/`NUM_PROC_COLS` instead to pin the decomposition. |
 | `NCPUS` | Parallelism for WRF and for TROPOMI preprocessing. |
 | `MAX_ITERATIONS` | Caps the inversion at this many successful L-BFGS-B iterations (default 20). Lower it to bound runtime. |
 | `BOUNDARY_TRIM` | Cells removed from each edge of the domain for boundary conditions. `5` for `aust10km`; small domains need a smaller value or MCIP will trim the domain away entirely. |
 | `CHK_PATH` | Where CMAQ checkpoint files go. These are large and written repeatedly — put them on fast local disk. |
 
-See [Parameters](../reference/parameters.md) for the full list.
+See [Parameters](../reference/parameters.md) for the full list, and
+[Performance and hardware](../reference/performance.md) for choosing
+`NUM_PROC_TOTAL` and sizing a machine for your domain.
 
 ## 4. Run the daily workflow for each day
 

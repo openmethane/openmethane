@@ -28,6 +28,7 @@ from openmethane.fourdvar.params import (
     date_defn,
     template_defn,
 )
+from openmethane.fourdvar.util.decomposition import resolve_decomposition
 from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
@@ -58,8 +59,10 @@ def parse_env_dict(env_dict, date):
 
 def setup_run():
     """Setup all the constant environment variables."""
+    decomposition = resolve_decomposition()
+
     env_dict = {
-        "NPCOL_NPROW": f"{cmaq_config.npcol} {cmaq_config.nprow}",
+        "NPCOL_NPROW": f"{decomposition.npcol} {decomposition.nprow}",
         "IOAPI_LOG_WRITE": "T" if cmaq_config.ioapi_logging else "F",
         "CTM_MAXSYNC": str(cmaq_config.maxsync),
         "CTM_MINSYNC": str(cmaq_config.minsync),
@@ -184,23 +187,27 @@ def build_cmd(executable: str, stdout_filename: str) -> str:
     """
     Creates the command to run the executable.
 
-    If more than one processor is to be used (as determined by the product of `npcol` and `nprow`),
-    `mpirun` will be used to execute the CMAQ binary.
+    If the resolved decomposition needs more than one rank, `mpirun` will be
+    used to execute the CMAQ binary.
 
     Parameters
     ----------
     executable
         Binary to be executed
     """
+    decomposition = resolve_decomposition()
+
     run_cmd = cmaq_config.cmd_preamble
-    if int(cmaq_config.npcol) != 1 or int(cmaq_config.nprow) != 1:
+    if not decomposition.is_serial:
         # use mpi
-        # run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} "
+        # run_cmd += f"mpirun -np {decomposition.ranks} "
 
         # write stdout and stderr to a file per-node for debugging
         #  -outfile-pattern=prefix.%r-%h.stdout
         #  -errfile-pattern=prefix.%r-%h.stderr
-        run_cmd += f"mpirun -np {int(cmaq_config.npcol) * int(cmaq_config.nprow)} -errfile-pattern={stdout_filename}.%r-%h.stderr "
+        run_cmd += (
+            f"mpirun -np {decomposition.ranks} -errfile-pattern={stdout_filename}.%r-%h.stderr "
+        )
     run_cmd += executable
 
     return run_cmd
