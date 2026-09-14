@@ -264,3 +264,8 @@ cmd_shell = "/bin/csh"
 
 # shell input added before running drivers
 cmd_preamble = ""
+
+# Extra arguments passed to mpirun, ahead of the executable. Empty leaves rank
+# placement to the MPI library, which for MPICH's Hydra means no binding at all.
+# See docs/reference/performance.md for when binding is worth setting.
+mpi_extra_args = env.str("MPI_EXTRA_ARGS", "")

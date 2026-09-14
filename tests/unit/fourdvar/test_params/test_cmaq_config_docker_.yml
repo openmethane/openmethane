@@ -72,6 +72,7 @@ met_cro_3d: /app/data/mcip/<YYYY-MM-DD>/d01/METCRO3D_au-test_v1
 met_dot_3d: /app/data/mcip/<YYYY-MM-DD>/d01/METDOT3D_au-test_v1
 min_cells_per_rank: 10
 minsync: 300
+mpi_extra_args: ''
 npcol: 0
 nprow: 0
 num_proc_total: 0
