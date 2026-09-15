@@ -49,7 +49,6 @@ Turns WRF meteorology and the prior into inputs CMAQ can read. See
 | `scripts/cmaq_preprocess/make_template.py` | Prepares CMAQ run directories and the concentration, forcing and sensitivity templates, by running one day of CMAQ forwards and backwards. Requires the adjoint binaries. |
 | `scripts/cmaq_preprocess/make_prior.py` | Builds the prior in the form `fourdvar` consumes. |
 | `scripts/cmaq_preprocess/bias_correct_cams.py` | Corrects bias between CAMS boundary conditions and CMAQ. Honours `DISABLE_CORRECT_BIAS_BY_REGION`. |
-| `scripts/cmaq_preprocess/upload-domains.py` | Publishes domain files to the data store. Maintainers only; needs CloudFlare R2 credentials. |
 
 The last three template steps can be run together:
 
@@ -137,7 +136,6 @@ than the rest of the codebase.
 | `prepare-templates` | Run the three template generation scripts. |
 | `fetch-domains` | Download the WRF geometry and Open Methane domain files for `aust10km` and `au-test` into `data/`. |
 | `fetch-test-data` | Download the `au-test` geometry and domain files, plus the CAMS file the tests need. Run by `docker-test`. |
-| `sync-domains-from-cf` | Sync all domain data from CloudFlare. Needs credentials. |
 | `changelog-draft` | Preview the next release's changelog. |
 | `format` | Format with ruff. |
 | `clean` | Delete generated files under `data/`, preserving `data/tropomi`. |

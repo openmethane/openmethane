@@ -141,6 +141,18 @@ Domain files for existing domains are served from the public data store at
 which is where the end-to-end scripts fetch them from. A custom domain has to be
 placed in the expected location manually prior to running workflows.
 
+Publishing a domain there, so that it is served to everyone rather than kept
+locally, is a maintainer step done by hand. Both the geometry file from
+setup-wrf and the domain file from `create_prior_domain.py` belong under the
+domain's prefix:
+
+```shell
+aws s3 sync data/domains/${DOMAIN_NAME}/${DOMAIN_VERSION} \
+  s3://openmethane/domains/${DOMAIN_NAME}/${DOMAIN_VERSION}
+```
+
+This needs write access to the `openmethane` bucket in the production account.
+
 Before committing to a long run, do a single day on the new domain and confirm
 the MCIP output has the grid dimensions you expect. Grid geometry mistakes are
 much cheaper to find at that point than after a month of daily runs.
