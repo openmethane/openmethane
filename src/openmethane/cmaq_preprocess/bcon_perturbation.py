@@ -51,9 +51,40 @@ def perturb_bcon_files(
     species
         Species to perturb.
     """
+    # Every file is checked before any is written. The run's boundary field has
+    # to be perturbed on all days or none: a failure part way through would
+    # leave the forward model reading an offset that changes mid-run, which is
+    # not a boundary perturbation of any describable size.
+    for file in bcon_files:
+        _check_file(file, species)
+
     for file in bcon_files:
         _perturb_file(file, offset_ppb, species)
         logger.info(f"{file}: {species} offset by {offset_ppb:+g} ppb")
+
+
+def _check_file(file: pathlib.Path, species: str) -> None:
+    if not file.exists():
+        raise FileNotFoundError(
+            f"{file} does not exist; the forward run reads one BCON file per day "
+            "of the run, so every day has to be present before any is perturbed"
+        )
+
+    with xr.open_dataset(file) as contents:
+        applied = contents.attrs.get(OFFSET_ATTR)
+        if applied is not None:
+            raise ValueError(
+                f"{file} already carries a boundary offset of {applied:+g} ppb. "
+                "Perturb a freshly generated BCON file rather than an already "
+                "perturbed one; offsets applied twice compound."
+            )
+
+        units = contents[species].attrs.get("units", "").strip()
+        if units != EXPECTED_UNITS:
+            raise ValueError(
+                f"{file}: {species} units are {units!r}, expected {EXPECTED_UNITS!r}; "
+                "the offset would be applied in the wrong units"
+            )
 
 
 def _perturb_file(file: pathlib.Path, offset_ppb: float, species: str) -> None:
@@ -64,21 +95,6 @@ def _perturb_file(file: pathlib.Path, offset_ppb: float, species: str) -> None:
 
     with xr.open_dataset(file) as ds:
         contents = ds.load()
-
-    applied = contents.attrs.get(OFFSET_ATTR)
-    if applied is not None:
-        raise ValueError(
-            f"{file} already carries a boundary offset of {applied:+g} ppb. "
-            "Perturb a freshly generated BCON file rather than an already "
-            "perturbed one; offsets applied twice compound."
-        )
-
-    units = contents[species].attrs.get("units", "").strip()
-    if units != EXPECTED_UNITS:
-        raise ValueError(
-            f"{file}: {species} units are {units!r}, expected {EXPECTED_UNITS!r}; "
-            "the offset would be applied in the wrong units"
-        )
 
     contents[species] += offset_ppb / PPB_PER_PPM
     contents.attrs[OFFSET_ATTR] = float(offset_ppb)

@@ -104,3 +104,22 @@ def test_no_leftover_temporary_file(bcon_file):
     perturb_bcon_files([bcon_file], offset_ppb=20.0)
 
     assert sorted(p.name for p in bcon_file.parent.iterdir()) == [BCON_FILE_NAME]
+
+
+def test_nothing_is_written_when_a_later_file_is_bad(bcon_file, tmp_path):
+    """All days or none: a bad file must stop the first file being touched.
+
+    A failure part way through would leave the forward model reading a boundary
+    field that steps partway through the run, which is not a perturbation of any
+    describable size.
+    """
+    with xr.open_dataset(bcon_file) as ds:
+        before = ds["CH4"].to_numpy()
+
+    missing = tmp_path / "absent" / BCON_FILE_NAME
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        perturb_bcon_files([bcon_file, missing], offset_ppb=20.0)
+
+    with xr.open_dataset(bcon_file) as ds:
+        np.testing.assert_array_equal(ds["CH4"].to_numpy(), before)
+        assert OFFSET_ATTR not in ds.attrs
