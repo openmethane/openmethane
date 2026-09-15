@@ -18,6 +18,7 @@ import glob
 import multiprocessing
 import os
 import time as timing
+import warnings
 from typing import Any
 
 import click
@@ -39,6 +40,17 @@ logger = get_logger(__name__)
 N_CPUS = int(os.environ.get("NCPUS", 1))
 DEFAULT_WS1 = int(os.environ.get("DEFAULT_WS1", 7))  # default recommended by SRON
 DEFAULT_WS2 = int(os.environ.get("DEFAULT_WS2", 100))  # default recommended by SRON
+
+
+def _nanmedian(data: np.ndarray, axis: int) -> np.ndarray:
+    """np.nanmedian, without the warning for windows that hold no valid data.
+
+    Sparse swaths routinely produce all-NaN windows, and NaN is the wanted
+    result for those, so the warning is noise rather than a signal.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN slice encountered", RuntimeWarning)
+        return np.nanmedian(data, axis=axis)
 
 
 def destripe_smoothing(
@@ -79,7 +91,7 @@ def destripe_smoothing(
             st = i - ws
             sp = i + ws
 
-        back[:, i] = np.nanmedian(data[:, st:sp], axis=1)
+        back[:, i] = _nanmedian(data[:, st:sp], axis=1)
 
     this = data - back
 
@@ -98,7 +110,7 @@ def destripe_smoothing(
             st = j - ws
             sp = j + ws
 
-        stripes[j, :] = np.nanmedian(this[st:sp, :], axis=0)
+        stripes[j, :] = _nanmedian(this[st:sp, :], axis=0)
 
     return data - stripes
 
