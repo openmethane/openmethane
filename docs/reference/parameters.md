@@ -159,7 +159,8 @@ See [Troubleshooting](../troubleshooting.md#logging).
 ## Domain upload
 
 Used only by `scripts/cmaq_preprocess/upload-domains.py`, which publishes domain
-files to the data store. Requires CloudFlare R2 credentials.
+files to the data store. Requires CloudFlare R2 credentials, and an AWS CLI on
+`PATH` -- it is not a project dependency, so install it separately.
 
 | Variable | Type | Description | Default |
 | --- | --- | --- | --- |

@@ -30,7 +30,8 @@ fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/d
 
 .PHONY: sync-domains-from-cf
 sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
-	# This requires CloudFlare credentials
+	# This requires CloudFlare credentials and the AWS CLI, which is not a
+	# project dependency -- install it separately.
 	aws s3 sync s3://openmethane-prior/domains data/domains \
 		  --endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com \
 		  --profile cf-om-prior-r2
