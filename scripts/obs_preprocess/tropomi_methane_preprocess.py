@@ -235,7 +235,7 @@ def process_file(
         (lat_filter, lon_filter, mask_filter, qa_filter, swir_albedo_filter, swir_aod_filter)
     )
 
-    epoch = dt.datetime.utcfromtimestamp(0)
+    epoch = dt.datetime(1970, 1, 1)
 
     start_date = date_defn.start_date
     end_date = date_defn.end_date
