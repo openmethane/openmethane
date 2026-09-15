@@ -55,6 +55,12 @@ markers = [
     # outage should not be allowed to fail the suite.
     "network: hits a third-party service over the network",
 ]
+filterwarnings = [
+    # The netCDF4 wheels are compiled against the numpy 2 headers while this
+    # project still pins numpy 1.x. The resulting size check is a Cython false
+    # positive for that pairing, and goes away once we move to numpy 2.
+    "ignore:numpy.ndarray size changed:RuntimeWarning",
+]
 
 [tool.ruff]
 src = ["src"]
