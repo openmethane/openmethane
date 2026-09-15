@@ -18,6 +18,7 @@ import glob
 import multiprocessing
 import os
 import time as timing
+import warnings
 from typing import Any
 
 import click
@@ -39,6 +40,17 @@ logger = get_logger(__name__)
 N_CPUS = int(os.environ.get("NCPUS", 1))
 DEFAULT_WS1 = int(os.environ.get("DEFAULT_WS1", 7))  # default recommended by SRON
 DEFAULT_WS2 = int(os.environ.get("DEFAULT_WS2", 100))  # default recommended by SRON
+
+
+def _nanmedian(data: np.ndarray, axis: int) -> np.ndarray:
+    """np.nanmedian, without the warning for windows that hold no valid data.
+
+    Sparse swaths routinely produce all-NaN windows, and NaN is the wanted
+    result for those, so the warning is noise rather than a signal.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN slice encountered", RuntimeWarning)
+        return np.nanmedian(data, axis=axis)
 
 
 def destripe_smoothing(
@@ -79,7 +91,7 @@ def destripe_smoothing(
             st = i - ws
             sp = i + ws
 
-        back[:, i] = np.nanmedian(data[:, st:sp], axis=1)
+        back[:, i] = _nanmedian(data[:, st:sp], axis=1)
 
     this = data - back
 
@@ -98,7 +110,7 @@ def destripe_smoothing(
             st = j - ws
             sp = j + ws
 
-        stripes[j, :] = np.nanmedian(this[st:sp, :], axis=0)
+        stripes[j, :] = _nanmedian(this[st:sp, :], axis=0)
 
     return data - stripes
 
@@ -123,10 +135,12 @@ def process_obs(obs: dict[str, float], model_grid: ModelSpace) -> ObsSRON:
 
 
 def process_file(
-        model_grid: ModelSpace, ds: Dataset, qa_cutoff: float, swir_albedo_cutoff: float,
-        swir_aod_cutoff: float,
-        max_process_time: float,
-        
+    model_grid: ModelSpace,
+    ds: Dataset,
+    qa_cutoff: float,
+    swir_albedo_cutoff: float,
+    swir_aod_cutoff: float,
+    max_process_time: float,
 ) -> tuple[list[ObsSRON], int, int]:
     """
     Process an individual file
@@ -151,7 +165,7 @@ def process_file(
     product = ds["/PRODUCT"]
     diag = ds["/PRODUCT"]
     geo = ds["/PRODUCT/SUPPORT_DATA/GEOLOCATIONS"]
-    detailed_results = ds['/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS']
+    detailed_results = ds["/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS"]
     n_levels = product.dimensions["level"].size
     latitude = instrument.variables["latitude"][:]
     latitude_center = latitude.reshape((latitude.size,))
@@ -183,7 +197,7 @@ def process_file(
 
     # check for obs files missing methane data
     if ch4.size <= 1:
-        raise InvalidInputException('Observation file methane_mixing_ratio_bias_corrected is empty')
+        raise InvalidInputException("Observation file methane_mixing_ratio_bias_corrected is empty")
 
     ch4 = destripe_smoothing(ch4.squeeze())
     ch4_column = ch4.reshape((ch4.size,))
@@ -202,7 +216,6 @@ def process_file(
     aod = detailed_results.variables["aerosol_optical_thickness_SWIR"][:]
     swir_aod = aod.reshape(swir.size)
 
-
     mask_arr = np.ma.getmaskarray(ch4_column)
 
     # quick filter out: mask, lat, lon and quality
@@ -216,12 +229,13 @@ def process_file(
     )
     mask_filter = np.logical_not(mask_arr)
     qa_filter = qa_value > qa_cutoff
-    swir_albedo_filter = (swir_albedo > swir_albedo_cutoff)
-    swir_aod_filter = (swir_aod < swir_aod_cutoff)
-    include_filter = np.logical_and.reduce((lat_filter, lon_filter, mask_filter,
-                                            qa_filter, swir_albedo_filter, swir_aod_filter))
+    swir_albedo_filter = swir_albedo > swir_albedo_cutoff
+    swir_aod_filter = swir_aod < swir_aod_cutoff
+    include_filter = np.logical_and.reduce(
+        (lat_filter, lon_filter, mask_filter, qa_filter, swir_albedo_filter, swir_aod_filter)
+    )
 
-    epoch = dt.datetime.utcfromtimestamp(0)
+    epoch = dt.datetime(1970, 1, 1)
 
     start_date = date_defn.start_date
     end_date = date_defn.end_date
@@ -252,8 +266,8 @@ def process_file(
         # so build it down from the reported surface pressure. Anchoring on
         # surface_pressure rather than n_layers * pressure_interval keeps the
         # grid consistent with the pressure weights the retrieval used.
-        press_levels = surface_pressure[i] - (n_levels - 1 - np.arange(n_levels)) * (
-            pressure_interval[i]
+        press_levels = (
+            surface_pressure[i] - (n_levels - 1 - np.arange(n_levels)) * (pressure_interval[i])
         )
         press_levels = np.maximum(press_levels, 0.0)
 
@@ -370,7 +384,9 @@ def process_observations(
     help="Maximum time to process each observation in seconds. Default is 5 seconds",
     default=5,
 )
-def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, swir_aod_cutoff, max_process_time):
+def run_tropomi_preprocess(
+    source, output_file, qa_cutoff, swir_albedo_cutoff, swir_aod_cutoff, max_process_time
+):
     """
     Process TROPOMI data to create a set of observations for use in the fourdvar system.
     """
@@ -403,8 +419,8 @@ def run_tropomi_preprocess(source, output_file, qa_cutoff, swir_albedo_cutoff, s
                     model_grid,
                     ds,
                     qa_cutoff=qa_cutoff,
-                    swir_albedo_cutoff = swir_albedo_cutoff,
-                    swir_aod_cutoff = swir_aod_cutoff, 
+                    swir_albedo_cutoff=swir_albedo_cutoff,
+                    swir_aod_cutoff=swir_aod_cutoff,
                     max_process_time=max_process_time,
                 )
 

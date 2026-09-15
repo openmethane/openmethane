@@ -1,4 +1,3 @@
-
 import xarray as xr
 
 from openmethane.util.cf import get_grid_mappings

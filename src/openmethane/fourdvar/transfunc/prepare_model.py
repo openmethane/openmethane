@@ -90,9 +90,9 @@ def prepare_model(physical_data):
     m_daysize = ncf.get_variable(emis_fname, physical_data.spcs[0]).shape[0] - 1
     dlist = dt.get_datelist()
     b_daysize = float(physical_data.nstep_bcon) / len(dlist)
-    assert (b_daysize < 1) or (
-        m_daysize % b_daysize == 0
-    ), "physical & model input emis TSTEP incompatible."
+    assert (b_daysize < 1) or (m_daysize % b_daysize == 0), (
+        "physical & model input emis TSTEP incompatible."
+    )
     nrow, ncol = physical_data.nrows, physical_data.ncols
 
     emis_pattern = "emis.<YYYYMMDD>"

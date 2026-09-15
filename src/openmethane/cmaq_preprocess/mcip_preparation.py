@@ -3,10 +3,12 @@
 import datetime
 import os
 import pathlib
-import warnings
 
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
 from openmethane.cmaq_preprocess.utils import nested_dir
+from openmethane.util.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def check_input_met_and_output_folders(
@@ -29,7 +31,7 @@ def check_input_met_and_output_folders(
         chemdir = nested_dir(domain, date, ctm_dir)
 
         if not os.path.exists(mcipdir):
-            warnings.warn(f"MCIP output directory not found at {mcipdir}")
+            logger.info(f"MCIP output directory not found at {mcipdir}")
             return False
 
         ## create output destination
@@ -39,7 +41,7 @@ def check_input_met_and_output_folders(
         griddesc_path = mcipdir / "GRIDDESC"
 
         if not os.path.exists(griddesc_path):
-            warnings.warn(f"GRIDDESC file not found at {griddesc_path} ... ")
+            logger.info(f"GRIDDESC file not found at {griddesc_path}")
             return False
 
         ## check that the other MCIP output files are present
@@ -56,6 +58,6 @@ def check_input_met_and_output_folders(
             expected_filename = f"{filetype}_{domain.mcip_suffix}"
 
             if not (mcipdir / expected_filename).exists():
-                warnings.warn(f"{expected_filename} file not found in folder {mcipdir}")
+                logger.info(f"{expected_filename} file not found in folder {mcipdir}")
                 return False
     return True

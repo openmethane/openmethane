@@ -55,10 +55,20 @@ markers = [
     # outage should not be allowed to fail the suite.
     "network: hits a third-party service over the network",
 ]
+filterwarnings = [
+    # Warnings fail the suite, so that new ones are dealt with as they appear
+    # rather than accumulating. Add a targeted ignore below when a warning is
+    # genuinely out of our hands; later entries win over earlier ones.
+    "error",
+    # The netCDF4 wheels are compiled against the numpy 2 headers while this
+    # project still pins numpy 1.x. The resulting size check is a Cython false
+    # positive for that pairing, and goes away once we move to numpy 2.
+    "ignore:numpy.ndarray size changed:RuntimeWarning",
+]
 
 [tool.ruff]
 src = ["src"]
-target-version = "py311"
+target-version = "py312"
 # Provide some leeway for long docstring
 line-length = 100
 

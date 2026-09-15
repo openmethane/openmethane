@@ -19,6 +19,7 @@ from openmethane.obs_preprocess.column_operator import (
 # between the surface and VGTOP = 5000 Pa.
 N_SAT = 12
 VGTOP = 5000.0
+# fmt: off
 VGLVLS = np.array(
     [
         1.0, 0.9938145, 0.9859505, 0.9760142, 0.9635575, 0.9480932, 0.9291238,
@@ -29,6 +30,7 @@ VGLVLS = np.array(
         0.01009149, 0.0
     ]
 )
+# fmt: on
 
 
 def sat_edges(surface_pressure=99752.0, n_layer=N_SAT):
@@ -183,9 +185,7 @@ def test_constant_model_profile_matches_the_kernel_formula():
 
 def test_partial_coverage_is_reported():
     sat_edge = sat_edges()
-    operator = build_column_operator(
-        sat_edge, np.ones(N_SAT), np.full(N_SAT, 1800.0), cmaq_edges()
-    )
+    operator = build_column_operator(sat_edge, np.ones(N_SAT), np.full(N_SAT, 1800.0), cmaq_edges())
 
     # only the topmost retrieval layer reaches above VGTOP
     assert operator.coverage[0] < 1.0
@@ -269,9 +269,7 @@ def test_prior_fill_does_not_depend_on_the_model_top():
     model_edge = cmaq_edges()
     prior = np.linspace(1000.0, 1850.0, N_SAT)
 
-    operator = build_column_operator(
-        sat_edge, np.ones(N_SAT), prior, model_edge, fill=FILL_PRIOR
-    )
+    operator = build_column_operator(sat_edge, np.ones(N_SAT), prior, model_edge, fill=FILL_PRIOR)
 
     # the top model layer only carries the part of the column it actually spans
     assert operator.weights[-1] == pytest.approx(

@@ -58,10 +58,14 @@ def posterior_emissions_postprocess(
         coords={
             "x": prior_emissions_ds.coords["x"],
             "y": prior_emissions_ds.coords["y"],
-            "time": (("time"), [period_start], {
-                "standard_name": "time",
-                "bounds": "time_bounds",
-            }),
+            "time": (
+                ("time"),
+                [period_start],
+                {
+                    "standard_name": "time",
+                    "bounds": "time_bounds",
+                },
+            ),
             # this dimension currently has no coordinate values, so it is left
             # as a dimension without coordinates
             # "vertical": (("vertical"), [0], {}),
@@ -71,50 +75,52 @@ def posterior_emissions_postprocess(
             "x_bounds": prior_emissions_ds["x_bounds"],
             "y_bounds": prior_emissions_ds["y_bounds"],
             "time_bounds": (("time", "time_period"), [[period_start, period_end]]),
-
             # georeferencing
             "lon": prior_emissions_ds["lon"],
             "lat": prior_emissions_ds["lat"],
             projection_var_name: prior_emissions_ds[projection_var_name],
-
             # copied data
             "land_mask": prior_emissions_ds["land_mask"],
             "cell_name": prior_emissions_ds["cell_name"],
-
             # results data
             # posterior CH4 emissions - Open Methane primary result
-            "ch4": (("time", "vertical", "y", "x"), emissions_np, {
-                "units": "kg/m2/s",
-                "standard_name": "surface_upward_mass_flux_of_methane",
-                "long_name": "estimated flux of methane based on observations (posterior)",
-                "grid_mapping": projection_var_name,
-            }),
+            "ch4": (
+                ("time", "vertical", "y", "x"),
+                emissions_np,
+                {
+                    "units": "kg/m2/s",
+                    "standard_name": "surface_upward_mass_flux_of_methane",
+                    "long_name": "estimated flux of methane based on observations (posterior)",
+                    "grid_mapping": projection_var_name,
+                },
+            ),
             # expected emissions (prior averaged over period)
-            "prior_ch4": (("time", "vertical", "y", "x"), prior_emissions_np, {
-                "units": "kg/m2/s",
-                "standard_name": "surface_upward_mass_flux_of_methane",
-                "long_name": "expected flux of methane based on public data (prior)",
-                "grid_mapping": projection_var_name,
-            }),
+            "prior_ch4": (
+                ("time", "vertical", "y", "x"),
+                prior_emissions_np,
+                {
+                    "units": "kg/m2/s",
+                    "standard_name": "surface_upward_mass_flux_of_methane",
+                    "long_name": "expected flux of methane based on public data (prior)",
+                    "grid_mapping": projection_var_name,
+                },
+            ),
         },
         attrs={
             "DX": prior_emissions_ds.DX,
             "DY": prior_emissions_ds.DY,
             "XCELL": prior_emissions_ds.XCELL,
             "YCELL": prior_emissions_ds.YCELL,
-
             # domain
             "domain_name": prior_emissions_ds.domain_name,
             "domain_version": prior_emissions_ds.domain_version,
             "domain_slug": prior_emissions_ds.domain_slug,
-
             # meta
             "title": "Open Methane monthly emissions estimates",
             "comment": "Gridded emissions estimate for methane across Australia",
             "history": get_timestamped_command(),
             "openmethane_version": get_version(),
             "openmethane_prior_version": prior_emissions_ds.openmethane_prior_version,
-
             "Conventions": "CF-1.12",
         },
     )
@@ -127,7 +133,9 @@ def posterior_emissions_postprocess(
     # add prior emissions estimates per-sector
     # sector estimates are daily, so average them across the month to make them
     # consistent with ch4 and prior_ch4 data.
-    prior_sector_vars = [var_name for var_name in prior_emissions_ds.data_vars if var_name.startswith("ch4_sector")]
+    prior_sector_vars = [
+        var_name for var_name in prior_emissions_ds.data_vars if var_name.startswith("ch4_sector")
+    ]
     for sector_var in prior_sector_vars:
         # take the mean of prior emissions over the entire period, to align the
         # prior sector output with the prior and posterior emissions data
@@ -137,13 +145,13 @@ def posterior_emissions_postprocess(
         sector_period_mean = np.expand_dims(sector_period_mean, axis=0)
 
         posterior_emissions_ds[f"prior_{sector_var}"] = xr.DataArray(
-            dims=["time", "vertical", "y", "x"], # match prior_ch4 var
+            dims=["time", "vertical", "y", "x"],  # match prior_ch4 var
             data=sector_period_mean,
             attrs=prior_emissions_ds.variables[sector_var].attrs,
         )
 
     # disable _FillValue for variables that shouldn't have empty values
-    for var_name in ['time_bounds', 'x', 'y', 'x_bounds', 'y_bounds', 'lat', 'lon']:
+    for var_name in ["time_bounds", "x", "y", "x_bounds", "y_bounds", "lat", "lon"]:
         posterior_emissions_ds[var_name].encoding["_FillValue"] = None
 
     return posterior_emissions_ds

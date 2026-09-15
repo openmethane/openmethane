@@ -103,7 +103,9 @@ def download_from_mirror(client, key: str, outfn: str, expected_size: int | None
     remote_size = client.head_object(Bucket=BUCKET, Key=key)["ContentLength"]
 
     if remote_size == 0:
-        raise UnreliableMirrorObjectError(f"{key} is an empty (0 byte) object in the {BUCKET} mirror")
+        raise UnreliableMirrorObjectError(
+            f"{key} is an empty (0 byte) object in the {BUCKET} mirror"
+        )
 
     if expected_size is not None and remote_size != expected_size:
         raise UnreliableMirrorObjectError(

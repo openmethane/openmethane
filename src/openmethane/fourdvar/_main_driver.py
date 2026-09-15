@@ -28,8 +28,7 @@ from openmethane.fourdvar.env import env
 logger = get_logger(__name__)
 
 
-def cost_func(vector,
-              archive_obs_file=None):
+def cost_func(vector, archive_obs_file=None):
     """framework: cost function used by minimizer
     input: numpy.ndarray
     output: scalar.
@@ -55,7 +54,6 @@ def cost_func(vector,
         model_in = transform(physical, d.ModelInputData)
         model_out = transform(model_in, d.ModelOutputData)
         data_access.prev_vector = vector.copy()
-
 
     simulated = transform(model_out, d.ObservationData)
 
@@ -129,7 +127,6 @@ def gradient_func(vector):
 
     simulated = transform(model_out, d.ObservationData)
 
-
     residual = d.ObservationData.get_residual(observed, simulated)
     w_residual = d.ObservationData.error_weight(residual)
 
@@ -175,9 +172,13 @@ def get_answer():
 
     user_driver.setup()
     start_vector = bg_unknown.get_vector()
-    min_output = user_driver.minim(cost_func, gradient_func, start_vector,
-                                   allow_negative_emissions = allow_negative_emissions,
-                                   physical_template = bg_physical)
+    min_output = user_driver.minim(
+        cost_func,
+        gradient_func,
+        start_vector,
+        allow_negative_emissions=allow_negative_emissions,
+        physical_template=bg_physical,
+    )
     out_vector = min_output[0]
     out_unknown = d.UnknownData(out_vector)
     out_physical = transform(out_unknown, d.PhysicalData)

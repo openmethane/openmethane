@@ -1,4 +1,5 @@
 import datetime as dt
+import pathlib
 from unittest import mock
 
 import pytest
@@ -83,7 +84,9 @@ def test_download_from_mirror_accepts_a_correctly_sized_download(tmp_path):
     outfn = tmp_path / "out.nc"
     client = mock.Mock()
     client.head_object.return_value = {"ContentLength": 4}
-    client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"data")
+    client.download_file.side_effect = lambda bucket, key, path: pathlib.Path(path).write_bytes(
+        b"data"
+    )
 
     fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn), expected_size=4)
 
@@ -96,7 +99,9 @@ def test_download_from_mirror_retries_a_short_download_once(tmp_path):
     outfn = tmp_path / "out.nc"
     client = mock.Mock()
     client.head_object.return_value = {"ContentLength": 4}
-    client.download_file.side_effect = lambda bucket, key, path: open(path, "wb").write(b"da")
+    client.download_file.side_effect = lambda bucket, key, path: pathlib.Path(path).write_bytes(
+        b"da"
+    )
 
     with pytest.raises(RuntimeError, match="did not download to its expected size"):
         fetch_tropomi.download_from_mirror(client, "some/key.nc", str(outfn))

@@ -3,10 +3,13 @@
 import datetime
 import os
 import pathlib
-from typing import Literal
 
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
-from openmethane.cmaq_preprocess.utils import compress_nc_file, nested_dir, replace_and_write, run_command
+from openmethane.cmaq_preprocess.utils import (
+    compress_nc_file,
+    nested_dir,
+    run_command,
+)
 
 
 def prepare_template_bcon_files(

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import os 
+import os
 import numpy as np
 
 import openmethane.fourdvar.datadef as d
@@ -99,33 +99,36 @@ def _cell(name, default):
     return r, c
 
 
-def make_cost_template( model_output, weight, layers=None,time=13):
+def make_cost_template(model_output, weight, layers=None, time=13):
     print(f"make_cost_template, layers = {layers}, time={time}")
     one_d_vector = model_output.get_vector()
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.conc, tmp_spc)[:].shape
     result = np.zeros(target_shape)
     if result.size != one_d_vector.size:
-        raise ValueError(f"inconsistent sizes: vector={one_d_vector.size},\
-        template={result.size}")
+        raise ValueError(
+            f"inconsistent sizes: vector={one_d_vector.size},\
+        template={result.size}"
+        )
     if os.environ.get("TEST_GRAD_COST_ALL", "0") == "1":
-        result[...] = 1.
+        result[...] = 1.0
     else:
         r, c = _cell("TEST_GRAD_MEASURE_CELL", (4, 4))
-        result[time,0,r,c] = 1.
+        result[time, 0, r, c] = 1.0
     return result.flatten()
 
 
-def make_pert_template( model_input, layers=None, time=12):
-
+def make_pert_template(model_input, layers=None, time=12):
     one_d_vector = model_input.get_vector()
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     input_file = dt.replace_date(template_defn.emis, dt.get_datelist()[0])
     target_shape = ncf.get_variable(input_file, tmp_spc)[:].shape
     result = np.zeros(target_shape)
     if result.size != one_d_vector.size:
-        raise ValueError(f"inconsistent sizes: vector={one_d_vector.size},\
-        template={result.size}")
+        raise ValueError(
+            f"inconsistent sizes: vector={one_d_vector.size},\
+        template={result.size}"
+        )
     if os.environ.get("TEST_GRAD_PERT_ALL", "0") == "1":
         # Spread the perturbation over every cell of layer 0 at this time. The
         # signal grows with the number of cells while the per-cell amplitude --
@@ -133,13 +136,11 @@ def make_pert_template( model_input, layers=None, time=12):
         # this beats down the O(1/eps) float32 noise and the limiter
         # non-differentiability at the same time, which neither a smaller
         # epsilon nor a central difference can do alone.
-        result[time,0,:,:] = 1.
+        result[time, 0, :, :] = 1.0
     else:
         r, c = _cell("TEST_GRAD_PERT_CELL", (9, 3))
-        result[time,0,r,c] = 1.
+        result[time, 0, r, c] = 1.0
     return result.flatten()
-
-    
 
 
 def test_fourdvar_grad_cmaq(target_environment):
@@ -151,10 +152,10 @@ def test_fourdvar_grad_cmaq(target_environment):
 def _run_grad_cmaq():
     measure_layer = np.s_[:]
     # measure_layer = 0
-    pert_layer = 0              # 
-    measure_time=int(os.environ.get("TEST_GRAD_MEASURE_TIME",default="13"))
-    pert_time=int(os.environ.get("TEST_GRAD_PERT_TIME",default="12"))
-    cost_mult=1.e3
+    pert_layer = 0
+    measure_time = int(os.environ.get("TEST_GRAD_MEASURE_TIME", default="13"))
+    pert_time = int(os.environ.get("TEST_GRAD_PERT_TIME", default="12"))
+    cost_mult = 1.0e3
     archive_defn.experiment = "tmp_grad_cmaq"
     archive_defn.desc_name = ""
 
@@ -182,7 +183,7 @@ def _run_grad_cmaq():
     for date in dt.get_datelist():
         met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
         # slice off any extra layers above area of interest
-        rhoj = ncf.get_variable(met_file, "DENSA_J")[ ...]
+        rhoj = ncf.get_variable(met_file, "DENSA_J")[...]
         xcell = ncf.get_attr(met_file, "XCELL")
         ycell = ncf.get_attr(met_file, "YCELL")
         cell_area = float(xcell * ycell)
@@ -201,49 +202,47 @@ def _run_grad_cmaq():
 
         conversion_list.append(unit_array)
     conversion_vector = np.array(conversion_list).flatten()
-    conversion_vector.dump('/opt/project/data/conversion.pic')
+    conversion_vector.dump("/opt/project/data/conversion.pic")
 
     print("get prior in PhysicalData format")
     physical = user.get_background()
-    physical.emis['CH4'][...] = 0.
+    physical.emis["CH4"][...] = 0.0
     modelInput = transform(physical, d.ModelInputData)
     model_input_vector = modelInput.get_vector()
-    modelOutput = transform(modelInput, d.ModelOutputData) # 
-    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer,
-                                       time=measure_time)
+    modelOutput = transform(modelInput, d.ModelOutputData)  #
+    cost_template = make_cost_template(modelOutput, thick, layers=measure_layer, time=measure_time)
     model_output_vector = modelOutput.get_vector()
-    model_output_vector.dump('/opt/project/data//unperturbed.pic')
-    cost_template.dump('/opt/project/data/template.pic')
-    
-    sampled_output_vector = cost_template * model_output_vector # region targeted for cost function
-    sampled_output_vector.dump('/opt/project/data/forcing.pic')
-    init_cost = cost_mult*(sampled_output_vector.sum())
-    forcing_vector = cost_mult*cost_template   # adjoint of squared sum
+    model_output_vector.dump("/opt/project/data//unperturbed.pic")
+    cost_template.dump("/opt/project/data/template.pic")
+
+    sampled_output_vector = cost_template * model_output_vector  # region targeted for cost function
+    sampled_output_vector.dump("/opt/project/data/forcing.pic")
+    init_cost = cost_mult * (sampled_output_vector.sum())
+    forcing_vector = cost_mult * cost_template  # adjoint of squared sum
     # now we want to divide forcing_vector by layer thickness which needs some reshaping
     tmp_spc = ncf.get_attr(template_defn.sense_emis, "VAR-LIST").split()[0]
     target_shape = ncf.get_variable(template_defn.sense_emis, tmp_spc)[:].shape
     forcing_reshape = forcing_vector.reshape(target_shape)
-    # forcing_reshape /= lay_thick*rhoj[measure_time,0,4,4] 
+    # forcing_reshape /= lay_thick*rhoj[measure_time,0,4,4]
     forcing_vector = forcing_reshape.flatten()
     adjointForcing = d.AdjointForcingData.load_from_vector_template(forcing_vector)
     sensitivity = transform(adjointForcing, d.SensitivityData)
 
     sensitivity_vector = sensitivity.get_vector()
-    sensitivity_vector.dump('/opt/project/data/sensitivity_raw.pic')
+    sensitivity_vector.dump("/opt/project/data/sensitivity_raw.pic")
     sensitivity_vector_mole = sensitivity_vector
-    sensitivity_vector_mole.dump('/opt/project/data/sensitivity.pic')
+    sensitivity_vector_mole.dump("/opt/project/data/sensitivity.pic")
     epsilon = float(os.environ.get("TEST_GRAD_EPSILON", "0.1"))
     central = os.environ.get("TEST_GRAD_CENTRAL", "0") == "1"
-    pert_template = make_pert_template(modelInput, layers=pert_layer,
-                                       time=pert_time)
+    pert_template = make_pert_template(modelInput, layers=pert_layer, time=pert_time)
     dx = epsilon * pert_template
     pert_input_vector = model_input_vector + dx
     pert_model_input = d.ModelInputData.load_from_vector_template(pert_input_vector)
     pert_model_output = transform(pert_model_input, d.ModelOutputData)
     pert_output_vector = pert_model_output.get_vector()
-    pert_output_vector.dump('/opt/project/data/perturbed.pic')
+    pert_output_vector.dump("/opt/project/data/perturbed.pic")
     sampled_pert_output_vector = cost_template * pert_output_vector
-    pert_cost = cost_mult*(sampled_pert_output_vector.sum())
+    pert_cost = cost_mult * (sampled_pert_output_vector.sum())
     if central:
         # Central difference: [J(x+dx) - J(x-dx)] / 2. The one-sided difference
         # carries an O(eps) error from the PPM limiter taking different branches
@@ -254,21 +253,23 @@ def _run_grad_cmaq():
         minus_model_input = d.ModelInputData.load_from_vector_template(minus_input_vector)
         minus_model_output = transform(minus_model_input, d.ModelOutputData)
         minus_output_vector = minus_model_output.get_vector()
-        minus_output_vector.dump('/opt/project/data/perturbed_minus.pic')
-        minus_cost = cost_mult*((cost_template * minus_output_vector).sum())
+        minus_output_vector.dump("/opt/project/data/perturbed_minus.pic")
+        minus_cost = cost_mult * ((cost_template * minus_output_vector).sum())
         finite_diff = 0.5 * (pert_cost - minus_cost)
     else:
         finite_diff = pert_cost - init_cost
-    grad_diff = (dx @ sensitivity_vector_mole)
-    percentage_error = 100.*(grad_diff -finite_diff)/finite_diff
-    print(f"pert_time {pert_time} measure_time {measure_time} init_cost {init_cost} pert_cost {pert_cost} finite_diff {finite_diff} grad_diff {grad_diff} percentage_error {percentage_error:6.2f}")
-    ratio = grad_diff / finite_diff if finite_diff != 0. else float("nan")
+    grad_diff = dx @ sensitivity_vector_mole
+    percentage_error = 100.0 * (grad_diff - finite_diff) / finite_diff
+    print(
+        f"pert_time {pert_time} measure_time {measure_time} init_cost {init_cost} pert_cost {pert_cost} finite_diff {finite_diff} grad_diff {grad_diff} percentage_error {percentage_error:6.2f}"
+    )
+    ratio = grad_diff / finite_diff if finite_diff != 0.0 else float("nan")
     print(
         "RESULT"
         f" eps={epsilon:g}"
         f" fd={'central' if central else 'onesided'}"
-        f" pert_cell={'ALL' if os.environ.get('TEST_GRAD_PERT_ALL','0')=='1' else _cell('TEST_GRAD_PERT_CELL', (9, 3))}"
-        f" measure_cell={'ALL' if os.environ.get('TEST_GRAD_COST_ALL','0')=='1' else _cell('TEST_GRAD_MEASURE_CELL', (4, 4))}"
+        f" pert_cell={'ALL' if os.environ.get('TEST_GRAD_PERT_ALL', '0') == '1' else _cell('TEST_GRAD_PERT_CELL', (9, 3))}"
+        f" measure_cell={'ALL' if os.environ.get('TEST_GRAD_COST_ALL', '0') == '1' else _cell('TEST_GRAD_MEASURE_CELL', (4, 4))}"
         f" pert_time={pert_time} measure_time={measure_time}"
         f" finite_diff={finite_diff:.8g} grad_diff={grad_diff:.8g}"
         f" ratio={ratio:.6f}"

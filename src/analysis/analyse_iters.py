@@ -370,7 +370,7 @@ def read_run(
     ):
         if array.size != n_obs:
             raise ValueError(
-                f"{label} has {array.size} observations, " f"but the obs-lite files have {n_obs}"
+                f"{label} has {array.size} observations, but the obs-lite files have {n_obs}"
             )
 
     run = {

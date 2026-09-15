@@ -63,7 +63,7 @@ def test_setup_for_cmaq(
 
     # Check the grid definition
     file_regression.check(
-        open(mcip_run_dir / "GRIDDESC").read(),
+        (mcip_run_dir / "GRIDDESC").read_text(),
         basename=f"{request.node.name}_griddesc",
     )
 
@@ -71,8 +71,8 @@ def test_setup_for_cmaq(
     # The namelist embeds absolute paths that vary by run (pytest's tmpdir is
     # named after the current user) so they are replaced with placeholders.
     namelist = (
-        open(mcip_run_dir / "namelist.mcip")
-        .read()
+        (mcip_run_dir / "namelist.mcip")
+        .read_text()
         .replace(str(tmpdir), "<tmpdir>")
         .replace(str(root_dir), "<root_dir>")
     )

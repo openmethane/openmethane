@@ -357,8 +357,8 @@ class Point:
     def dist(self, other):
         assert isinstance(other, Point), "dist only between 2 points"
         assert self.ndim == other.ndim, "dimension mis-match"
-        gen = ((self.co_ord[i] - other.co_ord[i]) ** 2 for i in range(self.ndim))
-        return np.sqrt(np.sum(gen))
+        squares = ((self.co_ord[i] - other.co_ord[i]) ** 2 for i in range(self.ndim))
+        return np.sqrt(sum(squares))
 
     @classmethod
     def mid_point(cls, p1, p2):
