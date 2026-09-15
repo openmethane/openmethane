@@ -68,7 +68,7 @@ filterwarnings = [
 
 [tool.ruff]
 src = ["src"]
-target-version = "py311"
+target-version = "py312"
 # Provide some leeway for long docstring
 line-length = 100
 
