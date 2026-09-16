@@ -156,17 +156,6 @@ See [Outputs](outputs.md#alerts) for what the resulting file contains.
 
 See [Troubleshooting](../troubleshooting.md#logging).
 
-## Domain upload
-
-Used only by `scripts/cmaq_preprocess/upload-domains.py`, which publishes domain
-files to the data store. Requires CloudFlare R2 credentials.
-
-| Variable | Type | Description | Default |
-| --- | --- | --- | --- |
-| `GEO_DIR` | str | Local domain directory to upload from | `data/domains` |
-| `EXTRA_R2_ARGS` | str | Extra arguments passed to the upload command | `""` |
-| `FORCE` | bool | Overwrite existing remote files | `false` |
-
 ## Credentials
 
 | Variable | Description |

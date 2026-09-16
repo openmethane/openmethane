@@ -28,13 +28,6 @@ build:  ## Build the docker container locally
 ## Fetch the WRF geometry and Open Methane domain files
 fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc
 
-.PHONY: sync-domains-from-cf
-sync-domains-from-cf:  ## Download all domain data from the Cloudflare bucket
-	# This requires CloudFlare credentials
-	aws s3 sync s3://openmethane-prior/domains data/domains \
-		  --endpoint-url https://8f8a25e8db38811ac9f26a347158f296.r2.cloudflarestorage.com \
-		  --profile cf-om-prior-r2
-
 .PHONY: test
 test:  ## Run the tests
 	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
