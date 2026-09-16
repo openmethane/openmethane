@@ -151,7 +151,9 @@ aws s3 sync data/domains/${DOMAIN_NAME}/${DOMAIN_VERSION} \
   s3://openmethane/domains/${DOMAIN_NAME}/${DOMAIN_VERSION}
 ```
 
-This needs write access to the `openmethane` bucket in the production account.
+This needs write access to the `openmethane` bucket in the production account,
+and an `aws` CLI on `PATH` -- it is not a project dependency, so install it
+separately.
 
 Before committing to a long run, do a single day on the new domain and confirm
 the MCIP output has the grid dimensions you expect. Grid geometry mistakes are
