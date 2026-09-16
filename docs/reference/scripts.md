@@ -49,6 +49,7 @@ Turns WRF meteorology and the prior into inputs CMAQ can read. See
 | `scripts/cmaq_preprocess/make_template.py` | Prepares CMAQ run directories and the concentration, forcing and sensitivity templates, by running one day of CMAQ forwards and backwards. Requires the adjoint binaries. |
 | `scripts/cmaq_preprocess/make_prior.py` | Builds the prior in the form `fourdvar` consumes. |
 | `scripts/cmaq_preprocess/bias_correct_cams.py` | Corrects bias between CAMS boundary conditions and CMAQ. Honours `DISABLE_CORRECT_BIAS_BY_REGION`. |
+| `scripts/cmaq_preprocess/scale_top_gradient.py` | Rescales the methane profile above `--anchor-layer` by `--scale` in the prepared run's ICON and BCON files, in place. Diagnostic: used to test whether the column drift in #248 depends on the gradient at the model top, not part of a normal run. |
 | `scripts/cmaq_preprocess/upload-domains.py` | Publishes domain files to the data store. Maintainers only; needs CloudFlare R2 credentials. |
 
 The last three template steps can be run together:
