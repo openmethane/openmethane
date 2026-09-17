@@ -16,14 +16,7 @@ container or touch a live run.
 
 | | |
 | --- | --- |
-| `../model_top_drift/extract.py <month>` | Builds the per-sounding cache. Streams an archived monthly run's `observed.pickle` against its `simulobs_first_guess.pic.gz` and keeps the whole column operator per sounding, with qa, albedo, aerosol, precision, and the solar and viewing geometry. About 500 MB a month. **Run this first.** |
 | `light_path.py <month> [<month>]` | Whether the aerosol dependence scales with the length of the light path. It does. |
-
-`extract.py` sits in the neighbouring directory because it was written for
-[#248](https://github.com/openmethane/openmethane/issues/248) and is shared with
-that issue's diagnostics, which arrive with
-[#250](https://github.com/openmethane/openmethane/pull/250). Only the cache it
-writes is needed here.
 
 ## The argument
 
@@ -39,13 +32,20 @@ detector column saw a sounding has nothing to do with where the sounding is.
 Binning by viewing zenith angle therefore varies the light path with the
 geography, the land cover and the sources all left alone.
 
+Both zenith angles have to be reconstructed, because the observation files drop
+the ones the retrieval reported; `../sounding_geometry.py` does that and says
+how accurately.
+
 ## Pointing it at data
+
+`light_path.py` reads only the per-sounding cache that `../sounding_cache.py`
+writes, so that has to run first:
 
 ```shell
 export OM_MONTHLY_ROOT=/path/to/aust10km/monthly/2024
 
-python src/analysis/model_top_drift/extract.py 06
-python src/analysis/model_top_drift/extract.py 01
+python src/analysis/sounding_cache.py 06
+python src/analysis/sounding_cache.py 01
 python src/analysis/aerosol_bias/light_path.py 06 01
 ```
 
@@ -56,21 +56,3 @@ and January 2024 `aust10km` runs the numbers come from are under
 
 `OM_CACHE` overrides where the cache is written and read; it defaults to
 `~/.cache/openmethane`.
-
-## Reconstructed geometry
-
-The observation files keep each sounding's timestamp and corner coordinates but
-drop the solar and viewing zenith angles the retrieval reported, so both are
-reconstructed in `extract.py`:
-
-- the solar zenith angle follows from the timestamp and the pixel centre, and
-  comes back within 0.15 degrees of what the granules report;
-- the viewing zenith angle follows from the across-track width of the ground
-  pixel, which a pushbroom detector column sets by geometry alone. The angle
-  itself is poor near nadir, where a wider pixel barely moves it, but `sec(vza)`
-  -- the quantity that enters the air mass factor, and which is flat at 1 in
-  exactly that region -- comes back unbiased to a thousandth with a scatter of
-  0.014 against a mean of 1.32.
-
-Both are checked against a granule that still carries the reported angles, in
-`tests/unit/analysis/test_light_path.py`.

@@ -1,9 +1,13 @@
-"""Build a compact per-observation table from an archived monthly run.
+"""Build a compact per-sounding table from an archived monthly run.
 
-Run this first; everything else in this directory reads the cache it writes.
+    python3 src/analysis/sounding_cache.py 06   # ~/.cache/openmethane/misfit_06.npz
+    python3 src/analysis/sounding_cache.py 01
 
-    python3 extract.py 06          # writes ~/.cache/openmethane/misfit_06.npz
-    python3 extract.py 01
+A monthly run's observations are millions of pickled records carrying the whole
+column operator each, which is minutes of streaming to read and far too much to
+hold in memory. This flattens a month into one `.npz` of parallel arrays, so
+that anything asking a question of the residuals reads it in a second or two
+rather than re-streaming the run.
 
 `OM_MONTHLY_ROOT` points at the downloaded monthly runs, one directory per
 month; each month's data is read from `<month>/archive/openmethane`. Two files
@@ -13,31 +17,37 @@ are streamed in parallel:
   simulobs_first_guess.pic.gz  the same records with `value` replaced by the
                              column simulated from the prior emissions
 
-Every field of the column operator is carried on both files, so the cache keeps
-the full per-sounding operator -- averaging kernel, retrieval prior profile,
-per-retrieval-layer model coverage and per-CMAQ-layer weights. That is what
-makes it possible to ask *where in the column* a misfit lives without running
-the model again.
-
 Records are paired by position and the (time, lat, lon) identity is checked on
 every record, so a mismatch is an error rather than a silent mispairing.
 
-Two properties the observation files do not carry are reconstructed here. The
-solar zenith angle follows exactly from the record's timestamp and centre, and
-the ground pixel's across-track width follows from its corners. Both are
-measures of how long a light path the retrieval had to work with, which is what
-[#249](https://github.com/openmethane/openmethane/issues/249) tests the aerosol
-dependence against.
+What each sounding keeps:
+
+  lat lon day step row col     where and when, and the grid cell it fell in
+  obs sim unc                  retrieved column, simulated column, uncertainty
+  qa albedo aod precision      the retrieval's own quality and scene properties
+  offset                       the operator's additive term
+  sza across_km along_km       geometry, reconstructed by `sounding_geometry`
+  avker prior cov              the averaging kernel, retrieval prior profile and
+                               per-retrieval-layer model coverage
+  vis                          per-CMAQ-layer weights
+
+Keeping the whole operator rather than a summary is what makes it possible to
+ask *where in the column* a misfit lives without running the model again. It
+costs about 500 MB a month.
+
+`OM_CACHE` overrides where the cache is written; it defaults to
+`~/.cache/openmethane`.
 """
 
 import gzip
-import math
 import os
 import pathlib
 import pickle
 import sys
 
 import numpy as np
+
+from analysis.sounding_geometry import footprint, solar_zenith
 
 
 def _required_dir(variable, what):
@@ -118,60 +128,6 @@ class Table:
             self.blocks.append({k: v[: self.i] for k, v in self.cur.items()})
         keys = self.blocks[0].keys()
         return {k: np.concatenate([b[k] for b in self.blocks]) for k in keys}
-
-
-def solar_zenith(when, lat, lon):
-    """Solar zenith angle in degrees, by NOAA's low-precision formulae.
-
-    Good to a hundredth of a degree, which is far finer than anything here
-    needs. The observation files drop the angles the retrieval reported, but
-    the timestamp and the pixel centre fix the sun's position regardless.
-    """
-    fraction = when.hour + when.minute / 60 + when.second / 3600
-    gamma = 2 * math.pi / 365.0 * (when.timetuple().tm_yday - 1 + (fraction - 12) / 24)
-    equation_of_time = 229.18 * (
-        0.000075
-        + 0.001868 * math.cos(gamma)
-        - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma)
-        - 0.040849 * math.sin(2 * gamma)
-    )
-    declination = (
-        0.006918
-        - 0.399912 * math.cos(gamma)
-        + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma)
-        + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma)
-        + 0.00148 * math.sin(3 * gamma)
-    )
-    true_solar = fraction * 60 + equation_of_time + 4 * lon
-    hour_angle = math.radians(true_solar / 4 - 180)
-    radians = math.radians(lat)
-    cosine = math.sin(radians) * math.sin(declination) + math.cos(radians) * math.cos(
-        declination
-    ) * math.cos(hour_angle)
-    return math.degrees(math.acos(min(1.0, max(-1.0, cosine))))
-
-
-def footprint(lat_corners, lon_corners, lat, lon):
-    """The ground pixel's two edge lengths in km, across-track first.
-
-    TropOMI's along-track edge is fixed by the integration time at 5.5 km; the
-    across-track edge is set by the detector column's fixed angular width and so
-    grows from about 7 km at nadir to several times that at the swath edge. The
-    longer of the two is therefore the across-track one.
-
-    Longitudes are unwrapped onto the pixel centre first, so that a pixel
-    straddling the antimeridian does not come out hundreds of km wide.
-    """
-    longitudes = np.asarray(lon_corners, float)
-    longitudes -= 360.0 * np.round((longitudes - lon) / 360.0)
-    x = longitudes * (111.320 * math.cos(math.radians(lat)))
-    y = np.asarray(lat_corners, float) * 110.574
-    sides = np.hypot(np.roll(x, -1) - x, np.roll(y, -1) - y)
-    pair_one, pair_two = (sides[0] + sides[2]) / 2, (sides[1] + sides[3]) / 2
-    return max(pair_one, pair_two), min(pair_one, pair_two)
 
 
 def identity(record):

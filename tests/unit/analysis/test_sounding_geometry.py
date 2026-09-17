@@ -1,11 +1,10 @@
-"""The geometry `light_path.py` reconstructs, checked against what TropOMI reports.
+"""`sounding_geometry` against the angles TropOMI itself reports.
 
-The observation files the diagnostics read keep the sounding's timestamp and its
-corner coordinates but drop the solar and viewing zenith angles the retrieval
-reported. Both are reconstructed, and the whole of
-[#249](https://github.com/openmethane/openmethane/issues/249)'s light-path test
-rests on their being right, so they are checked here against a granule that
-still carries the reported angles.
+The observation files an archived run leaves behind keep each sounding's
+timestamp and corner coordinates but drop the solar and viewing zenith angles
+the retrieval reported, so both are reconstructed from what is left. These
+check the reconstructions against a granule that still carries the reported
+angles, and pin down how accurate they are.
 """
 
 import datetime as dt
@@ -14,8 +13,7 @@ import numpy as np
 import pytest
 from netCDF4 import Dataset
 
-from analysis.aerosol_bias.light_path import viewing_zenith
-from analysis.model_top_drift.extract import footprint, solar_zenith
+from analysis.sounding_geometry import footprint, solar_zenith, viewing_zenith
 
 GRANULE = (
     "tropomi/2022-12-07T0000_2022-12-07T2359_104.0_-47.0_162.0_-6.0/"

@@ -1,6 +1,6 @@
 """Does the aerosol dependence in the observed columns follow the light path?
 
-    python3 ../model_top_drift/extract.py 06 && python3 light_path.py 06 01
+    python3 ../sounding_cache.py 06 && python3 light_path.py 06 01
 
 [#249](https://github.com/openmethane/openmethane/issues/249) measures the
 observed column falling about 290 ppb per unit of retrieved SWIR aerosol optical
@@ -30,14 +30,13 @@ kept apart:
    half of overpass time the swath spans, or between June and January over the
    same ground.
 
-Every slope is fitted inside 200 km, one-day blocks with the block mean removed,
-as in `model_top_drift/analyse.py`: within a block the model field is smooth and
-cannot vary in step with one sounding's retrieval. Standard errors are clustered
-on the block, so the many soundings sharing one are not counted as independent
-evidence.
+Every slope is fitted inside 200 km, one-day blocks with the block mean
+removed: within a block the model field is smooth and cannot vary in step with
+one sounding's retrieval. Standard errors are clustered on the block, so the
+many soundings sharing one are not counted as independent evidence.
 
-`extract.py` must have run first, and must have been the version that records
-the solar zenith angle and the ground pixel footprint.
+`sounding_cache.py` must have run first, and must have been the version that
+records the geometry.
 """
 
 import itertools
@@ -46,6 +45,8 @@ import pathlib
 import sys
 
 import numpy as np
+
+from analysis.sounding_geometry import viewing_zenith
 
 CACHE = pathlib.Path(os.environ.get("OM_CACHE", pathlib.Path.home() / ".cache/openmethane"))
 
@@ -57,42 +58,16 @@ MIN_IN_SUBSET = 20_000
 # optical depth. It holds about three quarters of the soundings.
 MATCHED_AOD = (0.010, 0.045)
 
-EARTH_RADIUS_KM = 6371.0
-ORBIT_HEIGHT_KM = 824.0  # Sentinel-5P
-
-# The nadir across-track ground pixel, in the units `footprint` measures in.
-# TropOMI's is documented as 7 km; 7.4 is what makes the inversion below
-# reproduce the viewing zenith angles the granules report, absorbing the small
-# error in measuring a corner polygon on a flat-Earth approximation. Checked in
-# tests/unit/analysis/test_light_path.py: sec(vza) comes back unbiased to a
-# thousandth, with a scatter of 0.014 against a mean of 1.32.
-NADIR_ACROSS_KM = 7.4
-
-
-def viewing_zenith(across_km):
-    """Viewing zenith angle in degrees, from how wide the ground pixel is.
-
-    A pushbroom detector column subtends a fixed angle, so the strip of ground
-    it covers is set by the slant range and by how obliquely the ray meets the
-    surface -- both functions of the viewing zenith angle alone. Inverting that
-    recovers the angle the observation files dropped.
-    """
-    angle = np.radians(np.linspace(1e-6, 72.0, 4000))
-    scan = np.arcsin(np.sin(angle) * EARTH_RADIUS_KM / (EARTH_RADIUS_KM + ORBIT_HEIGHT_KM))
-    slant = EARTH_RADIUS_KM * np.sin(angle - scan) / np.sin(scan)
-    widening = (slant / ORBIT_HEIGHT_KM) / np.cos(angle)
-    return np.interp(np.asarray(across_km) / NADIR_ACROSS_KM, widening, np.degrees(angle))
-
 
 def load(month):
     """The per-sounding cache, with the geometry worked out."""
     path = CACHE / f"misfit_{month}.npz"
     if not path.exists():
-        raise SystemExit(f"missing {path}; run model_top_drift/extract.py {month} first")
+        raise SystemExit(f"missing {path}; run analysis/sounding_cache.py {month} first")
     data = np.load(path)
     if "sza" not in data.files:
         raise SystemExit(
-            f"{path} predates the geometry fields; re-run model_top_drift/extract.py {month}"
+            f"{path} predates the geometry fields; re-run analysis/sounding_cache.py {month}"
         )
     d = {k: data[k].astype(float) for k in data.files}
     d["residual"] = d["obs"] - d["sim"]
