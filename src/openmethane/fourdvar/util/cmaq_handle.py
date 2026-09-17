@@ -159,6 +159,13 @@ def setup_run():
     env_dict["CTM_IRR_3"] = cmaq_config.irr3_file + " -v"
     env_dict["CTM_RJ_1"] = cmaq_config.rj1_file + " -v"
     env_dict["CTM_RJ_2"] = cmaq_config.rj2_file + " -v"
+
+    # ADJOINT_FWD writes the gridded model-top flux only when this names a
+    # file, so leaving it out of the environment is how the diagnostic is
+    # turned off
+    if cmaq_config.write_vadv_topflx:
+        env_dict["CTM_VADV_TOPFLX"] = cmaq_config.vadv_topflx_file + " -v"
+
     return env_dict
 
 
@@ -307,11 +314,20 @@ def run_cmaq(
     return res
 
 
+# Forward passes made in this process. An inversion runs one per line search
+# evaluation and each rewrites the same output paths, so the model-top flux
+# diagnostics are filed by pass number to keep them apart.
+_fwd_pass = {"count": 0}
+
+
 def run_fwd_single(date: datetime.date, is_first: bool) -> None:
     """Run cmaq fwd for a single day.
 
     input: dt.date, Boolean (is this day the first of the model)
     """
+    if is_first:
+        _fwd_pass["count"] += 1
+
     env_dict = setup_run()
 
     env_dict["PERTCOLS"] = cmaq_config.pertcols
@@ -342,12 +358,57 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
 
     env_dict = parse_env_dict(env_dict, date)
 
+    # IO/API opens an existing file for update rather than truncating it, so
+    # anything a crashed earlier attempt left at this path has to go first.
+    if cmaq_config.write_vadv_topflx:
+        stale_topflx = dt.replace_date(cmaq_config.vadv_topflx_file, date)
+        if os.path.isfile(stale_topflx):
+            os.remove(stale_topflx)
+
     run_cmaq(
         cmaq_config.fwd_prog,
         env_dict=env_dict,
         template_stdout_filename=cmaq_config.fwd_stdout_log,
         date=date,
     )
+
+    if cmaq_config.write_vadv_topflx:
+        keep_vadv_topflx(date)
+
+
+def keep_vadv_topflx(date: datetime.date) -> None:
+    """File one day's model-top flux diagnostic under the pass that produced it.
+
+    Both halves of the diagnostic sit at paths the next forward pass overwrites,
+    and `wipeout_fwd` deletes the CMAQ log outright, so an inversion would
+    otherwise finish holding only whatever its last line search evaluation
+    happened to try.
+
+    Only the lines of the log the diagnostic wrote are kept. The whole forward
+    log is far larger and the rest of it is already rewritten every pass.
+    """
+    dest_dir = os.path.join(cmaq_config.vadv_topflx_path, f"{_fwd_pass['count']:04}")
+    fh.ensure_path(dest_dir, inc_file=False)
+
+    flux_file = dt.replace_date(cmaq_config.vadv_topflx_file, date)
+    if os.path.isfile(flux_file):
+        os.replace(flux_file, os.path.join(dest_dir, os.path.basename(flux_file)))
+    else:
+        logger.warning(f"no model-top flux file to keep at {flux_file}")
+
+    # The gridded file covers the model top alone; the domain-integrated flux at
+    # every interface, which is what closes the vertical mass budget, is only in
+    # the log.
+    log_file = dt.replace_date(cmaq_config.fwd_logfile, date)
+    if not os.path.isfile(log_file):
+        logger.warning(f"no forward log to take flux records from at {log_file}")
+        return
+
+    kept = os.path.join(dest_dir, "vadv_flux." + os.path.basename(log_file))
+    with open(log_file, errors="replace") as source, open(kept, "w") as dest:
+        dest.writelines(
+            line for line in source if line.lstrip().startswith(("VADVTOP", "VADVFLX"))
+        )
 
 
 def run_bwd_single(date, is_first):

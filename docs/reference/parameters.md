@@ -78,6 +78,63 @@ simulation day — see
 | `NCPUS` | int | Parallelism for TROPOMI preprocessing and alerts | `1` |
 | `USE_JOBFS` | bool | Put checkpoints on PBS job-local storage (`$PBS_JOBFS`). HPC only; warns and falls back if not run under `qsub`. | `false` |
 | `EXECUTION_ID` | str | Unique identifier for this execution. Only required when `CHK_PATH` is exactly `/mnt/scratch`, where it is appended to keep concurrent runs apart. | *conditionally required* |
+| `WRITE_VADV_TOPFLX` | bool | Write the gridded model-top advective flux from each forward run, to `{CMAQ_BASE}/output/VADV_TOPFLX.<YYYYMMDD>.nc`. See [Model-top advective flux](#model-top-advective-flux). | `false` |
+
+### Model-top advective flux
+
+CMAQ gives methane no top boundary condition, and vertical advection sets the
+velocity at the model top from the column air-mass budget residual rather than
+to zero, so methane crosses the lid in both directions. `ADJOINT_FWD` measures
+that, upward and downward separately, for methane and for air.
+
+The domain integral at every interface goes to the CMAQ log every
+synchronisation step and cannot be turned off. `WRITE_VADV_TOPFLX` additionally
+writes a gridded file of the model-top interface at each output step, which is
+what says *where* the flux happens — useful because the boundary conditions are
+injected on the perimeter.
+
+`docs/vadv-top-flux.md` in
+[openmethane/CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) covers
+the units, the log line format and the mass conversion.
+
+#### What is kept, and where
+
+Everything is filed under `{CMAQ_BASE}/output/vadv-topflx/<pass>/`, one
+directory per forward pass, numbered from `0001`:
+
+| File | Holds |
+| --- | --- |
+| `VADV_TOPFLX.<YYYYMMDD>.nc` | the gridded model-top flux, per output step |
+| `vadv_flux.<forward log name>` | the `VADVTOP` and `VADVFLX` records taken out of that day's CMAQ log |
+
+Both halves are needed. The gridded file covers the model top alone; the
+domain-integrated flux at *every* layer interface, which is what closes the
+vertical mass budget, exists only in the log.
+
+Neither can be left where the model writes it. `wipeout_fwd` clears the forward
+output before each pass and again as the driver exits, and `_cleanup` replaces
+the date tag with a wildcard, so a whole month would go at once — the CMAQ
+forward log is the first entry in that list. Collecting the diagnostic is a copy
+off the run directory after the job has finished, so it has to survive both.
+
+An inversion runs a forward pass per line search evaluation, and each pass is
+kept. The flux under a trial control vector says as much about what the
+optimiser is doing as the flux under whichever vector the search happened to try
+last — the upper-level `bcon` elements of the control vector act directly on the
+top layer that sets this flux.
+
+#### Cost
+
+Per forward pass, for a month on `aust10km` (454 x 430 cells, hourly output):
+
+| | Size |
+| --- | --- |
+| gridded file | 2.3 GB |
+| log records | 8.5 MB |
+
+A forward-only month is one pass. A full inversion is one pass per line search
+evaluation, so tens of them — budget accordingly, or run forward-only, which is
+what the diagnostic is mainly for.
 
 ### MPI domain decomposition
 
