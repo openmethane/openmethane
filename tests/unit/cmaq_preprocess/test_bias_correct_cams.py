@@ -1,14 +1,17 @@
 """Tests that the bias is zero after correcting it."""
 
 import datetime
+import pathlib
 import shutil
 
 import numpy as np
 import pytest
 import xarray as xr
 
+import openmethane.cmaq_preprocess.bias as bias_module
 import openmethane.fourdvar.datadef as d
 from openmethane.cmaq_preprocess.bias import (
+    calculate_forward_bias,
     calculate_icon_bias,
     correct_icon_bcon,
     mean_weight_sum,
@@ -151,3 +154,31 @@ def test_mean_weight_sum(test_data_dir, monkeypatch):
     # the operational TROPOMI column kernel is normalised against the pressure
     # weights, so the operator puts a total weight of one on the model
     assert mean_weight_sum(obs) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypatch):
+    """The correction has to be `(O - F) / (ppm2ppb * W)` exactly.
+
+    `O - F` is the residual the driver reports as its first-guess `bias`, so a
+    correction built from anything else leaves that report non-zero. The forward
+    run is stubbed out; only the arithmetic around it is under test. The test
+    data is a single day on which the operator weight is one, so it pins neither
+    the per-sounding weighting nor the division by `W`.
+    """
+    monkeypatch.setenv("START_DATE", "2022-12-07")
+    monkeypatch.setenv("END_DATE", "2022-12-07")
+
+    obs_file = test_data_dir / "obs" / OBS_FILE_NAME
+    obs = d.ObservationData.from_file(obs_file)
+    residual = 12.5  # ppb, an arbitrary shortfall of the model against the satellite
+    mean_simulated = float(np.mean(obs.get_vector())) - residual
+
+    # the prior is only handed to the stubbed forward run, so it is never read
+    monkeypatch.setattr(d.PhysicalData, "from_file", classmethod(lambda cls, path: None))
+    monkeypatch.setattr(
+        bias_module, "calculate_mean_obs", lambda physical, obs_file: mean_simulated
+    )
+
+    correction = calculate_forward_bias(prior_file=pathlib.Path("unused.nc"), obs_file=obs_file)
+
+    assert correction == pytest.approx(residual / (ppm2ppb * mean_weight_sum(obs)), rel=1e-12)
