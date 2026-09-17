@@ -1,6 +1,6 @@
 """Build a compact per-sounding table from an archived monthly run.
 
-    python3 src/analysis/sounding_cache.py 06   # ~/.cache/openmethane/misfit_06.npz
+    python3 src/analysis/sounding_cache.py 06   # ~/.cache/openmethane/soundings_06.npz
     python3 src/analysis/sounding_cache.py 01
 
 A monthly run's observations are millions of pickled records carrying the whole
@@ -32,7 +32,7 @@ What each sounding keeps:
   vis                          per-CMAQ-layer weights
 
 Keeping the whole operator rather than a summary is what makes it possible to
-ask *where in the column* a misfit lives without running the model again. It
+ask *where in the column* a residual lives without running the model again. It
 costs about 500 MB a month.
 
 `OM_CACHE` overrides where the cache is written; it defaults to
@@ -190,7 +190,7 @@ def main(month):
 
     data = table.finish()
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    out = CACHE_DIR / f"misfit_{month}.npz"
+    out = CACHE_DIR / f"soundings_{month}.npz"
     np.savez(out, **data)
     print(f"wrote {out} ({table.n:,} observations)")
 

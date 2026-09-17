@@ -61,7 +61,7 @@ MATCHED_AOD = (0.010, 0.045)
 
 def load(month):
     """The per-sounding cache, with the geometry worked out."""
-    path = CACHE / f"misfit_{month}.npz"
+    path = CACHE / f"soundings_{month}.npz"
     if not path.exists():
         raise SystemExit(f"missing {path}; run analysis/sounding_cache.py {month} first")
     data = np.load(path)
