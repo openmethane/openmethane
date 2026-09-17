@@ -1,6 +1,5 @@
 from openmethane.cmaq_preprocess.bias import (
-    calculate_emissions_bias,
-    calculate_icon_bias,
+    calculate_forward_bias,
     correct_icon_bcon,
     get_bcon_files,
     get_icon_files,
@@ -18,24 +17,15 @@ def main():
     species = "CH4"
     icon_files = get_icon_files(config)
     bcon_files = get_bcon_files(config)
-    icon_bias = calculate_icon_bias(
-        icon_files=icon_files,
-        obs_file=input_defn.obs_file,
-        start_date=config.start_date,
-        end_date=config.end_date,
-    )
-    logger.debug(f"icon_bias={icon_bias:f}")
-    emissions_bias = calculate_emissions_bias(
+    bias = calculate_forward_bias(
         prior_file=input_defn.prior_file,
         obs_file=input_defn.obs_file,
-        species=species,
     )
-    logger.debug(f"emissions_bias={emissions_bias:f}")
-    total_bias = icon_bias - emissions_bias
+    logger.debug(f"bias={bias:f}")
 
     correct_icon_bcon(
         species=species,
-        bias=total_bias,
+        bias=bias,
         icon_files=[icon_files[0]],
         bcon_files=bcon_files,
     )

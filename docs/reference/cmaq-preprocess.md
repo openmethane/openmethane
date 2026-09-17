@@ -64,6 +64,15 @@ runs already produced MCIP output.
 > [Creating a custom domain](../guides/custom-domain.md#grid) for the arithmetic.
 > On a small domain the default trim can consume the entire grid.
 
+CAMS is on pressure levels and CMAQ on sigma layers, so the vertical mapping is
+not a copy. Around and above the tropopause CMAQ's layers are finer than the
+CAMS levels, and `src/openmethane/cmaq_preprocess/vertical.py` reconstructs the
+profile as linear in log pressure and averages it over each layer's pressure
+thickness. Averaging by thickness is averaging by air mass, so the column burden
+is the same either side of the mapping. A layer's pressure follows the surface
+pressure of the column beneath it: `PRSFC` from METCRO2D on the interior, and on
+the perimeter the surface pressure recovered from METBDY3D's lowest layer.
+
 This step invokes the csh run scripts in `scripts/cmaq/` (`run.mcip`, `run.icon`,
 `run.bcon`), with arguments assembled in
 `src/openmethane/cmaq_preprocess/run_scripts.py`. When MCIP, ICON or BCON fail,
@@ -109,10 +118,20 @@ workflows, run afterwards as
 
 CAMS and CMAQ disagree systematically about background methane concentration.
 Left uncorrected, that offset is indistinguishable from a domain-wide emissions
-signal, and the inversion would attempt to explain it by adjusting emissions. The
-correction is computed over the region actually sampled by observations, unless
-`DISABLE_CORRECT_BIAS_BY_REGION` is set to exactly `"true"`, in which case the
-whole domain is used. A fixed additional offset can be applied with
+signal, and the inversion would attempt to explain it by adjusting emissions.
+
+The correction is measured by running the forward model once over the month at
+the prior emissions and differencing the mean simulated column from the mean
+observed column, over every sounding. That residual is the same quantity the
+inversion driver reports as its first-guess `bias`, so applying it to the ICON
+and BCON fields drives that report to zero. Because each sounding's column
+operator puts a total weight of `W` on the model, the residual is divided by `W`
+to express it as a shift of the concentration field. `O`, `F` and `W` are all
+logged.
+
+The correction is confined to what the observations see by construction: only
+cells carrying observation weight enter the simulated mean, so no separate
+regional masking is applied. A fixed additional offset can be applied with
 `CAMS_TO_CMAQ_BIAS`.
 
 ## Verifying the output
