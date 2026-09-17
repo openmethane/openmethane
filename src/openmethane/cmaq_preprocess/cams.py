@@ -329,15 +329,21 @@ def interpolate_from_cams_to_cmaq_grid(
             near_interior = numpy.zeros((LON.shape[0], LON.shape[1], 2), dtype=int)
             near_boundary = numpy.zeros((LONP.shape[0], 2), dtype=int)
 
-            for irow in range(LON.shape[0]):
-                for icol in range(LON.shape[1]):
-                    dists = get_distance_from_lat_lon_in_km(
-                        LAT[irow, icol], LON[irow, icol], LATMZ, LONMZ
-                    )
-                    minidx = numpy.argmin(dists)
-                    ix, iy = numpy.unravel_index(minidx, LONMZ.shape)
-                    near_interior[irow, icol, 0] = ix
-                    near_interior[irow, icol, 1] = iy
+            # Only the initial conditions read near_interior, and only the first
+            # date writes them, but this search is over every cell of the grid:
+            # 195,220 of them on aust10km against 1,772 around the perimeter, and
+            # about 21 minutes per date. Every date after the first was paying it
+            # to build a map nothing then looked at.
+            if do_ICs:
+                for irow in range(LON.shape[0]):
+                    for icol in range(LON.shape[1]):
+                        dists = get_distance_from_lat_lon_in_km(
+                            LAT[irow, icol], LON[irow, icol], LATMZ, LONMZ
+                        )
+                        minidx = numpy.argmin(dists)
+                        ix, iy = numpy.unravel_index(minidx, LONMZ.shape)
+                        near_interior[irow, icol, 0] = ix
+                        near_interior[irow, icol, 1] = iy
 
             for iperim in range(LONP.shape[0]):
                 dists = get_distance_from_lat_lon_in_km(LATP[iperim], LONP[iperim], LATMZ, LONMZ)
