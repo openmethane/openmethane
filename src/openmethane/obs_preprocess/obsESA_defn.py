@@ -36,6 +36,17 @@ DEFAULT_MODEL_UNCERTAINTY = 10.0
 # by this factor before entering the error budget.
 PRECISION_INFLATION = 2.0
 
+# Size of the residual aerosol artefact in the TropOMI columns, in ppb of
+# apparent column per unit SWIR AOD per unit of air mass factor. The columns
+# fall with retrieved aerosol while the simulated columns do not, and the
+# dependence scales with how far the light travelled through the atmosphere,
+# which is what identifies it as the retrieval rather than as methane. Fitted
+# across viewing and solar path bins in June and January 2024: -103 +/- 26,
+# with an intercept of +72 +/- 64, consistent with the zero that a light-path
+# artefact requires. Set the environment variable to 0 to drop the term.
+# @see: https://github.com/openmethane/openmethane/issues/249
+DEFAULT_AEROSOL_UNCERTAINTY = 103.0
+
 
 def model_uncertainty() -> float:
     """The model-side observation uncertainty in ppb.
@@ -44,6 +55,53 @@ def model_uncertainty() -> float:
     time, so that it follows the environment the observations are processed in.
     """
     return float(os.environ.get("OPENMETHANE_MODEL_UNCERTAINTY", DEFAULT_MODEL_UNCERTAINTY))
+
+
+def aerosol_uncertainty_scale() -> float:
+    """The aerosol artefact scale in ppb per unit AOD per unit of air mass.
+
+    Read from `OPENMETHANE_AEROSOL_UNCERTAINTY` on each call, for the same
+    reason as `model_uncertainty`.
+    """
+    return float(os.environ.get("OPENMETHANE_AEROSOL_UNCERTAINTY", DEFAULT_AEROSOL_UNCERTAINTY))
+
+
+def air_mass_factor(solar_zenith_angle: float, viewing_zenith_angle: float) -> float:
+    """Relative length of the path the measured light travelled, in air masses.
+
+    Sunlight reaches the ground along the solar path and returns to the
+    instrument along the viewing path, so the two secants add. It is 2 for a
+    sounding taken at nadir with the sun overhead and runs to about 4.9 at the
+    extremes of the domain, against a fitted range of 2.1 to 3.4.
+
+    Parameters
+    ----------
+    solar_zenith_angle
+        Sun angle from vertical in degrees.
+    viewing_zenith_angle
+        Instrument angle from vertical in degrees; zero at the middle of the
+        swath and largest at its edges.
+    """
+    solar = np.cos(np.radians(solar_zenith_angle))
+    viewing = np.cos(np.radians(viewing_zenith_angle))
+    return float(1.0 / solar + 1.0 / viewing)
+
+
+def aerosol_uncertainty(
+    aerosol_aod_SWIR: float,
+    solar_zenith_angle: float,
+    viewing_zenith_angle: float,
+) -> float:
+    """The aerosol artefact's contribution to one sounding's uncertainty, in ppb.
+
+    The artefact is a bias rather than noise, and this does not remove it: the
+    domain-mean part is absorbed by the CAMS background correction, and this
+    term stops the inversion reading what is left as flux. Carrying the air
+    mass factor rather than AOD alone is what makes it see the 1.6x spread
+    between nadir and swath edge within a single day's soundings.
+    """
+    path = air_mass_factor(solar_zenith_angle, viewing_zenith_angle)
+    return aerosol_uncertainty_scale() * path * abs(float(aerosol_aod_SWIR))
 
 
 class ObsSRON(ObsMultiRay):
@@ -76,7 +134,8 @@ class ObsSRON(ObsMultiRay):
         - dry_air_subcolumns : array[ float ] (length=layers, units=mol m-2)
         - obs_kernel : array[ float ] (length=layers, unitless)
         - qa_value : float (unitless)
-        - surface_albedo_SWIR : float (unitless).
+        - surface_albedo_SWIR : float (unitless)
+        - aerosol_aod_SWIR : float (unitless).
         """
         newobs = cls(obstype="ESA_co_obs")
 
@@ -160,13 +219,25 @@ class ObsSRON(ObsMultiRay):
         )
 
         # The uncertainty the inversion weights residuals by: the model side of
-        # the error budget combined in quadrature with the inflated retrieval
-        # precision.
+        # the error budget, the inflated retrieval precision and the aerosol
+        # artefact, combined in quadrature.
         model_unc = model_uncertainty()
         precision = float(self.out_dict["ch4_column_precision"])
+        aerosol_unc = aerosol_uncertainty(
+            aerosol_aod_SWIR=self.out_dict["aerosol_aod_SWIR"],
+            solar_zenith_angle=self.src_data["solar_zenith_angle"],
+            viewing_zenith_angle=self.src_data["viewing_zenith_angle"],
+        )
         self.out_dict["uncertainty"] = (
-            model_unc**2 + (PRECISION_INFLATION * precision) ** 2
+            model_unc**2 + (PRECISION_INFLATION * precision) ** 2 + aerosol_unc**2
         ) ** 0.5
+
+        # Kept so that the weighting can be audited after the fact: the obs
+        # files do not otherwise carry the reported angles.
+        self.out_dict["air_mass_factor"] = air_mass_factor(
+            self.src_data["solar_zenith_angle"], self.src_data["viewing_zenith_angle"]
+        )
+        self.out_dict["aerosol_uncertainty"] = aerosol_unc
 
         self.out_dict["offset_term"] = operator.offset
         self.out_dict["obs_kernel"] = np.asarray(self.src_data["obs_kernel"])

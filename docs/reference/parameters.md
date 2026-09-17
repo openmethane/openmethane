@@ -124,7 +124,8 @@ value.
 | --- | --- | --- | --- |
 | `DEFAULT_WS1` | int | Smoothing window size along the second axis, used to remove low-frequency stripes from TROPOMI retrievals. Default recommended by SRON. | `7` |
 | `DEFAULT_WS2` | int | Smoothing window size along the first axis, for the same destriping. Default recommended by SRON. | `100` |
-| `OPENMETHANE_MODEL_UNCERTAINTY` | float | Model-side observation uncertainty in ppb, combined in quadrature with twice the TropOMI retrieval precision to give each observation's uncertainty | `10.0` |
+| `OPENMETHANE_MODEL_UNCERTAINTY` | float | Model-side observation uncertainty in ppb, combined in quadrature with twice the TropOMI retrieval precision and the aerosol term below to give each observation's uncertainty | `10.0` |
+| `OPENMETHANE_AEROSOL_UNCERTAINTY` | float | Size of the TropOMI aerosol artefact, in ppb per unit SWIR AOD per unit of air mass factor. Each observation's share of it is `value x air mass factor x AOD`, which downweights soundings whose light travelled furthest through the most aerosol. Set to `0` to drop the term. | `103.0` |
 
 ## Alerts
 

@@ -10,6 +10,8 @@
 - longitude_corners
 - latitude_center
 - longitude_center
+- air_mass_factor
+- aerosol_uncertainty
 - offset_term
 - obs_kernel
 - prior_profile
