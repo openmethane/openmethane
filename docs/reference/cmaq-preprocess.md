@@ -64,6 +64,15 @@ runs already produced MCIP output.
 > [Creating a custom domain](../guides/custom-domain.md#grid) for the arithmetic.
 > On a small domain the default trim can consume the entire grid.
 
+CAMS is on pressure levels and CMAQ on sigma layers, so the vertical mapping is
+not a copy. Around and above the tropopause CMAQ's layers are finer than the
+CAMS levels, and `src/openmethane/cmaq_preprocess/vertical.py` reconstructs the
+profile as linear in log pressure and averages it over each layer's pressure
+thickness. Averaging by thickness is averaging by air mass, so the column burden
+is the same either side of the mapping. A layer's pressure follows the surface
+pressure of the column beneath it: `PRSFC` from METCRO2D on the interior, and on
+the perimeter the surface pressure recovered from METBDY3D's lowest layer.
+
 This step invokes the csh run scripts in `scripts/cmaq/` (`run.mcip`, `run.icon`,
 `run.bcon`), with arguments assembled in
 `src/openmethane/cmaq_preprocess/run_scripts.py`. When MCIP, ICON or BCON fail,
