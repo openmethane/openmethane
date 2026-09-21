@@ -1,7 +1,11 @@
+import datetime
+
 import numpy as np
 import pytest
+import xarray as xr
 
-from openmethane.postproc.alerts import map_enhance
+from openmethane.fourdvar.util.file_handle import save_list
+from openmethane.postproc.alerts import create_alerts, map_enhance
 
 NEAR_THRESHOLD = 0.2
 FAR_THRESHOLD = 1.0
@@ -121,3 +125,71 @@ def test_map_enhance_masks_near_and_far_fields_consistently():
     near, far = map_enhance(lat, lon, land_mask, concs, NEAR_THRESHOLD, FAR_THRESHOLD)
 
     assert (np.isnan(near) == np.isnan(far)).all()
+
+
+def make_alerts_baseline_file(path, n_rows=3, n_cols=4):
+    """A minimal alerts-baseline.nc, just complete enough for create_alerts to read."""
+    x = np.arange(n_cols, dtype="float64")
+    y = np.arange(n_rows, dtype="float64")
+    lat, lon, land_mask = make_domain(n_rows=n_rows, n_cols=n_cols)
+
+    ds = xr.Dataset(
+        coords={"x": x, "y": y},
+        data_vars={
+            "x_bounds": (("x", "nv"), np.stack([x - 0.5, x + 0.5], axis=1)),
+            "y_bounds": (("y", "nv"), np.stack([y - 0.5, y + 0.5], axis=1)),
+            "lat": (("y", "x"), lat),
+            "lon": (("y", "x"), lon),
+            "land_mask": (("y", "x"), land_mask.astype("float64")),
+            "crs": ((), 0, {"grid_mapping_name": "lambert_conformal_conic"}),
+            "obs_baseline_mean_diff": (("time", "y", "x"), np.zeros((1, n_rows, n_cols))),
+            "obs_baseline_std_diff": (("time", "y", "x"), np.ones((1, n_rows, n_cols))),
+            "sim_baseline_mean_diff": (("time", "y", "x"), np.zeros((1, n_rows, n_cols))),
+            "sim_baseline_std_diff": (("time", "y", "x"), np.ones((1, n_rows, n_cols))),
+            "baseline_count": (("time", "y", "x"), np.full((1, n_rows, n_cols), 100)),
+        },
+        attrs={
+            "DX": 10000.0,
+            "DY": 10000.0,
+            "XCELL": 10000.0,
+            "YCELL": 10000.0,
+            "alerts_near_threshold": NEAR_THRESHOLD,
+            "alerts_far_threshold": FAR_THRESHOLD,
+            "domain_name": "test",
+            "domain_version": "v1",
+            "domain_slug": "test-v1",
+        },
+    )
+    ds.to_netcdf(path)
+
+
+def test_create_alerts_handles_a_day_with_no_observations(tmp_path):
+    """A TROPOMI outage day has zero observations. openmethane#227 stopped that
+    from failing obs_preprocess, which made this a reachable path for
+    create_alerts: it must produce a valid, all-nan output for the requested
+    day rather than crashing on a missing observation period.
+    """
+    baseline_file = tmp_path / "alerts-baseline.nc"
+    make_alerts_baseline_file(baseline_file)
+
+    daily_dir = tmp_path / "daily"
+    domain_record = {"is_lite": False}
+    save_list([domain_record], str(daily_dir / "input" / "test_obs.pic.gz"))
+    save_list([domain_record], str(daily_dir / "simulobs.pic.gz"))
+
+    output_file = tmp_path / "alerts.nc"
+    run_date = datetime.date(2024, 1, 1)
+
+    create_alerts(
+        baseline_file=baseline_file,
+        daily_dir=daily_dir,
+        run_date=run_date,
+        output_file=str(output_file),
+        count_threshold=2,
+    )
+
+    with xr.open_dataset(output_file) as ds:
+        assert ds.sizes["time"] == 1
+        assert ds["time"].to_numpy()[0] == np.datetime64(run_date)
+        assert np.isnan(ds["alerts"].to_numpy()).all()
+        assert np.isnan(ds["obs_enhancement"].to_numpy()).all()

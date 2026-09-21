@@ -385,6 +385,7 @@ def create_alerts_baseline(  # noqa: PLR0913
 def create_alerts(  # noqa: PLR0913
     baseline_file: pathlib.Path,
     daily_dir: pathlib.Path,
+    run_date: datetime.date,
     obs_file_template: str = "input/test_obs.pic.gz",
     sim_file_template: str = "simulobs.pic.gz",
     output_file: str = "alerts.nc",
@@ -403,11 +404,16 @@ def create_alerts(  # noqa: PLR0913
 
     Output is stored as a netcdf file, which will contain nans wherever an
     alert cannot be defined (usually no obs), 0 for no alert and 1 for an alert.
+    A day with no observations at all (e.g. a TROPOMI outage) still produces a
+    valid, all-nan output rather than failing.
 
     :param baseline_file: netcdf file describing the baseline (see function
         create_alerts_baseline). will be used to template the output.
     :param daily_dir: directory containing obs and simulation outputs as
         ObservationData.
+    :param run_date: the calendar day this daily run covers. Used as the
+        output period rather than the observation timestamps, since a day
+        with no observations has none to derive a period from.
     :param obs_file_template: string to be appended to daily_dir to point to
         observations
     :param sim_file_template: string to be appended to daily_dir to point to
@@ -438,9 +444,7 @@ def create_alerts(  # noqa: PLR0913
         far_threshold = alerts_baseline_ds.attrs["alerts_far_threshold"]
         ds.close()
 
-    obs_sim, obs_period_start, obs_period_end = get_obs_sim(
-        daily_dir, obs_file_template, sim_file_template
-    )
+    obs_sim, _, _ = get_obs_sim(daily_dir, obs_file_template, sim_file_template)
 
     near, far = map_enhance(lats, lons, land_mask, obs_sim, near_threshold, far_threshold)
     enhancement = near - far
@@ -466,13 +470,11 @@ def create_alerts(  # noqa: PLR0913
 
     logger.info(f"Writing alerts to {output_file}")
 
-    # observations have specific times, but represent all the observations
-    # that were available for the entire day, so make the period the full day
-    period_start = obs_period_start.replace(hour=0, minute=0, second=0, microsecond=0)
-    # end of day
-    period_end = obs_period_end.replace(
-        hour=0, minute=0, second=0, microsecond=0
-    ) + datetime.timedelta(days=1)
+    # a daily run covers exactly one calendar day, so use that directly rather
+    # than deriving it from observation timestamps, which don't exist on a day
+    # with no observations
+    period_start = datetime.datetime.combine(run_date, datetime.time.min)
+    period_end = period_start + datetime.timedelta(days=1)
 
     # the domain typically has only one grid mapping, which applies to vars
     # with y, x coords
@@ -559,11 +561,11 @@ def create_alerts(  # noqa: PLR0913
     alerts_ds.time_bounds.encoding["units"] = time_encoding
 
     # disable _FillValue for variables that shouldn't have empty values
-    alerts_baseline_ds.time_bounds.encoding["_FillValue"] = None
-    alerts_baseline_ds.x.encoding["_FillValue"] = None
-    alerts_baseline_ds.y.encoding["_FillValue"] = None
-    alerts_baseline_ds.x_bounds.encoding["_FillValue"] = None
-    alerts_baseline_ds.y_bounds.encoding["_FillValue"] = None
+    alerts_ds.time_bounds.encoding["_FillValue"] = None
+    alerts_ds.x.encoding["_FillValue"] = None
+    alerts_ds.y.encoding["_FillValue"] = None
+    alerts_ds.x_bounds.encoding["_FillValue"] = None
+    alerts_ds.y_bounds.encoding["_FillValue"] = None
 
     alerts_ds.to_netcdf(output_file)
 
