@@ -63,8 +63,10 @@ force_lays = "template"
 # note: should always be >= emis_lays
 sense_emis_lays = "template"
 
-# kzmin, use unknown
-kzmin = False
+# Minimum vertical eddy diffusivity. False sends KZMIN=N, which floors Kz at
+# KZ0UT = 1.0 m2/s at every level; True sends KZMIN=Y, which floors it at
+# 0.01 m2/s away from urban cells. #242 candidate-1 arm — do not merge.
+kzmin = True
 
 # stop on input file mismatch
 fl_err_stop = False
