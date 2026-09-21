@@ -5,7 +5,7 @@ import pytest
 import xarray as xr
 
 from openmethane.fourdvar.util.file_handle import save_list
-from openmethane.postproc.alerts import create_alerts, map_enhance
+from openmethane.postproc.alerts import create_alerts, create_alerts_baseline, map_enhance
 
 NEAR_THRESHOLD = 0.2
 FAR_THRESHOLD = 1.0
@@ -127,13 +127,13 @@ def test_map_enhance_masks_near_and_far_fields_consistently():
     assert (np.isnan(near) == np.isnan(far)).all()
 
 
-def make_alerts_baseline_file(path, n_rows=3, n_cols=4):
-    """A minimal alerts-baseline.nc, just complete enough for create_alerts to read."""
+def make_domain_dataset(n_rows=3, n_cols=4):
+    """A minimal domain dataset, just complete enough for the alerts functions to read."""
     x = np.arange(n_cols, dtype="float64")
     y = np.arange(n_rows, dtype="float64")
     lat, lon, land_mask = make_domain(n_rows=n_rows, n_cols=n_cols)
 
-    ds = xr.Dataset(
+    return xr.Dataset(
         coords={"x": x, "y": y},
         data_vars={
             "x_bounds": (("x", "nv"), np.stack([x - 0.5, x + 0.5], axis=1)),
@@ -142,25 +142,62 @@ def make_alerts_baseline_file(path, n_rows=3, n_cols=4):
             "lon": (("y", "x"), lon),
             "land_mask": (("y", "x"), land_mask.astype("float64")),
             "crs": ((), 0, {"grid_mapping_name": "lambert_conformal_conic"}),
-            "obs_baseline_mean_diff": (("time", "y", "x"), np.zeros((1, n_rows, n_cols))),
-            "obs_baseline_std_diff": (("time", "y", "x"), np.ones((1, n_rows, n_cols))),
-            "sim_baseline_mean_diff": (("time", "y", "x"), np.zeros((1, n_rows, n_cols))),
-            "sim_baseline_std_diff": (("time", "y", "x"), np.ones((1, n_rows, n_cols))),
-            "baseline_count": (("time", "y", "x"), np.full((1, n_rows, n_cols), 100)),
         },
         attrs={
             "DX": 10000.0,
             "DY": 10000.0,
             "XCELL": 10000.0,
             "YCELL": 10000.0,
-            "alerts_near_threshold": NEAR_THRESHOLD,
-            "alerts_far_threshold": FAR_THRESHOLD,
             "domain_name": "test",
             "domain_version": "v1",
             "domain_slug": "test-v1",
         },
     )
+
+
+def make_alerts_baseline_file(path, n_rows=3, n_cols=4):
+    """A minimal alerts-baseline.nc, just complete enough for create_alerts to read."""
+    ds = make_domain_dataset(n_rows=n_rows, n_cols=n_cols)
+    ds = ds.assign(
+        obs_baseline_mean_diff=(("time", "y", "x"), np.zeros((1, n_rows, n_cols))),
+        obs_baseline_std_diff=(("time", "y", "x"), np.ones((1, n_rows, n_cols))),
+        sim_baseline_mean_diff=(("time", "y", "x"), np.zeros((1, n_rows, n_cols))),
+        sim_baseline_std_diff=(("time", "y", "x"), np.ones((1, n_rows, n_cols))),
+        baseline_count=(("time", "y", "x"), np.full((1, n_rows, n_cols), 100)),
+    )
+    ds.attrs["alerts_near_threshold"] = NEAR_THRESHOLD
+    ds.attrs["alerts_far_threshold"] = FAR_THRESHOLD
     ds.to_netcdf(path)
+
+
+def make_obs_sim_records(lat_bounds, lon_bounds, n_obs, seed):
+    """Paired obs/sim records, as read_obs_file would return them for one day."""
+    rng = np.random.default_rng(seed)
+    lats = rng.uniform(*lat_bounds, n_obs)
+    lons = rng.uniform(*lon_bounds, n_obs)
+    obs_values = rng.normal(1900, 20, n_obs)
+    sim_values = rng.normal(1900, 20, n_obs)
+
+    obs_records = [
+        {
+            "lite_coord": i,
+            "latitude_center": lats[i],
+            "longitude_center": lons[i],
+            "value": obs_values[i],
+            "weight_grid": None,
+        }
+        for i in range(n_obs)
+    ]
+    sim_records = [
+        {"lite_coord": i, "value": sim_values[i], "weight_grid": None} for i in range(n_obs)
+    ]
+    return obs_records, sim_records
+
+
+def make_daily_dir(daily_dir, obs_records, sim_records):
+    """A daily run directory, holding just what get_obs_sim reads."""
+    save_list([{"is_lite": False}, *obs_records], str(daily_dir / "input" / "test_obs.pic.gz"))
+    save_list([{"is_lite": False}, *sim_records], str(daily_dir / "simulobs.pic.gz"))
 
 
 def test_create_alerts_handles_a_day_with_no_observations(tmp_path):
@@ -173,9 +210,7 @@ def test_create_alerts_handles_a_day_with_no_observations(tmp_path):
     make_alerts_baseline_file(baseline_file)
 
     daily_dir = tmp_path / "daily"
-    domain_record = {"is_lite": False}
-    save_list([domain_record], str(daily_dir / "input" / "test_obs.pic.gz"))
-    save_list([domain_record], str(daily_dir / "simulobs.pic.gz"))
+    make_daily_dir(daily_dir, obs_records=[], sim_records=[])
 
     output_file = tmp_path / "alerts.nc"
     run_date = datetime.date(2024, 1, 1)
@@ -193,3 +228,65 @@ def test_create_alerts_handles_a_day_with_no_observations(tmp_path):
         assert ds["time"].to_numpy()[0] == np.datetime64(run_date)
         assert np.isnan(ds["alerts"].to_numpy()).all()
         assert np.isnan(ds["obs_enhancement"].to_numpy()).all()
+
+
+@pytest.mark.filterwarnings("ignore:Mean of empty slice:RuntimeWarning")
+@pytest.mark.filterwarnings("ignore:Degrees of freedom <= 0 for slice:RuntimeWarning")
+def test_create_alerts_baseline_handles_a_day_with_no_observations(tmp_path):
+    """A baseline spans many days, so a single TROPOMI outage day within that
+    range is a normal occurrence, not an edge case. create_alerts_baseline must
+    not crash folding that day's missing observation period into the others'.
+
+    The ocean cells in this tiny domain never get a valid enhancement on any
+    day, which is exactly what nanmean/nanstd are for; the "empty slice"
+    warning that comes with it is expected here, not something this test is
+    checking for.
+    """
+    domain_file = tmp_path / "domain.nc"
+    make_domain_dataset().to_netcdf(domain_file)
+
+    good_day = tmp_path / "daily" / "2024-01-01"
+    obs_records, sim_records = make_obs_sim_records(
+        lat_bounds=(-40, -12), lon_bounds=(115, 152), n_obs=200, seed=10
+    )
+    # land cell (0, 1) at (lat=-40, lon=127.33): pin one observation on its
+    # centre (near field) and one 0.6 degrees away (far field), so this cell
+    # has a defined baseline rather than every cell landing on nanmean([]).
+    for i, (lat, lon) in enumerate([(-40, 127.333336), (-40.6, 127.333336)]):
+        obs_records.append(
+            {
+                "lite_coord": f"pinned-{i}",
+                "latitude_center": lat,
+                "longitude_center": lon,
+                "value": 1900.0,
+                "weight_grid": None,
+            }
+        )
+        sim_records.append({"lite_coord": f"pinned-{i}", "value": 1900.0, "weight_grid": None})
+    make_daily_dir(good_day, obs_records, sim_records)
+
+    outage_day = tmp_path / "daily" / "2024-01-02"
+    make_daily_dir(outage_day, obs_records=[], sim_records=[])
+
+    output_file = tmp_path / "alerts-baseline.nc"
+    start_date = datetime.date(2024, 1, 1)
+    end_date = datetime.date(2024, 1, 2)
+
+    create_alerts_baseline(
+        domain_file=domain_file,
+        dir_list=[str(good_day), str(outage_day)],
+        start_date=start_date,
+        end_date=end_date,
+        near_threshold=NEAR_THRESHOLD,
+        far_threshold=FAR_THRESHOLD,
+        output_file=str(output_file),
+    )
+
+    with xr.open_dataset(output_file) as ds:
+        assert ds.sizes["time"] == 1
+        assert ds["time"].to_numpy()[0] == np.datetime64(start_date)
+        assert ds["time_bounds"].to_numpy()[0, 1] == np.datetime64(
+            end_date + datetime.timedelta(days=1)
+        )
+        # the outage day contributed nothing, so at most the good day's obs count
+        assert ds["baseline_count"].to_numpy().max() <= 1

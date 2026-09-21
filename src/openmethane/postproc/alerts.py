@@ -74,8 +74,8 @@ def get_obs_sim(
     checks for consistency of coordinates
 
     Returns a row per observation of (latitude, longitude, observed value,
-    simulated value), along with the period the observations cover. Only these
-    fields are needed downstream, so the full records are not retained.
+    simulated value). Only these fields are needed downstream, so the full
+    records are not retained. A day with no observations returns zero rows.
     """
     logger.debug(f"Loading observation data from {dir}")
 
@@ -86,15 +86,8 @@ def get_obs_sim(
     if len(sim_list) != len(obs_list):
         raise ValueError("inconsistent lenghts for obs and sim")
 
-    period_start: datetime.datetime | None = None
-    period_end: datetime.datetime | None = None
-
     obs_sim = np.empty((len(obs_list), 4))
     for n, (obs, sim) in enumerate(zip(obs_list, sim_list)):
-        if (period_start is None) or (period_start > obs["time"]):
-            period_start = obs["time"]
-        if (period_end is None) or (period_end < obs["time"]):
-            period_end = obs["time"]
         if obs["lite_coord"] != sim["lite_coord"]:
             raise ValueError("inconsistent lite coord")
         obs_sim[n] = (
@@ -103,7 +96,7 @@ def get_obs_sim(
             obs["value"],
             sim["value"],
         )
-    return obs_sim, period_start, period_end
+    return obs_sim
 
 
 def calculate_baseline_statistics(
@@ -150,14 +143,15 @@ def _day_enhancement(task):
         near_threshold,
         far_threshold,
     ) = task
-    obs_sim, period_start, period_end = get_obs_sim(dir, obs_file_template, sim_file_template)
-    near, far = map_enhance(lats, lons, land_mask, obs_sim, near_threshold, far_threshold)
-    return near, far, period_start, period_end
+    obs_sim = get_obs_sim(dir, obs_file_template, sim_file_template)
+    return map_enhance(lats, lons, land_mask, obs_sim, near_threshold, far_threshold)
 
 
 def create_alerts_baseline(  # noqa: PLR0913
     domain_file: pathlib.Path,
     dir_list: list[str],
+    start_date: datetime.date,
+    end_date: datetime.date,
     obs_file_template: str = "input/test_obs.pic.gz",
     sim_file_template: str = "simulobs.pic.gz",
     near_threshold: float = 0.2,
@@ -173,6 +167,11 @@ def create_alerts_baseline(  # noqa: PLR0913
         template the output.
     :param dir_list: list of directories containing obs and simulation outputs
         as ObservationData.
+    :param start_date: first calendar day covered by dir_list. Used as the
+        output period rather than the observation timestamps, since a day
+        with no observations (e.g. a TROPOMI outage) has none to derive a
+        period from.
+    :param end_date: last calendar day covered by dir_list.
     :param obs_file_template: string to be appended to each dir in dir_list to
         point to observations
     :param sim_file_template: string to be appended to each dir in dir_list to
@@ -196,9 +195,6 @@ def create_alerts_baseline(  # noqa: PLR0913
     far_fields = []
 
     logger.info(f"Creating alerts baseline from {len(dir_list)} days of observations")
-
-    obs_period_start: datetime.datetime | None = None
-    obs_period_end: datetime.datetime | None = None
 
     tasks = [
         (
@@ -233,15 +229,9 @@ def create_alerts_baseline(  # noqa: PLR0913
         else:
             results = map(_day_enhancement, tasks)
 
-        for near, far, period_start, period_end in results:
+        for near, far in results:
             near_fields.append(near)
             far_fields.append(far)
-
-            # record the dates of the first and last observation being examined
-            if (obs_period_start is None) or (obs_period_start > period_start):
-                obs_period_start = period_start
-            if (obs_period_end is None) or (obs_period_end < period_end):
-                obs_period_end = period_end
 
     logger.info("Constructing near_fields_array")
     near_fields_array = np.stack(near_fields)
@@ -259,12 +249,12 @@ def create_alerts_baseline(  # noqa: PLR0913
         baseline_count,
     ) = calculate_baseline_statistics(near_fields_array, far_fields_array)
 
-    # observations have specific times, but represent all the observations
-    # that were available for the entire day, so make the period the full day
-    baseline_period_start = obs_period_start.replace(hour=0, minute=0, second=0, microsecond=0)
-    # end of day
-    baseline_period_end = obs_period_end.replace(
-        hour=0, minute=0, second=0, microsecond=0
+    # dir_list covers exactly this calendar range, so use it directly rather
+    # than deriving it from observation timestamps, which don't exist for a
+    # day with no observations
+    baseline_period_start = datetime.datetime.combine(start_date, datetime.time.min)
+    baseline_period_end = datetime.datetime.combine(
+        end_date, datetime.time.min
     ) + datetime.timedelta(days=1)
 
     # the domain typically has only one grid mapping, which applies to vars
@@ -444,7 +434,7 @@ def create_alerts(  # noqa: PLR0913
         far_threshold = alerts_baseline_ds.attrs["alerts_far_threshold"]
         ds.close()
 
-    obs_sim, _, _ = get_obs_sim(daily_dir, obs_file_template, sim_file_template)
+    obs_sim = get_obs_sim(daily_dir, obs_file_template, sim_file_template)
 
     near, far = map_enhance(lats, lons, land_mask, obs_sim, near_threshold, far_threshold)
     enhancement = near - far
