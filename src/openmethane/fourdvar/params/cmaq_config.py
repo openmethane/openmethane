@@ -63,8 +63,17 @@ force_lays = "template"
 # note: should always be >= emis_lays
 sense_emis_lays = "template"
 
-# kzmin, use unknown
-kzmin = False
+# Minimum vertical eddy diffusivity, passed to CMAQ as KZMIN.
+#
+# True sends KZMIN=Y, CMAQ's own default: eddyx.F floors Kz at 0.01 m2/s and
+# ramps it towards 1.0 with urban fraction below 500 m. False sends KZMIN=N,
+# which instead floors it at KZ0UT = 1.0 m2/s at every level, everywhere.
+#
+# On aust10km only 34 of 195,220 cells exceed 1% urban, so the two settings
+# differ by a factor of 100 in the Kz floor over essentially the whole domain —
+# most of it overnight and in the stable free troposphere, where a floor of
+# 1.0 m2/s does the most cumulative work.
+kzmin = env.bool("CMAQ_KZMIN", True)
 
 # stop on input file mismatch
 fl_err_stop = False
