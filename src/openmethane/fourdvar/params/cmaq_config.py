@@ -202,6 +202,26 @@ irr2_file = os.path.join(output_path, "IRR_2.<YYYYMMDD>.nc")
 irr3_file = os.path.join(output_path, "IRR_3.<YYYYMMDD>.nc")
 rj1_file = os.path.join(output_path, "RJ_1.<YYYYMMDD>.nc")
 rj2_file = os.path.join(output_path, "RJ_2.<YYYYMMDD>.nc")
+# Gridded model-top advective flux, the diagnostic for openmethane#256. Off by
+# default because it adds an output file to every forward run, including the
+# many the inversion makes per iteration. ADJOINT_FWD logs the domain integral
+# every synchronisation step either way, so leaving this off loses only the
+# spatial field. See docs/vadv-top-flux.md in openmethane/CMAQ-Adjoint.
+write_vadv_topflx = env.bool("WRITE_VADV_TOPFLX", False)
+
+# Where ADJOINT_FWD writes it, before cmaq_handle files it away. Deliberately
+# absent from wipeout_fwd_list below: _cleanup wildcards the date, so listing it
+# would delete every day of the diagnostic at the start of the next forward
+# pass.
+vadv_topflx_file = os.path.join(output_path, "VADV_TOPFLX.<YYYYMMDD>.nc")
+
+# Where it is kept, one directory per forward pass. An inversion runs a forward
+# pass per line search evaluation, each rewriting the same output paths, and
+# the flux under a trial control vector is worth as much as the flux under the
+# last one the search happened to try. The per-interface profile is copied out
+# of the CMAQ log into the same place, because wipeout_fwd deletes that log.
+vadv_topflx_path = os.path.join(output_path, "vadv-topflx")
+
 conc_sense_file = os.path.join(output_path, "LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 emis_sense_file = os.path.join(output_path, "EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 emis_scale_sense_file = os.path.join(output_path, "EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
