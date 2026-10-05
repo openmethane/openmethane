@@ -48,7 +48,7 @@ Turns WRF meteorology and the prior into inputs CMAQ can read. See
 | `scripts/cmaq_preprocess/make_emis_template.py` | Builds the CMAQ emissions template from the prior. |
 | `scripts/cmaq_preprocess/make_template.py` | Prepares CMAQ run directories and the concentration, forcing and sensitivity templates, by running one day of CMAQ forwards and backwards. Requires the adjoint binaries. |
 | `scripts/cmaq_preprocess/make_prior.py` | Builds the prior in the form `fourdvar` consumes. |
-| `scripts/cmaq_preprocess/bias_correct_cams.py` | Corrects bias between CAMS boundary conditions and CMAQ. Honours `DISABLE_CORRECT_BIAS_BY_REGION`. |
+| `scripts/cmaq_preprocess/bias_correct_cams.py` | Corrects the bias between the simulated CAMS background and the satellite columns, measured with one forward run over the month. Requires the adjoint binaries. |
 
 The last three template steps can be run together:
 

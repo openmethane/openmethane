@@ -143,6 +143,11 @@ def calculate_icon_bias(
     background provides. Because the operator puts a total weight of `W` on the
     model, a shift of `dx` ppm only moves a simulated column by
     `ppm2ppb * W * dx` ppb, so the residual is divided by the mean weight.
+
+    Diagnostic only: the pipeline corrects with `calculate_forward_bias`. The
+    static field this simulates from carries no transport or time evolution, so
+    it does not reproduce a zero-emissions forward run, and differencing the two
+    is the cheapest way to measure that gap.
     """
     obs = d.ObservationData.from_file(obs_file)
     icon_means = []
@@ -165,6 +170,39 @@ def calculate_icon_bias(
     return (obs_means.mean() - icon_means.mean()) / (ppm2ppb * weight_sum)
 
 
+def calculate_forward_bias(
+    prior_file: pathlib.Path,
+    obs_file: pathlib.Path,
+) -> float:
+    """Calculate the shift that makes the forward model match the satellite on average.
+
+    Runs the forward model once at the prior emissions and differences the mean
+    simulated column from the mean observed column, over every sounding in the
+    month. This is the same quantity the driver reports as its first-guess
+    `bias`, so correcting by it drives that report to zero.
+
+    The residual is divided by the mean operator weight to express it, like the
+    other bias terms, as a shift in ppm of the concentration field.
+
+    inputs: prior_file, path to prior emissions file,
+    obs_file, path to observation file,
+    returns: the correction to add to the concentration field, in ppm.
+    """
+    prior = d.PhysicalData.from_file(prior_file)
+    # the run is not followed by an adjoint run, so the checkpoints would be
+    # written and never read; on the full domain they dominate the runtime
+    with cmaq.checkpointing_disabled():
+        mean_simulated = calculate_mean_obs(prior, obs_file)
+    # calculate_mean_obs has just loaded obs_file, so this reads the same data
+    obs = d.ObservationData.from_file(obs_file)
+    mean_observed = float(np.mean(obs.get_vector()))
+    weight_sum = mean_weight_sum(obs)
+    logger.info(f"mean observed column (ppb): {mean_observed}")
+    logger.info(f"mean simulated column (ppb): {mean_simulated}")
+    logger.info(f"mean operator weight: {weight_sum}")
+    return (mean_observed - mean_simulated) / (ppm2ppb * weight_sum)
+
+
 def calculate_emissions_bias(
     prior_file: pathlib.Path,
     obs_file: pathlib.Path,
@@ -177,6 +215,8 @@ def calculate_emissions_bias(
     The offset term is the same in both runs, so it cancels; what remains is
     divided by the mean operator weight to express it, like the ICON bias, as a
     shift in ppm of the concentration field.
+
+    Diagnostic only: the pipeline corrects with `calculate_forward_bias`.
 
     inputs: prior_file, path to prior emissions file,
     obs_file, path to observation file,
