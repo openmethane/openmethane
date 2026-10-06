@@ -29,10 +29,12 @@ def main():
     alerts_threshold = env.float("ALERTS_THRESHOLD", default=5.0)
     significance_threshold = env.float("SIGNIFICANCE_THRESHOLD", default=3.0)
     count_threshold = env.int("ALERTS_COUNT_THRESHOLD", 30)
+    run_date = env.date("START_DATE")
 
     alerts.create_alerts(
         baseline_file=baseline_file,
         daily_dir=daily_dir,
+        run_date=run_date,
         obs_file_template=obs_file_template,
         sim_file_template=sim_file_template,
         output_file=output_file,
