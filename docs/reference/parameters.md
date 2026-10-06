@@ -22,7 +22,7 @@ What is being modelled. These are the settings that change between runs.
 | `DOMAIN_NAME` | str | The domain to model | *required* |
 | `DOMAIN_VERSION` | str | Version of that domain | *required* |
 | `STORE_PATH` | path | Root directory for this run's data | *required* |
-| `EXPERIMENT` | str | Name of the experiment, used in archive paths | `openmethane` |
+| `EXPERIMENT` | str | Name of the experiment, the prefix of archive directories (see [outputs](outputs.md#archive-layout)) | `openmethane` |
 | `TARGET` | str | Which `.env.${TARGET}` file to load | `docker` |
 
 ## Domain and grid

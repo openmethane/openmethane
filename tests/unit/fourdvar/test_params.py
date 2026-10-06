@@ -55,8 +55,6 @@ def test_archive_defn(data_regression, target_environment, target):
                 "experiment",
                 "description",
                 "desc_name",
-                "overwrite",
-                "extension",
                 "icon_file",
                 "emis_file",
                 "conc_file",
