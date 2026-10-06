@@ -6,71 +6,75 @@ from openmethane.fourdvar.params import archive_defn
 from openmethane.fourdvar.util import archive_handle
 
 
-@pytest.fixture
-def archive(tmp_path, monkeypatch):
+@pytest.fixture(autouse=True)
+def archive_root(tmp_path, monkeypatch):
     monkeypatch.setattr(archive_defn, "archive_path", str(tmp_path))
     monkeypatch.setattr(archive_defn, "experiment", "openmethane")
     monkeypatch.setattr(archive_defn, "desc_name", "")
     monkeypatch.setattr(archive_handle, "finished_setup", False)
     monkeypatch.setattr(archive_handle, "archive_path", "")
-
-    def start_run(hour: int, second: int = 0):
-        moment = datetime(2026, 10, 6, hour, 15, second, tzinfo=UTC)
-        monkeypatch.setattr(archive_handle, "_utcnow", lambda: moment)
-        monkeypatch.setattr(archive_handle, "finished_setup", False)
-        archive_handle.setup()
-        return archive_handle.get_archive_path()
-
-    return tmp_path, start_run
+    return tmp_path
 
 
-def test_creates_timestamped_directory_and_latest_link(archive):
-    root, start_run = archive
+def _freeze_time(monkeypatch, hour, second=0):
+    moment = datetime(2026, 10, 6, hour, 15, second, tzinfo=UTC)
+    monkeypatch.setattr(archive_handle, "_utcnow", lambda: moment)
 
-    path = start_run(3, 42)
 
-    assert path == str(root / "openmethane-20261006-031542")
-    assert (root / "openmethane-20261006-031542").is_dir()
-    link = root / "openmethane-latest"
+def test_creates_timestamped_directory_and_latest_link(archive_root, monkeypatch):
+    _freeze_time(monkeypatch, 3, 42)
+
+    archive_handle.setup()
+
+    assert archive_handle.get_archive_path() == str(archive_root / "openmethane-20261006-031542")
+    assert (archive_root / "openmethane-20261006-031542").is_dir()
+    link = archive_root / "openmethane-latest"
     assert link.is_symlink()
     # relative, so the archive can be moved or bind mounted
     assert link.readlink().as_posix() == "openmethane-20261006-031542"
 
 
-def test_latest_link_follows_newest_run_and_keeps_old_runs(archive):
-    root, start_run = archive
+def test_latest_link_follows_newest_run_and_keeps_old_runs(archive_root, monkeypatch):
+    _freeze_time(monkeypatch, 3)
+    archive_handle.setup()
+    (archive_root / "openmethane-20261006-031500" / "result.nc").write_text("first")
 
-    first = start_run(3)
-    (root / "openmethane-20261006-031500" / "result.nc").write_text("first")
-    second = start_run(5)
+    _freeze_time(monkeypatch, 5)
+    monkeypatch.setattr(archive_handle, "finished_setup", False)
+    archive_handle.setup()
 
-    assert first != second
-    assert (root / "openmethane-latest").resolve() == (root / "openmethane-20261006-051500")
-    assert (root / "openmethane-20261006-031500" / "result.nc").read_text() == "first"
+    assert archive_handle.get_archive_path() == str(archive_root / "openmethane-20261006-051500")
+    assert (archive_root / "openmethane-latest").resolve() == (
+        archive_root / "openmethane-20261006-051500"
+    )
+    assert (archive_root / "openmethane-20261006-031500" / "result.nc").read_text() == "first"
 
 
-def test_same_second_start_fails_rather_than_reusing_directory(archive):
-    _, start_run = archive
+def test_same_second_start_fails_rather_than_reusing_directory(monkeypatch):
+    _freeze_time(monkeypatch, 3)
+    archive_handle.setup()
 
-    start_run(3)
+    monkeypatch.setattr(archive_handle, "finished_setup", False)
     with pytest.raises(FileExistsError):
-        start_run(3)
+        archive_handle.setup()
 
 
-def test_existing_directories_are_left_alone(archive):
-    root, start_run = archive
-    (root / "openmethane").mkdir()
-    (root / "openmethane" / "old.nc").write_text("old")
+def test_existing_directories_are_left_alone(archive_root, monkeypatch):
+    (archive_root / "openmethane").mkdir()
+    (archive_root / "openmethane" / "old.nc").write_text("old")
+    _freeze_time(monkeypatch, 3)
 
-    start_run(3)
+    archive_handle.setup()
 
-    assert (root / "openmethane" / "old.nc").read_text() == "old"
+    assert (archive_root / "openmethane" / "old.nc").read_text() == "old"
 
 
-def test_setup_is_idempotent(archive):
-    _, start_run = archive
+def test_setup_is_idempotent(monkeypatch):
+    _freeze_time(monkeypatch, 3)
+    archive_handle.setup()
+    path = archive_handle.get_archive_path()
 
-    path = start_run(3)
+    _freeze_time(monkeypatch, 5)
     archive_handle.setup()
 
     assert archive_handle.get_archive_path() == path
