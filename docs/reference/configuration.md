@@ -68,7 +68,7 @@ pre-existing values, matching the Python behaviour.
 
 ```dotenv
 MET_DIR="${STORE_PATH}/mcip"
-CAMS_FILE="${STORE_PATH}/cams/cams_eac4_methane_${START_DATE}-${END_DATE}.nc"
+GEO_DIR="${STORE_PATH}/wrf/${DOMAIN_NAME}"
 ```
 
 Variables used in expansions must be defined **outside** the file — this is why

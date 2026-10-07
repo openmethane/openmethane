@@ -43,8 +43,8 @@ Turns WRF meteorology and the prior into inputs CMAQ can read. See
 | Script | Description |
 | --- | --- |
 | `scripts/cmaq_preprocess/run-cmaq-preprocess.sh` | Runs the whole stage in order. Honours `SKIP_CAMS_DOWNLOAD`, `SKIP_CMAQ_SETUP` and `SKIP_TEMPLATE_GENERATION`. |
-| `scripts/cmaq_preprocess/download_cams_input.py` | Downloads CAMS methane on pressure levels for the date range. Needs ADS credentials. Takes `-s`/`-e` and an output path. |
-| `scripts/cmaq_preprocess/setup_for_cmaq.py` | Runs MCIP, ICON and BCON, and interpolates CAMS onto the CMAQ grid. Requires WRF output and the CAMS file. |
+| `scripts/cmaq_preprocess/download_cams_input.py` | Downloads CAMS methane for the date range, from the product chosen by `CAMS_PRODUCT`. Needs ADS credentials. Takes `-s`/`-e` and an optional output path, which defaults to `CAMS_FILE`. |
+| `scripts/cmaq_preprocess/setup_for_cmaq.py` | Runs MCIP, ICON and BCON, and interpolates CAMS onto the CMAQ grid, according to `CAMS_PRODUCT`. Requires WRF output and the CAMS file. |
 | `scripts/cmaq_preprocess/make_emis_template.py` | Builds the CMAQ emissions template from the prior. |
 | `scripts/cmaq_preprocess/make_template.py` | Prepares CMAQ run directories and the concentration, forcing and sensitivity templates, by running one day of CMAQ forwards and backwards. Requires the adjoint binaries. |
 | `scripts/cmaq_preprocess/make_prior.py` | Builds the prior in the form `fourdvar` consumes. |

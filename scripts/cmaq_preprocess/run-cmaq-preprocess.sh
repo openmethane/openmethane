@@ -18,8 +18,7 @@ SKIP_TEMPLATE_GENERATION=${SKIP_TEMPLATE_GENERATION:-}
 if [[ -z "${SKIP_CAMS_DOWNLOAD}" ]]; then
   python scripts/cmaq_preprocess/download_cams_input.py \
     -s "${START_DATE}" \
-    -e "${END_DATE}" \
-    "${CAMS_FILE}"
+    -e "${END_DATE}"
 else
   echo "Skipping CAMS download"
 fi

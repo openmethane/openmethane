@@ -51,7 +51,7 @@ What is being modelled. These are the settings that change between runs.
 | `TEMPLATE_DIR` | path | CMAQ template directory | `${STORE_PATH}/templates` |
 | `CHK_PATH` | path | CMAQ checkpoint files. Large and frequently rewritten — use fast scratch disk. Cleared by the container entrypoint. | `{CMAQ_BASE}/chkpnt` |
 | `PRIOR_FILE` | path | The prior emissions estimate, from openmethane-prior | *required* |
-| `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | *required* |
+| `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | `${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{start}-{end}.nc`, with the release only for the inversion |
 | `ICON_FILE` | path | ICON template file | *required* |
 | `BCON_FILE` | path | BCON template file | *required* |
 | `EMIS_FILE` | path | Emissions files | `{CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc` |
@@ -111,6 +111,8 @@ value.
 | Variable | Type | Description | Default |
 | --- | --- | --- | --- |
 | `FORCE_UPDATE` | bool | Regenerate CMAQ preprocessing outputs even when they already exist | `true` |
+| `CAMS_PRODUCT` | str | Which CAMS product supplies boundary and initial conditions: `inversion` (the CAMS greenhouse gas inversion, constrained by surface and satellite observations) or `eac4` (the reanalysis, whose CH4 is not assimilated). The inversion only covers dates up to the end of its latest release, and the run fails with an error if the dates are outside that. | `inversion` |
+| `CAMS_INVERSION_VERSION` | str | Release of the CAMS inversion to download with `CAMS_PRODUCT=inversion`. Each release re-processes the whole record, so the values for a date change between releases. The release is stored in the downloaded file and in the `CAMS_RELEASE` attribute of the ICON and BCON files. | `v25r1` |
 | `CAMS_TO_CMAQ_BIAS` | float | Fixed bias correction applied when interpolating CAMS onto the CMAQ grid | `0.0` |
 | `DISABLE_CORRECT_BIAS_BY_REGION` | str | Set to exactly `"true"` to compute the CAMS bias over the whole domain instead of only the region sampled by observations. Any other value, including unset, uses regional correction. | unset |
 | `SKIP_CAMS_DOWNLOAD` | str | Set to any non-empty value to skip the CAMS download in `run-cmaq-preprocess.sh` | unset |
