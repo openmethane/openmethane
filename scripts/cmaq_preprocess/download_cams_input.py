@@ -2,7 +2,7 @@
 """
 Download CAMS methane fields to use as boundary and initial conditions
 
-Two products are available, chosen by CAMS_PRODUCT:
+Two products are available, chosen by CAMS_PRODUCT (the inversion by default):
 
 - `eac4`: the CAMS reanalysis (EAC4) on pressure levels. CH4 is not assimilated
   in EAC4, it is a free-running model field. About 1.4GB / month.
@@ -59,7 +59,8 @@ def download_cams_input(
     """
     Download CAMS methane fields for the date range
 
-    The product is CAMS_PRODUCT. OUTPUT defaults to CAMS_FILE.
+    The product is CAMS_PRODUCT. OUTPUT defaults to CAMS_FILE, or a name made from the
+    product, the inversion's release and the dates.
 
     EAC4 data are stored on tape, so the download may be queued for several minutes
     while the data are retrieved.

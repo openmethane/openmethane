@@ -25,6 +25,24 @@ def process_date_string(value) -> datetime.date:
 
 
 CAMS_PRODUCTS = ("eac4", "inversion")
+DEFAULT_CAMS_PRODUCT = "inversion"
+DEFAULT_CAMS_INVERSION_VERSION = "v25r1"
+
+
+def default_cams_file(
+    store_path: pathlib.Path,
+    product: str,
+    inversion_version: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> pathlib.Path:
+    """Where the CAMS file for the product and dates lives when CAMS_FILE is not set
+
+    The inversion's release is part of the name, because each release re-processes
+    past dates and a file from another release must never be reused.
+    """
+    release = f"_{inversion_version}" if product == "inversion" else ""
+    return store_path / "cams" / f"cams_{product}{release}_methane_{start_date}-{end_date}.nc"
 
 
 @frozen
@@ -145,7 +163,7 @@ class CMAQConfig:
     5 is a good start for larger domains.
     """
     cams_product: str = field(
-        default="eac4",
+        default=DEFAULT_CAMS_PRODUCT,
         validator=attrs.validators.in_(CAMS_PRODUCTS),
     )
     """
@@ -153,7 +171,7 @@ class CMAQConfig:
 
     `eac4` is the CAMS reanalysis, `inversion` is the CAMS greenhouse gas inversion.
     """
-    cams_inversion_version: str = "v25r1"
+    cams_inversion_version: str = DEFAULT_CAMS_INVERSION_VERSION
     """
     Release of the CAMS inversion to download when `cams_product` is `inversion`
 
@@ -209,6 +227,14 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         mcip_suffix=env.str("DOMAIN_MCIP_SUFFIX", "LamCon_34S_150E"),
     )
 
+    cams_product = env.str("CAMS_PRODUCT", DEFAULT_CAMS_PRODUCT)
+    cams_inversion_version = env.str("CAMS_INVERSION_VERSION", DEFAULT_CAMS_INVERSION_VERSION)
+    start_date = env.date("START_DATE")
+    end_date = env.date("END_DATE")
+    cams_file = env.path("CAMS_FILE", None) or default_cams_file(
+        env.path("STORE_PATH"), cams_product, cams_inversion_version, start_date, end_date
+    )
+
     options = dict(
         prepare_ic_and_bc=True,
         force_update=env.bool("FORCE_UPDATE", True),
@@ -218,14 +244,14 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         ctm_dir=env.path("CTM_DIR"),
         wrf_dir=env.path("WRF_DIR"),
         geo_dir=env.path("GEO_DIR"),
-        input_cams_file=env.path("CAMS_FILE"),
-        start_date=env.date("START_DATE"),
-        end_date=env.date("END_DATE"),
+        input_cams_file=cams_file,
+        start_date=start_date,
+        end_date=end_date,
         mech="CH4only",
         cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 0.0),
         boundary_trim=env.int("BOUNDARY_TRIM", 5),
-        cams_product=env.str("CAMS_PRODUCT", "eac4"),
-        cams_inversion_version=env.str("CAMS_INVERSION_VERSION", "v25r1"),
+        cams_product=cams_product,
+        cams_inversion_version=cams_inversion_version,
     )
 
     return CMAQConfig(domain=domain, **{**options, **overrides})
