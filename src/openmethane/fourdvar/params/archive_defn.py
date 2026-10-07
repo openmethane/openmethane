@@ -30,7 +30,8 @@ iter_model_output = True
 # archive observation-lite of each successful iteration
 iter_obs_lite = True
 
-# experiment name & name of directory to save results in
+# experiment name, used as the prefix of the directory each run saves results in:
+# <experiment>-<YYYYMMDD>-<HHMMSS>, with <experiment>-latest linked to the newest
 experiment = env.str("EXPERIMENT", "openmethane")
 
 # description is copied into a txt file in the experiment directory
@@ -39,17 +40,6 @@ The description here should contain details of the experiment
 and is written to the description text file."""
 # name of txt file holding the description, if empty string ('') file is not created.
 desc_name = ""
-
-# if True, delete any existing archive with the same name.
-# if False, create a new archive name to save results into.
-overwrite = False
-
-# pattern used to create new archive name if overwrite is False
-# <E> is replaced with the experiment name
-# <I> if replace with a number to make a unique directory name
-# if a tag is missing the assumed format is: <E>extension<I>
-extension = "<E>_vsn<I>"
-
 
 # cmaq datadef files can be archived. These require an archive name pattern
 # patterns can include <YYYYMMDD>, <YYYYDDD> or <YYYY-MM-DD> tags to specify day
