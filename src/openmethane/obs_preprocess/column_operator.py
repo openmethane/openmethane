@@ -9,11 +9,25 @@ it was retrieved against. Simulating that quantity from a model profile is
 
     y = sum_j pw_j [ x_a,j + A_j ( x_m,j - x_a,j ) ]                       (1)
 
-where ``j`` indexes the retrieval layers, ``pw_j`` are the retrieval's pressure
-weights and ``x_m,j`` is the model profile mapped onto the retrieval grid. This
-follows the reference implementation at
+where ``j`` indexes the retrieval layers, ``x_m,j`` is the model profile mapped
+onto the retrieval grid, and ``pw_j`` is each layer's share of the retrieval's
+dry-air column,
+
+    pw_j = d_j / sum_k d_k                                                 (1a)
+
+with ``d_j`` the ``dry_air_subcolumns`` reported in the product. This is the
+operator prescribed in the S5P CH4 product user manual (SRON-S5P-LEV2-MA-001,
+issue 2.9.1, section 8.5.1, equations 2-4), which applies the kernel to
+partial columns and divides by the total dry-air column; (1) is that, divided
+through. The model mapping follows the reference implementation at
 https://github.com/hannahnesser/TROPOMI_inversion/blob/main/python/TROPOMI_operator.py
-(``GC_to_sat_levels`` and ``apply_avker``).
+(``GC_to_sat_levels`` and ``apply_avker``), which instead weights each layer by
+its pressure thickness. The two agree only when the dry-air column is
+distributed evenly in pressure; water vapour and the variation of gravity with
+altitude shift air towards the upper layers, which lowers the simulated column
+over Australia by about 0.2-0.3 ppb. The same author's later parser in
+https://github.com/pennelise/GOOPy uses dry-air weights, as here. See
+https://github.com/openmethane/openmethane/issues/273.
 
 The mapping of the model onto the retrieval grid is by pressure overlap,
 
@@ -38,6 +52,10 @@ the retrieval grid, so the model does not span the whole column: roughly the top
 fraction ``f_j``, and the uncovered part must be filled from somewhere:
 
     x_m,j = sum_i (O_ji / dp_j) x_i  +  (1 - f_j) x_fill,j                 (4)
+
+Within a retrieval layer, the model layers and the fill are weighted by their
+share of its pressure thickness ``dp_j``: the product only reports dry air per
+retrieval layer, so it is taken to be spread evenly in pressure inside each one.
 
 Three fill strategies are supported, selected by ``fill``:
 
@@ -116,7 +134,9 @@ class ColumnOperator:
         The part of the simulated column that does not depend on the model
         state (ppb): the ``(1 - A) x_a`` term plus the fill contribution.
     pressure_weight
-        Retrieval pressure weights ``pw_j``, top first. Sums to one.
+        Each retrieval layer's share ``pw_j`` of the retrieval's dry-air
+        column, top first. Sums to one. Named for the "pressure weights" of
+        the reference implementation, which it replaces.
     coverage
         Fraction ``f_j`` of each retrieval layer spanned by the model, top
         first. Values below one mean part of that layer was filled.
@@ -172,10 +192,11 @@ def _interp_mean(lo: float, hi: float, knot_p: np.ndarray, knot_v: np.ndarray) -
     return float(integral / (hi - lo))
 
 
-def build_column_operator(
+def build_column_operator(  # noqa: PLR0913
     sat_edge: np.ndarray,
     avker: np.ndarray,
     prior: np.ndarray,
+    dry_air: np.ndarray,
     model_edge: np.ndarray,
     fill: str = FILL_PRIOR,
 ) -> ColumnOperator:
@@ -190,6 +211,9 @@ def build_column_operator(
         Column averaging kernel, dimensionless, top first.
     prior
         Retrieval a-priori profile as a dry-air mole fraction (ppb), top first.
+    dry_air
+        Retrieval dry-air sub-columns, top first, in any unit: only each
+        layer's share of their sum is used.
     model_edge
         Model level pressures (Pa), descending from the surface, length
         ``n_model_layer + 1``.
@@ -209,11 +233,16 @@ def build_column_operator(
     sat_edge = np.asarray(sat_edge, dtype=float)
     avker = np.asarray(avker, dtype=float)
     prior = np.asarray(prior, dtype=float)
+    dry_air = np.asarray(dry_air, dtype=float)
     model_edge = np.asarray(model_edge, dtype=float)
 
     n_sat = sat_edge.size - 1
-    if avker.shape != (n_sat,) or prior.shape != (n_sat,):
-        raise ValueError("averaging kernel and prior must have one value per retrieval layer")
+    if avker.shape != (n_sat,) or prior.shape != (n_sat,) or dry_air.shape != (n_sat,):
+        raise ValueError(
+            "averaging kernel, prior and dry air must have one value per retrieval layer"
+        )
+    if np.any(dry_air <= 0.0):
+        raise ValueError("dry-air sub-columns must be positive")
     if np.any(np.diff(sat_edge) <= 0.0):
         raise ValueError("retrieval level pressures must ascend from the top of the atmosphere")
     if np.any(np.diff(model_edge) >= 0.0):
@@ -228,15 +257,14 @@ def build_column_operator(
     model_edge[0] = sat_edge[-1]
 
     sat_thickness = np.diff(sat_edge)
-    column_thickness = sat_edge[-1] - sat_edge[0]
-    pressure_weight = sat_thickness / column_thickness
+    pressure_weight = dry_air / dry_air.sum()
 
     overlap = pressure_overlap(sat_edge, model_edge)
     coverage = overlap.sum(axis=1) / sat_thickness
 
     # The covered part of the column, equation (4) first term, folded into (3).
-    # pw_j / dp_j is the same constant for every layer, hence the simple form.
-    weights = (avker[:, np.newaxis] * overlap).sum(axis=0) / column_thickness
+    layer_gain = pressure_weight * avker / sat_thickness
+    weights = (layer_gain[:, np.newaxis] * overlap).sum(axis=0)
 
     # The model spans a contiguous pressure range, so the uncovered part of each
     # retrieval layer is the slice above the model top.

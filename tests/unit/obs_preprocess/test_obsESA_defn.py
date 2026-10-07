@@ -46,8 +46,9 @@ def model_edges():
 def sounding():
     """The retrieval fields add_visibility reads, top of atmosphere first."""
     prior_ppb = np.linspace(600.0, 1850.0, N_SAT)
-    # mol m-2; uniform, so that the ppb prior is recovered exactly
-    dry_air = np.full(N_SAT, 1.0e4)
+    # mol m-2; heavier towards the top, as on real soundings but exaggerated,
+    # so that a weight taken from pressure thickness cannot come out right
+    dry_air = np.linspace(1.1e4, 0.9e4, N_SAT)
     return {
         "pressure_levels": sat_edges(),
         # neither uniform nor everywhere below one, so that a weight cannot come
@@ -134,24 +135,31 @@ def test_preprocessor_puts_no_fill_weight_on_the_topmost_model_layer():
     sat_edge = sat_edges()
     model_edge = model_edges()
     avker = obs.src_data["obs_kernel"]
-    column_thickness = sat_edge[-1] - sat_edge[0]
+    dry_air = obs.src_data["dry_air_subcolumns"]
+    # the top retrieval layer's share of the dry air, per unit pressure in it
+    top_share_per_pa = dry_air[0] / dry_air.sum() / (sat_edge[1] - sat_edge[0])
 
     weight_grid = obs.add_visibility(light_path(), FakeModelSpace())
 
     # the topmost model layer lies wholly inside the topmost retrieval layer, so
-    # the only weight it can earn is the kernel times its own pressure share
+    # the only weight it can earn is the kernel times its own air-mass share
     assert model_edge[-2] < sat_edge[1]
-    air_mass_share = avker[0] * (model_edge[-2] - model_edge[-1]) / column_thickness
+    air_mass_share = avker[0] * (model_edge[-2] - model_edge[-1]) * top_share_per_pa
 
     top_layer = sum(w for coord, w in weight_grid.items() if coord[2] == N_MODEL - 1)
     assert top_layer == pytest.approx(air_mass_share)
 
     # what an anchored fill would have added instead: the whole column above the
     # model top, which outweighs the layer itself several times over
-    uncovered = avker[0] * (model_edge[-1] - sat_edge[0]) / column_thickness
+    uncovered = avker[0] * (model_edge[-1] - sat_edge[0]) * top_share_per_pa
     assert uncovered > air_mass_share
     anchored = build_column_operator(
-        sat_edge, avker, obs.out_dict["prior_profile"], model_edge, fill=FILL_PRIOR_OFFSET
+        sat_edge,
+        avker,
+        obs.out_dict["prior_profile"],
+        dry_air,
+        model_edge,
+        fill=FILL_PRIOR_OFFSET,
     )
     assert anchored.weights[-1] == pytest.approx(air_mass_share + uncovered)
 
@@ -167,12 +175,16 @@ def test_preprocessor_builds_the_prior_fill_operator():
         sat_edge=sat_edges(),
         avker=avker,
         prior=obs.out_dict["prior_profile"],
+        dry_air=obs.src_data["dry_air_subcolumns"],
         model_edge=model_edges(),
         fill=FILL_PRIOR,
     )
     assert obs.out_dict["model_vis"] == pytest.approx(expected.weights)
     assert obs.out_dict["offset_term"] == pytest.approx(expected.offset)
     assert obs.out_dict["model_coverage"] == pytest.approx(expected.coverage)
+    # the layer weights stored with the observation are the dry-air shares
+    dry_air = obs.src_data["dry_air_subcolumns"]
+    assert obs.out_dict["sat_pressure_weight"] == pytest.approx(dry_air / dry_air.sum())
 
     # the weights account for the covered column and nothing else; the fill is
     # wholly in the constant term

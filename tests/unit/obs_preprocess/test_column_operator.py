@@ -1,7 +1,11 @@
 """Tests for the vertical part of the TROPOMI column operator.
 
-The reference implementation this is checked against is
+The operator is checked against two references: the implementation at
 https://github.com/hannahnesser/TROPOMI_inversion/blob/main/python/TROPOMI_operator.py
+and equations 2-4 of the S5P CH4 product user manual (SRON-S5P-LEV2-MA-001,
+issue 2.9.1, section 8.5.1). The first weights each retrieval layer by its
+pressure thickness, the second by its dry-air sub-column, so the first only
+applies where the dry air is spread evenly in pressure.
 """
 
 import numpy as np
@@ -31,6 +35,12 @@ VGLVLS = np.array(
     ]
 )
 # fmt: on
+
+# Dry-air sub-columns spread evenly in pressure over the equidistant grid that
+# sat_edges() builds, so that the dry-air weights equal the pressure-thickness
+# weights of the reference implementation. Tests that compare against that
+# implementation, or against shares of pressure thickness, depend on this.
+UNIFORM_DRY_AIR = np.full(N_SAT, 1.0)
 
 
 def sat_edges(surface_pressure=99752.0, n_layer=N_SAT):
@@ -127,7 +137,7 @@ def test_full_coverage_reproduces_the_reference_implementation():
         prior = rng.uniform(400.0, 1900.0, N_SAT)
         profile = rng.uniform(1500.0, 2100.0, VGLVLS.size - 1)
 
-        operator = build_column_operator(sat_edge, avker, prior, model_edge)
+        operator = build_column_operator(sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge)
         assert np.all(operator.coverage == pytest.approx(1.0))
 
         got = operator.weights @ profile + operator.offset
@@ -146,25 +156,88 @@ def test_model_top_fill_reproduces_the_reference_implementation():
         prior = rng.uniform(400.0, 1900.0, N_SAT)
         profile = rng.uniform(1500.0, 2100.0, VGLVLS.size - 1)
 
-        operator = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_MODEL_TOP)
+        operator = build_column_operator(
+            sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_MODEL_TOP
+        )
         got = operator.weights @ profile + operator.offset
         expected = reference_column(avker, prior, sat_edge, model_edge, profile)
         assert got == pytest.approx(expected, rel=1e-10)
 
 
-def test_unit_kernel_and_full_coverage_is_a_pressure_weighted_mean():
+def test_unit_kernel_and_full_coverage_is_a_dry_air_weighted_mean():
     sat_edge = sat_edges()
     model_edge = cmaq_edges(surface_pressure=sat_edge[-1], vgtop=0.0)
     avker = np.ones(N_SAT)
     prior = np.linspace(1900.0, 400.0, N_SAT)[::-1]
+    dry_air = np.linspace(1.1, 0.9, N_SAT)
+    profile = np.linspace(1900.0, 1750.0, VGLVLS.size - 1)
 
-    operator = build_column_operator(sat_edge, avker, prior, model_edge)
+    operator = build_column_operator(sat_edge, avker, prior, dry_air, model_edge)
 
     assert operator.offset == pytest.approx(0.0, abs=1e-9)
     assert operator.weights.sum() == pytest.approx(1.0)
-    assert operator.pressure_weight.sum() == pytest.approx(1.0)
-    # an equidistant retrieval grid has uniform pressure weights
-    assert operator.pressure_weight == pytest.approx(np.full(N_SAT, 1.0 / N_SAT))
+    assert operator.pressure_weight == pytest.approx(dry_air / dry_air.sum())
+
+    # each retrieval layer's mean of the model profile, weighted by its dry air
+    overlap = pressure_overlap(sat_edge, model_edge)
+    on_sat = overlap @ profile / overlap.sum(axis=1)
+    expected = (dry_air * on_sat).sum() / dry_air.sum()
+    assert operator.weights @ profile == pytest.approx(expected, rel=1e-12)
+
+
+def test_matches_the_product_user_manual_in_partial_columns():
+    """The simulated column follows PUM section 8.5.1, equations 2-4.
+
+    The manual applies the kernel to layer partial columns of methane, takes
+    each model partial column as the model mole fraction times that layer's
+    dry-air sub-column, and divides the result by the total dry-air column. It
+    is written out here in those terms rather than as weights.
+    """
+    rng = np.random.default_rng(20240115)
+    sat_edge = sat_edges()
+    model_edge = cmaq_edges()
+    overlap = pressure_overlap(sat_edge, np.clip(model_edge, sat_edge[0], sat_edge[-1]))
+    covered = overlap.sum(axis=1)
+    uncovered = np.diff(sat_edge) - covered
+    # only the top retrieval layer reaches above the model top
+    assert uncovered[0] > 0.0 and np.allclose(uncovered[1:], 0.0)
+
+    for _ in range(20):
+        avker = rng.uniform(0.2, 1.4, N_SAT)
+        prior = rng.uniform(400.0, 1900.0, N_SAT)
+        # a prior that is flat across the top two layers is flat over the
+        # uncovered slice too, so the prior fill there is simply prior[0]
+        prior[1] = prior[0]
+        dry_air = rng.uniform(800.0, 1200.0, N_SAT)
+        profile = rng.uniform(1500.0, 2100.0, VGLVLS.size - 1)
+
+        operator = build_column_operator(sat_edge, avker, prior, dry_air, model_edge)
+
+        # the model on the retrieval grid, filled from the prior above its top
+        model_on_sat = (overlap @ profile + uncovered * prior) / np.diff(sat_edge)
+        model_partial = model_on_sat * dry_air
+        prior_partial = prior * dry_air
+        methane_column = prior_partial.sum() + (avker * (model_partial - prior_partial)).sum()
+        expected = methane_column / dry_air.sum()
+
+        got = operator.weights @ profile + operator.offset
+        assert got == pytest.approx(expected, rel=1e-12)
+
+
+def test_dry_air_units_do_not_matter():
+    """Only each layer's share of the dry air is used."""
+    sat_edge = sat_edges()
+    model_edge = cmaq_edges()
+    avker = np.linspace(1.15, 0.8, N_SAT)
+    prior = np.linspace(1000.0, 1850.0, N_SAT)
+    dry_air = np.linspace(1.1, 0.9, N_SAT)
+
+    operator = build_column_operator(sat_edge, avker, prior, dry_air, model_edge)
+    # mol m-2 on a real sounding are of order 1e3 per layer
+    scaled = build_column_operator(sat_edge, avker, prior, 3.7e3 * dry_air, model_edge)
+
+    assert scaled.weights == pytest.approx(operator.weights, rel=1e-12)
+    assert scaled.offset == pytest.approx(operator.offset, rel=1e-12)
 
 
 def test_constant_model_profile_matches_the_kernel_formula():
@@ -174,9 +247,10 @@ def test_constant_model_profile_matches_the_kernel_formula():
     rng = np.random.default_rng(7)
     avker = rng.uniform(0.2, 1.2, N_SAT)
     prior = rng.uniform(400.0, 1900.0, N_SAT)
+    dry_air = rng.uniform(800.0, 1200.0, N_SAT)
     value = 1850.0
 
-    operator = build_column_operator(sat_edge, avker, prior, model_edge)
+    operator = build_column_operator(sat_edge, avker, prior, dry_air, model_edge)
 
     got = operator.weights.sum() * value + operator.offset
     expected = (operator.pressure_weight * (prior + avker * (value - prior))).sum()
@@ -185,7 +259,9 @@ def test_constant_model_profile_matches_the_kernel_formula():
 
 def test_partial_coverage_is_reported():
     sat_edge = sat_edges()
-    operator = build_column_operator(sat_edge, np.ones(N_SAT), np.full(N_SAT, 1800.0), cmaq_edges())
+    operator = build_column_operator(
+        sat_edge, np.ones(N_SAT), np.full(N_SAT, 1800.0), UNIFORM_DRY_AIR, cmaq_edges()
+    )
 
     # only the topmost retrieval layer reaches above VGTOP
     assert operator.coverage[0] < 1.0
@@ -208,8 +284,12 @@ def test_prior_offset_fill_is_continuous_with_the_model_top():
     prior = np.full(N_SAT, 1800.0)
     profile = np.linspace(1900.0, 1750.0, VGLVLS.size - 1)
 
-    offset_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR_OFFSET)
-    model_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_MODEL_TOP)
+    offset_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR_OFFSET
+    )
+    model_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_MODEL_TOP
+    )
 
     assert offset_fill.weights @ profile + offset_fill.offset == pytest.approx(
         model_fill.weights @ profile + model_fill.offset
@@ -225,9 +305,15 @@ def test_prior_offset_fill_carries_the_prior_gradient():
     prior = np.linspace(1000.0, 1850.0, N_SAT)
     profile = np.full(VGLVLS.size - 1, 1800.0)
 
-    offset_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR_OFFSET)
-    model_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_MODEL_TOP)
-    prior_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR)
+    offset_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR_OFFSET
+    )
+    model_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_MODEL_TOP
+    )
+    prior_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR
+    )
 
     with_offset = offset_fill.weights @ profile + offset_fill.offset
     with_model = model_fill.weights @ profile + model_fill.offset
@@ -251,7 +337,9 @@ def test_prior_offset_fill_tracks_the_model_top_layer():
     avker = np.ones(N_SAT)
     prior = np.linspace(1000.0, 1850.0, N_SAT)
 
-    operator = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR_OFFSET)
+    operator = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR_OFFSET
+    )
 
     profile = np.full(VGLVLS.size - 1, 1800.0)
     bumped = profile.copy()
@@ -269,7 +357,9 @@ def test_prior_fill_does_not_depend_on_the_model_top():
     model_edge = cmaq_edges()
     prior = np.linspace(1000.0, 1850.0, N_SAT)
 
-    operator = build_column_operator(sat_edge, np.ones(N_SAT), prior, model_edge, fill=FILL_PRIOR)
+    operator = build_column_operator(
+        sat_edge, np.ones(N_SAT), prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR
+    )
 
     # the top model layer only carries the part of the column it actually spans
     assert operator.weights[-1] == pytest.approx(
@@ -287,6 +377,7 @@ def test_surface_pressure_mismatch_leaves_no_gap_at_the_bottom():
             sat_edge,
             np.ones(N_SAT),
             np.full(N_SAT, 1800.0),
+            UNIFORM_DRY_AIR,
             cmaq_edges(surface_pressure=model_surface),
         )
         # every retrieval layer below the model top is fully covered
@@ -300,13 +391,17 @@ def test_rejects_badly_ordered_input():
     prior = np.full(N_SAT, 1800.0)
 
     with pytest.raises(ValueError, match="ascend"):
-        build_column_operator(sat_edge[::-1], avker, prior, model_edge)
+        build_column_operator(sat_edge[::-1], avker, prior, UNIFORM_DRY_AIR, model_edge)
     with pytest.raises(ValueError, match="descend"):
-        build_column_operator(sat_edge, avker, prior, model_edge[::-1])
+        build_column_operator(sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge[::-1])
     with pytest.raises(ValueError, match="one value per retrieval layer"):
-        build_column_operator(sat_edge, avker[:-1], prior, model_edge)
+        build_column_operator(sat_edge, avker[:-1], prior, UNIFORM_DRY_AIR, model_edge)
+    with pytest.raises(ValueError, match="one value per retrieval layer"):
+        build_column_operator(sat_edge, avker, prior, UNIFORM_DRY_AIR[:-1], model_edge)
+    with pytest.raises(ValueError, match="must be positive"):
+        build_column_operator(sat_edge, avker, prior, np.zeros(N_SAT), model_edge)
     with pytest.raises(ValueError, match="unknown fill strategy"):
-        build_column_operator(sat_edge, avker, prior, model_edge, fill="nonsense")
+        build_column_operator(sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill="nonsense")
 
 
 def test_default_fill_is_the_prior():
@@ -321,8 +416,10 @@ def test_default_fill_is_the_prior():
     avker = np.ones(N_SAT)
     prior = np.linspace(1000.0, 1850.0, N_SAT)
 
-    default = build_column_operator(sat_edge, avker, prior, model_edge)
-    explicit = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR)
+    default = build_column_operator(sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge)
+    explicit = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR
+    )
 
     assert default.weights == pytest.approx(explicit.weights)
     assert default.offset == pytest.approx(explicit.offset)
@@ -340,8 +437,12 @@ def test_prior_fill_weights_the_top_layer_by_its_air_mass():
     avker = np.ones(N_SAT)
     prior = np.linspace(1000.0, 1850.0, N_SAT)
 
-    prior_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR)
-    offset_fill = build_column_operator(sat_edge, avker, prior, model_edge, fill=FILL_PRIOR_OFFSET)
+    prior_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR
+    )
+    offset_fill = build_column_operator(
+        sat_edge, avker, prior, UNIFORM_DRY_AIR, model_edge, fill=FILL_PRIOR_OFFSET
+    )
 
     # the pressure share of the top model layer, as a fraction of the retrieval column
     air_mass_share = prior_fill.overlap[:, -1].sum() / (sat_edge[-1] - sat_edge[0])
