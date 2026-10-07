@@ -103,4 +103,4 @@ The `tests/integration/fourdvar/` tests rely on input data which hasn't been pro
 
 ## Release Process
 
-Changelog entries go in `changelog/` using towncrier conventions (one file per PR, named `{PR_NUMBER}.{type}.md` where type is `breaking`, `feature`, `improvement`, `fix`, `docs`, or `trivial`). Releases are cut via the GitHub Actions `release.yaml` workflow.
+Changelog entries go in `changelog/` using towncrier conventions (named `{PR_NUMBER}.{type}.md` where type is `breaking`, `feature`, `improvement`, `fix`, `docs`, or `trivial`). A PR can have several entries, and each separate change needs its own file, because newlines in a file do not make separate bullets in the changelog. Add a counter to tell files apart, e.g. `123.feature.1.md` and `123.feature.2.md`, and use `breaking` for any change to existing behaviour. Releases are cut via the GitHub Actions `release.yaml` workflow.
