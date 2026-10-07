@@ -34,11 +34,20 @@ daily runs already did.
 
 ### download_cams_input
 
-Downloads methane fields from
-[CAMS](https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4)
-on pressure levels, to `CAMS_FILE`. CAMS is a global atmospheric reanalysis; it
-supplies what methane is entering the domain from outside, which the regional
-model cannot know on its own.
+Downloads global methane fields from CAMS to `CAMS_FILE`. They supply what
+methane is entering the domain from outside, which the regional model cannot
+know on its own. `CAMS_PRODUCT` chooses the product:
+
+| `CAMS_PRODUCT` | Product | Notes |
+| --- | --- | --- |
+| `eac4` | [CAMS global reanalysis (EAC4)](https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4), 25 pressure levels, 3-hourly | CH4 is not assimilated: it is a free-running model field, about 110–120 ppb below the satellite-constrained products over the domain. |
+| `inversion` | [CAMS greenhouse gas inversion](https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-inversion), surface and satellite, 34 hybrid levels, 6-hourly | Constrained by the NOAA surface network and TROPOMI. Covers up to the end of the latest release's last year. Releases re-process past dates, so `CAMS_INVERSION_VERSION` is pinned and recorded. |
+
+The inversion cannot be subset on the ADS. Each month is a 2.2 GB global file,
+which the script fetches with parallel range requests (about 4 minutes) and cuts
+to the domain, plus 3° of padding, before saving. It needs that much temporary
+disk next to `CAMS_FILE`. If the dates are beyond the inversion's coverage the
+download fails with an error that says so.
 
 Requires ADS credentials. Skip with `SKIP_CAMS_DOWNLOAD`.
 
@@ -131,6 +140,10 @@ The correction is confined to what the observations see by construction: only
 cells carrying observation weight enter the simulated mean, so no separate
 regional masking is applied. A fixed additional offset can be applied with
 `CAMS_TO_CMAQ_BIAS`.
+
+The size of the correction is logged. Against EAC4 it is about +108 ppb. The
+inversion is already anchored to TROPOMI, so expect a few ppb with
+`CAMS_PRODUCT=inversion`: a large value points to a units or mapping error.
 
 ## Verifying the output
 

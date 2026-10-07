@@ -1,23 +1,34 @@
 #!/usr/bin/env python
 """
-Download CAMS data on pressure levels
+Download CAMS methane fields to use as boundary and initial conditions
 
-Here we use EAC4 data product,
-which is the latest generation of the Copernicus Atmosphere Monitoring Service (CAMS)
-reanalysis data products.
+Two products are available, chosen by CAMS_PRODUCT:
 
-Download volume: ~1.4GB / month
-Description: https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4
+- `eac4`: the CAMS reanalysis (EAC4) on pressure levels. CH4 is not assimilated
+  in EAC4, it is a free-running model field. About 1.4GB / month.
+  https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4
+- `inversion`: the CAMS greenhouse gas inversion (TM5-MP 4D-Var, surface network
+  plus satellite). The ADS cannot subset it, so each month is a 2.2GB global file
+  which is fetched with parallel range requests, then cut to the domain.
+  https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-inversion
 
 Assumes that the user has a valid ADS account and has set up the necessary credentials
 in `~/.cdsapirc`.
 """
 
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
 import cdsapi
 import click
+
+from openmethane.cmaq_preprocess.cams_download import (
+    cut_inversion_to_domain,
+    download_inversion,
+)
+from openmethane.cmaq_preprocess.read_config_cmaq import load_config_from_env
+from openmethane.fourdvar.env import create_env
 
 DATETIME_FORMAT = "%Y-%m-%d"
 
@@ -40,28 +51,46 @@ DATETIME_FORMAT = "%Y-%m-%d"
 @click.argument(
     "output",
     type=click.Path(exists=False, path_type=Path),
-    default="data/inputs/cams_eac4_methane.nc",
+    required=False,
 )
-def download_cams_input(start_date: str, end_date: str, output: str | Path, force: bool = False):
+def download_cams_input(
+    start_date: str, end_date: str, output: str | Path | None, force: bool = False
+):
     """
-    Download Methane chemistry data from CAMS on pressure levels
+    Download CAMS methane fields for the date range
 
-    These data are stored on tape, so the download may be queued for several minutes
+    The product is CAMS_PRODUCT. OUTPUT defaults to CAMS_FILE.
+
+    EAC4 data are stored on tape, so the download may be queued for several minutes
     while the data are retrieved.
     """
-    if datetime.strptime(start_date, DATETIME_FORMAT) > datetime.strptime(
-        end_date, DATETIME_FORMAT
-    ):
+    start = datetime.strptime(start_date, DATETIME_FORMAT).date()
+    end = datetime.strptime(end_date, DATETIME_FORMAT).date()
+    if start > end:
         raise ValueError("Start date must be before end date")
 
-    if not force and Path(output).exists():
+    config = load_config_from_env()
+    output = Path(output or config.input_cams_file)
+    if not force and output.exists():
         print(f"CAMS file {output} already exists, skipping")
         return
 
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    if config.cams_product == "inversion":
+        domain_file = create_env().path("DOMAIN_FILE")
+        with tempfile.TemporaryDirectory(dir=output.parent) as scratch:
+            monthly_files = download_inversion(
+                start, end, config.cams_inversion_version, Path(scratch)
+            )
+            cut_inversion_to_domain(monthly_files, domain_file, start, end, output)
+    else:
+        download_eac4(start_date, end_date, output)
+
+
+def download_eac4(start_date: str, end_date: str, output: Path):
     # This will use ENV variables CDSAPI_KEY and CDSAPI_URL to connect to ADS
     c = cdsapi.Client()
-    output = Path(output)
-    output.parent.mkdir(parents=True, exist_ok=True)
 
     # fmt: off
     c.retrieve(

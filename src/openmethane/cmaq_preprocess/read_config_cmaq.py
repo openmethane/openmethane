@@ -153,6 +153,12 @@ class CMAQConfig:
 
     `eac4` is the CAMS reanalysis, `inversion` is the CAMS greenhouse gas inversion.
     """
+    cams_inversion_version: str = "v25r1"
+    """
+    Release of the CAMS inversion to download when `cams_product` is `inversion`
+
+    Each release re-processes the whole record, so values for a date differ between releases.
+    """
 
 
 def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfig:
@@ -219,6 +225,7 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 0.0),
         boundary_trim=env.int("BOUNDARY_TRIM", 5),
         cams_product=env.str("CAMS_PRODUCT", "eac4"),
+        cams_inversion_version=env.str("CAMS_INVERSION_VERSION", "v25r1"),
     )
 
     return CMAQConfig(domain=domain, **{**options, **overrides})

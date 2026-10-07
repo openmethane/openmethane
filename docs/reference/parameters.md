@@ -112,6 +112,7 @@ value.
 | --- | --- | --- | --- |
 | `FORCE_UPDATE` | bool | Regenerate CMAQ preprocessing outputs even when they already exist | `true` |
 | `CAMS_PRODUCT` | str | Which CAMS product `CAMS_FILE` holds: `eac4` (the CAMS reanalysis) or `inversion` (the CAMS greenhouse gas inversion, cut to the domain). The run fails with an error if the file does not cover the run's dates. | `eac4` |
+| `CAMS_INVERSION_VERSION` | str | Release of the CAMS inversion to download with `CAMS_PRODUCT=inversion`. Each release re-processes the whole record, so the values for a date change between releases. The release is stored in the downloaded file and in the `CAMS_RELEASE` attribute of the ICON and BCON files. | `v25r1` |
 | `CAMS_TO_CMAQ_BIAS` | float | Fixed bias correction applied when interpolating CAMS onto the CMAQ grid | `0.0` |
 | `DISABLE_CORRECT_BIAS_BY_REGION` | str | Set to exactly `"true"` to compute the CAMS bias over the whole domain instead of only the region sampled by observations. Any other value, including unset, uses regional correction. | unset |
 | `SKIP_CAMS_DOWNLOAD` | str | Set to any non-empty value to skip the CAMS download in `run-cmaq-preprocess.sh` | unset |
