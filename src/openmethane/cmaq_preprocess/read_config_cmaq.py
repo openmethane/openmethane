@@ -24,6 +24,9 @@ def process_date_string(value) -> datetime.date:
         raise TypeError(f"Cannot process {value} as a date. {type(value)}")
 
 
+CAMS_PRODUCTS = ("eac4", "inversion")
+
+
 @frozen
 class Domain:
     index: int
@@ -141,6 +144,15 @@ class CMAQConfig:
 
     5 is a good start for larger domains.
     """
+    cams_product: str = field(
+        default="eac4",
+        validator=attrs.validators.in_(CAMS_PRODUCTS),
+    )
+    """
+    Which CAMS product `input_cams_file` holds
+
+    `eac4` is the CAMS reanalysis, `inversion` is the CAMS greenhouse gas inversion.
+    """
 
 
 def create_cmaq_config_object(config: dict[str, str | int | float]) -> CMAQConfig:
@@ -206,6 +218,7 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
         mech="CH4only",
         cams_to_cmaq_bias=env.float("CAMS_TO_CMAQ_BIAS", 0.0),
         boundary_trim=env.int("BOUNDARY_TRIM", 5),
+        cams_product=env.str("CAMS_PRODUCT", "eac4"),
     )
 
     return CMAQConfig(domain=domain, **{**options, **overrides})

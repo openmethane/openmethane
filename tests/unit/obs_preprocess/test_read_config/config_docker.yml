@@ -1,4 +1,5 @@
 boundary_trim: 5
+cams_product: eac4
 cams_to_cmaq_bias: 0.0
 cmaq_bin_dir: /opt/cmaq/bin
 cmaq_scripts_dir: /app/scripts/cmaq

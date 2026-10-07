@@ -50,7 +50,14 @@ The substantial step. `scripts/cmaq_preprocess/setup_for_cmaq.py`:
 - runs **MCIP** to extract meteorology from the WRF output and interpolate it
   onto the CMAQ grid
 - prepares initial and boundary conditions using **ICON** and **BCON**
-- interpolates the CAMS data onto the CMAQ grid
+- interpolates the CAMS data onto the CMAQ grid. A reader for each product
+  (`cams_readers.py`) returns methane in ppmV and the pressure of every level, on
+  the CAMS grid and levels. This is a common intermediate, not the CMAQ format,
+  so both products take the same path from there: the nearest CAMS cell for each
+  CMAQ column, then linear interpolation in log-pressure from that cell's levels
+  onto the column's own CMAQ layer pressures. The result is written to the ICON
+  and BCON files on CMAQ's own cells and layers, with `CAMS_PRODUCT` and, for the
+  inversion, `CAMS_RELEASE` as global attributes.
 
 Afterwards there are results in `MET_DIR` and `CTM_DIR`.
 
