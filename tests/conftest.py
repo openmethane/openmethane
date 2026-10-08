@@ -40,7 +40,9 @@ def _clean_attrs(
         "CTIME",
         "WDATE",
         "WTIME",
-        "IOAPI_VERSION",  # TODO: Check why this differs on the CI
+        # IOAPI 3.1 truncates this to the length of a stale buffer
+        # (crtfil3.F), so its value depends on what the binary wrote before
+        "IOAPI_VERSION",
     ),
 ) -> dict:
     clean = {}
