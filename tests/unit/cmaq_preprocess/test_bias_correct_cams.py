@@ -151,9 +151,18 @@ def test_mean_weight_sum(test_data_dir, monkeypatch):
 
     obs = d.ObservationData.from_file(test_data_dir / "obs" / OBS_FILE_NAME)
 
-    # the operational TROPOMI column kernel is normalised against the pressure
-    # weights, so the operator puts a total weight of one on the model
-    assert mean_weight_sum(obs) == pytest.approx(1.0, abs=1e-6)
+    # the operator carries the kernel over the part of the column the model
+    # spans, and fills the rest from the retrieval prior, so the total weight
+    # it puts on the model falls short of one by the air above the model top
+    expected = np.mean(
+        [
+            (np.asarray(meta["sat_pressure_weight"]) * np.asarray(meta["obs_kernel"]))
+            @ np.asarray(meta["model_coverage"])
+            for meta in obs.misc_meta
+        ]
+    )
+    assert mean_weight_sum(obs) == pytest.approx(expected, rel=1e-6)
+    assert mean_weight_sum(obs) < 1.0
 
 
 def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypatch):
@@ -162,8 +171,8 @@ def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypat
     `O - F` is the residual the driver reports as its first-guess `bias`, so a
     correction built from anything else leaves that report non-zero. The forward
     run is stubbed out; only the arithmetic around it is under test. The test
-    data is a single day on which the operator weight is one, so it pins neither
-    the per-sounding weighting nor the division by `W`.
+    data is a single day on which the operator weight barely varies between
+    soundings, so it does not pin the per-sounding weighting.
     """
     monkeypatch.setenv("START_DATE", "2022-12-07")
     monkeypatch.setenv("END_DATE", "2022-12-07")
