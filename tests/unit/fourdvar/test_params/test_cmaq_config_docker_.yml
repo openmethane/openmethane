@@ -59,7 +59,7 @@ irr1_file: /app/data/run-cmaq/output/IRR_1.<YYYYMMDD>.nc
 irr2_file: /app/data/run-cmaq/output/IRR_2.<YYYYMMDD>.nc
 irr3_file: /app/data/run-cmaq/output/IRR_3.<YYYYMMDD>.nc
 jproc_path: /app/data/run-cmaq/jproc
-kzmin: false
+kzmin: true
 last_grid_file: /app/data/run-cmaq/output/CGRID.<YYYYMMDD>.nc
 layerfile: /app/data/mcip/<YYYY-MM-DD>/d01/METCRO3D_au-test_v1
 maxsync: 600
