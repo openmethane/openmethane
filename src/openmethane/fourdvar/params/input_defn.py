@@ -25,5 +25,9 @@ prior_file = os.path.join(store_path, "input/prior.nc")
 # full path to the obs file used by user_driver.get_observed
 obs_file = os.path.join(store_path, env.str("OBS_FILE_GLOB", "input/test_obs.pic.gz"))
 
+# observations whose SWIR aerosol optical depth is at or above this are dropped
+# when the obs file is read; None keeps everything tropomi_methane_preprocess wrote
+obs_max_swir_aod = env.float("OBS_MAX_SWIR_AOD", None)
+
 # include model initial conditions in solution
 inc_icon = False

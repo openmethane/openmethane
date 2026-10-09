@@ -27,7 +27,7 @@ import openmethane.fourdvar.util.date_handle as dt
 import openmethane.fourdvar.util.file_handle as fh
 import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar.datadef.abstract._fourdvar_data import FourDVarData
-from openmethane.fourdvar.params import date_defn, template_defn
+from openmethane.fourdvar.params import date_defn, input_defn, template_defn
 from openmethane.fourdvar.util.archive_handle import get_archive_path
 from openmethane.util.logger import get_logger
 
@@ -65,11 +65,14 @@ def load_observations_from_file(
     filename: str | pathlib.Path,
     start_date: datetime.date,
     end_date: datetime.date,
+    max_swir_aod: float | None = None,
 ) -> ObservationCollection:
     """
     Loads processed observation data from disk
 
     Observations that occurred outside the start_date and end_date are dropped.
+    If max_swir_aod is given, observations with an `aerosol_aod_SWIR` at or
+    above it are dropped as well.
 
     Parameters
     ----------
@@ -81,6 +84,10 @@ def load_observations_from_file(
         Date to start loading observations from (inclusive)
     end_date
         Date to stop loading observations from (inclusive)
+    max_swir_aod
+        Drop observations whose SWIR aerosol optical depth is at or above this.
+        Only applied to full files: a lite file is written from observations
+        that were already filtered.
 
     Raises
     ------
@@ -109,6 +116,14 @@ def load_observations_from_file(
 
     # Drop observations outside the date range
     obs_list = [o for o in obs_list if start_date <= o["time"].date() <= end_date]
+
+    if max_swir_aod is not None and not domain.get("is_lite", False):
+        n_before = len(obs_list)
+        obs_list = [o for o in obs_list if o["aerosol_aod_SWIR"] < max_swir_aod]
+        logger.info(
+            f"SWIR AOD filter: kept {len(obs_list)} of {n_before} observations "
+            f"with aerosol_aod_SWIR < {max_swir_aod} ({n_before - len(obs_list)} dropped)"
+        )
 
     domain["SDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", start_date))
     domain["EDATE"] = np.int32(dt.replace_date("<YYYYMMDD>", end_date))
@@ -241,7 +256,10 @@ class ObservationData(FourDVarData):
         """
 
         obs = load_observations_from_file(
-            filename, start_date=date_defn.start_date, end_date=date_defn.end_date
+            filename,
+            start_date=date_defn.start_date,
+            end_date=date_defn.end_date,
+            max_swir_aod=input_defn.obs_max_swir_aod,
         )
 
         if "is_lite" in obs.domain.keys():
