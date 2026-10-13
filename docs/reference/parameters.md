@@ -76,8 +76,32 @@ simulation day — see
 | `MIN_CELLS_PER_RANK` | int | Fewest grid cells a subdomain may span in either direction | `10` |
 | `MPI_EXTRA_ARGS` | str | Extra arguments passed to `mpirun`, ahead of the CMAQ executable. Used to bind ranks to cores — see [Rank binding](performance.md#rank-binding). Ignored for a serial run. | unset |
 | `NCPUS` | int | Parallelism for TROPOMI preprocessing and alerts | `1` |
+| `CMAQ_KZMIN` | bool | Floor on the vertical eddy diffusivity. `true` sends CMAQ `KZMIN=Y`, flooring Kz at 0.01 m²/s away from urban cells; `false` sends `KZMIN=N`, flooring it at 1.0 m²/s everywhere — see [Vertical mixing](#vertical-mixing). | `true` |
 | `USE_JOBFS` | bool | Put checkpoints on PBS job-local storage (`$PBS_JOBFS`). HPC only; warns and falls back if not run under `qsub`. | `false` |
 | `EXECUTION_ID` | str | Unique identifier for this execution. Only required when `CHK_PATH` is exactly `/mnt/scratch`, where it is appended to keep concurrent runs apart. | *conditionally required* |
+
+### Vertical mixing
+
+`CMAQ_KZMIN` chooses between the two floors CMAQ can put under the vertical eddy
+diffusivity `Kz`. The floor matters wherever the meteorology gives little
+mixing of its own: overnight in the stable boundary layer, and through the free
+troposphere.
+
+- `true` (the default, and CMAQ's own) floors `Kz` at 0.01 m²/s and ramps it
+  towards 1.0 m²/s with urban fraction below 500 m.
+- `false` floors it at 1.0 m²/s at every level, everywhere.
+
+On `aust10km` only 34 of 195,220 cells exceed 1% urban, so over 99.98% of the
+domain the two settings differ by a factor of 100.
+
+The setting changes where emitted methane ends up in the vertical, and through
+that how far it is carried: methane lifted out of the surface layer meets faster
+winds aloft and is redeposited further away. Measured on a month of June 2024
+forward runs, `false` widens the monthly-mean emissions-to-column response from
+492 km to 582 km at the surface layer, and raises the box-mean misfit against
+TROPOMI by 1.4%. `true` is both the better-fitting and the less arbitrary
+setting; `false` is retained for reproducing runs archived before this became
+configurable.
 
 ### MPI domain decomposition
 
