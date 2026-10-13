@@ -29,5 +29,9 @@ obs_file = os.path.join(store_path, env.str("OBS_FILE_GLOB", "input/test_obs.pic
 # when the obs file is read; None keeps everything tropomi_methane_preprocess wrote
 obs_max_swir_aod = env.float("OBS_MAX_SWIR_AOD", None)
 
+# observations whose methane column (ppb) is below this are dropped when the
+# obs file is read; None keeps them all
+obs_min_xch4 = env.float("OBS_MIN_XCH4", None)
+
 # include model initial conditions in solution
 inc_icon = False
