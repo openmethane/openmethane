@@ -105,6 +105,8 @@ tstep:
 use_jobfs: false
 va_rhoj_chk: /app/data/run-cmaq/chkpnt/VA_RHOJ_CHK.<YYYYMMDD>.nc
 vadv_chk: /app/data/run-cmaq/chkpnt/VADV_CHK.<YYYYMMDD>.nc
+vadv_topflx_file: /app/data/run-cmaq/output/VADV_TOPFLX.<YYYYMMDD>.nc
+vadv_topflx_path: /app/data/run-cmaq/output/vadv-topflx
 vdiff_chk: /app/data/run-cmaq/chkpnt/VDIFF_CHK.<YYYYMMDD>.nc
 wetdep1_file: /app/data/run-cmaq/output/WETDEP1.<YYYYMMDD>.nc
 wetdep2_file: /app/data/run-cmaq/output/WETDEP2.<YYYYMMDD>.nc
@@ -147,4 +149,5 @@ wipeout_fwd_list:
 - /app/data/run-cmaq/output/RJ_1.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/RJ_2.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/fwd_stdout.<YYYYMMDD>.log
+write_vadv_topflx: false
 xj_data: /app/data/run-cmaq/jproc/JTABLE_<YYYYDDD>
