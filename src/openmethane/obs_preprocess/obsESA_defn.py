@@ -138,8 +138,8 @@ class ObsSRON(ObsMultiRay):
             sum(weight_grid values * concentration) + offset_term
 
         See `openmethane.obs_preprocess.column_operator` for the operator
-        itself. The averaging kernel, the pressure weights and the a-priori
-        profile all belong to the retrieval, so the model is mapped onto the
+        itself. The averaging kernel, the dry-air layer weights and the
+        a-priori profile all belong to the retrieval, so the model is mapped onto the
         retrieval's vertical grid rather than the other way around.
         """
         # a sample model coordinate at the surface, used to locate the column of
@@ -152,6 +152,7 @@ class ObsSRON(ObsMultiRay):
             sat_edge=self.src_data["pressure_levels"],
             avker=self.src_data["obs_kernel"],
             prior=prior,
+            dry_air=self.src_data["dry_air_subcolumns"],
             model_edge=model_edge,
             # 'prior' fill mode works best with CMAQ adjoint due to issues
             # modelling methane at the top of atmosphere.

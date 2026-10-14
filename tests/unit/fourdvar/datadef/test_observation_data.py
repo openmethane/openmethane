@@ -98,12 +98,19 @@ def test_observation_data_column_operator(test_data_dir, target_environment):
         meta = obs.misc_meta[i]
         avker = np.asarray(meta["obs_kernel"])
         pressure_weight = np.asarray(meta["sat_pressure_weight"])
+        coverage = np.asarray(meta["model_coverage"])
 
-        # TROPOMI column kernels are normalised so that their pressure-weighted
-        # mean is one; the model weights inherit that, since the part of the
-        # column above the model top is filled from the model's own top layer
+        # the layer weights are each retrieval layer's share of the dry-air
+        # column, which TROPOMI layers of equal pressure thickness do not share
+        # equally
+        assert pressure_weight.sum() == pytest.approx(1.0)
+        assert not np.allclose(pressure_weight, 1.0 / pressure_weight.size)
+
+        # the model weights carry the kernel over the part of the column the
+        # model spans and nothing more: the part above the model top is filled
+        # from the retrieval prior, so it lands in the offset instead
         assert sum(obs.weight_grid[i].values()) == pytest.approx(
-            float(pressure_weight @ avker), rel=1e-6
+            float((pressure_weight * avker) @ coverage), rel=1e-6
         )
 
         # the offset is the retrieval prior's contribution, which is nowhere
@@ -112,7 +119,6 @@ def test_observation_data_column_operator(test_data_dir, target_environment):
         assert -50.0 < obs.offset_term[i] < 50.0
 
         # part of the retrieval column sits above the CMAQ model top
-        coverage = np.asarray(meta["model_coverage"])
         assert coverage[0] < 1.0
         assert np.all(coverage[1:] == pytest.approx(1.0))
 

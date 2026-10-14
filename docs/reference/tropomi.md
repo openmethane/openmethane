@@ -56,5 +56,9 @@ CMAQ concentration field plus a constant. The vertical part of that operator —
 mapping the model onto the retrieval's pressure levels, applying the column
 averaging kernel, and filling the part of the column above the CMAQ model top —
 lives in `openmethane.obs_preprocess.column_operator`, which documents the
-equations and the conventions. `tropomi_averaging_kernel_operator.md` in the
-repository root records why the operator is built this way and what it replaced.
+equations and the conventions. Each retrieval layer is weighted by its share of
+the retrieval's dry-air sub-columns, as the product user manual prescribes
+(SRON-S5P-LEV2-MA-001, issue 2.9.1, section 8.5.1); these shares are stored
+with each observation as `sat_pressure_weight`.
+`tropomi_averaging_kernel_operator.md` in the repository root records why the
+operator is built this way and what it replaced.
