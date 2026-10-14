@@ -104,3 +104,11 @@ The `tests/integration/fourdvar/` tests rely on input data which hasn't been pro
 ## Release Process
 
 Changelog entries go in `changelog/` using towncrier conventions (one file per PR, named `{PR_NUMBER}.{type}.md` where type is `breaking`, `feature`, `improvement`, `fix`, `docs`, or `trivial`). Releases are cut via the GitHub Actions `release.yaml` workflow.
+
+Writing a changelog fragment (see `changelog/README.md`):
+- Each fragment becomes one bullet in a section named for its type, so don't repeat the type in the text (no "Breaking change:" or "Fix:" prefix).
+- Write for users of Open Methane, in the past tense ("Changed…", "Removed…", "Fixed…"), not about internal implementation.
+- Short entries can be a single paragraph. Bullets are encouraged when an entry has several separate details, as breaking changes often do; they render as nested bullets under the entry.
+- For `breaking` entries, say what the previous behaviour was, what it is now, and what a user must change. Put secondary caveats in a short final paragraph starting "Note:".
+- Links must be absolute (`https://github.com/openmethane/openmethane/blob/main/docs/...`), since the changelog is also read in GitHub releases where relative paths don't resolve. towncrier appends the PR link itself.
+- Run `make changelog-draft` and read the rendered output before committing.
