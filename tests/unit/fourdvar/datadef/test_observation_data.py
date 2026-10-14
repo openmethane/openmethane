@@ -198,3 +198,22 @@ def test_observation_data_missing(test_data_dir, target_environment):
         FileNotFoundError, match=f"No valid observations files found matching {inp_file}"
     ):
         ObservationData.from_file(inp_file)
+
+
+def test_load_observations_max_swir_aod(test_data_dir, caplog):
+    kwargs = dict(
+        filename=test_data_dir / "obs" / "test_obs_2022-12-*.pic.gz",
+        start_date=datetime.date(2022, 12, 7),
+        end_date=datetime.date(2022, 12, 8),
+    )
+    unfiltered = load_observations_from_file(**kwargs).observations
+    cutoff = float(np.median([o["aerosol_aod_SWIR"] for o in unfiltered]))
+
+    with caplog.at_level(logging.INFO):
+        filtered = load_observations_from_file(**kwargs, max_swir_aod=cutoff).observations
+
+    expected = [o for o in unfiltered if o["aerosol_aod_SWIR"] < cutoff]
+    assert 0 < len(filtered) < len(unfiltered)
+    assert len(filtered) == len(expected)
+    assert all(o["aerosol_aod_SWIR"] < cutoff for o in filtered)
+    assert f"kept {len(filtered)} of {len(unfiltered)} observations" in caplog.text

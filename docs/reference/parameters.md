@@ -57,6 +57,7 @@ What is being modelled. These are the settings that change between runs.
 | `EMIS_FILE` | path | Emissions files | `{CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc` |
 | `FORCE_FILE` | path | Adjoint forcing template file | `{CMAQ_BASE}/force/ADJ_FORCE.<YYYYMMDD>.nc` |
 | `OBS_FILE_GLOB` | str | Glob matching the processed observation files, relative to `STORE_PATH` | `input/test_obs.pic.gz` |
+| `OBS_MAX_SWIR_AOD` | float | Drop observations whose `aerosol_aod_SWIR` is at or above this when the observation files are read, so a stricter cutoff than `tropomi_methane_preprocess.py --swir-aod-cutoff` can be applied without reprocessing | unset (no extra filtering) |
 | `ROOT_DIR` | path | Repository root, used to locate the bundled CMAQ run scripts | derived from the installed package location |
 
 Several of these accept date placeholders such as `<YYYY-MM-DD>`, expanded per
