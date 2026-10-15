@@ -203,3 +203,19 @@ def test_default_cams_file_has_no_release_for_eac4():
     )
 
     assert path == pathlib.Path("/store/cams/cams_eac4_methane_2024-01-01-2024-01-31.nc")
+
+
+def test_the_forecasts_can_be_chosen_with_cams_product(target_environment):
+    target_environment(
+        "docker",
+        overrides={
+            "START_DATE": "2026-01-01",
+            "END_DATE": "2026-01-01",
+            "CAMS_PRODUCT": "forecasts",
+        },
+    )
+
+    config = load_config_from_env()
+
+    assert config.cams_product == "forecasts"
+    assert config.input_cams_file.name == "cams_forecasts_methane_2026-01-01-2026-01-01.nc"
