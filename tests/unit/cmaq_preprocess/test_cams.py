@@ -11,9 +11,11 @@ from openmethane.cmaq_preprocess.cams import (
     cmaq_layer_pressures,
     interpolate_columns,
     interpolate_from_cams_to_cmaq_grid,
+    nearest_points,
 )
 from openmethane.cmaq_preprocess.cams_readers import CamsProfile, open_cams
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
+from openmethane.cmaq_preprocess.utils import get_distance_from_lat_lon_in_km
 
 TEST_DATA = pathlib.Path(__file__).parents[2] / "test-data"
 INVERSION_FILE = TEST_DATA / "cams" / "cams_inversion_v25r1_2022-12-07.nc"
@@ -105,6 +107,25 @@ def test_interpolation_uses_each_columns_own_pressures():
     np.testing.assert_allclose(out[0, 0], 1.85, rtol=1e-6)
     expected_second = 1.9 + (1.85 - 1.9) * np.log(70000 / 80000) / np.log(60000 / 80000)
     np.testing.assert_allclose(out[0, 1], expected_second, rtol=1e-6)
+
+
+def test_nearest_points_match_a_search_of_every_great_circle_distance():
+    # a 0.1 degree grid like the forecasts, and points scattered over it
+    grid_lat, grid_lon = np.meshgrid(
+        np.arange(-45.0, -10.0, 0.1), np.arange(110.0, 155.0, 0.1), indexing="ij"
+    )
+    rng = np.random.default_rng(0)
+    lat = rng.uniform(-44.0, -11.0, size=(20, 30))
+    lon = rng.uniform(111.0, 154.0, size=(20, 30))
+
+    index = nearest_points(grid_lat, grid_lon, lat, lon)
+
+    expected = [
+        get_distance_from_lat_lon_in_km(point_lat, point_lon, grid_lat, grid_lon).argmin()
+        for point_lat, point_lon in zip(lat.ravel(), lon.ravel())
+    ]
+    assert index.shape == lat.shape
+    np.testing.assert_array_equal(index.ravel(), expected)
 
 
 def test_inversion_reader_returns_ppmv_and_pressure_for_each_level():
