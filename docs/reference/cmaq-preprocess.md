@@ -57,9 +57,11 @@ to the domain, plus 3° of padding, before saving. It needs that much temporary
 disk next to `CAMS_FILE`. If the dates are beyond the inversion's coverage the
 download fails with an error that says so and suggests `CAMS_PRODUCT=forecasts`.
 
-EAC4 and the forecasts are downloaded globally for the whole date range in one
-request. The forecasts' forecast start and lead time are joined into one
-valid-time axis before saving.
+EAC4 and the forecasts are cut on the ADS to the domain in `DOMAIN_FILE`, plus
+3° of padding, so both need `DOMAIN_FILE` as the inversion does. The script
+requests a month at a time and fetches each month with parallel range requests.
+The forecasts' forecast start and lead time are joined into one valid-time axis
+before saving.
 
 Requires ADS credentials. Skip with `SKIP_CAMS_DOWNLOAD`.
 
