@@ -131,6 +131,13 @@ def test_nearest_points_match_a_search_of_every_great_circle_distance():
     np.testing.assert_array_equal(index.ravel(), expected)
 
 
+def test_nearest_points_beyond_a_cell_diagonal_of_the_grid_are_an_error():
+    grid_lat, grid_lon = np.meshgrid([-30.0, -29.0], [140.0, 141.0], indexing="ij")
+
+    with pytest.raises(ValueError, match="the grid does not cover them"):
+        nearest_points(grid_lat, grid_lon, np.array([-29.5, -29.5]), np.array([140.5, 145.0]))
+
+
 def test_inversion_reader_returns_ppmv_and_pressure_for_each_level():
     with open_cams(INVERSION_FILE, "inversion") as cams:
         profile = cams.profile(0)

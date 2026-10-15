@@ -8,6 +8,7 @@ from pytest_regressions.data_regression import RegressionYamlDumper
 
 from openmethane.cmaq_preprocess.config_read_functions import load_json
 from openmethane.cmaq_preprocess.read_config_cmaq import (
+    Domain,
     create_cmaq_config_object,
     default_cams_file,
     load_config_from_env,
@@ -181,28 +182,37 @@ def test_021_validator_end_date_after_start_date_errors(
         create_cmaq_config_object(cmaq_config_dict)
 
 
-def test_default_cams_file_names_the_inversion_release():
+AUST10KM = Domain(1, "aust10km", "v1.0.0", "LamCon_34S_150E", "aust10km_v1")
+
+
+def test_default_cams_file_names_the_inversion_release_and_the_domain():
     path = default_cams_file(
         pathlib.Path("/store"),
         "inversion",
         "v25r1",
+        AUST10KM,
         datetime.date(2024, 1, 1),
         datetime.date(2024, 1, 31),
     )
 
-    assert path == pathlib.Path("/store/cams/cams_inversion_v25r1_methane_2024-01-01-2024-01-31.nc")
+    assert path == pathlib.Path(
+        "/store/cams/cams_inversion_v25r1_methane_aust10km_v1.0.0_2024-01-01-2024-01-31.nc"
+    )
 
 
-def test_default_cams_file_has_no_release_for_eac4():
+def test_default_cams_file_names_the_domain_but_no_release_for_eac4():
     path = default_cams_file(
         pathlib.Path("/store"),
         "eac4",
         "v25r1",
+        AUST10KM,
         datetime.date(2024, 1, 1),
         datetime.date(2024, 1, 31),
     )
 
-    assert path == pathlib.Path("/store/cams/cams_eac4_methane_2024-01-01-2024-01-31.nc")
+    assert path == pathlib.Path(
+        "/store/cams/cams_eac4_methane_aust10km_v1.0.0_2024-01-01-2024-01-31.nc"
+    )
 
 
 def test_the_forecasts_can_be_chosen_with_cams_product(target_environment):
@@ -218,4 +228,6 @@ def test_the_forecasts_can_be_chosen_with_cams_product(target_environment):
     config = load_config_from_env()
 
     assert config.cams_product == "forecasts"
-    assert config.input_cams_file.name == "cams_forecasts_methane_2026-01-01-2026-01-01.nc"
+    assert config.input_cams_file.name == (
+        "cams_forecasts_methane_au-test_v1_2026-01-01-2026-01-01.nc"
+    )

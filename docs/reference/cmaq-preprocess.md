@@ -35,9 +35,10 @@ daily runs already did.
 ### download_cams_input
 
 Downloads global methane fields from CAMS to `CAMS_FILE`, which defaults to
-`${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{start}-{end}.nc`. The
-inversion's release is in the name, so a file from another release is never
-reused. The fields supply what
+`${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{domain}_{version}_{start}-{end}.nc`.
+The file is cut to the domain, so `DOMAIN_NAME` and `DOMAIN_VERSION` are in
+the name, and the inversion's release is too. A file from another domain or
+release is therefore never reused. The fields supply what
 methane is entering the domain from outside, which the regional model cannot
 know on its own. `CAMS_PRODUCT` chooses the product. The inversion is the
 default, but only covers dates up to the end of its release: v25r1 ends on

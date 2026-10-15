@@ -29,22 +29,6 @@ DEFAULT_CAMS_PRODUCT = "inversion"
 DEFAULT_CAMS_INVERSION_VERSION = "v25r1"
 
 
-def default_cams_file(
-    store_path: pathlib.Path,
-    product: str,
-    inversion_version: str,
-    start_date: datetime.date,
-    end_date: datetime.date,
-) -> pathlib.Path:
-    """Where the CAMS file for the product and dates lives when CAMS_FILE is not set
-
-    The inversion's release is part of the name, because each release re-processes
-    past dates and a file from another release must never be reused.
-    """
-    release = f"_{inversion_version}" if product == "inversion" else ""
-    return store_path / "cams" / f"cams_{product}{release}_methane_{start_date}-{end_date}.nc"
-
-
 @frozen
 class Domain:
     index: int
@@ -56,6 +40,30 @@ class Domain:
     @property
     def id(self):
         return f"d{self.index:02}"
+
+
+def default_cams_file(  # noqa: PLR0913
+    store_path: pathlib.Path,
+    product: str,
+    inversion_version: str,
+    domain: Domain,
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> pathlib.Path:
+    """Where the CAMS file for the product, domain and dates lives when CAMS_FILE is not set
+
+    The inversion's release is part of the name, because each release re-processes
+    past dates and a file from another release must never be reused. The domain is
+    part of the name because the file is cut to the domain, so a file cut for another
+    domain must never be reused either.
+    """
+    release = f"_{inversion_version}" if product == "inversion" else ""
+    domain_tag = f"{domain.name}_{domain.version}"
+    return (
+        store_path
+        / "cams"
+        / f"cams_{product}{release}_methane_{domain_tag}_{start_date}-{end_date}.nc"
+    )
 
 
 @define
@@ -233,7 +241,7 @@ def load_config_from_env(**overrides: typing.Any) -> CMAQConfig:
     start_date = env.date("START_DATE")
     end_date = env.date("END_DATE")
     cams_file = env.path("CAMS_FILE", None) or default_cams_file(
-        env.path("STORE_PATH"), cams_product, cams_inversion_version, start_date, end_date
+        env.path("STORE_PATH"), cams_product, cams_inversion_version, domain, start_date, end_date
     )
 
     options = dict(

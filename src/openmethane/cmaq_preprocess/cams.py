@@ -30,14 +30,25 @@ def nearest_points(grid_lat, grid_lon, lat, lon):
     great-circle distance, so a KD-tree over unit vectors finds the same neighbours
     as comparing great-circle distances to every grid point, in a fraction of the time.
 
+    Raises an error if any point is further from its nearest grid point than 1.5 grid
+    cell diagonals, which suggests the CAMS file was cut to a different domain.
+
     Args:
-        grid_lat, grid_lon: latitude and longitude of the grid points, any matching shape
+        grid_lat, grid_lon: latitude and longitude of the grid points, 2D
         lat, lon: latitude and longitude of the points to look up, any matching shape
 
     Returns:
         Indices into the flattened grid, with the shape of `lat`
     """
-    _, index = cKDTree(_unit_vectors(grid_lat, grid_lon)).query(_unit_vectors(lat, lon))
+    grid = _unit_vectors(grid_lat, grid_lon)
+    distance, index = cKDTree(grid).query(_unit_vectors(lat, lon))
+    corners = grid.reshape(*numpy.shape(grid_lat), 3)
+    max_diagonal = numpy.linalg.norm(corners[1:, 1:] - corners[:-1, :-1], axis=-1).max()
+    if distance.max() > 1.5 * max_diagonal:
+        raise ValueError(
+            "Some points are more than one and a half cell diagonals from the grid, so the "
+            "grid does not cover them. A CAMS file cut for another domain does this."
+        )
     return index.reshape(numpy.shape(lat))
 
 
