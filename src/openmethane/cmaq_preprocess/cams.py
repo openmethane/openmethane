@@ -8,10 +8,48 @@ import warnings
 
 import netCDF4
 import numpy
+from scipy.spatial import cKDTree
 
 from openmethane.cmaq_preprocess.cams_readers import open_cams
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
-from openmethane.cmaq_preprocess.utils import get_distance_from_lat_lon_in_km, nested_dir
+from openmethane.cmaq_preprocess.utils import nested_dir
+
+
+def _unit_vectors(lat, lon):
+    lat = numpy.deg2rad(numpy.asarray(lat, dtype=float).ravel())
+    lon = numpy.deg2rad(numpy.asarray(lon, dtype=float).ravel())
+    return numpy.column_stack(
+        (numpy.cos(lat) * numpy.cos(lon), numpy.cos(lat) * numpy.sin(lon), numpy.sin(lat))
+    )
+
+
+def nearest_points(grid_lat, grid_lon, lat, lon):
+    """Index of the nearest grid point to each point, by great-circle distance
+
+    The straight-line distance between points on a sphere increases with the
+    great-circle distance, so a KD-tree over unit vectors finds the same neighbours
+    as comparing great-circle distances to every grid point, in a fraction of the time.
+
+    Raises an error if any point is further from its nearest grid point than 1.5 grid
+    cell diagonals, which suggests the CAMS file was cut to a different domain.
+
+    Args:
+        grid_lat, grid_lon: latitude and longitude of the grid points, 2D
+        lat, lon: latitude and longitude of the points to look up, any matching shape
+
+    Returns:
+        Indices into the flattened grid, with the shape of `lat`
+    """
+    grid = _unit_vectors(grid_lat, grid_lon)
+    distance, index = cKDTree(grid).query(_unit_vectors(lat, lon))
+    corners = grid.reshape(*numpy.shape(grid_lat), 3)
+    max_diagonal = numpy.linalg.norm(corners[1:, 1:] - corners[:-1, :-1], axis=-1).max()
+    if distance.max() > 1.5 * max_diagonal:
+        raise ValueError(
+            "Some points are more than one and a half cell diagonals from the grid, so the "
+            "grid does not cover them. A CAMS file cut for another domain does this."
+        )
+    return index.reshape(numpy.shape(lat))
 
 
 def cmaq_layer_pressures(psurf, sigma, mtop):
@@ -151,8 +189,9 @@ def interpolate_from_cams_to_cmaq_grid(
         force_update: If True, update the output even if it already exists
         default_spec: A species that is known to exist in the CAMS files (defaults to 'O3'),
             used for checking dimension information
-        cams_product: "eac4" if input_cams_file is the CAMS reanalysis, or "inversion" if it
-            is the CAMS inversion cut by `download_cams_input.py`
+        cams_product: "eac4" if input_cams_file is the CAMS reanalysis, "inversion" if it
+            is the CAMS inversion cut by `download_cams_input.py`, or "forecasts" if it is
+            the CAMS greenhouse gas forecasts cut by `download_cams_input.py`
 
     Returns:
         Nothing
@@ -283,33 +322,16 @@ def interpolate_from_cams_to_cmaq_grid(
             timesmod = timesmod[itime0:itime1]
             TFLAG = TFLAG[itime0:itime1]
 
-            LATMZ = numpy.zeros((len(latmz), len(lonmz)))
-            LONMZ = numpy.zeros((len(latmz), len(lonmz)))
-            for irow in range(len(latmz)):
-                LONMZ[irow, :] = lonmz
-
-            for icol in range(len(lonmz)):
-                LATMZ[:, icol] = latmz
-
-            near_interior = numpy.zeros((LON.shape[0], LON.shape[1], 2), dtype=int)
-            near_boundary = numpy.zeros((LONP.shape[0], 2), dtype=int)
-
-            for irow in range(LON.shape[0]):
-                for icol in range(LON.shape[1]):
-                    dists = get_distance_from_lat_lon_in_km(
-                        LAT[irow, icol], LON[irow, icol], LATMZ, LONMZ
-                    )
-                    minidx = numpy.argmin(dists)
-                    ix, iy = numpy.unravel_index(minidx, LONMZ.shape)
-                    near_interior[irow, icol, 0] = ix
-                    near_interior[irow, icol, 1] = iy
-
-            for iperim in range(LONP.shape[0]):
-                dists = get_distance_from_lat_lon_in_km(LATP[iperim], LONP[iperim], LATMZ, LONMZ)
-                minidx = numpy.argmin(dists)
-                ix, iy = numpy.unravel_index(minidx, LONMZ.shape)
-                near_boundary[iperim, 0] = ix
-                near_boundary[iperim, 1] = iy
+            LATMZ, LONMZ = numpy.meshgrid(latmz, lonmz, indexing="ij")
+            if do_ICs:
+                near_interior = numpy.stack(
+                    numpy.unravel_index(nearest_points(LATMZ, LONMZ, LAT, LON), LATMZ.shape),
+                    axis=-1,
+                )
+            near_boundary = numpy.stack(
+                numpy.unravel_index(nearest_points(LATMZ, LONMZ, LATP, LONP), LATMZ.shape),
+                axis=-1,
+            )
 
             iMZtime_for_each_CMtime = numpy.zeros((len(timesmod)), dtype=int)
             for itime, time in enumerate(timesmod):
@@ -384,14 +406,7 @@ def interpolate_from_cams_to_cmaq_grid(
             ##
             if do_BCs:
                 # a perimeter point takes the surface pressure of its nearest CMAQ cell
-                perimeter_psurf = numpy.array(
-                    [
-                        PSURF[itime0].ravel()[
-                            get_distance_from_lat_lon_in_km(LATP[i], LONP[i], LAT, LON).argmin()
-                        ]
-                        for i in range(LONP.shape[0])
-                    ]
-                )
+                perimeter_psurf = PSURF[itime0].ravel()[nearest_points(LAT, LON, LATP, LONP)]
                 out_boundary = interpolate_columns(
                     profile,
                     near_boundary[:, 0],
