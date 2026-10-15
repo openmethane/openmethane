@@ -34,11 +34,23 @@ daily runs already did.
 
 ### download_cams_input
 
-Downloads methane fields from
-[CAMS](https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4)
-on pressure levels, to `CAMS_FILE`. CAMS is a global atmospheric reanalysis; it
-supplies what methane is entering the domain from outside, which the regional
-model cannot know on its own.
+Downloads global methane fields from CAMS to `CAMS_FILE`, which defaults to
+`${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{start}-{end}.nc`. The
+inversion's release is in the name, so a file from another release is never
+reused. The fields supply what
+methane is entering the domain from outside, which the regional model cannot
+know on its own. `CAMS_PRODUCT` chooses the product:
+
+| `CAMS_PRODUCT` | Product | Notes |
+| --- | --- | --- |
+| `eac4` | [CAMS global reanalysis (EAC4)](https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4), 25 pressure levels, 3-hourly | CH4 is not assimilated: it is a free-running model field, about 110–120 ppb below the satellite-constrained products over the domain. |
+| `inversion` (default) | [CAMS greenhouse gas inversion](https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-inversion), surface and satellite, 34 hybrid levels, 6-hourly | Constrained by the NOAA surface network and TROPOMI. Covers up to the end of the latest release's last year. Releases re-process past dates, so `CAMS_INVERSION_VERSION` is pinned and recorded. |
+
+The inversion cannot be subset on the ADS. Each month is a 2.2 GB global file,
+which the script fetches with parallel range requests (about 4 minutes) and cuts
+to the domain, plus 3° of padding, before saving. It needs that much temporary
+disk next to `CAMS_FILE`. If the dates are beyond the inversion's coverage the
+download fails with an error that says so.
 
 Requires ADS credentials. Skip with `SKIP_CAMS_DOWNLOAD`.
 
@@ -50,7 +62,14 @@ The substantial step. `scripts/cmaq_preprocess/setup_for_cmaq.py`:
 - runs **MCIP** to extract meteorology from the WRF output and interpolate it
   onto the CMAQ grid
 - prepares initial and boundary conditions using **ICON** and **BCON**
-- interpolates the CAMS data onto the CMAQ grid
+- interpolates the CAMS data onto the CMAQ grid. A reader for each product
+  (`cams_readers.py`) returns methane in ppmV and the pressure of every level, on
+  the CAMS grid and levels. This is a common intermediate, not the CMAQ format,
+  so both products take the same path from there: the nearest CAMS cell for each
+  CMAQ column, then linear interpolation in log-pressure from that cell's levels
+  onto the column's own CMAQ layer pressures. The result is written to the ICON
+  and BCON files on CMAQ's own cells and layers, with `CAMS_PRODUCT` and, for the
+  inversion, `CAMS_RELEASE` as global attributes.
 
 Afterwards there are results in `MET_DIR` and `CTM_DIR`.
 
@@ -124,6 +143,10 @@ The correction is confined to what the observations see by construction: only
 cells carrying observation weight enter the simulated mean, so no separate
 regional masking is applied. A fixed additional offset can be applied with
 `CAMS_TO_CMAQ_BIAS`.
+
+The size of the correction is logged. Against EAC4 it is about +108 ppb. The
+inversion is already anchored to TROPOMI, so expect a few ppb with
+`CAMS_PRODUCT=inversion`: a large value points to a units or mapping error.
 
 ## Verifying the output
 

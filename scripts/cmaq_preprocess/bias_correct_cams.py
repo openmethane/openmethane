@@ -21,7 +21,9 @@ def main():
         prior_file=input_defn.prior_file,
         obs_file=input_defn.obs_file,
     )
-    logger.debug(f"bias={bias:f}")
+    logger.info(
+        f"CAMS bias correction ({config.cams_product}): {bias:f} ppm ({bias * 1e3:+.1f} ppb)"
+    )
 
     correct_icon_bcon(
         species=species,

@@ -103,6 +103,7 @@ def setup_for_cmaq(config: CMAQConfig):
             ctm_dir=config.ctm_dir,
             force_update=config.force_update,
             bias_correct=config.cams_to_cmaq_bias,
+            cams_product=config.cams_product,
         )
 
 

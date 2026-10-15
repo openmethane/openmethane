@@ -9,105 +9,54 @@ import warnings
 import netCDF4
 import numpy
 
+from openmethane.cmaq_preprocess.cams_readers import open_cams
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
 from openmethane.cmaq_preprocess.utils import get_distance_from_lat_lon_in_km, nested_dir
 
-moleMass = {"air": 28.96, "ch4_c": 16}
 
-
-def match_two_sorted_arrays(arr1, arr2):
-    """Match up two sorted arrays
+def cmaq_layer_pressures(psurf, sigma, mtop):
+    """Mid-layer pressures of CMAQ columns
 
     Args:
-        arr1: A sorted 1D numpy array
-        arr2: A sorted 1D numpy array
+        psurf: surface pressure (Pa) of each column, any shape
+        sigma: sigma values of the layer interfaces, length LAY + 1
+        mtop: model top pressure (Pa)
 
     Returns:
-        result: numpy integer array with the same dimensions as array arr2, with each element
-        containing the index of arr1 that provides the *closest* match to the given entry in arr2
+        Pressures (Pa) with shape (LAY, *psurf.shape)
     """
-    result = numpy.zeros(arr2.shape, dtype=int)
-    for i, v in enumerate(arr2):
-        result[i] = numpy.argmin(numpy.abs(arr1 - v))
-    return result
+    psurf = numpy.asarray(psurf, dtype=float)
+    sigma = numpy.asarray(sigma, dtype=float).reshape((-1,) + (1,) * psurf.ndim)
+    interfaces = (psurf - mtop) * sigma + mtop
+    return (interfaces[1:] + interfaces[:-1]) / 2.0
 
 
-def extract_and_interpolate_interior(mzspec, ncin, lens, LON, Iz, iMZtime, P, near_interior):
-    """Interpolate from the CAMS grid to the CMAQ interior points (i.e. the full 3D array)
+def interpolate_columns(profile, ix, iy, cmaq_pressure):
+    """Interpolate CAMS columns onto the layers of CMAQ columns
+
+    Each CMAQ column takes the CAMS column of its nearest cell, with the CAMS levels
+    placed at that cell's own pressures, and is interpolated linearly in log-pressure to
+    the column's own CMAQ layer pressures. Values beyond the CAMS levels take the
+    nearest level.
 
     Args:
-        mzspec: the CAMS species name
-        ncin: the connection to the netCDF input file (i.e. the CAMS file)
-        lens: dictionary of dimension lengths
-        LON: array of longitudes with the same size as the output array
-        Iz: array of indices of CAMS levels that correspond to the CMAQ levels
-        iMZtime: index of the CAMS time to use
-        isAerosol: Boolean (True/False) whether this is an aerosol species or not
-        mz_mw_aerosol: molecular weight of the CAMS species
-        T: array of temperatures (units = K) from the CAMS output
-        P: array of pressures (units = Pa) from the CAMS output
-        near_interior: array of indices matching up the CAMS grid-points with CMAQ grid-points
+        profile: CamsProfile of the CAMS grid at one time
+        ix, iy: CAMS lat and lon indices of the nearest cell to each CMAQ column, shape (N,)
+        cmaq_pressure: CMAQ mid-layer pressures (Pa), shape (LAY, N)
 
     Returns:
-        out_interior: Gridded CAMS concentrations interpolated to the CMAQ grid
+        CH4 in ppmV, shape (LAY, N)
     """
-    out_interior = numpy.zeros((lens["LAY"], LON.shape[0], LON.shape[1]), dtype=numpy.float32)
-
-    if mzspec in list(ncin.variables.keys()):
-        varin = ncin.variables[mzspec][iMZtime, :, :, :]
-
-        convFac = moleMass["air"] / moleMass[mzspec] * 1e6  # converting from kg/kg to VMR in ppmv
-        varin = varin * convFac  ## convert from VMR to PPMV
-
-        for irow in range(LON.shape[0]):
-            for icol in range(LON.shape[1]):
-                ix, iy = near_interior[irow, icol, :]
-                out_interior[:, irow, icol] = varin[Iz, ix, iy]
-    else:
-        warnings.warn(
-            f"Species {mzspec} was not found in input CAMS file "
-            f"-- contributions from this variable will be zero..."
-        )
-
-    return out_interior
-
-
-def extract_and_interpolate_boundary(
-    mzspec, ncin, lens, LONP, Iz, iMZtime_for_each_CMtime, P, near_boundary
-):
-    """Interpolate from the CAMS grid to the CMAQ boundary points
-
-    Args:
-        mzspec: the CAMS species name
-        ncin: the connection to the netCDF input file (i.e. the CAMS file)
-        lens: dictionary of dimension lengths
-        LONP: array of longitudes of CMAQ boundary points with the same size as the output array
-        Iz: array of indices of CAMS levels that correspond to the CMAQ levels
-        iMZtime_for_each_CMtime: index of the CAMS time to use, one entry for each CMAQ time
-        P: array of pressures (units = Pa) from the CAMS output
-        near_boundary: array of indices matching up the CAMS grid-points with CMAQ boundary grid-points
-
-    Returns:
-        out_boundary: Gridded CAMS concentrations interpolated to the CMAQ boundary grid points
-    """
-    iCMtime = 0
-    iMZtime = iMZtime_for_each_CMtime[iCMtime]
-    ntime = 1
-    out_boundary = numpy.zeros((ntime, lens["LAY"], LONP.shape[0]), dtype=numpy.float32)
-    if mzspec in list(ncin.variables.keys()):
-        varin = ncin.variables[mzspec][iMZtime, :, :, :]
-        convFac = moleMass["air"] / moleMass[mzspec] * 1e6  # converting from kg/kg to VMR in ppmv
-        varin = varin * convFac  ## convert from VMR to PPMV
-        for iperim in range(LONP.shape[0]):
-            ix, iy = near_boundary[iperim, :]
-            ## for iCMtime, iMZtime in enumerate(iMZtime_for_each_CMtime):
-            out_boundary[iCMtime, :, iperim] = varin[Iz, ix, iy]
-    else:
-        warnings.warn(
-            f"Species {mzspec} was not found in input CAMS file "
-            f"-- contributions from this variable will be zero..."
-        )
-    return out_boundary
+    columns = numpy.asarray(profile.ch4_ppmv[:, ix, iy], dtype=float)
+    log_cams = numpy.log(profile.pressure_pa[:, ix, iy])
+    log_cmaq = numpy.log(cmaq_pressure)
+    # np.interp wants increasing x, and the levels run in either direction
+    if log_cams[0, 0] > log_cams[-1, 0]:
+        columns, log_cams = columns[::-1], log_cams[::-1]
+    out = numpy.empty(cmaq_pressure.shape, dtype=numpy.float32)
+    for column in range(cmaq_pressure.shape[1]):
+        out[:, column] = numpy.interp(log_cmaq[:, column], log_cams[:, column], columns[:, column])
+    return out
 
 
 def populate_interior_variable(ncouti, cmspec, out_interior, coef):
@@ -186,6 +135,7 @@ def interpolate_from_cams_to_cmaq_grid(
     force_update: bool,
     bias_correct=0.0,
     default_spec="O3",
+    cams_product="eac4",
 ):
     """Function to interpolate from the global CAMS CTM output to ICs and BCs for CMAQ
 
@@ -201,11 +151,16 @@ def interpolate_from_cams_to_cmaq_grid(
         force_update: If True, update the output even if it already exists
         default_spec: A species that is known to exist in the CAMS files (defaults to 'O3'),
             used for checking dimension information
+        cams_product: "eac4" if input_cams_file is the CAMS reanalysis, or "inversion" if it
+            is the CAMS inversion cut by `download_cams_input.py`
 
     Returns:
         Nothing
 
     """
+    with open_cams(input_cams_file, cams_product) as cams:
+        cams.require_dates(dates)
+
     ##
     ## if we aren't forcing an update, check whether files exist and
     ## return early if possible
@@ -272,7 +227,7 @@ def interpolate_from_cams_to_cmaq_grid(
             netCDF4.Dataset(bdyFile, "r", format="NETCDF4") as ncbdy,
             netCDF4.Dataset(metFile, "r", format="NETCDF4") as ncmet,
             netCDF4.Dataset(srfFile, "r", format="NETCDF4") as ncsrf,
-            netCDF4.Dataset(input_cams_file, "r", format="NETCDF4") as ncin,
+            open_cams(input_cams_file, cams_product) as cams,
         ):
             if do_BCs:
                 print("write BCs to file: ", outBCON)
@@ -301,11 +256,9 @@ def interpolate_from_cams_to_cmaq_grid(
             LONP = ncbdy.variables["LON"][:].squeeze()
             sigma = ncmet.getncattr("VGLVLS")
             mtop = ncmet.getncattr("VGTOP")
-            MZdates = netCDF4.num2date(
-                ncin.variables["valid_time"][:], ncin.variables["valid_time"].getncattr("units")
-            )
-            latmz = ncin.variables["latitude"][:].squeeze()
-            lonmz = ncin.variables["longitude"][:].squeeze()
+            MZdates = cams.times
+            latmz = cams.lat
+            lonmz = cams.lon
             PSURF = ncsrf.variables["PRSFC"][:].squeeze()
             TFLAG = ncsrf.variables["TFLAG"][:, 0, :].squeeze()
             yyyy = TFLAG[:, 0] // 1000
@@ -330,11 +283,6 @@ def interpolate_from_cams_to_cmaq_grid(
             timesmod = timesmod[itime0:itime1]
             TFLAG = TFLAG[itime0:itime1]
 
-            ## populate the pressure array
-            P = numpy.zeros(ncin["ch4_c"].shape)
-            P += ncin["pressure_level"][...][
-                :, numpy.newaxis, numpy.newaxis
-            ]  # broadcasting but into axis 0 not axis -1
             LATMZ = numpy.zeros((len(latmz), len(lonmz)))
             LONMZ = numpy.zeros((len(latmz), len(lonmz)))
             for irow in range(len(latmz)):
@@ -382,29 +330,8 @@ def interpolate_from_cams_to_cmaq_grid(
 
             iMZtime = iMZtime_for_each_CMtime[0]
 
-            ## interpolation from CAMS to CMAQ levels
-            if not ("Iz" in vars() or "Iz" in globals()):
-                irow = LON.shape[0] - 1
-                icol = LON.shape[1] - 1
-                itime = 0
-                PRES_CM = (PSURF[itime, irow, icol] - mtop) * sigma + mtop
-                PRES_CM[0] = PSURF[itime, irow, icol]
-                PRES_CM = (PRES_CM[1:] + PRES_CM[:-1]) / 2.0
-                # PRES_MZ = Ap +  Bp * PSURF[itime,irow,icol]
-                PRES_MZm = ncin["pressure_level"][:].astype("float")
-                mb2pa = 100.0  # converting from  millibar to pascal
-                Iz = match_two_sorted_arrays(PRES_MZm * mb2pa, PRES_CM)
             ## set the values to zero for species that we *WILL* interpolate to
             ALL_CM_SPEC = ["CH4"]
-            species_map = []
-            species_map.append(
-                {
-                    "MZspec": "ch4_c",
-                    "CMspec": "CH4",
-                    "coef": 1.0,
-                    "isAerosol": False,
-                }
-            )
             for spec in ALL_CM_SPEC:
                 if do_ICs:
                     if spec not in list(ncouti.variables.keys()):
@@ -441,40 +368,49 @@ def interpolate_from_cams_to_cmaq_grid(
                         ncoutb.var_desc = "{:80}".format("Variable " + spec)
                     ncoutb.variables[spec][:] = 0.0
 
-            nspec = len(species_map)
-            for ispec in range(nspec):
-                MZspec = species_map[ispec]["MZspec"]
-                CMspec = species_map[ispec]["CMspec"]
-                coefs = species_map[ispec]["coef"]
-                Factor = 1.0e3  ## convert from ppm to ppb
-                ##
-                if do_ICs:
-                    out_interior = extract_and_interpolate_interior(
-                        MZspec, ncin, lens, LON, Iz, iMZtime, P, near_interior
-                    )
-                    out_interior += bias_correct
-                    print_interior_variable(MZspec, out_interior, Factor)
-                ##
-                if do_BCs:
-                    out_boundary = extract_and_interpolate_boundary(
-                        MZspec,
-                        ncin,
-                        lens,
-                        LONP,
-                        Iz,
-                        iMZtime_for_each_CMtime,
-                        P,
-                        near_boundary,
-                    )
-                    out_boundary += bias_correct
-                    print_boundary_variable(MZspec, out_boundary, Factor)
-                ##
-                if do_ICs:
-                    populate_interior_variable(ncouti, CMspec, out_interior, coefs)
-                ##
-                if do_BCs:
-                    populate_boundary_variable(ncoutb, CMspec, out_boundary, coefs)
+            profile = cams.profile(iMZtime)
+            Factor = 1.0e3  ## convert from ppm to ppb
+            ##
+            if do_ICs:
+                layer_pressure = cmaq_layer_pressures(PSURF[itime0].ravel(), sigma, mtop)
+                out_interior = interpolate_columns(
+                    profile,
+                    near_interior[..., 0].ravel(),
+                    near_interior[..., 1].ravel(),
+                    layer_pressure,
+                ).reshape((lens["LAY"], *LON.shape))
+                out_interior += bias_correct
+                print_interior_variable("CH4", out_interior, Factor)
+            ##
+            if do_BCs:
+                # a perimeter point takes the surface pressure of its nearest CMAQ cell
+                perimeter_psurf = numpy.array(
+                    [
+                        PSURF[itime0].ravel()[
+                            get_distance_from_lat_lon_in_km(LATP[i], LONP[i], LAT, LON).argmin()
+                        ]
+                        for i in range(LONP.shape[0])
+                    ]
+                )
+                out_boundary = interpolate_columns(
+                    profile,
+                    near_boundary[:, 0],
+                    near_boundary[:, 1],
+                    cmaq_layer_pressures(perimeter_psurf, sigma, mtop),
+                )[numpy.newaxis]
+                out_boundary += bias_correct
+                print_boundary_variable("CH4", out_boundary, Factor)
+            ##
+            if do_ICs:
+                populate_interior_variable(ncouti, "CH4", out_interior, 1.0)
+            ##
+            if do_BCs:
+                populate_boundary_variable(ncoutb, "CH4", out_boundary, 1.0)
 
+            for output in [*([ncouti] if do_ICs else []), *([ncoutb] if do_BCs else [])]:
+                output.setncattr("CAMS_PRODUCT", cams.product)
+                if cams.release:
+                    output.setncattr("CAMS_RELEASE", cams.release)
             if do_ICs:
                 ncouti.close()
             if do_BCs:
