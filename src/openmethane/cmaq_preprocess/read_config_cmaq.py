@@ -24,7 +24,7 @@ def process_date_string(value) -> datetime.date:
         raise TypeError(f"Cannot process {value} as a date. {type(value)}")
 
 
-CAMS_PRODUCTS = ("eac4", "inversion")
+CAMS_PRODUCTS = ("eac4", "inversion", "forecasts")
 DEFAULT_CAMS_PRODUCT = "inversion"
 DEFAULT_CAMS_INVERSION_VERSION = "v25r1"
 
@@ -169,7 +169,8 @@ class CMAQConfig:
     """
     Which CAMS product `input_cams_file` holds
 
-    `eac4` is the CAMS reanalysis, `inversion` is the CAMS greenhouse gas inversion.
+    `eac4` is the CAMS reanalysis, `inversion` is the CAMS greenhouse gas inversion and
+    `forecasts` is the CAMS greenhouse gas forecasts.
     """
     cams_inversion_version: str = DEFAULT_CAMS_INVERSION_VERSION
     """

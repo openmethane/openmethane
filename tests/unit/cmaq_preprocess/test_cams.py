@@ -20,6 +20,9 @@ from openmethane.cmaq_preprocess.utils import get_distance_from_lat_lon_in_km
 TEST_DATA = pathlib.Path(__file__).parents[2] / "test-data"
 INVERSION_FILE = TEST_DATA / "cams" / "cams_inversion_v25r1_2022-12-07.nc"
 EAC4_FILE = TEST_DATA / "cams" / "cams_eac4_methane_2022-12-07.nc"
+# The forecasts start in 2024, so this is 2024-12-07 relabelled to the date of the test
+# MCIP, and thinned to every fifth point of the 0.1° grid to keep it small
+FORECASTS_FILE = TEST_DATA / "cams" / "cams_forecasts_2024-12-07_as_2022-12-07.nc"
 DOMAIN = Domain(1, "au-test", "v1", "LamCon_34S_150E", "au-test_v1")
 
 # One CAMS column of three levels, ordered from the surface up, in ppmV and Pa
@@ -153,6 +156,29 @@ def test_eac4_reader_returns_ppmv_and_pressure_for_each_level():
     assert np.all(np.diff(profile.pressure_pa[:, 0, 0]) < 0)
 
 
+def test_forecasts_reader_returns_ppmv_and_pressure_for_each_level():
+    with open_cams(FORECASTS_FILE, "forecasts") as cams:
+        profile = cams.profile(0)
+        grid_shape = (len(cams.lat), len(cams.lon))
+
+    assert profile.ch4_ppmv.shape == (17, *grid_shape)
+    assert profile.pressure_pa.shape == (17, *grid_shape)
+    # level 0 is 1000 hPa, where the troposphere is about 1.9 ppm
+    assert 1.8 < profile.ch4_ppmv[0].mean() < 2.0
+    assert profile.pressure_pa[0, 0, 0] == 100000.0
+    assert profile.pressure_pa[-1, 0, 0] == 5000.0
+
+
+def test_forecasts_reader_has_no_release():
+    with open_cams(FORECASTS_FILE, "forecasts") as cams:
+        assert cams.release is None
+
+
+def test_an_eac4_file_is_rejected_as_forecasts():
+    with pytest.raises(ValueError, match="not a CAMS forecasts file.*ch4"):
+        open_cams(EAC4_FILE, "forecasts")
+
+
 def test_inversion_reader_reports_the_release():
     with open_cams(INVERSION_FILE, "inversion") as cams:
         assert cams.release == "v25r1"
@@ -175,7 +201,7 @@ def test_an_eac4_file_is_rejected_as_inversion():
 
 def test_coverage_error_names_the_dates_and_the_fallback():
     with open_cams(INVERSION_FILE, "inversion") as cams:
-        with pytest.raises(ValueError, match="2026-03-01.*CAMS_PRODUCT=eac4"):
+        with pytest.raises(ValueError, match="2026-03-01.*CAMS_PRODUCT=forecasts"):
             cams.require_dates([datetime.date(2026, 3, 1)])
 
 
@@ -200,7 +226,7 @@ def mcip_columns():
 
 @pytest.mark.parametrize(
     "product, path",
-    [("inversion", INVERSION_FILE), ("eac4", EAC4_FILE)],
+    [("inversion", INVERSION_FILE), ("eac4", EAC4_FILE), ("forecasts", FORECASTS_FILE)],
 )
 def test_interpolation_preserves_the_pressure_weighted_column_mean(product, path, mcip_columns):
     sigma, model_top, surface_pressure = mcip_columns
@@ -237,12 +263,14 @@ def test_interpolation_preserves_the_pressure_weighted_column_mean(product, path
 
 
 # The surface-layer mean of ICON and BCON built from each fixture, measured when the
-# fixtures were made. EAC4 is about 130 ppb lower than the inversion at the surface.
+# fixtures were made. EAC4 is about 130 ppb lower than the inversion at the surface. The
+# forecasts are from 2024, so their value is not comparable with the other two.
 @pytest.mark.parametrize(
     "product, path, release, surface_ppmv",
     [
         ("inversion", INVERSION_FILE, "v25r1", 1.904),
         ("eac4", EAC4_FILE, None, 1.772),
+        ("forecasts", FORECASTS_FILE, None, 1.895),
     ],
 )
 def test_icon_and_bcon_are_filled_in_ppmv_and_record_the_product(
@@ -272,7 +300,7 @@ def test_icon_and_bcon_are_filled_in_ppmv_and_record_the_product(
 
 
 def test_dates_outside_the_file_fail_before_anything_is_written(tmp_path):
-    with pytest.raises(ValueError, match="CAMS_PRODUCT=eac4"):
+    with pytest.raises(ValueError, match="CAMS_PRODUCT=forecasts"):
         interpolate_from_cams_to_cmaq_grid(
             dates=[datetime.date(2030, 1, 1)],
             domain=DOMAIN,
