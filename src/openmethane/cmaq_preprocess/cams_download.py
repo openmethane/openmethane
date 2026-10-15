@@ -146,6 +146,19 @@ DOMAIN_PADDING_DEGREES = 3.0
 INVERSION_VARIABLES = ["CH4", "ps", "hyam", "hybm"]
 
 
+def padded_domain_bounds(
+    domain_file: pathlib.Path, padding: float = DOMAIN_PADDING_DEGREES
+) -> tuple[float, float, float, float]:
+    """South, north, west and east edges of the domain, widened by `padding` degrees"""
+    with xr.open_dataset(domain_file) as domain:
+        return (
+            float(domain.lat.min()) - padding,
+            float(domain.lat.max()) + padding,
+            float(domain.lon.min()) - padding,
+            float(domain.lon.max()) + padding,
+        )
+
+
 def cut_inversion_to_domain(
     monthly_files: list[pathlib.Path],
     domain_file: pathlib.Path,
@@ -158,10 +171,7 @@ def cut_inversion_to_domain(
     The time axis keeps one step past `end`, because the reader takes the latest
     CAMS step at or before each model time.
     """
-    with xr.open_dataset(domain_file) as domain:
-        lat_min, lat_max = float(domain.lat.min()), float(domain.lat.max())
-        lon_min, lon_max = float(domain.lon.min()), float(domain.lon.max())
-    padding = DOMAIN_PADDING_DEGREES
+    lat_min, lat_max, lon_min, lon_max = padded_domain_bounds(domain_file)
     time_start = datetime.datetime.combine(start, datetime.time())
     time_end = datetime.datetime.combine(end + datetime.timedelta(days=1), datetime.time())
 
@@ -171,8 +181,8 @@ def cut_inversion_to_domain(
         with xr.open_dataset(path) as monthly:
             release = monthly.attrs["release"]
             piece = monthly[INVERSION_VARIABLES].sel(
-                latitude=slice(lat_min - padding, lat_max + padding),
-                longitude=slice(lon_min - padding, lon_max + padding),
+                latitude=slice(lat_min, lat_max),
+                longitude=slice(lon_min, lon_max),
                 time=slice(time_start, time_end),
             )
             pieces.append(piece.load())
@@ -256,31 +266,47 @@ def download_pressure_levels(
     start: datetime.date,
     end: datetime.date,
     destination: pathlib.Path,
+    domain_file: pathlib.Path,
     client=None,
 ):
-    """Download a CAMS product on pressure levels for each day from start to end"""
+    """Download a CAMS product on pressure levels over the domain, for each day from start to end
+
+    The ADS cuts each request to the domain and its padding. One request is made per
+    calendar month, because a month of the forecasts' 0.1° grid over Australia is
+    still a few GB, and each is fetched with parallel range requests.
+    """
     import cdsapi
 
     client = client or cdsapi.Client()
     spec = PRESSURE_LEVEL_PRODUCTS[product]
-    request = {
-        "variable": spec.variable,
-        "pressure_level": list(spec.pressure_levels),
-        "date": f"{start.isoformat()}/{end.isoformat()}",
-        spec.time_field: list(spec.times),
-        "format": "netcdf",
-    }
-    if spec.to_valid_time is None:
-        client.retrieve(spec.dataset, request, destination)
-        return
-
+    south, north, west, east = padded_domain_bounds(domain_file)
     with tempfile.TemporaryDirectory(dir=destination.parent) as scratch:
-        retrieved = pathlib.Path(scratch) / "retrieved"
-        client.retrieve(spec.dataset, request, retrieved)
-        with xr.open_dataset(_extract_netcdf(retrieved, pathlib.Path(scratch))) as delivered:
-            flat = spec.to_valid_time(delivered).load()
-        flat.attrs["cams_product"] = product
-        flat.to_netcdf(destination)
+        pieces = []
+        for year, month in months_in_range(start, end):
+            first_of_month = datetime.date(year, month, 1)
+            next_month = (first_of_month + datetime.timedelta(days=32)).replace(day=1)
+            chunk_start = max(start, first_of_month)
+            chunk_end = min(end, next_month - datetime.timedelta(days=1))
+            request = {
+                "variable": spec.variable,
+                "pressure_level": list(spec.pressure_levels),
+                "date": f"{chunk_start.isoformat()}/{chunk_end.isoformat()}",
+                spec.time_field: list(spec.times),
+                "area": [north, west, south, east],
+                "data_format": "netcdf_zip",
+            }
+            result = client.retrieve(spec.dataset, request)
+            archive = pathlib.Path(scratch) / f"{year}-{month:02d}.zip"
+            logger.info(f"downloading {result.content_length / 1e6:.0f} MB for {year}-{month:02d}")
+            download_in_ranges(result.location, archive, result.content_length)
+            with xr.open_dataset(_extract_netcdf(archive, pathlib.Path(scratch))) as delivered:
+                piece = spec.to_valid_time(delivered) if spec.to_valid_time else delivered
+                pieces.append(piece.load())
+        downloaded = xr.concat(pieces, dim="valid_time", data_vars="minimal")
+    for variable in downloaded.variables.values():
+        variable.encoding = {}
+    downloaded.attrs["cams_product"] = product
+    downloaded.to_netcdf(destination)
 
 
 def _extract_netcdf(retrieved: pathlib.Path, directory: pathlib.Path) -> pathlib.Path:

@@ -80,15 +80,15 @@ def download_cams_input(
 
     output.parent.mkdir(parents=True, exist_ok=True)
 
+    domain_file = create_env().path("DOMAIN_FILE")
     if config.cams_product == "inversion":
-        domain_file = create_env().path("DOMAIN_FILE")
         with tempfile.TemporaryDirectory(dir=output.parent) as scratch:
             monthly_files = download_inversion(
                 start, end, config.cams_inversion_version, Path(scratch)
             )
             cut_inversion_to_domain(monthly_files, domain_file, start, end, output)
     else:
-        download_pressure_levels(config.cams_product, start, end, output)
+        download_pressure_levels(config.cams_product, start, end, output, domain_file)
 
 
 if __name__ == "__main__":
