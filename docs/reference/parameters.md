@@ -51,7 +51,7 @@ What is being modelled. These are the settings that change between runs.
 | `TEMPLATE_DIR` | path | CMAQ template directory | `${STORE_PATH}/templates` |
 | `CHK_PATH` | path | CMAQ checkpoint files. Large and frequently rewritten — use fast scratch disk. Cleared by the container entrypoint. | `{CMAQ_BASE}/chkpnt` |
 | `PRIOR_FILE` | path | The prior emissions estimate, from openmethane-prior | *required* |
-| `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | `${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{start}-{end}.nc`, with the release only for the inversion |
+| `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | `${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{DOMAIN_NAME}_{DOMAIN_VERSION}_{start}-{end}.nc`, with the release only for the inversion |
 | `ICON_FILE` | path | ICON template file | *required* |
 | `BCON_FILE` | path | BCON template file | *required* |
 | `EMIS_FILE` | path | Emissions files | `{CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc` |

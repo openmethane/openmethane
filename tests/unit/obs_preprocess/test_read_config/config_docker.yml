@@ -14,7 +14,7 @@ domain:
 end_date: 2022-12-07
 force_update: true
 geo_dir: /app/data/wrf/au-test
-input_cams_file: /app/data/cams/cams_inversion_v25r1_methane_2022-12-07-2022-12-07.nc
+input_cams_file: /app/data/cams/cams_inversion_v25r1_methane_au-test_v1_2022-12-07-2022-12-07.nc
 mech: CH4only
 met_dir: /app/data/mcip
 prepare_ic_and_bc: true
