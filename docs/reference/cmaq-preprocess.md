@@ -39,18 +39,27 @@ Downloads global methane fields from CAMS to `CAMS_FILE`, which defaults to
 inversion's release is in the name, so a file from another release is never
 reused. The fields supply what
 methane is entering the domain from outside, which the regional model cannot
-know on its own. `CAMS_PRODUCT` chooses the product:
+know on its own. `CAMS_PRODUCT` chooses the product. The inversion is the
+default, but only covers dates up to the end of its release: v25r1 ends on
+2025-12-31. For later dates, set `CAMS_PRODUCT=forecasts` explicitly. The product
+is never switched automatically, so every run's boundary source is the one its
+operator chose, and it is recorded in the ICON and BCON files.
 
 | `CAMS_PRODUCT` | Product | Notes |
 | --- | --- | --- |
 | `eac4` | [CAMS global reanalysis (EAC4)](https://www.copernicus.eu/en/access-data/copernicus-services-catalogue/cams-global-reanalysis-eac4), 25 pressure levels, 3-hourly | CH4 is not assimilated: it is a free-running model field, about 110–120 ppb below the satellite-constrained products over the domain. |
 | `inversion` (default) | [CAMS greenhouse gas inversion](https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-inversion), surface and satellite, 34 hybrid levels, 6-hourly | Constrained by the NOAA surface network and TROPOMI. Covers up to the end of the latest release's last year. Releases re-process past dates, so `CAMS_INVERSION_VERSION` is pinned and recorded. |
+| `forecasts` | [CAMS greenhouse gas forecasts](https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-forecasts), 17 pressure levels from 1000 to 50 hPa, 6-hourly | Assimilates TROPOMI, GOSAT and IASI. Available from March 2024. Within a few ppb of the inversion in the troposphere; the two differ mainly above 100 hPa, about 5% of the column. The 00, 06, 12 and 18 h leads of each day's 00Z forecast give valid times at the same hours as the inversion. |
 
 The inversion cannot be subset on the ADS. Each month is a 2.2 GB global file,
 which the script fetches with parallel range requests (about 4 minutes) and cuts
 to the domain, plus 3° of padding, before saving. It needs that much temporary
 disk next to `CAMS_FILE`. If the dates are beyond the inversion's coverage the
-download fails with an error that says so.
+download fails with an error that says so and suggests `CAMS_PRODUCT=forecasts`.
+
+EAC4 and the forecasts are downloaded globally for the whole date range in one
+request. The forecasts' forecast start and lead time are joined into one
+valid-time axis before saving.
 
 Requires ADS credentials. Skip with `SKIP_CAMS_DOWNLOAD`.
 
@@ -145,8 +154,8 @@ regional masking is applied. A fixed additional offset can be applied with
 `CAMS_TO_CMAQ_BIAS`.
 
 The size of the correction is logged. Against EAC4 it is about +108 ppb. The
-inversion is already anchored to TROPOMI, so expect a few ppb with
-`CAMS_PRODUCT=inversion`: a large value points to a units or mapping error.
+inversion and the forecasts are already anchored to TROPOMI, so expect a few ppb
+with either: a large value points to a units or mapping error.
 
 ## Verifying the output
 
