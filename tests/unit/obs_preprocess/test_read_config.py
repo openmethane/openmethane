@@ -9,6 +9,7 @@ from pytest_regressions.data_regression import RegressionYamlDumper
 from openmethane.cmaq_preprocess.config_read_functions import load_json
 from openmethane.cmaq_preprocess.read_config_cmaq import (
     create_cmaq_config_object,
+    default_cams_file,
     load_config_from_env,
 )
 
@@ -178,3 +179,27 @@ def test_021_validator_end_date_after_start_date_errors(
 
     with pytest.raises(ValueError, match="End date must be after start date."):
         create_cmaq_config_object(cmaq_config_dict)
+
+
+def test_default_cams_file_names_the_inversion_release():
+    path = default_cams_file(
+        pathlib.Path("/store"),
+        "inversion",
+        "v25r1",
+        datetime.date(2024, 1, 1),
+        datetime.date(2024, 1, 31),
+    )
+
+    assert path == pathlib.Path("/store/cams/cams_inversion_v25r1_methane_2024-01-01-2024-01-31.nc")
+
+
+def test_default_cams_file_has_no_release_for_eac4():
+    path = default_cams_file(
+        pathlib.Path("/store"),
+        "eac4",
+        "v25r1",
+        datetime.date(2024, 1, 1),
+        datetime.date(2024, 1, 31),
+    )
+
+    assert path == pathlib.Path("/store/cams/cams_eac4_methane_2024-01-01-2024-01-31.nc")
