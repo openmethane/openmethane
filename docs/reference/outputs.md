@@ -6,6 +6,23 @@ published in the public Open Methane Data Store. All are NetCDF files following
 
 Results are written under the run's archive directory, inside `STORE_PATH`.
 
+## Output layout
+
+Each fourdvar run writes to its own directory, `archive/<EXPERIMENT>-<YYYYMMDD>-<HHMMSS>`
+(UTC time the run started, e.g. `archive/openmethane-20261006-031542`), and
+`archive/<EXPERIMENT>-latest` is a relative symlink to the most recent run. Use
+the `-latest` path when you want "the last run", and the timestamped path when
+you want a specific one. Earlier runs are never moved, renamed or deleted.
+
+- The link means *latest started*, not *latest successful*. If a run fails or is
+  terminated, the link still points at it, and the previous good run is found by
+  its timestamp.
+- Tools that follow symlinks will copy the latest run twice. `aws s3 sync` and
+  `cp -r` on `archive/` store the data under both the timestamped name and
+  `-latest`. Exclude `*-latest`, or upload the timestamped directory
+  (`readlink archive/<EXPERIMENT>-latest`).
+- Two runs starting in the same second with the same `EXPERIMENT` is an error.
+
 ## Emissions
 
 Produced by the monthly workflow, at the end of the inversion.

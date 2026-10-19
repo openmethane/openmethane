@@ -33,10 +33,14 @@ def main():
     near_threshold = env.float("ALERTS_NEAR_THRESHOLD", 0.2)
     far_threshold = env.float("ALERTS_FAR_THRESHOLD", 1.0)
     output_file = env.str("ALERTS_BASELINE_FILE", default="alerts-baseline.nc")
+    start_date = env.date("START_DATE")
+    end_date = env.date("END_DATE")
 
     alerts.create_alerts_baseline(
         domain_file=domain_file,
         dir_list=dir_list,
+        start_date=start_date,
+        end_date=end_date,
         obs_file_template=obs_file_template,
         sim_file_template=sim_file_template,
         near_threshold=near_threshold,

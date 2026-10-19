@@ -1,4 +1,5 @@
 import datetime
+import os
 import os.path
 
 import pytest
@@ -55,8 +56,6 @@ def test_archive_defn(data_regression, target_environment, target):
                 "experiment",
                 "description",
                 "desc_name",
-                "overwrite",
-                "extension",
                 "icon_file",
                 "emis_file",
                 "conc_file",
@@ -119,6 +118,24 @@ def test_overrides(target_environment):
     target_environment(target, clear=False)
 
     assert date_defn.end_date == datetime.date(2024, 1, 1)
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    (
+        (None, True),  # CMAQ's own default
+        ("true", True),
+        ("false", False),
+    ),
+)
+def test_cmaq_kzmin(target_environment, value, expected):
+    """CMAQ_KZMIN is readable from the environment and defaults to on."""
+    target_environment("docker")
+    if value is not None:
+        os.environ["CMAQ_KZMIN"] = value
+    target_environment("docker", clear=False)
+
+    assert cmaq_config.kzmin is expected
 
 
 @targets
