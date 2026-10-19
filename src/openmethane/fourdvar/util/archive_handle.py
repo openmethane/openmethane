@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 import os
+from datetime import UTC, datetime
 
 from openmethane.fourdvar.params import archive_defn
-from openmethane.fourdvar.util import file_handle
 from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
@@ -25,40 +25,45 @@ finished_setup = False
 archive_path = ""
 
 
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+def latest_link_name() -> str:
+    """Name of the symlink which points at the most recent run's archive."""
+    return f"{archive_defn.experiment}-latest"
+
+
 def setup():
     """Setup the archive/experiment directory.
     input: None
     output: None.
 
-    notes: creates an empty directory for storing data
+    notes: creates a new, empty, timestamped directory for storing data
+    (<experiment>-<YYYYMMDD>-<HHMMSS>, in UTC) and points the relative symlink
+    <experiment>-latest at it. Existing archives are never moved or modified.
     """
     global finished_setup
     global archive_path
     if finished_setup is True:
         logger.warning("archive setup called again. Ignoring")
         return None
-    path = os.path.join(archive_defn.archive_path, archive_defn.experiment)
-    if os.path.isdir(path) is True:
-        logger.warning(f"{path} already exists.")
-        if archive_defn.overwrite is False:
-            # need to generate new archive path name
-            extn = archive_defn.extension
-            if "<E>" not in extn:
-                extn = "<E>" + extn
-            if "<I>" not in extn:
-                extn = extn + "<I>"
-            template = extn.replace("<E>", archive_defn.experiment)
-            i = 1
-            unique = False
-            while unique is False:
-                path = os.path.join(archive_defn.archive_path, template.replace("<I>", str(i)))
-                unique = not os.path.isdir(path)
-                i += 1
-            logger.warning(f"moved archive to {path}")
-        else:
-            logger.warning("deleted old archive.")
+
+    run_name = f"{archive_defn.experiment}-{_utcnow():%Y%m%d-%H%M%S}"
+    path = os.path.join(archive_defn.archive_path, run_name)
+    # fails rather than reusing a directory if two runs start in the same second
+    os.makedirs(path)
+
+    # replace the link atomically so readers never see it missing
+    link = os.path.join(archive_defn.archive_path, latest_link_name())
+    tmp_link = f"{link}.tmp"
+    if os.path.lexists(tmp_link):
+        os.remove(tmp_link)
+    os.symlink(run_name, tmp_link)
+    os.replace(tmp_link, link)
+    logger.info(f"archiving to {path}, linked from {link}")
+
     archive_path = path
-    file_handle.empty_dir(archive_path)
     if archive_defn.desc_name != "":
         # add description to archive as text file.
         with open(os.path.join(archive_path, archive_defn.desc_name), "w") as desc_file:
