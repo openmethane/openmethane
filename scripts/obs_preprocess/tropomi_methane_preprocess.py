@@ -377,7 +377,8 @@ def process_observations(
 @click.option(
     "--swir-aod-cutoff",
     help="maximum SWIR aerosol optical depth before observation is discarded.",
-    default=0.13,
+    # see docs/reference/tropomi.md#observation-filters for how this was chosen
+    default=0.07,
 )
 @click.option(
     "--max-process-time",
