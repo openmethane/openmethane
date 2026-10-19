@@ -2,7 +2,7 @@
 """
 Download CAMS methane fields to use as boundary and initial conditions
 
-Two products are available, chosen by CAMS_PRODUCT (the inversion by default):
+Three products are available, chosen by CAMS_PRODUCT (the inversion by default):
 
 - `eac4`: the CAMS reanalysis (EAC4) on pressure levels. CH4 is not assimilated
   in EAC4, it is a free-running model field. About 1.4GB / month.
@@ -11,6 +11,10 @@ Two products are available, chosen by CAMS_PRODUCT (the inversion by default):
   plus satellite). The ADS cannot subset it, so each month is a 2.2GB global file
   which is fetched with parallel range requests, then cut to the domain.
   https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-inversion
+- `forecasts`: the CAMS global greenhouse gas forecasts (IFS, assimilating TROPOMI,
+  GOSAT and IASI), from March 2024. Each day's 00Z forecast at leads of 0, 6, 12
+  and 18 h, flattened to one valid time axis.
+  https://ads.atmosphere.copernicus.eu/datasets/cams-global-greenhouse-gas-forecasts
 
 Assumes that the user has a valid ADS account and has set up the necessary credentials
 in `~/.cdsapirc`.
@@ -20,12 +24,12 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-import cdsapi
 import click
 
 from openmethane.cmaq_preprocess.cams_download import (
     cut_inversion_to_domain,
     download_inversion,
+    download_pressure_levels,
 )
 from openmethane.cmaq_preprocess.read_config_cmaq import load_config_from_env
 from openmethane.fourdvar.env import create_env
@@ -76,39 +80,15 @@ def download_cams_input(
 
     output.parent.mkdir(parents=True, exist_ok=True)
 
+    domain_file = create_env().path("DOMAIN_FILE")
     if config.cams_product == "inversion":
-        domain_file = create_env().path("DOMAIN_FILE")
         with tempfile.TemporaryDirectory(dir=output.parent) as scratch:
             monthly_files = download_inversion(
                 start, end, config.cams_inversion_version, Path(scratch)
             )
             cut_inversion_to_domain(monthly_files, domain_file, start, end, output)
     else:
-        download_eac4(start_date, end_date, output)
-
-
-def download_eac4(start_date: str, end_date: str, output: Path):
-    # This will use ENV variables CDSAPI_KEY and CDSAPI_URL to connect to ADS
-    c = cdsapi.Client()
-
-    # fmt: off
-    c.retrieve(
-        "cams-global-reanalysis-eac4",
-        {
-            "variable": "methane_chemistry",
-            "pressure_level": [
-                "1", "2", "3", "5", "7", "10", "20",
-                "30", "50", "70", "100", "150", "200",
-                "250", "300", "400", "500", "600", "700",
-                "800", "850", "900", "925", "950", "1000",
-            ],
-            "date": f"{start_date}/{end_date}",
-            "time": [f"{hour:02d}:00" for hour in range(0, 24, 3)],
-            "format": "netcdf",
-        },
-        output,
-    )
-    # fmt: on
+        download_pressure_levels(config.cams_product, start, end, output, domain_file)
 
 
 if __name__ == "__main__":

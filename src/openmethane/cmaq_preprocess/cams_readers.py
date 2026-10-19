@@ -95,19 +95,43 @@ class CamsReader:
     coverage_hint = "Download the CAMS file again for the dates of the run."
 
 
-class Eac4Reader(CamsReader):
-    """CAMS global reanalysis (EAC4) on fixed pressure levels, as kg/kg"""
+class PressureLevelReader(CamsReader):
+    """A CAMS product on fixed pressure levels, as a mass mixing ratio in kg/kg
 
-    product = "eac4"
+    Subclasses name the product and its methane variable.
+    """
+
     time_variable = "valid_time"
-    required_variables = ("ch4_c", "pressure_level")
+    ch4_variable: str
+
+    @property
+    def required_variables(self) -> tuple[str, ...]:
+        return (self.ch4_variable, "pressure_level")
 
     def profile(self, itime: int) -> CamsProfile:
-        mass_mixing_ratio = self.dataset.variables["ch4_c"][itime]
+        mass_mixing_ratio = self.dataset.variables[self.ch4_variable][itime]
         ch4_ppmv = mass_mixing_ratio * (MOLAR_MASS_AIR / MOLAR_MASS_CH4 * 1e6)
         hpa = numpy.asarray(self.dataset.variables["pressure_level"][:], dtype=float)
         pressure_pa = numpy.broadcast_to((hpa * 100.0)[:, None, None], ch4_ppmv.shape)
         return CamsProfile(ch4_ppmv=ch4_ppmv, pressure_pa=pressure_pa)
+
+
+class Eac4Reader(PressureLevelReader):
+    """CAMS global reanalysis (EAC4)"""
+
+    product = "eac4"
+    ch4_variable = "ch4_c"
+
+
+class ForecastsReader(PressureLevelReader):
+    """CAMS greenhouse gas forecasts
+
+    The file is the one written by `cams_download.download_forecasts`, with one time
+    axis of valid times in place of the ADS's forecast start and lead time.
+    """
+
+    product = "forecasts"
+    ch4_variable = "ch4"
 
 
 class InversionReader(CamsReader):
@@ -117,8 +141,8 @@ class InversionReader(CamsReader):
     time_variable = "time"
     required_variables = ("CH4", "ps", "hyam", "hybm")
     coverage_hint = (
-        "The inversion adds a year of data about once a year; "
-        "use CAMS_PRODUCT=eac4 for dates it does not cover yet."
+        "The inversion adds a year of data about once a year; set "
+        "CAMS_PRODUCT=forecasts for dates it does not cover yet."
     )
 
     @property
@@ -136,9 +160,9 @@ class InversionReader(CamsReader):
         return CamsProfile(ch4_ppmv=ch4_ppmv, pressure_pa=pressure_pa)
 
 
-READERS = {reader.product: reader for reader in (Eac4Reader, InversionReader)}
+READERS = {reader.product: reader for reader in (Eac4Reader, InversionReader, ForecastsReader)}
 
 
 def open_cams(path: pathlib.Path, product: str) -> CamsReader:
-    """Open a CAMS file of the given product ("eac4" or "inversion")"""
+    """Open a CAMS file of the given product ("eac4", "inversion" or "forecasts")"""
     return READERS[product](path)

@@ -6,10 +6,12 @@ import os
 import pathlib
 import tempfile
 import time
+import typing
 import zipfile
 
 import requests
 import xarray as xr
+from attrs import frozen
 
 from openmethane.util.logger import get_logger
 
@@ -123,8 +125,8 @@ def retrieve_inversion_month(
         raise RuntimeError(
             f"The CAMS inversion {version} has no methane concentration for "
             f"{year:04d}-{month:02d}, or the request failed: {err}. "
-            "The inversion adds a year of data roughly once a year; "
-            "use CAMS_PRODUCT=eac4 for dates it does not cover yet."
+            "The inversion adds a year of data roughly once a year; set "
+            "CAMS_PRODUCT=forecasts for dates it does not cover yet."
         ) from err
 
     with tempfile.TemporaryDirectory(dir=destination.parent) as scratch:
@@ -144,6 +146,19 @@ DOMAIN_PADDING_DEGREES = 3.0
 INVERSION_VARIABLES = ["CH4", "ps", "hyam", "hybm"]
 
 
+def padded_domain_bounds(
+    domain_file: pathlib.Path, padding: float = DOMAIN_PADDING_DEGREES
+) -> tuple[float, float, float, float]:
+    """South, north, west and east edges of the domain, widened by `padding` degrees"""
+    with xr.open_dataset(domain_file) as domain:
+        return (
+            float(domain.lat.min()) - padding,
+            float(domain.lat.max()) + padding,
+            float(domain.lon.min()) - padding,
+            float(domain.lon.max()) + padding,
+        )
+
+
 def cut_inversion_to_domain(
     monthly_files: list[pathlib.Path],
     domain_file: pathlib.Path,
@@ -156,10 +171,7 @@ def cut_inversion_to_domain(
     The time axis keeps one step past `end`, because the reader takes the latest
     CAMS step at or before each model time.
     """
-    with xr.open_dataset(domain_file) as domain:
-        lat_min, lat_max = float(domain.lat.min()), float(domain.lat.max())
-        lon_min, lon_max = float(domain.lon.min()), float(domain.lon.max())
-    padding = DOMAIN_PADDING_DEGREES
+    lat_min, lat_max, lon_min, lon_max = padded_domain_bounds(domain_file)
     time_start = datetime.datetime.combine(start, datetime.time())
     time_end = datetime.datetime.combine(end + datetime.timedelta(days=1), datetime.time())
 
@@ -169,8 +181,8 @@ def cut_inversion_to_domain(
         with xr.open_dataset(path) as monthly:
             release = monthly.attrs["release"]
             piece = monthly[INVERSION_VARIABLES].sel(
-                latitude=slice(lat_min - padding, lat_max + padding),
-                longitude=slice(lon_min - padding, lon_max + padding),
+                latitude=slice(lat_min, lat_max),
+                longitude=slice(lon_min, lon_max),
                 time=slice(time_start, time_end),
             )
             pieces.append(piece.load())
@@ -187,3 +199,122 @@ def cut_inversion_to_domain(
         }
     )
     cut.to_netcdf(destination)
+
+
+def forecasts_by_valid_time(forecasts: xr.Dataset) -> xr.Dataset:
+    """Replace the forecast start and lead time of the ADS file by a single valid time"""
+    ch4 = forecasts["ch4"].stack(step=("forecast_reference_time", "forecast_period"))
+    ch4 = ch4.transpose("step", "pressure_level", "latitude", "longitude")
+    return xr.Dataset(
+        {"ch4": (("valid_time", "pressure_level", "latitude", "longitude"), ch4.values)},
+        coords={
+            "valid_time": ch4["valid_time"].values,
+            "pressure_level": forecasts["pressure_level"].values,
+            "latitude": forecasts["latitude"].values,
+            "longitude": forecasts["longitude"].values,
+        },
+        attrs=forecasts.attrs,
+    ).assign(ch4=lambda dataset: dataset["ch4"].assign_attrs(forecasts["ch4"].attrs))
+
+
+@frozen
+class PressureLevelProduct:
+    """How to request a CAMS product on fixed pressure levels from the ADS"""
+
+    dataset: str
+    variable: str
+    pressure_levels: tuple[str, ...]
+    time_field: str
+    """The request field that selects the times of each day"""
+    times: tuple[str, ...]
+    to_valid_time: typing.Callable[[xr.Dataset], xr.Dataset] | None = None
+    """Puts the delivered file on one valid time axis, if it does not arrive that way"""
+
+
+# fmt: off
+EAC4 = PressureLevelProduct(
+    dataset="cams-global-reanalysis-eac4",
+    variable="methane_chemistry",
+    pressure_levels=(
+        "1", "2", "3", "5", "7", "10", "20",
+        "30", "50", "70", "100", "150", "200",
+        "250", "300", "400", "500", "600", "700",
+        "800", "850", "900", "925", "950", "1000",
+    ),
+    time_field="time",
+    times=tuple(f"{hour:02d}:00" for hour in range(0, 24, 3)),
+)
+FORECASTS = PressureLevelProduct(
+    dataset="cams-global-greenhouse-gas-forecasts",
+    variable="methane",
+    # the CMAQ model top is 50 hPa, so higher levels never reach ICON or BCON
+    pressure_levels=(
+        "50", "70", "100", "150", "200", "250", "300", "400", "500",
+        "600", "700", "800", "850", "900", "925", "950", "1000",
+    ),
+    time_field="leadtime_hour",
+    # the shortest leads of the daily 00Z forecast that give the inversion's 6-hourly steps
+    times=("0", "6", "12", "18"),
+    to_valid_time=forecasts_by_valid_time,
+)
+# fmt: on
+PRESSURE_LEVEL_PRODUCTS = {"eac4": EAC4, "forecasts": FORECASTS}
+
+
+def download_pressure_levels(
+    product: str,
+    start: datetime.date,
+    end: datetime.date,
+    destination: pathlib.Path,
+    domain_file: pathlib.Path,
+    client=None,
+):
+    """Download a CAMS product on pressure levels over the domain, for each day from start to end
+
+    The ADS cuts each request to the domain and its padding. One request is made per
+    calendar month, because a month of the forecasts' 0.1° grid over Australia is
+    still a few GB, and each is fetched with parallel range requests.
+    """
+    import cdsapi
+
+    client = client or cdsapi.Client()
+    spec = PRESSURE_LEVEL_PRODUCTS[product]
+    south, north, west, east = padded_domain_bounds(domain_file)
+    with tempfile.TemporaryDirectory(dir=destination.parent) as scratch:
+        pieces = []
+        for year, month in months_in_range(start, end):
+            first_of_month = datetime.date(year, month, 1)
+            next_month = (first_of_month + datetime.timedelta(days=32)).replace(day=1)
+            chunk_start = max(start, first_of_month)
+            chunk_end = min(end, next_month - datetime.timedelta(days=1))
+            request = {
+                "variable": spec.variable,
+                "pressure_level": list(spec.pressure_levels),
+                "date": f"{chunk_start.isoformat()}/{chunk_end.isoformat()}",
+                spec.time_field: list(spec.times),
+                "area": [north, west, south, east],
+                "data_format": "netcdf_zip",
+            }
+            result = client.retrieve(spec.dataset, request)
+            archive = pathlib.Path(scratch) / f"{year}-{month:02d}.zip"
+            logger.info(f"downloading {result.content_length / 1e6:.0f} MB for {year}-{month:02d}")
+            download_in_ranges(result.location, archive, result.content_length)
+            with xr.open_dataset(_extract_netcdf(archive, pathlib.Path(scratch))) as delivered:
+                piece = spec.to_valid_time(delivered) if spec.to_valid_time else delivered
+                pieces.append(piece.load())
+        downloaded = xr.concat(pieces, dim="valid_time", data_vars="minimal")
+    for variable in downloaded.variables.values():
+        variable.encoding = {}
+    downloaded.attrs["cams_product"] = product
+    downloaded.to_netcdf(destination)
+
+
+def _extract_netcdf(retrieved: pathlib.Path, directory: pathlib.Path) -> pathlib.Path:
+    """The netCDF the ADS delivered, which may be inside a zip"""
+    if not zipfile.is_zipfile(retrieved):
+        return retrieved
+    with zipfile.ZipFile(retrieved) as archive_zip:
+        members = [name for name in archive_zip.namelist() if name.endswith(".nc")]
+        if len(members) != 1:
+            raise RuntimeError(f"expected one netCDF in the CAMS archive, found {members}")
+        return pathlib.Path(archive_zip.extract(members[0], directory))
