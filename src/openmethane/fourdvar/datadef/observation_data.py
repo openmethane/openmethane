@@ -33,12 +33,16 @@ from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Bumped when the meaning of the fields in an observation file changes.
+# Bumped when the meaning of the fields in an observation file changes, or when
+# the way they are computed changes enough that files from before and after
+# should not be mixed.
 # 1: light-path pressure weights only, no averaging kernel, no offset term.
 # 2: full column operator - averaging kernel applied, `offset_term` present.
 # 3: column above the model top filled from the retrieval prior alone, so the
 #    weights no longer over-weight CMAQ's top layer.
-OBS_OPERATOR_VERSION = 3
+# 4: retrieval layers weighted by their share of the dry-air column, as the
+#    product user manual prescribes, rather than by pressure thickness.
+OBS_OPERATOR_VERSION = 4
 
 # What is wrong with a file written by each superseded version, so that the
 # warning below can say something specific rather than just quoting numbers.
@@ -51,6 +55,11 @@ _OPERATOR_VERSION_CHANGES = {
     2: (
         "it fills the column above the model top from CMAQ's top layer, which "
         "over-weights that layer by around 4.4x its share of the air mass."
+    ),
+    3: (
+        "it weights each retrieval layer by its pressure thickness rather than its "
+        "share of the dry-air column, which puts simulated columns over Australia "
+        "around 0.2-0.3 ppb high."
     ),
 }
 
@@ -259,7 +268,7 @@ class ObservationData(FourDVarData):
             logger.warning(
                 f"{filename} was written by observation operator version {file_version}, "
                 f"this is version {OBS_OPERATOR_VERSION}: {what_changed} "
-                "Simulated observations made with it will be wrong. Re-run "
+                "Simulated observations made with it carry that error. Re-run "
                 "scripts/obs_preprocess/tropomi_methane_preprocess.py to regenerate it."
             )
         if cls.grid_attr is not None:
