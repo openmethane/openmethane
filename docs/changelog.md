@@ -19,6 +19,109 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.6.0 (2026-10-20)
+
+### ⚠️ Breaking Changes
+
+- Removed `scripts/cmaq_preprocess/upload-domains.py` and the `sync-domains-from-cf`
+  make target, which mirrored domain files to a CloudFlare R2 bucket. Domain files
+  are served from the public data store at
+  `https://openmethane.s3.amazonaws.com/domains/`, which `make fetch-domains` and the
+  end-to-end scripts already use. Publishing a domain is now a manual upload, described
+  in [Creating a custom domain](https://github.com/openmethane/openmethane/blob/main/docs/guides/custom-domain.md#using-your-domain).
+
+  The `awscli` development dependency went with them, since nothing in the project
+  shells out to the `aws` CLI any more. The manual upload above needs an `aws` CLI
+  installed separately. ([#246](https://github.com/openmethane/openmethane/pull/246))
+- The minimum vertical eddy diffusivity CMAQ applies is now read from the
+  `CMAQ_KZMIN` environment variable, and **its default has changed from off to
+  on**. Previously it was hard-coded off, which floored the diffusivity at
+  1.0 m²/s at every level; it now defaults to CMAQ's own setting, a floor of
+  0.01 m²/s away from urban cells. Measured over June 2024 on `aust10km`, the new
+  default gives a 1.4% smaller box-mean misfit against TROPOMI and a monthly-mean
+  emissions-to-column response 90 km narrower at the surface layer. Concentrations
+  and posterior emissions will differ from runs made before this change; set
+  `CMAQ_KZMIN=false` to reproduce the old behaviour. See
+  [Vertical mixing](https://github.com/openmethane/openmethane/blob/main/docs/reference/parameters.md#vertical-mixing). ([#267](https://github.com/openmethane/openmethane/pull/267))
+- Changed fourdvar to write each run to its own archive directory instead of `archive/<EXPERIMENT>`.
+
+  - Previously, a run wrote to `archive/<EXPERIMENT>` and a re-run wrote to
+    `archive/<EXPERIMENT>_vsn<N>`, so the location of the latest result depended on how
+    many runs had come before it.
+  - Now, every run writes to `archive/<EXPERIMENT>-<YYYYMMDD>-<HHMMSS>` (UTC start time),
+    and earlier runs are never moved or overwritten.
+  - Anything reading from `archive/<EXPERIMENT>` or `archive/<EXPERIMENT>_vsn<N>` will find
+    only older runs, or nothing, and must be updated.
+  - The `overwrite` and `extension` archive settings were removed.
+
+  Note: `archive/<EXPERIMENT>-latest` is a relative symlink to the most recent run. Tools
+  which follow symlinks, such as `aws s3 sync` and `cp -r`, will copy that run twice unless
+  the link is excluded. See the
+  [output layout](https://github.com/openmethane/openmethane/blob/main/docs/reference/outputs.md#output-layout).
+
+  ([#270](https://github.com/openmethane/openmethane/pull/270))
+- Changed the EAC4 boundary and initial conditions to interpolate in log-pressure
+  onto each CMAQ column's own layer pressures, in place of the nearest pressure
+  level taken from a single corner cell of the domain. On the test data this moves
+  the layer means by under 1 ppb, except in the top layer, which moves by about
+  32 ppb. ([#271](https://github.com/openmethane/openmethane/pull/271))
+- Changed the default CAMS product for boundary and initial conditions from EAC4
+  to the CAMS greenhouse gas inversion. Set `CAMS_PRODUCT=eac4` to keep the
+  previous behaviour. The inversion needs about 2.2 GB of temporary disk per
+  month of the run, and only covers dates up to the end of its latest release.
+  `CAMS_FILE` is now optional and defaults to a name that includes the product
+  and, for the inversion, its release, so an existing EAC4 file is never reused
+  as the inversion. ([#271](https://github.com/openmethane/openmethane/pull/271))
+- Made the CAMS to CMAQ interpolation fail with an error when the CAMS file does
+  not cover the dates of the run. EAC4 files previously fell back to the nearest
+  time with a warning. ([#271](https://github.com/openmethane/openmethane/pull/271))
+- Lowered the default `--swir-aod-cutoff` in `tropomi_methane_preprocess.py`
+  from 0.13 to 0.07, removing more soundings that are biased low by aerosol
+  ([#249](https://github.com/openmethane/openmethane/issues/249)). Pass
+  `--swir-aod-cutoff 0.13` to keep the previous behaviour. See
+  [Observation filters](https://github.com/openmethane/openmethane/blob/main/docs/reference/tropomi.md#observation-filters).
+
+  Note: daily workflows that have already run keep the old cutoff, and must be
+  re-run to use the new value. ([#280](https://github.com/openmethane/openmethane/pull/280))
+
+### 🆕 Features
+
+- Added the CAMS greenhouse gas inversion as a source of boundary and initial
+  conditions, selected with `CAMS_PRODUCT=inversion`. EAC4, the default, does not
+  assimilate methane and has a surface-heavy profile and a flat near-surface
+  north-south gradient over Australia that the bias correction cannot remove. The
+  inversion is downloaded with parallel range requests and cut to the domain, and
+  its release is recorded in the ICON and BCON files. ([#271](https://github.com/openmethane/openmethane/pull/271))
+
+### 🎉 Improvements
+
+- Measure the CAMS bias correction with a single forward run instead of
+  differencing an ICON-only surrogate against a zero-emissions run. The surrogate
+  pushed one time-invariant field through each sounding's column operator, so it
+  carried no transport, no vertical mixing and no time evolution, and the old
+  decomposition overcorrected by however far it fell short of the forward run.
+  The correction is now the mean observed column minus the mean simulated column
+  over every sounding, and it costs one forward run per month rather than two. ([#254](https://github.com/openmethane/openmethane/pull/254))
+- Weight each TROPOMI retrieval layer by its share of the retrieval's dry-air
+  column in the observation operator, as the S5P CH4 product user manual
+  prescribes, rather than by its pressure thickness. Water vapour and the fall in
+  gravity with altitude put slightly more dry air in the upper layers than an
+  equal pressure split allows, so the old weights put simulated columns over
+  Australia around 0.2-0.3 ppb high. Observation files must be regenerated;
+  `OBS_OPERATOR_VERSION` is bumped to 4 so that stale files are flagged on load. ([#274](https://github.com/openmethane/openmethane/pull/274))
+
+### 🐛 Bug Fixes
+
+- Fixed `create_alerts` and `create_alerts_baseline` crashing on a day with no
+  TROPOMI observations (e.g. an instrument outage), producing a valid all-nan
+  `alerts.nc` for the day, or a correctly dated baseline that ignores the
+  outage day, instead. ([#264](https://github.com/openmethane/openmethane/pull/264))
+
+### 🔧 Trivial/Internal Changes
+
+- [#243](https://github.com/openmethane/openmethane/pull/243), [#257](https://github.com/openmethane/openmethane/pull/257), [#275](https://github.com/openmethane/openmethane/pull/275)
+
+
 ## openmethane v1.5.0 (2026-09-14)
 
 ### 🗑️ Deprecations

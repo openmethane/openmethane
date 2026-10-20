@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.12.*"
 
 [[package]]
@@ -278,8 +278,9 @@ wheels = [
 
 [[package]]
 name = "openmethane"
-version = "1.5.1.dev1"
+version = "1.6.0"
 source = { editable = "." }
+default-groups = ["dev", "tests"]
 dependencies = [
     { name = "attrs" },
     { name = "boto3" },
