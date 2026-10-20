@@ -48,6 +48,26 @@ the fetch that needs an account: set `CDSE_USERNAME` and `CDSE_PASSWORD` in
 them the fetch fails and names the objects it could not retrieve, rather than
 silently leaving a day short of observations.
 
+## Observation filters
+
+`tropomi_methane_preprocess.py` keeps a sounding only if it passes all of these
+cutoffs, each of which can be overridden on the command line:
+
+| Option | Keeps soundings with | Default |
+| --- | --- | --- |
+| `--qa-cutoff` | `qa_value` above this | 0.5 |
+| `--swir-albedo-cutoff` | SWIR surface albedo above this | 0.03 |
+| `--swir-aod-cutoff` | SWIR aerosol optical depth below this | 0.07 |
+
+The SWIR aerosol optical depth cutoff removes soundings affected by aerosol.
+Retrieved XCH4 has a heavy low tail at high aerosol optical depth: soundings
+tens to over a hundred ppb too low, far more often than the scatter elsewhere
+predicts, and clustered in space. The analysis is in
+[this #249 comment](https://github.com/openmethane/openmethane/issues/249#issuecomment-6009229613),
+and the experiment that tested the 0.07 cutoff is
+[#277](https://github.com/openmethane/openmethane/pull/277), with
+[results here](https://github.com/openmethane/openmethane/pull/277#issuecomment-6264169993).
+
 ## The observation operator
 
 `tropomi_methane_preprocess.py` does more than reformat the retrieval: it builds
