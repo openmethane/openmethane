@@ -16,20 +16,21 @@
 
 import pathlib
 
-import xarray as xr
 import numpy as np
+import xarray as xr
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import openmethane.fourdvar.datadef as d
+import openmethane.fourdvar.transfunc as t
 import openmethane.fourdvar.util.archive_handle as archive
 import openmethane.fourdvar.util.cmaq_handle as cmaq
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.env import env
 from openmethane.fourdvar.params import (
-    input_defn,
-    data_access,
-    template_defn,
     archive_defn,
+    data_access,
+    input_defn,
+    template_defn,
 )
 from openmethane.postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 from openmethane.util.logger import get_logger
@@ -98,6 +99,11 @@ def callback_func(current_vector):
     current_unknown = d.UnknownData(current_vector)
     current_physical = transform(current_unknown, d.PhysicalData)
     current_physical.archive(f"iter{iter_num:04}.ncf")
+    # the latest gradient may come from a line-search point after current_vector,
+    # but recomputing it at current_vector would cost an extra adjoint run
+    if data_access.prev_gradient is not None:
+        current_gradient = t.uncondition_adjoint(d.UnknownData(data_access.prev_gradient))
+        current_gradient.archive(f"gradient_iter{iter_num:04}.ncf")
     if archive_defn.iter_model_output is True:
         current_model_output = d.ModelOutputData()
     if archive_defn.iter_obs_lite is True:

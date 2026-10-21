@@ -19,3 +19,6 @@ allow_fwd_skip = False
 
 # previous unknown vector run through CMAQ_fwd
 prev_vector = None
+
+# most recent gradient (in unknown space) returned by gradient_func
+prev_gradient = None

@@ -21,7 +21,7 @@ from openmethane.fourdvar.transfunc.obs_operator import obs_operator
 from openmethane.fourdvar.transfunc.prepare_model import prepare_model
 from openmethane.fourdvar.transfunc.run_adjoint import run_adjoint
 from openmethane.fourdvar.transfunc.run_model import run_model
-from openmethane.fourdvar.transfunc.uncondition import uncondition
+from openmethane.fourdvar.transfunc.uncondition import uncondition, uncondition_adjoint
 
 __all__ = [
     "calc_forcing",
@@ -33,4 +33,5 @@ __all__ = [
     "run_adjoint",
     "run_model",
     "uncondition",
+    "uncondition_adjoint",
 ]
