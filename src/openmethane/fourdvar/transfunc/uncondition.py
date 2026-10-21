@@ -16,7 +16,7 @@
 
 import numpy as np
 
-from openmethane.fourdvar.datadef import PhysicalData
+from openmethane.fourdvar.datadef import PhysicalAdjointData, PhysicalData
 from openmethane.fourdvar.params.input_defn import inc_icon
 
 
@@ -27,7 +27,38 @@ def uncondition(unknown):
 
     notes: this function must apply the prior error covariance
     """
+    return unk_to_phys(unknown, False)
+
+
+def uncondition_adjoint(unknown_gradient):
+    """application: undo pre-conditioning of a gradient, the inverse of condition_adjoint
+    input: UnknownData (gradient of the cost with respect to the unknowns)
+    output: PhysicalAdjointData.
+
+    notes: this function must apply the inverse prior error covariance
+    """
+    return unk_to_phys(unknown_gradient, True)
+
+
+def unk_to_phys(unknown, is_adjoint):
+    """application: undo pre-conditioning of UnknownData
+    input: UnknownData
+    output: PhysicalData, or PhysicalAdjointData if is_adjoint.
+    """
     PhysicalData.assert_params()
+
+    # weighting function changes if is_adjoint
+    if is_adjoint is True:
+        output_class = PhysicalAdjointData
+
+        def weight(val, sd):
+            return val / sd
+    else:
+        output_class = PhysicalData
+
+        def weight(val, sd):
+            return val * sd
+
     p = PhysicalData
     emis_shape = (
         p.nstep_emis,
@@ -53,20 +84,20 @@ def uncondition(unknown):
         if inc_icon is True:
             icon = vals[i]
             i += 1
-            icon_dict[spc] = icon * PhysicalData.icon_unc[spc]
+            icon_dict[spc] = weight(icon, PhysicalData.icon_unc[spc])
 
         emis = vals[i : i + emis_len]
         emis = emis.reshape(emis_shape)
-        emis_dict[spc] = emis * PhysicalData.emis_unc[spc]
+        emis_dict[spc] = weight(emis, PhysicalData.emis_unc[spc])
         i += emis_len
 
         bcon = vals[i : i + bcon_len]
         bcon = bcon.reshape(bcon_shape)
-        bcon_dict[spc] = bcon * PhysicalData.bcon_unc[spc]
+        bcon_dict[spc] = weight(bcon, PhysicalData.bcon_unc[spc])
         i += bcon_len
 
     assert i == len(vals), "Some physical data left unassigned!"
 
     if inc_icon is False:
         icon_dict = None
-    return PhysicalData(icon_dict, emis_dict, bcon_dict)
+    return output_class(icon_dict, emis_dict, bcon_dict)

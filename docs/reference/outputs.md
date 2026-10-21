@@ -78,6 +78,19 @@ One file per successful optimiser iteration, archived by
 `user_driver.callback_func`. These let you see how the solution evolved, and are
 what `restart_script.py` resumes from.
 
+### `gradient_iter{NNNN}.ncf`
+
+The gradient of the cost function at each `iter{NNNN}.ncf`, plus
+`gradient_iter0000.ncf` at the prior (the first guess). It is in the same layout
+as the iteration files, but holds the gradient with respect to the physical
+values (the pre-conditioning has been undone), so negative values mark cells
+where increasing emissions would lower the cost.
+
+> [!NOTE]
+> The file holds the latest gradient calculated. L-BFGS-B ends each line search
+> on the accepted point, so this is the gradient at the iterate. If it ever is
+> not, a warning is logged naming the file.
+
 ## Alerts
 
 Methane alerts are produced for each calendar day, and represent grid cells

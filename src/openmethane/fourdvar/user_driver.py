@@ -16,20 +16,21 @@
 
 import pathlib
 
-import xarray as xr
 import numpy as np
+import xarray as xr
 from scipy.optimize import fmin_l_bfgs_b as minimize
 
 import openmethane.fourdvar.datadef as d
+import openmethane.fourdvar.transfunc as t
 import openmethane.fourdvar.util.archive_handle as archive
 import openmethane.fourdvar.util.cmaq_handle as cmaq
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.env import env
 from openmethane.fourdvar.params import (
-    input_defn,
-    data_access,
-    template_defn,
     archive_defn,
+    data_access,
+    input_defn,
+    template_defn,
 )
 from openmethane.postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 from openmethane.util.logger import get_logger
@@ -98,6 +99,7 @@ def callback_func(current_vector):
     current_unknown = d.UnknownData(current_vector)
     current_physical = transform(current_unknown, d.PhysicalData)
     current_physical.archive(f"iter{iter_num:04}.ncf")
+    archive_gradient(current_vector, f"gradient_iter{iter_num:04}.ncf")
     if archive_defn.iter_model_output is True:
         current_model_output = d.ModelOutputData()
     if archive_defn.iter_obs_lite is True:
@@ -106,6 +108,22 @@ def callback_func(current_vector):
         current_obs.archive(f"obs_lite_iter{iter_num:04}.pic.gz", force_lite=True)
 
     logger.info(f"iter_num = {iter_num}")
+
+
+def archive_gradient(current_vector, filename):
+    """Archive the latest gradient, converted to physical space.
+    input: np.array (the iterate the gradient should belong to), str
+    output: None.
+    """
+    if data_access.prev_gradient is None:
+        return
+    # L-BFGS-B ends each line search on the accepted point, so the latest
+    # gradient should be at current_vector. Recomputing it would cost an
+    # extra adjoint run, so only warn if it is not.
+    if not np.array_equal(data_access.prev_gradient_vector, current_vector):
+        logger.warning(f"{filename} holds a gradient from a point other than the current iterate")
+    current_gradient = t.uncondition_adjoint(d.UnknownData(data_access.prev_gradient))
+    current_gradient.archive(filename)
 
 
 def minim(
@@ -121,9 +139,13 @@ def minim(
     """
     # turn on skipping of unneeded fwd calls
     data_access.allow_fwd_skip = True
+    data_access.prev_gradient = None
+    data_access.prev_gradient_vector = None
 
     start_cost = cost_func(init_guess, archive_obs_file="simulobs_first_guess.pic.gz")
     start_grad = grad_func(init_guess)
+    # iter_num is 0 for a fresh run (the prior), or the iteration resumed from
+    archive_gradient(init_guess, f"gradient_iter{iter_num:04}.ncf")
     start_dict = {"start_cost": start_cost, "start_grad": start_grad}
 
     if allow_negative_emissions is True:

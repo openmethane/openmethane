@@ -21,9 +21,10 @@ import numpy as np
 from openmethane.fourdvar import datadef as d
 from openmethane.fourdvar import user_driver
 from openmethane.fourdvar._transform import transform
-from openmethane.fourdvar.params import archive_defn, data_access
-from openmethane.util.logger import get_logger
 from openmethane.fourdvar.env import env
+from openmethane.fourdvar.params import archive_defn, data_access
+from openmethane.fourdvar.util.kobayashi import kobayashi
+from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -88,12 +89,19 @@ def cost_func(vector, archive_obs_file=None):
     end_time = time.time()
 
     # Calculate statistics about the current step
-    bias = (observed.get_vector() - simulated.get_vector()).mean()
-    chisq = (
-        ((observed.get_vector() - simulated.get_vector()) / np.array(observed.uncertainty)) ** 2
-    ).sum() / observed.length
+    obs_vector = observed.get_vector()
+    sim_vector = simulated.get_vector()
+    obs_unc = np.array(observed.uncertainty)
+    bias = (obs_vector - sim_vector).mean()
+    chisq = (((obs_vector - sim_vector) / obs_unc) ** 2).sum() / observed.length
+    # decompose chisq: on uncertainty-weighted values the Kobayashi terms are
+    # per-observation means, so sb + sdsd + lcs == chisq
+    sb, sdsd, lcs = kobayashi(obs_vector / obs_unc, sim_vector / obs_unc)
 
-    logger.info(f"cost={cost} bias={bias} chisq={chisq} in {int(end_time - start_time)}s")
+    logger.info(
+        f"cost={cost} bias={bias} chisq={chisq} sb={sb} sdsd={sdsd} lcs={lcs} "
+        f"in {int(end_time - start_time)}s"
+    )
     return cost
 
 
@@ -154,6 +162,11 @@ def gradient_func(vector):
     sensitivity.cleanup()
     phys_sense.cleanup()
     un_gradient.cleanup()
+
+    # kept so the minimiser callback can archive it, with the vector it belongs
+    # to so the callback can check it matches the iterate
+    data_access.prev_gradient = np.array(gradient)
+    data_access.prev_gradient_vector = np.array(vector)
 
     end_time = time.time()
     logger.info(f"gradient norm = {np.linalg.norm(gradient)} in {int(end_time - start_time)}s")
