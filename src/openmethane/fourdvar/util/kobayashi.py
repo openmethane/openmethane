@@ -17,7 +17,6 @@ using mean squared deviation and its components. Agronomy Journal, 92(2),
 from collections.abc import Sequence
 
 import numpy as np
-from scipy.stats import pearsonr
 
 
 def kobayashi(
@@ -27,8 +26,13 @@ def kobayashi(
     """Return [SB, SDSD, LCS] for the two series, which sum to the MSD."""
     a = np.asarray(a, dtype="float64")
     b = np.asarray(b, dtype="float64")
-    result = []
-    result.append((a.mean() - b.mean()) ** 2)
-    result.append((a.std() - b.std()) ** 2)
-    result.append(2.0 * (1 - pearsonr(a, b).statistic) * a.std() * b.std())
-    return result
+    sd_a = a.std()
+    sd_b = b.std()
+    # 2 * (1 - r) * sd_a * sd_b, written with the covariance so a constant
+    # series or a single value gives LCS = 0 rather than an error or NaN
+    cov = ((a - a.mean()) * (b - b.mean())).mean()
+    return [
+        (a.mean() - b.mean()) ** 2,
+        (sd_a - sd_b) ** 2,
+        2.0 * (sd_a * sd_b - cov),
+    ]

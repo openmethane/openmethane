@@ -80,17 +80,16 @@ what `restart_script.py` resumes from.
 
 ### `gradient_iter{NNNN}.ncf`
 
-The most recent gradient of the cost function, archived alongside each
-`iter{NNNN}.ncf`. It is in the same layout as the iteration files, but holds the
-gradient with respect to the physical values (the pre-conditioning has been
-undone), so negative values mark cells where increasing emissions would lower
-the cost.
+The gradient of the cost function at each `iter{NNNN}.ncf`, plus
+`gradient_iter0000.ncf` at the prior (the first guess). It is in the same layout
+as the iteration files, but holds the gradient with respect to the physical
+values (the pre-conditioning has been undone), so negative values mark cells
+where increasing emissions would lower the cost.
 
 > [!NOTE]
-> The minimiser may evaluate the gradient at line-search points other than the
-> accepted iterate, so this is the latest gradient calculated, not necessarily
-> the gradient at `iter{NNNN}.ncf`. Recomputing it exactly would cost an extra
-> adjoint run per iteration.
+> The file holds the latest gradient calculated. L-BFGS-B ends each line search
+> on the accepted point, so this is the gradient at the iterate. If it ever is
+> not, a warning is logged naming the file.
 
 ## Alerts
 
