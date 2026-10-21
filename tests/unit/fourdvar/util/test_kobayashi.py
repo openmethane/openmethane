@@ -40,3 +40,15 @@ def test_weighted_components_sum_to_chisq():
     terms = kobayashi(observed / uncertainty, simulated / uncertainty)
 
     assert sum(terms) == pytest.approx(chisq)
+
+
+def test_constant_series():
+    sb, sdsd, lcs = kobayashi([2.0, 2.0, 2.0], [1.0, 3.0, 5.0])
+
+    assert sb == pytest.approx(1)
+    assert sdsd == pytest.approx(np.std([1.0, 3.0, 5.0]) ** 2)
+    assert lcs == pytest.approx(0)
+
+
+def test_single_value():
+    assert kobayashi([1.0], [3.0]) == pytest.approx([4, 0, 0])

@@ -163,9 +163,10 @@ def gradient_func(vector):
     phys_sense.cleanup()
     un_gradient.cleanup()
 
-    # kept so the minimiser callback can archive it. It may belong to a later
-    # line-search point than the iterate the callback is given.
+    # kept so the minimiser callback can archive it, with the vector it belongs
+    # to so the callback can check it matches the iterate
     data_access.prev_gradient = np.array(gradient)
+    data_access.prev_gradient_vector = np.array(vector)
 
     end_time = time.time()
     logger.info(f"gradient norm = {np.linalg.norm(gradient)} in {int(end_time - start_time)}s")
