@@ -60,7 +60,7 @@ def physical_params(monkeypatch, tmp_path):
 def make_physical(params, bcon_value=0.0):
     emis = {"CH4": np.ones((1, 1, NROWS, NCOLS))}
     bcon = {"CH4": np.full((1, params["bcon_region"]), bcon_value)}
-    icon = {"CH4": 1.0} if input_defn.inc_icon else None
+    icon = {"CH4": 0.0} if input_defn.inc_icon else None
     return PhysicalData(icon, emis, bcon)
 
 
@@ -89,7 +89,7 @@ def test_adjoint_archive_units(physical_params, tmp_path):
     """A gradient's bcon is per ppm of offset, so it can't pass as a prior."""
     path = tmp_path / "gradient.nc"
     bcon = {"CH4": np.zeros((1, physical_params["bcon_region"]))}
-    icon = {"CH4": 1.0} if input_defn.inc_icon else None
+    icon = {"CH4": 0.0} if input_defn.inc_icon else None
     PhysicalAdjointData(icon, {"CH4": np.ones((1, 1, NROWS, NCOLS))}, bcon).archive(str(path))
     with netCDF4.Dataset(path) as nc:
         assert nc.groups["bcon"].units == "CF/ppm"
@@ -176,7 +176,7 @@ def test_offset_lower_bound_daily_files(physical_params, test_data_dir, tmp_path
 
 @pytest.mark.parametrize("allow_negative_emissions", (True, False))
 def test_bounds_follow_condition_layout(physical_params, bcon_file, allow_negative_emissions):
-    bounds, is_bcon = user_driver.get_bounds(PhysicalData, allow_negative_emissions)
+    bounds, is_bcon, _ = user_driver.get_bounds(PhysicalData, allow_negative_emissions)
 
     n_emis = NROWS * NCOLS
     n_icon = 1 if input_defn.inc_icon else 0

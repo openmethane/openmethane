@@ -71,6 +71,10 @@ uncertainties (`CH4_UNC`). The group also stores the map from offsets to the
 BCON grid: `BCON_REGION`, and `STEP_START`/`STEP_END` in seconds from the start
 of the run. See [Boundary conditions](boundary-conditions.md).
 
+With `INC_ICON` on, the `icon` group holds the posterior initial condition
+offset, in ppm, as one scalar per species (`CH4`), with its prior uncertainty
+(`CH4_UNC`). See [The initial condition](boundary-conditions.md#the-initial-condition).
+
 If a run completed the inversion but failed during post-processing, the emissions
 file can be regenerated from this without re-running the model:
 
@@ -90,7 +94,8 @@ The gradient of the cost function at each `iter{NNNN}.ncf`, plus
 `gradient_iter0000.ncf` at the prior (the first guess). It is in the same layout
 as the iteration files, but holds the gradient with respect to the physical
 values (the pre-conditioning has been undone), so negative values mark cells
-where increasing emissions would lower the cost.
+where increasing emissions would lower the cost. The `bcon` and `icon` groups
+are in `CF/ppm`, the gradient with respect to each offset.
 
 > [!NOTE]
 > The file holds the latest gradient calculated. L-BFGS-B ends each line search
