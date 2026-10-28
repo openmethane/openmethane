@@ -7,9 +7,10 @@ from openmethane.fourdvar.params import input_defn
 from openmethane.fourdvar.transfunc import condition_adjoint, uncondition, uncondition_adjoint
 
 
-@pytest.fixture
-def physical_params(monkeypatch):
+@pytest.fixture(params=(True, False), ids=("icon", "no-icon"))
+def physical_params(request, monkeypatch):
     """Small physical shapes with uncertainties which differ in every cell."""
+    monkeypatch.setattr(input_defn, "inc_icon", request.param)
     rng = np.random.default_rng(0)
     params = {
         "tday_emis": 86400,
@@ -53,3 +54,8 @@ def test_uncondition_adjoint_divides_by_uncertainty(physical_params):
     emis_unc = physical_params["emis_unc"]["CH4"]
     np.testing.assert_allclose(gradient.emis["CH4"], 1 / emis_unc)
     np.testing.assert_allclose(physical.emis["CH4"], emis_unc)
+    if input_defn.inc_icon:
+        assert gradient.icon["CH4"] == pytest.approx(1 / 1.5)
+        assert physical.icon["CH4"] == pytest.approx(1.5)
+    else:
+        assert not hasattr(physical, "icon")

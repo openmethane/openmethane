@@ -30,7 +30,6 @@ sense_bcon = os.path.join(template_dir, "sense_bcon_template.nc")
 
 # fwd model inputs are "records" instead of templates.
 emis = os.path.join(template_dir, "record", "emis_record_<YYYY-MM-DD>.nc")
-icon = os.path.join(template_dir, "record", "icon_record.nc")
 
 # Path to the pre-calculated prior
 prior_file = env.path("PRIOR_FILE")

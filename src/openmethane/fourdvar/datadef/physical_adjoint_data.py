@@ -15,7 +15,6 @@
 #
 
 from openmethane.fourdvar.datadef.abstract._physical_abstract_data import PhysicalAbstractData
-from openmethane.fourdvar.params.input_defn import inc_icon
 
 
 class PhysicalAdjointData(PhysicalAbstractData):
@@ -26,5 +25,4 @@ class PhysicalAdjointData(PhysicalAbstractData):
     archive_name = "physical_sensitivity.ncf"
     emis_units = "CF/(mol/(s*m^2))"
     bcon_units = "CF/ppm"
-    if inc_icon is True:
-        icon_units = "CF/ppm"
+    icon_units = "CF/ppm"

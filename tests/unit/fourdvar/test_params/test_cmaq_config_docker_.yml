@@ -53,6 +53,7 @@ gridname: au-test_v1
 ha_rhoj_chk: /app/data/run-cmaq/chkpnt/HA_RHOJ_CHK.<YYYYMMDD>.nc
 hadv_chk: /app/data/run-cmaq/chkpnt/HADV_CHK.<YYYYMMDD>.nc
 icon_file: /app/data/cmaq/<YYYY-MM-DD>/d01/ICON.d01.au-test_v1.CH4only.nc
+icon_run_file: /app/data/run-cmaq/icon/ICON.nc
 ioapi_logging: false
 ipr1_file: /app/data/run-cmaq/output/PA_1.<YYYYMMDD>.nc
 ipr2_file: /app/data/run-cmaq/output/PA_2.<YYYYMMDD>.nc
