@@ -59,11 +59,11 @@ RUN groupadd --system --gid 1000 app \
 
 # Install the bare minimum software requirements on top of cmaq-adjoint
 RUN <<EOT
+set -e
 apt-get update -qy
 apt-get install -qyy \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
-    ca-certificates \
     build-essential \
     csh \
     nco \
@@ -88,6 +88,20 @@ ENV PYTHONFAULTHANDLER=1 \
 
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /app
+
+# Install ca-certificates after the application, unlike the packages above, so
+# any change to the repo reinstalls it and picks up trust store updates
+RUN <<EOT
+set -e
+apt-get update -qy
+apt-get install -qyy \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    ca-certificates
+
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+EOT
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

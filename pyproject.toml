@@ -40,6 +40,8 @@ default-groups = [
     "tests",
     "dev",
 ]
+# certifi before 2026.10.18 trusts the compromised eMudhra emSign ECC Root CA - G3
+constraint-dependencies = ["certifi>=2026.10.18"]
 
 [build-system]
 requires = ["uv_build>=0.9.18,<0.10.0"]
