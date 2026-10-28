@@ -47,6 +47,7 @@ desc_name = ""
 icon_file = "icon.nc"
 # emission file, requires a tag to map date
 emis_file = "emis.<YYYYMMDD>.nc"
+bcon_file = "bcon.<YYYYMMDD>.nc"
 # concentration file, requires a tag to map date
 conc_file = "conc.<YYYYMMDD>.nc"
 # adjoint forcing file, requires a tag to map date
@@ -55,3 +56,4 @@ force_file = "force.<YYYYMMDD>.nc"
 sens_conc_file = "sens_conc.<YYYYMMDD>.nc"
 # emission sensitivity file, requires a tag to map date
 sens_emis_file = "sens_emis.<YYYYMMDD>.nc"
+sens_bcon_file = "sens_bcon.<YYYYMMDD>.nc"

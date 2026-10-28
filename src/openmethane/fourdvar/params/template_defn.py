@@ -26,6 +26,7 @@ conc = os.path.join(template_dir, "conc_template.nc")
 force = os.path.join(template_dir, "force_template.nc")
 sense_emis = os.path.join(template_dir, "sense_emis_template.nc")
 sense_conc = os.path.join(template_dir, "sense_conc_template.nc")
+sense_bcon = os.path.join(template_dir, "sense_bcon_template.nc")
 
 # fwd model inputs are "records" instead of templates.
 emis = os.path.join(template_dir, "record", "emis_record_<YYYY-MM-DD>.nc")

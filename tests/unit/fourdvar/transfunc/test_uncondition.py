@@ -20,9 +20,10 @@ def physical_params(monkeypatch):
         "spcs": ["CH4"],
         "emis_unc": {"CH4": rng.uniform(0.5, 2.0, (2, 1, 3, 4))},
         "bcon_region": 2,
-        "tsec_bcon": 86400,
         "nstep_bcon": 1,
-        "bcon_up_lay": 8,
+        "bcon_region_map": np.repeat([[0], [1]], 8, axis=0) * np.ones((1, 44), dtype=int),
+        "bcon_step_start": np.array([0]),
+        "bcon_step_end": np.array([86400]),
         "bcon_unc": {"CH4": rng.uniform(0.5, 2.0, (1, 2))},
     }
     if input_defn.inc_icon is True:

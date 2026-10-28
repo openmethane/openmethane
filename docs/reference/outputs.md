@@ -65,6 +65,12 @@ Useful for inspecting what the inversion actually did, since it separates the
 correction from the prior's magnitude. `posterior-emissions.nc` is derived from
 this.
 
+The `bcon` group holds the posterior boundary condition offsets, in ppm, one per
+boundary region and control step (`TSTEP`, `BCON`), with their prior
+uncertainties (`CH4_UNC`). The group also stores the map from offsets to the
+BCON grid: `BCON_REGION`, and `STEP_START`/`STEP_END` in seconds from the start
+of the run. See [Boundary conditions](boundary-conditions.md).
+
 If a run completed the inversion but failed during post-processing, the emissions
 file can be regenerated from this without re-running the model:
 

@@ -1,3 +1,9 @@
+bcon_map_file: null
+bcon_nbands: 4
+bcon_remainder: spread
+bcon_segment_km: 1000.0
+bcon_step_days: 5.0
+bcon_unc: 0.02
 inc_icon: false
 obs_file: /app/data/input/test_obs.pic.gz
 prior_file: /app/data/input/prior.nc

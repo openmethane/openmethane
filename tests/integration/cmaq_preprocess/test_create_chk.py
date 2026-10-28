@@ -52,6 +52,9 @@ def run_fwd_day(date):
     emis_file = dt.replace_date(cmaq_config.emis_file, date)
     fh.ensure_path(os.path.dirname(emis_file))
     ncf.copy_compress(dt.replace_date(template_defn.emis, date), emis_file)
+    bcon_file = dt.replace_date(cmaq_config.bcon_run_file, date)
+    fh.ensure_path(os.path.dirname(bcon_file))
+    ncf.copy_compress(dt.replace_date(cmaq_config.bcon_file, date), bcon_file)
 
     conc_file = dt.replace_date(cmaq_config.conc_file, date)
     fh.ensure_path(os.path.dirname(conc_file))

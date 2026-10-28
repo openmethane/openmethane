@@ -113,7 +113,7 @@ class SensitivityData(FourDVarData):
         """
         destDict = get_filedict(cls.__name__)
         srcDict = get_filedict(d.ModelInputData.__name__)
-        concKeys = set(destDict.keys()) - set(srcDict.keys())
+        concKeys = [k for k in destDict if not k.startswith("emis")]
         for k in concKeys:
             ncf.create_from_template(
                 destDict[k]["template"],
@@ -122,7 +122,8 @@ class SensitivityData(FourDVarData):
                 overwrite=True,
             )
 
-        for k in srcDict.keys():
+        # only the emissions have a counterpart in the sensitivities
+        for k in [k for k in srcDict if k.startswith("emis")]:
             ncf.create_from_template(
                 destDict[k]["template"],
                 destDict[k]["actual"],

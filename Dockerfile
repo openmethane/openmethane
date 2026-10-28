@@ -1,5 +1,10 @@
 # Adapted from https://github.com/astral-sh/uv-docker-example/blob/main/standalone.Dockerfile
 
+# CMAQ-Adjoint image to build on. It must write ADJ_LGRID_BC, the sensitivity to
+# the boundary condition (openmethane/CMAQ-Adjoint#33). Override with
+# --build-arg CMAQ_ADJOINT_IMAGE=... to test against a local build.
+ARG CMAQ_ADJOINT_IMAGE=ghcr.io/openmethane/cmaq-adjoint:2.0.1
+
 # Secret management
 FROM segment/chamber:2 AS chamber
 
@@ -33,7 +38,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Then, use a final image without uv for our runtime environment
 # https://github.com/openmethane/CMAQ-Adjoint
-FROM ghcr.io/openmethane/cmaq-adjoint:2.0.1
+FROM ${CMAQ_ADJOINT_IMAGE}
 
 # These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
 # These must be duplicated in .github/workflows/build_docker.yaml

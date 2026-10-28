@@ -32,7 +32,22 @@ def test_root_data_defn(data_regression, target_environment, target):
 def test_input_defn(data_regression, target_environment, target):
     target_environment(target)
 
-    data_regression.check(_extract_params(input_defn, ["prior_file", "obs_file", "inc_icon"]))
+    data_regression.check(
+        _extract_params(
+            input_defn,
+            [
+                "prior_file",
+                "obs_file",
+                "inc_icon",
+                "bcon_map_file",
+                "bcon_segment_km",
+                "bcon_step_days",
+                "bcon_nbands",
+                "bcon_remainder",
+                "bcon_unc",
+            ],
+        )
+    )
 
 
 @targets
@@ -58,10 +73,12 @@ def test_archive_defn(data_regression, target_environment, target):
                 "desc_name",
                 "icon_file",
                 "emis_file",
+                "bcon_file",
                 "conc_file",
                 "force_file",
                 "sens_conc_file",
                 "sens_emis_file",
+                "sens_bcon_file",
             ],
         )
     )
@@ -80,6 +97,7 @@ def test_template_defn(data_regression, target_environment, target):
                 "force",
                 "sense_emis",
                 "sense_conc",
+                "sense_bcon",
                 "emis",
                 "icon",
             ],

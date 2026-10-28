@@ -13,13 +13,19 @@ groups:
     variables: {}
   /bcon:
     attrs:
-      TSEC: 86400
-      UP_LAY: 15
+      units: ppm
     coords: {}
     dims:
-      BCON: 8
+      BCON: 16
+      LAY: 32
+      PERIM: 44
       TSTEP: 1
     variables:
+      BCON_REGION:
+        attrs: {}
+        dims:
+        - LAY
+        - PERIM
       CH4:
         attrs: {}
         dims:
@@ -30,6 +36,14 @@ groups:
         dims:
         - TSTEP
         - BCON
+      STEP_END:
+        attrs: {}
+        dims:
+        - TSTEP
+      STEP_START:
+        attrs: {}
+        dims:
+        - TSTEP
   /emis:
     attrs:
       TDAY: 1

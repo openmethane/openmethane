@@ -32,6 +32,7 @@ from openmethane.fourdvar.params import (
     input_defn,
     template_defn,
 )
+from openmethane.fourdvar.util import bcon_offset
 from openmethane.postproc.posterior_emissions_postprocess import posterior_emissions_postprocess
 from openmethane.util.logger import get_logger
 
@@ -126,6 +127,35 @@ def archive_gradient(current_vector, filename):
     current_gradient.archive(filename)
 
 
+def get_bounds(physical_template, allow_negative_emissions: bool) -> tuple[list[tuple], np.ndarray]:
+    """Bounds on each unknown, in the order condition() lays them out.
+
+    Returns the bounds and a mask of which unknowns are boundary offsets.
+
+    Emissions are multipliers, bounded below by zero unless negative emissions
+    are allowed. The boundary offsets are always bounded so that the BCON CMAQ
+    reads, staged BCON plus offset, stays non-negative. The unknowns are
+    scaled by their uncertainty, so each bound is divided by it too.
+    """
+    p = physical_template
+    emis_len = p.nstep_emis * p.nlays_emis * p.nrows * p.ncols
+    emis_bound = (None, None) if allow_negative_emissions else (0, None)
+    bounds = []
+    is_bcon = []
+    for spc in p.spcs:
+        if input_defn.inc_icon is True:
+            bounds.append((None, None))
+        bounds += emis_len * [emis_bound]
+        lower = bcon_offset.offset_lower_bound(
+            spc, p.bcon_region_map, p.bcon_step_start, p.bcon_step_end, p.bcon_region
+        )
+        scaled = (lower / p.bcon_unc[spc]).flatten()
+        is_bcon += [False] * (len(bounds) - len(is_bcon))
+        bounds += [(None if np.isinf(b) else float(b), None) for b in scaled]
+        is_bcon += [True] * scaled.size
+    return bounds, np.array(is_bcon)
+
+
 def minim(
     cost_func,
     grad_func,
@@ -148,18 +178,8 @@ def minim(
     archive_gradient(init_guess, f"gradient_iter{iter_num:04}.ncf")
     start_dict = {"start_cost": start_cost, "start_grad": start_grad}
 
-    if allow_negative_emissions is True:
-        bounds = None
-    else:
-        species = physical_template.spcs
-        if len(species) != 1:
-            raise ValueError("bounds only works for one species")
-        len_bcon = physical_template.bcon[species[0]].size
-        len_emis = init_guess.size - len_bcon
-        # now assign zero as lower bound for emissions
-        bounds = len_emis * [(0, None)]
-        # now add no bounds for bcon
-        bounds += len_bcon * [(None, None)]
+    bounds, is_bcon = get_bounds(physical_template, allow_negative_emissions)
+    assert len(bounds) == init_guess.size, "bounds do not match the unknowns"
     maxiter = env.int("MAX_ITERATIONS", 20)
     logger.info(f"Running minimiser with a maximum of {maxiter} iteration")
     answer = minimize(
@@ -172,6 +192,11 @@ def minim(
         # Very verbose output on every successful iteration
         iprint=200,
     )
+    # many boundary offsets on their bound suggest regions that span too wide a
+    # range of concentrations
+    lower = np.array([np.nan if lo is None else lo for lo, _ in bounds])
+    at_bound = np.isclose(answer[0], lower) & is_bcon
+    logger.info(f"{at_bound.sum()} of {is_bcon.sum()} boundary offsets are on their lower bound")
     # check answer warnflag, etc for success
     answer = [*list(answer), start_dict]
     return answer

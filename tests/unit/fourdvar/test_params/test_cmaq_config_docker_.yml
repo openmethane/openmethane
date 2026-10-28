@@ -5,6 +5,8 @@ avg_conc_file: /app/data/run-cmaq/output/ACONC.<YYYYMMDD>.nc
 avg_conc_out_lays: template
 avg_conc_spcs: CH4
 bcon_file: /app/data/cmaq/<YYYY-MM-DD>/d01/BCON.d01.au-test_v1.CH4only.nc
+bcon_run_file: /app/data/run-cmaq/bcon/BCON.<YYYYMMDD>.nc
+bcon_sense_file: /app/data/run-cmaq/output/BC.LGRID.bwd_CH4only.<YYYYMMDD>.nc
 bwd_appl: ADJOINT_BWD
 bwd_logfile: /app/data/run-cmaq/output/bwd_CH4_only.<YYYYMMDD>.log
 bwd_prog: /opt/cmaq/bin/ADJOINT_BWD
@@ -114,6 +116,7 @@ wipeout_bwd_list:
 - /app/data/run-cmaq/output/LGRID.bwd_CH4only.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc
+- /app/data/run-cmaq/output/BC.LGRID.bwd_CH4only.<YYYYMMDD>.nc
 - /app/data/run-cmaq/output/bwd_stdout.<YYYYMMDD>.log
 wipeout_fwd_list:
 - /app/data/run-cmaq/output/fwd_CH4_only.<YYYYMMDD>.log

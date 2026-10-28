@@ -53,7 +53,7 @@ What is being modelled. These are the settings that change between runs.
 | `PRIOR_FILE` | path | The prior emissions estimate, from openmethane-prior | *required* |
 | `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | `${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{DOMAIN_NAME}_{DOMAIN_VERSION}_{start}-{end}.nc`, with the release only for the inversion |
 | `ICON_FILE` | path | ICON template file | *required* |
-| `BCON_FILE` | path | BCON template file | *required* |
+| `BCON_FILE` | path | BCON template file. This is the prior boundary condition; the inversion adds its offsets to a copy in `{CMAQ_BASE}/bcon/` and never modifies it. | *required* |
 | `EMIS_FILE` | path | Emissions files | `{CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc` |
 | `FORCE_FILE` | path | Adjoint forcing template file | `{CMAQ_BASE}/force/ADJ_FORCE.<YYYYMMDD>.nc` |
 | `OBS_FILE_GLOB` | str | Glob matching the processed observation files, relative to `STORE_PATH` | `input/test_obs.pic.gz` |
@@ -128,7 +128,22 @@ value.
 | Variable | Type | Description | Default |
 | --- | --- | --- | --- |
 | `MAX_ITERATIONS` | int | Cap on successful L-BFGS-B iterations | `20` |
-| `ALLOW_NEGATIVE_EMISSIONS` | bool | Permit the inversion to produce negative emissions. Normally left off, since negative methane emissions are unphysical for most sources. | `false` |
+| `ALLOW_NEGATIVE_EMISSIONS` | bool | Permit the inversion to produce negative emissions. Normally left off, since negative methane emissions are unphysical for most sources. Does not affect the boundary offsets, which always keep the boundary concentration non-negative. | `false` |
+
+### Boundary condition offsets
+
+The inversion also solves for offsets, in ppm, on the boundary condition. These
+settings are read by `make_prior.py` and `make_bcon_map.py`. See
+[Boundary conditions](boundary-conditions.md).
+
+| Variable | Type | Description | Default |
+| --- | --- | --- | --- |
+| `BCON_MAP_FILE` | path | A boundary map file from `make_bcon_map.py`, possibly edited by hand. If unset, `make_prior.py` builds one from the settings below and saves it next to the prior as `bcon_map.nc`. | unset |
+| `BCON_SEGMENT_KM` | float | Target length of a boundary segment along each edge | `1000` |
+| `BCON_STEP_DAYS` | float | Target length of a control time step, in days | `5` |
+| `BCON_NBANDS` | int | Number of vertical bands, each holding about the same air mass | `4` |
+| `BCON_REMAINDER` | str | How lengths that don't divide exactly are split: `spread` (nearest whole number of equal pieces) or `end` (full pieces plus a shorter last one) | `spread` |
+| `BCON_UNC` | float | Prior 1-sigma uncertainty of each offset, in ppm | `0.02` |
 
 ## CMAQ preprocessing
 
