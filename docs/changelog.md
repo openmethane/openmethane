@@ -19,6 +19,40 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.6.1 (2026-10-28)
+
+### ⚠️ Breaking Changes
+
+- EAC4 is now downloaded only over the domain, so `CAMS_PRODUCT=eac4` needs
+  `DOMAIN_FILE`, as the default product, the inversion, already did. ([#279](https://github.com/openmethane/openmethane/pull/279))
+
+### 🆕 Features
+
+- Added the CAMS greenhouse gas forecasts as a source of boundary and initial
+  conditions, selected with `CAMS_PRODUCT=forecasts`. They assimilate TROPOMI,
+  GOSAT and IASI and are available from March 2024, so they cover dates after
+  the end of the CAMS inversion's release (2025-12-31 for v25r1). The product is
+  never chosen automatically: runs from 2026-01-01 must set it explicitly. ([#279](https://github.com/openmethane/openmethane/pull/279))
+- Added a Kobayashi decomposition of chisq to the log line printed on each forward run. The squared bias (`sb`), squared difference of standard deviations (`sdsd`) and lack of correlation (`lcs`) are computed on uncertainty-weighted observations, so they sum to `chisq`. The signed `bias` is still printed. ([#281](https://github.com/openmethane/openmethane/pull/281))
+- Added `gradient_iter{NNNN}.ncf` to the inversion archive, holding the gradient of the cost function at each iteration, and `gradient_iter0000.ncf` holding the gradient at the prior. See [outputs](https://github.com/openmethane/openmethane/blob/main/docs/reference/outputs.md#gradient_iternnnnncf) for how to interpret it. ([#281](https://github.com/openmethane/openmethane/pull/281))
+
+### 🎉 Improvements
+
+- Sped up the search for the nearest CAMS cell to each CMAQ cell, which took
+  about 21 minutes per date on `aust10km` with EAC4, by using a KD-tree. It now
+  runs only for the first date, whose ICON is the only file that uses it. ([#279](https://github.com/openmethane/openmethane/pull/279))
+- EAC4 is now cut to the domain on the ADS and fetched with parallel range
+  requests, like the forecasts. A day over `aust10km` shrinks from 54 MB to
+  4.1 MB, and ICON and BCON are unchanged. ([#279](https://github.com/openmethane/openmethane/pull/279))
+- CAMS files are cut to the domain, so the default `CAMS_FILE` now includes
+  `DOMAIN_NAME` and `DOMAIN_VERSION`, and a file cut for another domain is never
+  reused. ([#279](https://github.com/openmethane/openmethane/pull/279))
+
+### 🐛 Bug Fixes
+
+- The image no longer trusts the CA roots involved in the October 2026 eMudhra key compromise (`emSign ECC Root CA - G3`, `AAA Certificate Services`): certifi was bumped to 2026.10.23 and boto3/botocore to 1.43.121, and `ca-certificates` is now reinstalled on every code change so builds pick up the current trust store. ([#287](https://github.com/openmethane/openmethane/pull/287))
+
+
 ## openmethane v1.6.0 (2026-10-20)
 
 ### ⚠️ Breaking Changes
