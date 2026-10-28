@@ -242,8 +242,15 @@ def build_region_map(  # noqa: PLR0913
 def build_steps(
     total_hours: int, step_hours: int, remainder: str = "spread", min_fraction: float = 0.0
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Control step boundaries, in seconds from the start of the run."""
-    lengths = np.array(split_length(total_hours, step_hours, remainder, min_fraction)) * 3600
+    """Control step boundaries, in seconds from the start of the run.
+
+    When the run and the step are both whole days, the run is split in days so
+    every step boundary falls at midnight (31 days by 5 -> 5,5,5,5,5,6 days).
+    Otherwise it is split in hours.
+    """
+    unit = 24 if total_hours % 24 == 0 and step_hours % 24 == 0 else 1
+    pieces = split_length(total_hours // unit, step_hours // unit, remainder, min_fraction)
+    lengths = np.array(pieces) * unit * 3600
     end = np.cumsum(lengths)
     return end - lengths, end
 

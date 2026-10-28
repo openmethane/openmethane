@@ -113,12 +113,27 @@ class SensitivityData(FourDVarData):
         """
         destDict = get_filedict(cls.__name__)
         srcDict = get_filedict(d.ModelInputData.__name__)
-        concKeys = [k for k in destDict if not k.startswith("emis")]
+        concKeys = [k for k in destDict if k.startswith("conc")]
         for k in concKeys:
             ncf.create_from_template(
                 destDict[k]["template"],
                 destDict[k]["actual"],
                 date=destDict[k]["date"],
+                overwrite=True,
+            )
+
+        # the sum of squares does not depend on the boundary offsets, so their
+        # sensitivity is zero. The template is dated for the first day, so
+        # each copy is moved to its own day for the record-to-step mapping.
+        for k in [k for k in destDict if k.startswith("bcon")]:
+            template = destDict[k]["template"]
+            names = ncf.get_attr(template, "VAR-LIST").split()
+            zeros = {v: np.zeros_like(ncf.get_variable(template, v)) for v in names}
+            ncf.create_from_template(
+                template,
+                destDict[k]["actual"],
+                var_change=zeros,
+                date=destDict["emis" + k[len("bcon") :]]["date"],
                 overwrite=True,
             )
 

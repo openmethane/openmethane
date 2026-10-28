@@ -48,6 +48,13 @@ def load_bcon_map(save_path: str):
     map_file = input_defn.bcon_map_file
     if map_file is None:
         map_file = os.path.join(os.path.dirname(save_path), "bcon_map.nc")
+        if os.path.exists(map_file):
+            print(
+                f"WARNING: BCON_MAP_FILE is not set, so the existing boundary map\n"
+                f"  {map_file}\n"
+                "is being replaced by a newly built one. Any edits to it are lost; set "
+                "BCON_MAP_FILE to use an edited map."
+            )
         ds = bcon_map.build_bcon_map(
             bcon_file,
             start,

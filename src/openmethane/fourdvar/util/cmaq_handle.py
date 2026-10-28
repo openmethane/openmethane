@@ -374,7 +374,7 @@ def run_bwd_single(date, is_first):
     env_dict["ADJ_LGRID"] = cmaq_config.conc_sense_file + " -v"
     env_dict["ADJ_LGRID_EM"] = cmaq_config.emis_sense_file + " -v"
     env_dict["ADJ_LGRID_EM_SF"] = cmaq_config.emis_scale_sense_file + " -v"
-    env_dict["ADJ_LGRID_BC"] = cmaq_config.bcon_sense_file
+    env_dict["ADJ_LGRID_BC"] = cmaq_config.bcon_sense_file + " -v"
     env_dict["ADJ_FORCE"] = cmaq_config.force_file
 
     if cmaq_config.sense_sync is True:

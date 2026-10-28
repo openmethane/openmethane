@@ -180,6 +180,18 @@ def test_record_steps_uneven():
     assert bcon_map.record_steps(records, start, end).tolist() == [0, 0, 0, 1, 1, 1]
 
 
+def test_build_steps_whole_days():
+    """Day-length steps split the run in days, so boundaries fall at midnight."""
+    start, end = bcon_map.build_steps(31 * 24, 5 * 24, "spread")
+    assert ((end - start) / 86400).tolist() == [5, 5, 5, 5, 5, 6]
+    assert (start % 86400 == 0).all()
+
+
+def test_build_steps_hours():
+    start, end = bcon_map.build_steps(30, 12, "end")
+    assert ((end - start) / 3600).tolist() == [12, 12, 6]
+
+
 def test_record_steps_daily_files():
     """The 24:00 record of one day and 00:00 of the next fall either side of a step edge."""
     start, end = np.array([0, 86400]), np.array([86400, 2 * 86400])

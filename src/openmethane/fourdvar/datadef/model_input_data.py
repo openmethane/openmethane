@@ -143,7 +143,14 @@ class ModelInputData(FourDVarData):
     @classmethod
     def load_from_vector_template(cls, vector):
         """create a record from a templateconcatenated vector of all emissions with names in the varlist atribute from the actual item from each record"""
-        file_data = {k: v for k, v in get_filedict(cls.__name__).items() if k.startswith("emis")}
+        all_files = get_filedict(cls.__name__)
+        file_data = {k: v for k, v in all_files.items() if k.startswith("emis")}
+
+        # the vector holds only emissions, so the other inputs (the boundary
+        # conditions) are staged unchanged from their templates
+        for label, record in all_files.items():
+            if label not in file_data:
+                ncf.copy_compress(record["template"], record["actual"])
 
         # first set up dimensions for reshaping vector
         record = list(file_data.values())[0]["actual"]
