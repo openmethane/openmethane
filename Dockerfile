@@ -3,7 +3,7 @@
 # CMAQ-Adjoint image to build on. It must write ADJ_LGRID_BC, the sensitivity to
 # the boundary condition (openmethane/CMAQ-Adjoint#33). Override with
 # --build-arg CMAQ_ADJOINT_IMAGE=... to test against a local build.
-ARG CMAQ_ADJOINT_IMAGE=ghcr.io/openmethane/cmaq-adjoint:2.0.1
+ARG CMAQ_ADJOINT_IMAGE=ghcr.io/openmethane/cmaq-adjoint:2.1.0
 
 # Secret management
 FROM segment/chamber:2 AS chamber
