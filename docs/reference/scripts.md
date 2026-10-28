@@ -49,7 +49,7 @@ Turns WRF meteorology and the prior into inputs CMAQ can read. See
 | `scripts/cmaq_preprocess/make_template.py` | Prepares CMAQ run directories and the concentration, forcing and sensitivity templates (including the boundary sensitivity), by running one day of CMAQ forwards and backwards. Requires the adjoint binaries. |
 | `scripts/cmaq_preprocess/make_bcon_map.py` | Builds the map from boundary condition offsets to the BCON grid: boundary segments, vertical bands, control time steps and their uncertainty. Optional, since `make_prior.py` builds one from the `BCON_*` settings if `BCON_MAP_FILE` is unset. See [Boundary conditions](boundary-conditions.md). |
 | `scripts/cmaq_preprocess/make_prior.py` | Builds the prior in the form `fourdvar` consumes, including zero boundary offsets laid out by the boundary map. |
-| `scripts/cmaq_preprocess/bias_correct_cams.py` | Corrects the bias between the simulated CAMS background and the satellite columns, measured with one forward run over the month. Requires the adjoint binaries. |
+| `scripts/cmaq_preprocess/bias_correct_cams.py` | Corrects the bias between the simulated CAMS background and the satellite columns, measured with one forward run over the month. Shifts the staged ICON and BCON in place, so run it once only. Requires the adjoint binaries. |
 
 The last three template steps can be run together:
 
