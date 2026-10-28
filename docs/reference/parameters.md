@@ -52,7 +52,7 @@ What is being modelled. These are the settings that change between runs.
 | `CHK_PATH` | path | CMAQ checkpoint files. Large and frequently rewritten — use fast scratch disk. Cleared by the container entrypoint. | `{CMAQ_BASE}/chkpnt` |
 | `PRIOR_FILE` | path | The prior emissions estimate, from openmethane-prior | *required* |
 | `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | `${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{DOMAIN_NAME}_{DOMAIN_VERSION}_{start}-{end}.nc`, with the release only for the inversion |
-| `ICON_FILE` | path | ICON template file, the prior initial condition. It is never modified: CMAQ reads a copy plus the initial condition offset. | *required* |
+| `ICON_FILE` | path | ICON template file, the prior initial condition. `bias_correct_cams.py` shifts it in place, so run that once only; the inversion never modifies it, and CMAQ reads a copy plus the initial condition offset. | *required* |
 | `BCON_FILE` | path | BCON template file. This is the prior boundary condition; the inversion adds its offsets to a copy in `{CMAQ_BASE}/bcon/` and never modifies it. | *required* |
 | `EMIS_FILE` | path | Emissions files | `{CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc` |
 | `FORCE_FILE` | path | Adjoint forcing template file | `{CMAQ_BASE}/force/ADJ_FORCE.<YYYYMMDD>.nc` |
