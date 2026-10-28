@@ -149,7 +149,7 @@ the domain when the run starts. With `INC_ICON` on (the default), the inversion
 also solves for **one offset per species, in ppm, added to every cell and
 layer of the ICON** that CMAQ reads on the first day. As for the boundary, the
 staged ICON (`ICON_FILE`, after the CAMS bias correction) is the prior, so the
-prior offset is 0, and the staged file is never modified: the inversion writes
+prior offset is 0, and the inversion never modifies the staged file: it writes
 `{CMAQ_BASE}/icon/ICON.nc`, the staged ICON plus the offset. With `INC_ICON`
 off, that file is the staged ICON unchanged.
 

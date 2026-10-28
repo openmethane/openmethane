@@ -135,10 +135,11 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # convert spc_list into valid list
     emissions_filename = dt.replace_date(emis_template, date_defn.start_date)
     var_list = ncf.get_attr(emissions_filename, "VAR-LIST").split()
-    if input_defn.inc_icon is True:
-        ifile = dt.replace_date(cmaq_config.icon_file, date_defn.start_date)
-        i_var_list = ncf.get_attr(ifile, "VAR-LIST").split()
-        var_list = list(set(var_list).intersection(set(i_var_list)))
+    # prepare_model reads every species from the staged ICON whether or not the
+    # initial condition is solved for, so each species must be in it
+    ifile = dt.replace_date(cmaq_config.icon_file, date_defn.start_date)
+    i_var_list = ncf.get_attr(ifile, "VAR-LIST").split()
+    var_list = list(set(var_list).intersection(set(i_var_list)))
     if str(spc_list).lower() == "all":
         spc_list = [v for v in var_list]
     else:
