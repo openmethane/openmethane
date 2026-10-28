@@ -281,7 +281,7 @@ wheels = [
 
 [[package]]
 name = "openmethane"
-version = "1.6.1"
+version = "1.6.2.dev1"
 source = { editable = "." }
 default-groups = ["dev", "tests"]
 dependencies = [
