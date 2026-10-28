@@ -177,7 +177,8 @@ fwd_xfirst_file = os.path.join(output_path, "XFIRST.<YYYYMMDD>")
 bwd_xfirst_file = os.path.join(output_path, "XFIRST.bwd.<YYYYMMDD>")
 
 # input files
-# the staged ICON, which is the prior initial condition and is never modified
+# the staged ICON, which is the prior initial condition. bias_correct_cams.py
+# shifts it in place, and the inversion never modifies it
 icon_file = env.str("ICON_FILE")
 # the ICON CMAQ reads on the first day: icon_file plus the initial condition
 # offset, written by prepare_model

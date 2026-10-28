@@ -2,8 +2,8 @@
 
 The offset unknown, `PhysicalData.icon`, is one value per species (ppm) added to
 every record, layer and cell of the staged ICON for the start date
-(`cmaq_config.icon_file`, never modified) to give the ICON that CMAQ reads on
-the first day.
+(`cmaq_config.icon_file`, which the inversion never modifies) to give the ICON
+that CMAQ reads on the first day.
 
 The first CONC record of the first day is the initial condition itself, and
 ADJOINT_BWD's `ADJ_LGRID` at the initial time does not include the forcing on
