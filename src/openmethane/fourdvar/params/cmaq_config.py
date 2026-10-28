@@ -178,7 +178,10 @@ bwd_xfirst_file = os.path.join(output_path, "XFIRST.bwd.<YYYYMMDD>")
 
 # input files
 icon_file = env.str("ICON_FILE")
+# the staged BCON, which is the prior boundary condition and is never modified
 bcon_file = env.str("BCON_FILE")
+# the BCON CMAQ reads: bcon_file plus the boundary offset, written by prepare_model
+bcon_run_file = os.path.join(cmaq_base, "bcon", "BCON.<YYYYMMDD>.nc")
 emis_file = env.str("EMIS_FILE", os.path.join(emis_path, "emis.<YYYY-MM-DD>.nc"))
 force_file = env.str("FORCE_FILE", os.path.join(cmaq_base, "force", "ADJ_FORCE.<YYYYMMDD>.nc"))
 
@@ -214,6 +217,7 @@ rj2_file = os.path.join(output_path, "RJ_2.<YYYYMMDD>.nc")
 conc_sense_file = os.path.join(output_path, "LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 emis_sense_file = os.path.join(output_path, "EM.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 emis_scale_sense_file = os.path.join(output_path, "EM_SF.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
+bcon_sense_file = os.path.join(output_path, "BC.LGRID.bwd_CH4only.<YYYYMMDD>.nc")
 
 curdir = os.path.realpath(os.curdir)
 
@@ -261,6 +265,7 @@ wipeout_bwd_list = [
     conc_sense_file,
     emis_sense_file,
     emis_scale_sense_file,
+    bcon_sense_file,
     bwd_stdout_log,
 ]
 

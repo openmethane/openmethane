@@ -13,68 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import itertools
-
-import numpy as np
+import os
 
 import openmethane.fourdvar.util.cmaq_handle as cmaq
 import openmethane.fourdvar.util.date_handle as dt
+import openmethane.fourdvar.util.file_handle as fh
 import openmethane.fourdvar.util.netcdf_handle as ncf
+from openmethane import bcon_map
 from openmethane.fourdvar.datadef import ModelInputData
 from openmethane.fourdvar.params import (
     cmaq_config,
-    date_defn,
     input_defn,
     template_defn,
 )
-
-unit_key = "units.<YYYYMMDD>"
-unit_convert_bcon = None
-
-
-def get_unit_convert_bcon():
-    """PhysicalData.bcon units = ppm/day
-    ModelInputData.emis units = mol/s.
-    """
-    global unit_key
-
-    # physical constants:
-    # molar weight of dry air (precision matches cmaq)
-    mwair = 28.9628
-    # convert proportion to ppm
-    ppm_scale = 1e6
-    # convert g to kg
-    kg_scale = 1e-3
-
-    unit_dict = {}
-    efile = dt.replace_date(template_defn.emis, date_defn.start_date)
-    xcell = ncf.get_attr(efile, "XCELL")
-    ycell = ncf.get_attr(efile, "YCELL")
-    area = float(xcell * ycell)
-    lay_sigma = list(ncf.get_attr(efile, "VGLVLS"))
-    lay_thick = [l0 - l1 for l0, l1 in itertools.pairwise(lay_sigma)]
-    lay_thick = np.array(lay_thick).reshape((1, len(lay_thick), 1, 1))
-
-    for date in dt.get_datelist():
-        met_file = dt.replace_date(cmaq_config.met_cro_3d, date)
-        rhoj = ncf.get_variable(met_file, "DENSA_J")[:, : len(lay_thick), ...]
-        unit_array = (rhoj * lay_thick * area) / (kg_scale * ppm_scale * mwair)
-        day_label = dt.replace_date(unit_key, date)
-        unit_dict[day_label] = unit_array.copy()
-    return unit_dict
+from openmethane.fourdvar.util import bcon_offset
 
 
 def prepare_model(physical_data):
     """application: change resolution/formatting of physical data for input in forward model
     input: PhysicalData
     output: ModelInputData.
+
+    notes: PhysicalData.bcon is an offset (ppm) added to each day's staged BCON,
+    see openmethane.bcon_map.
     """
-    global unit_key
-    global unit_convert_bcon
-
-    if unit_convert_bcon is None:
-        unit_convert_bcon = get_unit_convert_bcon()
-
     if input_defn.inc_icon is True:
         model_input_args = {"icon": {}}
         for spcs, icon_scale in physical_data.icon.items():
@@ -85,14 +47,7 @@ def prepare_model(physical_data):
     else:
         model_input_args = {}
 
-    # all emis files & spcs for model_input use same NSTEP dimension, get it's size
-    emis_fname = dt.replace_date(template_defn.emis, date_defn.start_date)
-    m_daysize = ncf.get_variable(emis_fname, physical_data.spcs[0]).shape[0] - 1
     dlist = dt.get_datelist()
-    b_daysize = float(physical_data.nstep_bcon) / len(dlist)
-    assert (b_daysize < 1) or (m_daysize % b_daysize == 0), (
-        "physical & model input emis TSTEP incompatible."
-    )
     nrow, ncol = physical_data.nrows, physical_data.ncols
 
     emis_pattern = "emis.<YYYYMMDD>"
@@ -107,41 +62,24 @@ def prepare_model(physical_data):
             emis_arr *= phys_arr  # note implicit broadcasting to all levels and timesteps
             spcs_dict[physical_data.spcs[0]] = emis_arr  # Sougol
 
-        # add bcon values to emissons
-        msg = "Only setup for 8-region boundary conditions."
-        assert physical_data.bcon_region == 8, msg
-        bcon_lay = physical_data.bcon_up_lay
-        nrow, ncol = physical_data.nrows, physical_data.ncols
-        bshape = (m_daysize + 1, 1, 1)
-        bcon_convert = unit_convert_bcon[dt.replace_date(unit_key, date)]
-        start = int(i * b_daysize)
-        end = int((i + 1) * b_daysize)
-        if start == end:
-            end += 1
-        for spc in physical_data.spcs:
-            bcon_val = physical_data.bcon[spc][start:end, :]
-            if end < physical_data.nstep_bcon:
-                last_slice = physical_data.bcon[spc][end : end + 1, :]
-            else:
-                last_slice = physical_data.bcon[spc][end - 1 : end, :]
-            bcon_val = np.repeat(bcon_val, m_daysize // (end - start), axis=0)
-            bcon_val = np.append(bcon_val, last_slice, axis=0)
-            # bcon_val = [SL,SH,EL,EH,NL,NH,WL,WH]
-            bcon_arr = np.zeros(bcon_convert.shape)
-            bcon_arr[:, :bcon_lay, 0, 1:] = bcon_val[:, 0].reshape(bshape)
-            bcon_arr[:, bcon_lay:, 0, 1:] = bcon_val[:, 1].reshape(bshape)
-            bcon_arr[:, :bcon_lay, 1:, ncol - 1] = bcon_val[:, 2].reshape(bshape)
-            bcon_arr[:, bcon_lay:, 1:, ncol - 1] = bcon_val[:, 3].reshape(bshape)
-            bcon_arr[:, :bcon_lay, nrow - 1, :-1] = bcon_val[:, 4].reshape(bshape)
-            bcon_arr[:, bcon_lay:, nrow - 1, :-1] = bcon_val[:, 5].reshape(bshape)
-            bcon_arr[:, :bcon_lay, :-1, 0] = bcon_val[:, 6].reshape(bshape)
-            bcon_arr[:, bcon_lay:, :-1, 0] = bcon_val[:, 7].reshape(bshape)
-
-            base_arr = spcs_dict.get(spc, 0.0)
-            spcs_dict[spc] = base_arr + (bcon_arr * bcon_convert)
-
         emis_argname = dt.replace_date(emis_pattern, date)
         model_input_args[emis_argname] = spcs_dict
+
+    # add the boundary offset to each day's staged BCON
+    region_map = physical_data.bcon_region_map
+    for ymd, base_fname in bcon_offset.base_bcon_files():
+        bcon_offset.check_grid(base_fname, region_map)
+        rec_step = bcon_offset.record_steps(
+            base_fname, physical_data.bcon_step_start, physical_data.bcon_step_end
+        )
+        bcon_dict = {}
+        for spc in physical_data.spcs:
+            base = ncf.get_variable(base_fname, spc)
+            offset = bcon_map.expand(physical_data.bcon[spc], region_map, rec_step)
+            bcon_dict[spc] = base + offset
+        model_input_args[f"bcon.{ymd}"] = bcon_dict
+
+    fh.ensure_path(os.path.dirname(cmaq_config.bcon_run_file))
 
     # may want to remove this line in future.
     cmaq.wipeout_fwd()

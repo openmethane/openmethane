@@ -15,20 +15,46 @@
 #
 import os
 
+import netCDF4
 import numpy as np
 
 import openmethane.fourdvar.util.date_handle as dt
 import openmethane.fourdvar.util.netcdf_handle as ncf
+from openmethane import bcon_map
 from openmethane.fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from openmethane.fourdvar.params import (
+    cmaq_config,
+    date_defn,
     input_defn,
     template_defn,
-    date_defn,
 )
 from openmethane.fourdvar.util.archive_handle import get_archive_path
 from openmethane.util.logger import get_logger
 
 logger = get_logger(__name__)
+
+# units of PhysicalData.bcon. Prior files from before the boundary term became a
+# concentration offset have a ppm/s flux with no units attribute.
+BCON_UNITS = "ppm"
+
+
+def check_bcon_units(filename, expected=BCON_UNITS):
+    """Reject a physical data file whose bcon group is not in the expected units."""
+    with netCDF4.Dataset(filename, "r") as nc:
+        units = getattr(nc.groups["bcon"], "units", None)
+    if units != expected:
+        raise ValueError(
+            f"{filename}: the bcon group has units {units!r}, expected {expected!r}. "
+            "The boundary term is now an offset on the boundary concentration, not a "
+            "flux at the domain edge; regenerate the prior with make_prior.py."
+        )
+
+
+def set_step_units(bcon_grp):
+    """Label the bcon step boundaries, which are seconds from the start of the run."""
+    units = f"seconds since {date_defn.start_date.isoformat()} 00:00:00"
+    for name in ("STEP_START", "STEP_END"):
+        bcon_grp.variables[name].setncattr("units", units)
 
 
 class PhysicalAbstractData(FourDVarData):
@@ -43,11 +69,13 @@ class PhysicalAbstractData(FourDVarData):
     spcs = None  # list of species for all data
     emis_unc = None  # dict of emis uncertainty values
 
+    # bcon is an additive offset (ppm) on the BCON field, see openmethane.bcon_map
     bcon_region = None  # No. bcon regions
-    tsec_bcon = None  # No. seconds per boundary condition timestep
-    nstep_bcon = None  # No. timesteps for boundary condition data
-    bcon_up_lay = None  # bottom layer of upper region of boundary conditions
-    bcon_unc = None  # dict of boundary condition uncertainties
+    nstep_bcon = None  # No. control timesteps for boundary condition data
+    bcon_region_map = None  # region of each BCON cell, np.array([layer, perimeter])
+    bcon_step_start = None  # start of each bcon timestep, seconds from start_date
+    bcon_step_end = None  # end of each bcon timestep, seconds from start_date
+    bcon_unc = None  # dict of boundary condition uncertainties (ppm)
 
     if input_defn.inc_icon is True:
         icon_unc = None  # dict of icon uncertainty values
@@ -57,6 +85,7 @@ class PhysicalAbstractData(FourDVarData):
     # these class variables should be overloaded in children
     archive_name = "physical_abstract_data.ncf"  # default archive filename
     emis_units = "NA"  # unit to attach to netCDF archive
+    bcon_units = "NA"  # units of the bcon group in the netCDF archive
 
     def __init__(self, icon_dict, emis_dict, bcon_dict):
         """application: create an instance of PhysicalData
@@ -163,9 +192,14 @@ class PhysicalAbstractData(FourDVarData):
             parent=root, name="emis", dim=emis_dim, attr=emis_attr, var=emis_var, is_root=False
         )
 
-        bcon_dim = {"TSTEP": None, "BCON": self.bcon_region}
-        bcon_attr = {"UP_LAY": np.int32(self.bcon_up_lay), "TSEC": self.tsec_bcon}
-        bcon_var = {}
+        nlay, nperim = self.bcon_region_map.shape
+        bcon_dim = {"TSTEP": None, "BCON": self.bcon_region, "LAY": nlay, "PERIM": nperim}
+        bcon_attr = {"units": self.bcon_units}
+        bcon_var = {
+            "BCON_REGION": ("i4", ("LAY", "PERIM"), self.bcon_region_map),
+            "STEP_START": ("i8", ("TSTEP",), self.bcon_step_start),
+            "STEP_END": ("i8", ("TSTEP",), self.bcon_step_end),
+        }
         for spc in self.spcs:
             bcon_var[spc] = (
                 "f4",
@@ -183,9 +217,10 @@ class PhysicalAbstractData(FourDVarData):
                 ),
                 self.bcon_unc[spc],
             )
-        ncf.create(
+        bcon_grp = ncf.create(
             parent=root, name="bcon", dim=bcon_dim, var=bcon_var, attr=bcon_attr, is_root=False
         )
+        set_step_units(bcon_grp)
 
         root.close()
 
@@ -208,8 +243,10 @@ class PhysicalAbstractData(FourDVarData):
         tday_emis = ncf.get_attr(filename, "TDAY", group="emis")
         spcs_list = ncf.get_attr(filename, "VAR-LIST").split()
         unc_list = [unc(spc) for spc in spcs_list]
-        bcon_up_lay = ncf.get_attr(filename, "UP_LAY", group="bcon")
-        tsec_bcon = ncf.get_attr(filename, "TSEC", group="bcon")
+        check_bcon_units(filename, cls.bcon_units)
+        bcon_region_map = np.asarray(ncf.get_variable(filename, "BCON_REGION", group="bcon"))
+        bcon_step_start = np.asarray(ncf.get_variable(filename, "STEP_START", group="bcon"))
+        bcon_step_end = np.asarray(ncf.get_variable(filename, "STEP_END", group="bcon"))
 
         if input_defn.inc_icon is True:
             icon_val = ncf.get_variable(filename, "ICON-SCALE", group="icon")
@@ -244,9 +281,20 @@ class PhysicalAbstractData(FourDVarData):
             sense_lay = ncf.get_attr(template_defn.sense_conc, "NLAYS")
             assert icon_lay == sense_lay, "Must get conc sensitivities for all layers"
 
-        assert max(daysec, tsec_bcon) % min(daysec, tsec_bcon) == 0, (
-            "tsec_bcon must be a factor or multiple of No. seconds in a day."
+        bcon_map.validate_map(
+            bcon_region_map,
+            bcon_step_start,
+            bcon_step_end,
+            bcon_unc[spcs_list[0]],
+            run_seconds=len(dt.get_datelist()) * daysec,
+            # the layers come from the staged BCON, which the offsets are added to
+            nlays=int(
+                ncf.get_attr(dt.replace_date(cmaq_config.bcon_file, date_defn.start_date), "NLAYS")
+            ),
+            ncols=ecols,
+            nrows=erows,
         )
+        assert bregion == bcon_region_map.max() + 1, "bcon regions don't match BCON_REGION"
         assert len(dt.get_datelist()) == tday_emis * estep, "invalid emission tstep/tday"
         for spc in spcs_list:
             msg = "Uncertainty values are invalid for this data."
@@ -268,9 +316,10 @@ class PhysicalAbstractData(FourDVarData):
             "spcs",
             "emis_unc",
             "bcon_region",
-            "tsec_bcon",
             "nstep_bcon",
-            "bcon_up_lay",
+            "bcon_region_map",
+            "bcon_step_start",
+            "bcon_step_end",
             "bcon_unc",
         ]
         par_val = [
@@ -282,9 +331,10 @@ class PhysicalAbstractData(FourDVarData):
             spcs_list,
             emis_unc,
             bregion,
-            tsec_bcon,
             bstep,
-            bcon_up_lay,
+            bcon_region_map,
+            bcon_step_start,
+            bcon_step_end,
             bcon_unc,
         ]
         par_mutable = ["emis_unc", "bcon_unc"]
@@ -328,9 +378,10 @@ class PhysicalAbstractData(FourDVarData):
             "spcs",
             "emis_unc",
             "bcon_region",
-            "tsec_bcon",
             "nstep_bcon",
-            "bcon_up_lay",
+            "bcon_region_map",
+            "bcon_step_start",
+            "bcon_step_end",
             "bcon_unc",
         ]
         if input_defn.inc_icon is True:

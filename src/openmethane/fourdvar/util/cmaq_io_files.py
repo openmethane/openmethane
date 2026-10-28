@@ -89,6 +89,13 @@ def build_filedict():
             "archive": dt.replace_date(archive_defn.emis_file, date),
             "date": date,
         }
+        model_input_files["bcon." + ymd] = {
+            "actual": dt.replace_date(cmaq_config.bcon_run_file, date),
+            "template": dt.replace_date(cmaq_config.bcon_file, date),
+            "archive": dt.replace_date(archive_defn.bcon_file, date),
+            # BCON keeps its own time axis, which may be time-independent
+            "date": None,
+        }
         model_output_files["conc." + ymd] = {
             "actual": dt.replace_date(cmaq_config.conc_file, date),
             "template": template_defn.conc,
@@ -112,4 +119,10 @@ def build_filedict():
             "template": template_defn.sense_conc,
             "archive": dt.replace_date(archive_defn.sens_conc_file, date),
             "date": date,
+        }
+        sensitivity_files["bcon." + ymd] = {
+            "actual": dt.replace_date(cmaq_config.bcon_sense_file, date),
+            "template": template_defn.sense_bcon,
+            "archive": dt.replace_date(archive_defn.sens_bcon_file, date),
+            "date": None,
         }

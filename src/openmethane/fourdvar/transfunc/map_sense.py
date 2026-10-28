@@ -18,17 +18,17 @@ import numpy as np
 
 import openmethane.fourdvar.util.date_handle as dt
 import openmethane.fourdvar.util.netcdf_handle as ncf
+from openmethane import bcon_map
 from openmethane.fourdvar.datadef import PhysicalAdjointData
 from openmethane.fourdvar.params import (
     cmaq_config,
-    date_defn,
     input_defn,
     template_defn,
 )
+from openmethane.fourdvar.util import bcon_offset
 
 unit_key = "units.<YYYYMMDD>"
 unit_convert_emis = None
-unit_convert_bcon = None
 
 
 def get_unit_convert_emis():
@@ -84,14 +84,6 @@ def get_unit_convert_emis():
     return unit_dict
 
 
-def get_unit_convert_bcon():
-    """SensitivityData.emis units = CF/(ppm/s)
-    PhysicalAdjointData.bcon units = CF/(ppm/s).
-    """
-    unit_dict = {dt.replace_date(unit_key, date): 1.0 for date in dt.get_datelist()}
-    return unit_dict
-
-
 def map_sense(sensitivity):
     """application: map adjoint sensitivities to physical grid of unknowns.
     input: SensitivityData
@@ -99,11 +91,8 @@ def map_sense(sensitivity):
     """
     global unit_key
     global unit_convert_emis
-    global unit_convert_bcon
     if unit_convert_emis is None:
         unit_convert_emis = get_unit_convert_emis()
-    if unit_convert_bcon is None:
-        unit_convert_bcon = get_unit_convert_bcon()
 
     # check that:
     # - date_handle dates exist
@@ -112,10 +101,6 @@ def map_sense(sensitivity):
     # - template_defn.icon & template_defn.sense_conc are compatible
     datelist = dt.get_datelist()
     PhysicalAdjointData.assert_params()
-    # all spcs use same dimension set, therefore only need to test 1.
-    test_spc = PhysicalAdjointData.spcs[0]
-    test_fname = dt.replace_date(template_defn.emis, date_defn.start_date)
-    mod_shape = ncf.get_variable(test_fname, test_spc).shape
 
     # create blank constructors for PhysicalAdjointData
     p = PhysicalAdjointData
@@ -148,10 +133,6 @@ def map_sense(sensitivity):
             assert sense_data.shape == icon_data.shape, msg
             icon_dict[spc] = (sense_data * icon_data).sum()
 
-    b_daysize = float(24 * 60 * 60) / PhysicalAdjointData.tsec_bcon
-    blay = PhysicalAdjointData.bcon_up_lay
-    nrow = mod_shape[2]
-    ncol = mod_shape[3]
     emis_pattern = "emis.<YYYYMMDD>"
     for i, date in enumerate(datelist):
         label = dt.replace_date(emis_pattern, date)
@@ -161,38 +142,26 @@ def map_sense(sensitivity):
         emis_vars = ncf.get_variable(emis_fname, emis_dict.keys())
 
         pstep = i // PhysicalAdjointData.tday_emis
-        b_start = int(i * b_daysize)
-        b_end = int((i + 1) * b_daysize)
-        if b_start == b_end:
-            b_end += 1
         emis_unit = unit_convert_emis[dt.replace_date(unit_key, date)]
-        bcon_unit = unit_convert_bcon[dt.replace_date(unit_key, date)]
         for spc in PhysicalAdjointData.spcs:
             sense_arr_emis = sense_data_dict[spc]
             emis_dict[spc][pstep, :, :, :] += (sense_arr_emis * emis_vars[spc]).sum(
                 axis=(0, 1)
             )  # reverses splattering over timesteps and layers in prepare-model
 
-            # sense_arr_bcon = (sense_data_dict[ spc ][:] * bcon_unit)[:-1,:,:,:]
-
-            sense_arr_bcon = (sense_data_dict[spc][:] * bcon_unit)[:-1, :, :, :]
-            tot_lay = sense_arr_bcon.shape[1]
-            model_arr_bcon = sense_arr_bcon.reshape((24, -1, tot_lay, nrow, ncol)).sum(axis=1)
-            bcon_arr = model_arr_bcon.reshape((b_end - b_start, -1, tot_lay, nrow, ncol)).sum(
-                axis=1
+    # ADJ_LGRID_BC is the sensitivity to each BCON record and cell (CF/ppm), the
+    # adjoint of adding the offset to BCON in prepare_model
+    p = PhysicalAdjointData
+    for ymd, _ in bcon_offset.base_bcon_files():
+        sense_fname = sensitivity.file_data[f"bcon.{ymd}"]["actual"]
+        bcon_offset.check_grid(sense_fname, p.bcon_region_map)
+        rec_step = bcon_offset.record_steps(sense_fname, p.bcon_step_start, p.bcon_step_end)
+        sense_vars = ncf.get_variable(sense_fname, p.spcs)
+        for spc in p.spcs:
+            bcon_dict[spc] += bcon_map.collapse(
+                sense_vars[spc], p.bcon_region_map, rec_step, p.nstep_bcon, p.bcon_region
             )
-            bcon_SL = bcon_arr[:, :blay, 0, 1:].sum(axis=(1, 2))
-            bcon_SH = bcon_arr[:, blay:, 0, 1:].sum(axis=(1, 2))
-            bcon_EL = bcon_arr[:, :blay, 1:, ncol - 1].sum(axis=(1, 2))
-            bcon_EH = bcon_arr[:, blay:, 1:, ncol - 1].sum(axis=(1, 2))
-            bcon_NL = bcon_arr[:, :blay, nrow - 1, :-1].sum(axis=(1, 2))
-            bcon_NH = bcon_arr[:, blay:, nrow - 1, :-1].sum(axis=(1, 2))
-            bcon_WL = bcon_arr[:, :blay, :-1, 0].sum(axis=(1, 2))
-            bcon_WH = bcon_arr[:, blay:, :-1, 0].sum(axis=(1, 2))
-            bcon_merge = np.stack(
-                [bcon_SL, bcon_SH, bcon_EL, bcon_EH, bcon_NL, bcon_NH, bcon_WL, bcon_WH], axis=1
-            )
-            bcon_dict[spc][b_start:b_end, :] += bcon_merge[:, :]
+    del p
 
     if input_defn.inc_icon is False:
         icon_dict = None

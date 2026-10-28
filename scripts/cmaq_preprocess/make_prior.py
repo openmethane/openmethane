@@ -21,6 +21,11 @@ import numpy as np
 import openmethane.fourdvar.util.date_handle as dt
 import openmethane.fourdvar.util.file_handle as fh
 import openmethane.fourdvar.util.netcdf_handle as ncf
+from openmethane import bcon_map
+from openmethane.fourdvar.datadef.abstract._physical_abstract_data import (
+    BCON_UNITS,
+    set_step_units,
+)
 from openmethane.fourdvar.params import (
     cmaq_config,
     date_defn,
@@ -28,6 +33,53 @@ from openmethane.fourdvar.params import (
     template_defn,
 )
 from openmethane.fourdvar.uncertainty import convert_unc
+
+
+def load_bcon_map(save_path: str):
+    """
+    Read the boundary map, building it first if BCON_MAP_FILE is not set
+
+    A map built here is written next to the prior as `bcon_map.nc`, so the
+    regions behind a prior can always be looked up. Returns the region map, the
+    step boundaries (seconds from START_DATE) and the uncertainty (ppm).
+    """
+    start, end = date_defn.start_date, date_defn.end_date
+    bcon_file = dt.replace_date(cmaq_config.bcon_file, start)
+    map_file = input_defn.bcon_map_file
+    if map_file is None:
+        map_file = os.path.join(os.path.dirname(save_path), "bcon_map.nc")
+        if os.path.exists(map_file):
+            print(
+                f"WARNING: BCON_MAP_FILE is not set, so the existing boundary map\n"
+                f"  {map_file}\n"
+                "is being replaced by a newly built one. Any edits to it are lost; set "
+                "BCON_MAP_FILE to use an edited map."
+            )
+        ds = bcon_map.build_bcon_map(
+            bcon_file,
+            start,
+            end,
+            segment_km=input_defn.bcon_segment_km,
+            step_days=input_defn.bcon_step_days,
+            nbands=input_defn.bcon_nbands,
+            remainder=input_defn.bcon_remainder,
+            unc=input_defn.bcon_unc,
+        )
+        ds.to_netcdf(map_file)
+        print(f"Boundary map built and saved to:\n  {map_file}")
+
+    region_map, step_start, step_end, unc = bcon_map.read_bcon_map(map_file, start, end)
+    bcon_map.validate_map(
+        region_map,
+        step_start,
+        step_end,
+        unc,
+        run_seconds=len(dt.get_datelist()) * 24 * 60 * 60,
+        nlays=int(ncf.get_attr(bcon_file, "NLAYS")),
+        ncols=int(ncf.get_attr(bcon_file, "NCOLS")),
+        nrows=int(ncf.get_attr(bcon_file, "NROWS")),
+    )
+    return region_map, step_start, step_end, unc
 
 
 def make_prior(save_path: str, emis_template: str) -> None:
@@ -54,23 +106,11 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # int for custom layers or 'all' to use all possible layers
     emis_nlay = 1
 
-    # layer that splits upper and lower boundary regions
-    bcon_up_lay = 15
-    # total number of boundary regions
-    bcon_regions = 8
-
     # No. days per PhysicalData diurnal timestep
     # possible values:
     # 'single' for using a single average across the entire model run
     # integer to use custom number of days
     tday = "single"
-
-    # length of bcon timestep for PhysicalData (in seconds)
-    # allowed values:
-    # 'emis' to use timestep from emissions file
-    # 'single' for using a single average across the entire model run
-    # integer to use custom number of seconds
-    bcon_tsec = "single"
 
     # data for emission uncertainty
     # allowed values:
@@ -86,13 +126,10 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # icon_unc = [0.01]
     # icon_unc = [5e-3]
     icon_unc = [5 * 10e-3]
-    # data for bcon uncertainty
-    # allowed values:
-    # single number: apply value to every uncertainty
-    # dict: apply single value to each spcs ( eg: { 'CO2':1e-6, 'CO':1e-7 } )
-    # string: filename for netCDF file already correctly formatted.
-    # for test case using 50ppb/day CO
-    bcon_unc = {"CH4": 1e-9}  # ppm/s
+    # boundary condition offsets (ppm), added to the staged BCON. Their regions,
+    # time steps and uncertainty come from the boundary map file (BCON_MAP_FILE),
+    # or are built from the BCON_* settings, see make_bcon_map.py.
+    region_map, step_start, step_end, bcon_unc = load_bcon_map(save_path)
 
     # convert spc_list into valid list
     emissions_filename = dt.replace_date(emis_template, date_defn.start_date)
@@ -147,28 +184,11 @@ def make_prior(save_path: str, emis_template: str) -> None:
     assert tday <= tot_nday, "tday must be <= No. days in model run"
     assert tot_nday % tday == 0, "tday must cleanly divide No. days in model run"
 
-    # convert bcon_tsec into valid time-step length
-    daysec = 24 * 60 * 60
-    if str(bcon_tsec).lower() == "emis":
-        hms = int(ncf.get_attr(emissions_filename, "TSTEP"))
-        bcon_tsec = 3600 * (hms // 10000) + 60 * ((hms // 100) % 100) + (hms % 100)
-    elif str(bcon_tsec).lower() == "single":
-        nday = len(dt.get_datelist())
-        bcon_tsec = nday * daysec
-    else:
-        bcon_tsec = int(bcon_tsec)
-        if bcon_tsec >= daysec:
-            assert bcon_tsec % daysec == 0, "invalid bcon_tsec"
-            assert len(dt.get_datelist()) % (bcon_tsec // daysec) == 0, "invalid bcon_tsec"
-        else:
-            assert daysec % bcon_tsec == 0, "invalid bcon_tsec"
-
     # emis-file timestep must fit into PhysicalData tstep
     estep = int(ncf.get_attr(emissions_filename, "TSTEP"))
     print("estep:", estep)
 
     emis_nstep = tot_nday // tday
-    bcon_nstep = len(dt.get_datelist()) * daysec // bcon_tsec
 
     # convert emis-file data into needed PhysicalData format
     nrow = int(ncf.get_attr(emissions_filename, "NROWS"))
@@ -184,9 +204,12 @@ def make_prior(save_path: str, emis_template: str) -> None:
     emis_unc = convert_unc(emis_unc, emis_dict)
     emis_dict.update(emis_unc)
 
-    bcon_dict = {spc: np.zeros((bcon_nstep, bcon_regions)) for spc in spc_list}
-    bcon_unc = convert_unc(bcon_unc, bcon_dict)
-    bcon_dict.update(bcon_unc)
+    # the staged BCON is the prior boundary condition, so the prior offset is 0
+    bcon_regions = bcon_unc.shape[1]
+    bcon_dict = {}
+    for spc in spc_list:
+        bcon_dict[spc] = np.zeros_like(bcon_unc)
+        bcon_dict[f"{spc}_UNC"] = bcon_unc
 
     # build data into new netCDF file
     root_dim = {"ROW": nrow, "COL": ncol}
@@ -212,21 +235,23 @@ def make_prior(save_path: str, emis_template: str) -> None:
         }
         ncf.create(parent=root, name="icon", dim=icon_dim, var=icon_var, is_root=False)
 
-    bcon_dim = {"TSTEP": None, "BCON": bcon_regions}
-    bcon_attr = {"TSEC": bcon_tsec, "UP_LAY": np.int32(bcon_up_lay)}
-
-    bcon_var = {
-        k: (
-            "f4",
-            ("TSTEP", "BCON"),
-            v,
-        )
-        for k, v in list(bcon_dict.items())
+    bcon_dim = {
+        "TSTEP": None,
+        "BCON": bcon_regions,
+        "LAY": region_map.shape[0],
+        "PERIM": region_map.shape[1],
     }
+    bcon_attr = {"units": BCON_UNITS}
 
-    # bcon_var = { k: ('f4', ('TSTEP','BCON',), v) for k,v in list(bcon_dict.items()) }
+    bcon_var = {k: ("f4", ("TSTEP", "BCON"), v) for k, v in list(bcon_dict.items())}
+    bcon_var["BCON_REGION"] = ("i4", ("LAY", "PERIM"), region_map)
+    bcon_var["STEP_START"] = ("i8", ("TSTEP",), step_start)
+    bcon_var["STEP_END"] = ("i8", ("TSTEP",), step_end)
 
-    ncf.create(parent=root, name="bcon", dim=bcon_dim, attr=bcon_attr, var=bcon_var, is_root=False)
+    bcon_grp = ncf.create(
+        parent=root, name="bcon", dim=bcon_dim, attr=bcon_attr, var=bcon_var, is_root=False
+    )
+    set_step_units(bcon_grp)
 
     root.close()
     print(f"Prior created and save to:\n  {save_path}")

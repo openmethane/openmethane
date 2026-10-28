@@ -27,3 +27,14 @@ obs_file = os.path.join(store_path, env.str("OBS_FILE_GLOB", "input/test_obs.pic
 
 # include model initial conditions in solution
 inc_icon = False
+
+# Boundary condition offsets (see openmethane.bcon_map and
+# scripts/cmaq_preprocess/make_bcon_map.py). If BCON_MAP_FILE is unset,
+# make_prior.py builds the map from the settings below.
+bcon_map_file = env.str("BCON_MAP_FILE", "") or None
+bcon_segment_km = env.float("BCON_SEGMENT_KM", 1000.0)
+bcon_step_days = env.float("BCON_STEP_DAYS", 5.0)
+bcon_nbands = env.int("BCON_NBANDS", 4)
+bcon_remainder = env.str("BCON_REMAINDER", "spread")
+# prior 1-sigma uncertainty of each boundary offset, in ppm
+bcon_unc = env.float("BCON_UNC", 0.02)

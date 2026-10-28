@@ -49,6 +49,8 @@ logger.debug("Preparing for cmaq fwd and bwd run")
 # Copy a template emissions file into the input directory
 emis_file = dt.replace_date(cmaq_config.emis_file, date_defn.start_date)
 copy_file(template_defn.emis, cmaq_config.emis_file, date_defn.start_date)
+# CMAQ reads the run's BCON, normally the staged BCON plus the boundary offset
+copy_file(cmaq_config.bcon_file, cmaq_config.bcon_run_file, date_defn.start_date)
 
 # define cmaq filenames for first day of model run.
 icon_file = dt.replace_date(cmaq_config.icon_file, date_defn.start_date)
@@ -112,6 +114,7 @@ copy_file(conc_file, template_defn.conc, None)
 copy_file(force_file, template_defn.force, None)
 copy_file(cmaq_config.emis_sense_file, template_defn.sense_emis, date_defn.start_date)
 copy_file(cmaq_config.conc_sense_file, template_defn.sense_conc, date_defn.start_date)
+copy_file(cmaq_config.bcon_sense_file, template_defn.sense_bcon, date_defn.start_date)
 
 # clean up files created by cmaq
 cmaq_handle.wipeout_fwd()
