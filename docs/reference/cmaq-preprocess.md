@@ -124,7 +124,7 @@ It also means a failure here may be a CMAQ configuration problem rather than a
 template problem.
 
 **`make_prior.py`** creates the prior in the form `fourdvar` consumes, including
-initial conditions if `input_defn.inc_icon` is set.
+the initial condition offset if `INC_ICON` is on (the default).
 
 These three can be run on their own:
 

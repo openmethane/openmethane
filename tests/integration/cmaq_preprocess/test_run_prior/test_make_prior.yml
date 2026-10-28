@@ -68,3 +68,15 @@ groups:
         - LAY
         - ROW
         - COL
+  /icon:
+    attrs:
+      units: ppm
+    coords: {}
+    dims: {}
+    variables:
+      CH4:
+        attrs: {}
+        dims: []
+      CH4_UNC:
+        attrs: {}
+        dims: []

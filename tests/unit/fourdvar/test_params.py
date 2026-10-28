@@ -39,6 +39,7 @@ def test_input_defn(data_regression, target_environment, target):
                 "prior_file",
                 "obs_file",
                 "inc_icon",
+                "icon_unc",
                 "bcon_map_file",
                 "bcon_segment_km",
                 "bcon_step_days",
@@ -99,7 +100,6 @@ def test_template_defn(data_regression, target_environment, target):
                 "sense_conc",
                 "sense_bcon",
                 "emis",
-                "icon",
             ],
         )
     )

@@ -19,7 +19,6 @@ from openmethane.fourdvar.params import (
     archive_defn,
     cmaq_config,
     date_defn,
-    input_defn,
     template_defn,
 )
 
@@ -72,14 +71,15 @@ def build_filedict():
     all_files["AdjointForcingData"] = adjoint_forcing_files
     all_files["SensitivityData"] = sensitivity_files
 
-    if input_defn.inc_icon is True:
-        model_input_files["icon"] = {
-            "actual": cmaq_config.icon_file,
-            "template": template_defn.icon,
-            "archive": archive_defn.icon_file,
-            "date": None,
-        }
-        #'date': date_defn.start_date }
+    # present whether or not the initial condition is solved for, so CMAQ always
+    # reads the run copy; with inc_icon off it is the staged ICON unchanged
+    model_input_files["icon"] = {
+        "actual": cmaq_config.icon_run_file,
+        "template": dt.replace_date(cmaq_config.icon_file, date_defn.start_date),
+        "archive": archive_defn.icon_file,
+        # ICON keeps its own time axis
+        "date": None,
+    }
 
     for date in dt.get_datelist():
         ymd = dt.replace_date("<YYYYMMDD>", date)

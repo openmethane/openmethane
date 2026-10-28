@@ -327,10 +327,10 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
     env_dict["CTM_PROGNAME"] = cmaq_config.fwd_prog
 
     if is_first is True:
-        env_dict["INIT_GASC_1"] = cmaq_config.icon_file
-        env_dict["INIT_AERO_1"] = cmaq_config.icon_file
-        env_dict["INIT_NONR_1"] = cmaq_config.icon_file
-        env_dict["INIT_TRAC_1"] = cmaq_config.icon_file
+        env_dict["INIT_GASC_1"] = cmaq_config.icon_run_file
+        env_dict["INIT_AERO_1"] = cmaq_config.icon_run_file
+        env_dict["INIT_NONR_1"] = cmaq_config.icon_run_file
+        env_dict["INIT_TRAC_1"] = cmaq_config.icon_run_file
         env_dict["CTM_XFIRST_IN"] = ""
     else:
         prev_grid = dt.move_tag(cmaq_config.last_grid_file, -1)

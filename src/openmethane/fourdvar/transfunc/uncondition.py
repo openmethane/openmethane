@@ -17,7 +17,7 @@
 import numpy as np
 
 from openmethane.fourdvar.datadef import PhysicalAdjointData, PhysicalData
-from openmethane.fourdvar.params.input_defn import inc_icon
+from openmethane.fourdvar.params import input_defn
 
 
 def uncondition(unknown):
@@ -75,13 +75,13 @@ def unk_to_phys(unknown, is_adjoint):
     del p
 
     vals = unknown.get_vector()
-    if inc_icon is True:
+    if input_defn.inc_icon is True:
         icon_dict = {}
     emis_dict = {}
     bcon_dict = {}
     i = 0
     for spc in PhysicalData.spcs:
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             icon = vals[i]
             i += 1
             icon_dict[spc] = weight(icon, PhysicalData.icon_unc[spc])
@@ -98,6 +98,6 @@ def unk_to_phys(unknown, is_adjoint):
 
     assert i == len(vals), "Some physical data left unassigned!"
 
-    if inc_icon is False:
+    if input_defn.inc_icon is False:
         icon_dict = None
     return output_class(icon_dict, emis_dict, bcon_dict)

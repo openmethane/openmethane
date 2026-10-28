@@ -26,7 +26,7 @@ from openmethane.fourdvar.params import (
     input_defn,
     template_defn,
 )
-from openmethane.fourdvar.util import bcon_offset
+from openmethane.fourdvar.util import bcon_offset, icon_offset
 
 
 def prepare_model(physical_data):
@@ -35,17 +35,17 @@ def prepare_model(physical_data):
     output: ModelInputData.
 
     notes: PhysicalData.bcon is an offset (ppm) added to each day's staged BCON,
-    see openmethane.bcon_map.
+    see openmethane.bcon_map. PhysicalData.icon is an offset (ppm) added to the
+    staged ICON, see util.icon_offset.
     """
-    if input_defn.inc_icon is True:
-        model_input_args = {"icon": {}}
-        for spcs, icon_scale in physical_data.icon.items():
-            icon_array = ncf.get_variable(template_defn.icon, spcs)
-            # ModelInput adds array values to template, change icon_scale accordingly
-            # model_input_args['icon'][spcs] = (icon_scale-1.)*icon_array
-            model_input_args["icon"][spcs] = (icon_scale) * icon_array
-    else:
-        model_input_args = {}
+    # CMAQ always reads the run copy of ICON, which is the staged ICON unchanged
+    # when the initial condition is not solved for
+    icon_fname = icon_offset.base_icon_file()
+    icon_dict = {}
+    for spc in physical_data.spcs:
+        offset = physical_data.icon[spc] if input_defn.inc_icon else 0.0
+        icon_dict[spc] = icon_offset.apply(ncf.get_variable(icon_fname, spc), offset)
+    model_input_args = {"icon": icon_dict}
 
     dlist = dt.get_datelist()
     nrow, ncol = physical_data.nrows, physical_data.ncols
@@ -80,6 +80,7 @@ def prepare_model(physical_data):
         model_input_args[f"bcon.{ymd}"] = bcon_dict
 
     fh.ensure_path(os.path.dirname(cmaq_config.bcon_run_file))
+    fh.ensure_path(os.path.dirname(cmaq_config.icon_run_file))
 
     # may want to remove this line in future.
     cmaq.wipeout_fwd()
