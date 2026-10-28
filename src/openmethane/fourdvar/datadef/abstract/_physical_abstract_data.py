@@ -23,6 +23,7 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane import bcon_map
 from openmethane.fourdvar.datadef.abstract._fourdvar_data import FourDVarData
 from openmethane.fourdvar.params import (
+    cmaq_config,
     date_defn,
     input_defn,
     template_defn,
@@ -37,13 +38,13 @@ logger = get_logger(__name__)
 BCON_UNITS = "ppm"
 
 
-def check_bcon_units(filename):
-    """Reject a physical data file whose bcon group is not a ppm offset."""
+def check_bcon_units(filename, expected=BCON_UNITS):
+    """Reject a physical data file whose bcon group is not in the expected units."""
     with netCDF4.Dataset(filename, "r") as nc:
         units = getattr(nc.groups["bcon"], "units", None)
-    if units != BCON_UNITS:
+    if units != expected:
         raise ValueError(
-            f"{filename}: the bcon group has units {units!r}, expected {BCON_UNITS!r}. "
+            f"{filename}: the bcon group has units {units!r}, expected {expected!r}. "
             "The boundary term is now an offset on the boundary concentration, not a "
             "flux at the domain edge; regenerate the prior with make_prior.py."
         )
@@ -84,6 +85,7 @@ class PhysicalAbstractData(FourDVarData):
     # these class variables should be overloaded in children
     archive_name = "physical_abstract_data.ncf"  # default archive filename
     emis_units = "NA"  # unit to attach to netCDF archive
+    bcon_units = "NA"  # units of the bcon group in the netCDF archive
 
     def __init__(self, icon_dict, emis_dict, bcon_dict):
         """application: create an instance of PhysicalData
@@ -192,7 +194,7 @@ class PhysicalAbstractData(FourDVarData):
 
         nlay, nperim = self.bcon_region_map.shape
         bcon_dim = {"TSTEP": None, "BCON": self.bcon_region, "LAY": nlay, "PERIM": nperim}
-        bcon_attr = {"units": BCON_UNITS}
+        bcon_attr = {"units": self.bcon_units}
         bcon_var = {
             "BCON_REGION": ("i4", ("LAY", "PERIM"), self.bcon_region_map),
             "STEP_START": ("i8", ("TSTEP",), self.bcon_step_start),
@@ -241,7 +243,7 @@ class PhysicalAbstractData(FourDVarData):
         tday_emis = ncf.get_attr(filename, "TDAY", group="emis")
         spcs_list = ncf.get_attr(filename, "VAR-LIST").split()
         unc_list = [unc(spc) for spc in spcs_list]
-        check_bcon_units(filename)
+        check_bcon_units(filename, cls.bcon_units)
         bcon_region_map = np.asarray(ncf.get_variable(filename, "BCON_REGION", group="bcon"))
         bcon_step_start = np.asarray(ncf.get_variable(filename, "STEP_START", group="bcon"))
         bcon_step_end = np.asarray(ncf.get_variable(filename, "STEP_END", group="bcon"))
@@ -285,7 +287,10 @@ class PhysicalAbstractData(FourDVarData):
             bcon_step_end,
             bcon_unc[spcs_list[0]],
             run_seconds=len(dt.get_datelist()) * daysec,
-            nlays=bcon_region_map.shape[0],
+            # the layers come from the staged BCON, which the offsets are added to
+            nlays=int(
+                ncf.get_attr(dt.replace_date(cmaq_config.bcon_file, date_defn.start_date), "NLAYS")
+            ),
             ncols=ecols,
             nrows=erows,
         )

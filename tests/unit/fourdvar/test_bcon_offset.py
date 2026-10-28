@@ -8,7 +8,7 @@ import pytest
 
 from openmethane import bcon_map
 from openmethane.fourdvar import user_driver
-from openmethane.fourdvar.datadef import PhysicalData
+from openmethane.fourdvar.datadef import PhysicalAdjointData, PhysicalData
 from openmethane.fourdvar.datadef.abstract import _physical_abstract_data
 from openmethane.fourdvar.datadef.abstract._physical_abstract_data import PhysicalAbstractData
 from openmethane.fourdvar.params import cmaq_config, input_defn
@@ -63,7 +63,7 @@ def make_physical(params, bcon_value=0.0):
     return PhysicalData(icon, emis, bcon)
 
 
-def test_archive_round_trip(physical_params, tmp_path, monkeypatch):
+def test_archive_round_trip(physical_params, bcon_file, tmp_path, monkeypatch):
     path = tmp_path / "physical.nc"
     make_physical(physical_params, bcon_value=0.005).archive(str(path))
 
@@ -82,6 +82,34 @@ def test_archive_round_trip(physical_params, tmp_path, monkeypatch):
     np.testing.assert_allclose(
         physical.bcon_unc["CH4"], physical_params["bcon_unc"]["CH4"], rtol=1e-6
     )
+
+
+def test_adjoint_archive_units(physical_params, tmp_path):
+    """A gradient's bcon is per ppm of offset, so it can't pass as a prior."""
+    path = tmp_path / "gradient.nc"
+    bcon = {"CH4": np.zeros((1, physical_params["bcon_region"]))}
+    icon = {"CH4": 1.0} if input_defn.inc_icon else None
+    PhysicalAdjointData(icon, {"CH4": np.ones((1, 1, NROWS, NCOLS))}, bcon).archive(str(path))
+    with netCDF4.Dataset(path) as nc:
+        assert nc.groups["bcon"].units == "CF/ppm"
+
+    with pytest.raises(ValueError, match="expected 'ppm'"):
+        PhysicalData.from_file(str(path))
+
+
+def test_wrong_layer_count_is_rejected(physical_params, bcon_file, tmp_path, monkeypatch):
+    path = tmp_path / "physical.nc"
+    params = dict(physical_params)
+    params["bcon_region_map"], _ = bcon_map.build_region_map(
+        NCOLS, NROWS, NLAYS - 1, 4, 4, [0, 11, 17, 22]
+    )
+    monkeypatch.setattr(PhysicalAbstractData, "bcon_region_map", params["bcon_region_map"])
+    make_physical(params).archive(str(path))
+
+    for name in physical_params:
+        monkeypatch.setattr(PhysicalAbstractData, name, None)
+    with pytest.raises(ValueError, match="BCON_REGION has shape"):
+        PhysicalData.from_file(str(path))
 
 
 def test_old_prior_is_rejected(physical_params, tmp_path):
