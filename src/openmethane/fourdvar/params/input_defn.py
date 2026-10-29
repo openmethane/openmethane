@@ -25,8 +25,10 @@ prior_file = os.path.join(store_path, "input/prior.nc")
 # full path to the obs file used by user_driver.get_observed
 obs_file = os.path.join(store_path, env.str("OBS_FILE_GLOB", "input/test_obs.pic.gz"))
 
-# include model initial conditions in solution
-inc_icon = False
+# Solve for an offset (ppm) on the initial condition, added to the staged ICON
+# of the first day. ICON_UNC is its prior 1-sigma uncertainty.
+inc_icon = env.bool("INC_ICON", True)
+icon_unc = env.float("ICON_UNC", 0.05)
 
 # Boundary condition offsets (see openmethane.bcon_map and
 # scripts/cmaq_preprocess/make_bcon_map.py). If BCON_MAP_FILE is unset,

@@ -24,6 +24,7 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane import bcon_map
 from openmethane.fourdvar.datadef.abstract._physical_abstract_data import (
     BCON_UNITS,
+    ICON_UNITS,
     set_step_units,
 )
 from openmethane.fourdvar.params import (
@@ -123,12 +124,9 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # emis_unc = 1e-8 # mol/(s*m**2)
     emis_unc = 0.6  # unitless emissions multiplier
 
-    # data for ICON scaling
-    # list of values, one for each species
-    icon_scale = [1.0]
-    # icon_unc = [0.01]
-    # icon_unc = [5e-3]
-    icon_unc = [5 * 10e-3]
+    # initial condition offset (ppm), added to the staged ICON, with a prior
+    # 1-sigma uncertainty of ICON_UNC for every species
+    icon_unc = input_defn.icon_unc
     # boundary condition offsets (ppm), added to the staged BCON. Their regions,
     # time steps and uncertainty come from the boundary map file (BCON_MAP_FILE),
     # or are built from the BCON_* settings, see make_bcon_map.py.
@@ -137,10 +135,11 @@ def make_prior(save_path: str, emis_template: str) -> None:
     # convert spc_list into valid list
     emissions_filename = dt.replace_date(emis_template, date_defn.start_date)
     var_list = ncf.get_attr(emissions_filename, "VAR-LIST").split()
-    if input_defn.inc_icon is True:
-        ifile = dt.replace_date(cmaq_config.icon_file, date_defn.start_date)
-        i_var_list = ncf.get_attr(ifile, "VAR-LIST").split()
-        var_list = list(set(var_list).intersection(set(i_var_list)))
+    # prepare_model reads every species from the staged ICON whether or not the
+    # initial condition is solved for, so each species must be in it
+    ifile = dt.replace_date(cmaq_config.icon_file, date_defn.start_date)
+    i_var_list = ncf.get_attr(ifile, "VAR-LIST").split()
+    var_list = list(set(var_list).intersection(set(i_var_list)))
     if str(spc_list).lower() == "all":
         spc_list = [v for v in var_list]
     else:
@@ -154,10 +153,8 @@ def make_prior(save_path: str, emis_template: str) -> None:
             print("invalid spc_list")
             raise
 
-    # check that icon_scale & icon_unc are valid
     if input_defn.inc_icon is True:
-        assert len(spc_list) == len(icon_scale), "Invalid icon_scale size"
-        assert len(spc_list) == len(icon_unc), "Invalid icon_unc size"
+        assert icon_unc > 0, "ICON_UNC must be positive"
 
     # convert emis_nlay into valid number
     enlay = int(ncf.get_attr(emissions_filename, "NLAYS"))
@@ -230,13 +227,14 @@ def make_prior(save_path: str, emis_template: str) -> None:
     emis_var = {k: ("f4", ("TSTEP", "LAY", "ROW", "COL"), v) for k, v in list(emis_dict.items())}
     ncf.create(parent=root, name="emis", dim=emis_dim, attr=emis_attr, var=emis_var, is_root=False)
 
+    # the staged ICON is the prior initial condition, so the prior offset is 0
     if input_defn.inc_icon is True:
-        icon_dim = {"SPC": len(spc_list)}
-        icon_var = {
-            "ICON-SCALE": ("f4", ("SPC",), np.array(icon_scale)),
-            "ICON-UNC": ("f4", ("SPC",), np.array(icon_unc)),
-        }
-        ncf.create(parent=root, name="icon", dim=icon_dim, var=icon_var, is_root=False)
+        icon_attr = {"units": ICON_UNITS}
+        icon_var = {}
+        for spc in spc_list:
+            icon_var[spc] = ("f4", (), 0.0)
+            icon_var[f"{spc}_UNC"] = ("f4", (), icon_unc)
+        ncf.create(parent=root, name="icon", attr=icon_attr, var=icon_var, is_root=False)
 
     bcon_dim = {
         "TSTEP": None,

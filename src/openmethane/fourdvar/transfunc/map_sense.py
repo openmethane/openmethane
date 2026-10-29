@@ -25,7 +25,8 @@ from openmethane.fourdvar.params import (
     input_defn,
     template_defn,
 )
-from openmethane.fourdvar.util import bcon_offset
+from openmethane.fourdvar.util import bcon_offset, icon_offset
+from openmethane.fourdvar.util.cmaq_io_files import get_filedict
 
 unit_key = "units.<YYYYMMDD>"
 unit_convert_emis = None
@@ -98,14 +99,14 @@ def map_sense(sensitivity):
     # - date_handle dates exist
     # - PhysicalAdjointData params exist
     # - template_defn.emis & template_defn.sense_emis are compatible
-    # - template_defn.icon & template_defn.sense_conc are compatible
+    # - the staged ICON & the conc sensitivity are compatible
     datelist = dt.get_datelist()
     PhysicalAdjointData.assert_params()
 
     # create blank constructors for PhysicalAdjointData
     p = PhysicalAdjointData
     if input_defn.inc_icon is True:
-        icon_dict = {spc: 1.0 for spc in p.spcs}
+        icon_dict = {spc: 0.0 for spc in p.spcs}
     emis_shape = (
         p.nstep_emis,
         p.nlays_emis,
@@ -120,18 +121,23 @@ def map_sense(sensitivity):
     bcon_dict = {spc: np.zeros(bcon_shape) for spc in p.spcs}
     del p
 
-    # construct icon_dict
+    # record 0 of the first day is the initial time: the adjoint of adding the
+    # offset to every cell of ICON in prepare_model is the sum over that record
+    # of ADJ_LGRID and of the forcing on the first CONC record, which ADJ_LGRID
+    # leaves out (see util.icon_offset)
     if input_defn.inc_icon is True:
-        i_sense_label = dt.replace_date("conc.<YYYYMMDD>", datelist[0])
-        i_sense_fname = sensitivity.file_data[i_sense_label]["actual"]
+        ymd = dt.replace_date("<YYYYMMDD>", datelist[0])
+        i_sense_fname = sensitivity.file_data[f"conc.{ymd}"]["actual"]
+        i_force_fname = get_filedict("AdjointForcingData")[f"force.{ymd}"]["actual"]
         i_sense_vars = ncf.get_variable(i_sense_fname, icon_dict.keys())
-        icon_vars = ncf.get_variable(template_defn.icon, icon_dict.keys())
+        i_force_vars = ncf.get_variable(i_force_fname, icon_dict.keys())
+        icon_vars = ncf.get_variable(icon_offset.base_icon_file(), icon_dict.keys())
         for spc in PhysicalAdjointData.spcs:
             sense_data = i_sense_vars[spc][0, ...]
-            icon_data = icon_vars[spc][0, ...]
-            msg = "conc_sense and template_defn.icon are incompatible"
-            assert sense_data.shape == icon_data.shape, msg
-            icon_dict[spc] = (sense_data * icon_data).sum()
+            force_data = i_force_vars[spc][0, ...]
+            msg = "conc_sense, force and the staged ICON are incompatible"
+            assert sense_data.shape == force_data.shape == icon_vars[spc].shape[1:], msg
+            icon_dict[spc] = icon_offset.apply_adjoint(sense_data, force_data)
 
     emis_pattern = "emis.<YYYYMMDD>"
     for i, date in enumerate(datelist):

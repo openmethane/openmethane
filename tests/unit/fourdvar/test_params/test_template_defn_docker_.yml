@@ -1,7 +1,6 @@
 conc: /app/data/templates/conc_template.nc
 emis: /app/data/templates/record/emis_record_<YYYY-MM-DD>.nc
 force: /app/data/templates/force_template.nc
-icon: /app/data/templates/record/icon_record.nc
 sense_bcon: /app/data/templates/sense_bcon_template.nc
 sense_conc: /app/data/templates/sense_conc_template.nc
 sense_emis: /app/data/templates/sense_emis_template.nc

@@ -52,7 +52,7 @@ What is being modelled. These are the settings that change between runs.
 | `CHK_PATH` | path | CMAQ checkpoint files. Large and frequently rewritten — use fast scratch disk. Cleared by the container entrypoint. | `{CMAQ_BASE}/chkpnt` |
 | `PRIOR_FILE` | path | The prior emissions estimate, from openmethane-prior | *required* |
 | `CAMS_FILE` | path | CAMS CH4 field used for boundary conditions | `${STORE_PATH}/cams/cams_{product}[_{release}]_methane_{DOMAIN_NAME}_{DOMAIN_VERSION}_{start}-{end}.nc`, with the release only for the inversion |
-| `ICON_FILE` | path | ICON template file | *required* |
+| `ICON_FILE` | path | ICON template file, the prior initial condition. `bias_correct_cams.py` shifts it in place, so run that once only; the inversion never modifies it, and CMAQ reads a copy plus the initial condition offset. | *required* |
 | `BCON_FILE` | path | BCON template file. This is the prior boundary condition; the inversion adds its offsets to a copy in `{CMAQ_BASE}/bcon/` and never modifies it. | *required* |
 | `EMIS_FILE` | path | Emissions files | `{CMAQ_BASE}/emissions/emis.<YYYY-MM-DD>.nc` |
 | `FORCE_FILE` | path | Adjoint forcing template file | `{CMAQ_BASE}/force/ADJ_FORCE.<YYYYMMDD>.nc` |
@@ -144,6 +144,18 @@ settings are read by `make_prior.py` and `make_bcon_map.py`. See
 | `BCON_NBANDS` | int | Number of vertical bands, each holding about the same air mass | `4` |
 | `BCON_REMAINDER` | str | How lengths that don't divide exactly are split: `spread` (nearest whole number of equal pieces) or `end` (full pieces plus a shorter last one) | `spread` |
 | `BCON_UNC` | float | Prior 1-sigma uncertainty of each offset, in ppm | `0.02` |
+
+### Initial condition offset
+
+The inversion also solves for one offset per species, in ppm, added to the
+initial condition (ICON) on the first day. These settings are read by
+`make_prior.py` and the inversion. See
+[The initial condition](boundary-conditions.md#the-initial-condition).
+
+| Variable | Type | Description | Default |
+| --- | --- | --- | --- |
+| `INC_ICON` | bool | Solve for the initial condition offset. With it off, CMAQ reads the staged ICON unchanged. A prior made with it on can be used with it off, but not the other way round. | `true` |
+| `ICON_UNC` | float | Prior 1-sigma uncertainty of the offset, in ppm | `0.05` |
 
 ## CMAQ preprocessing
 
