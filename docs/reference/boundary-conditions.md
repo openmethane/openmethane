@@ -136,5 +136,14 @@ The perimeter is laid out as in the I/O API `BNDARY3` format with `NTHIK = 1`:
 south, east, north, west. Each side includes one corner: south and east at
 their ends, north and west at their starts.
 
-A time-independent BCON file (`TSTEP = 0`, as in the test target) has a
-single record for the whole run, so it can only be used with one control step.
+Each staged BCON file covers one day, with a record at every CAMS time from
+00:00 to 24:00: 3-hourly for EAC4, 6-hourly for the inversion and the
+forecasts. A record belongs to the control step that contains its time, so a
+step can start or end at any record. The 24:00 record of one day and the 00:00
+record of the next fall at the same time and go to the same step.
+
+A time-independent BCON file (`TSTEP = 0`) has a single record for the whole
+run, so it can only be used with one control step. The test target uses one,
+as did `setup_for_cmaq.py` before it wrote a time axis. Staged BCON files from
+before that change must be deleted and rebuilt before a run with more than one
+step.

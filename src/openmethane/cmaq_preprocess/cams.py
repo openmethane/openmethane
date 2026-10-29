@@ -1,6 +1,7 @@
 """Interpolate the from the global CAMS CTM output to ICs and BCs for CMAQ"""
 
 import datetime
+import itertools
 import os
 import pathlib
 import shutil
@@ -114,21 +115,120 @@ def populate_interior_variable(ncouti, cmspec, out_interior, coef):
     )
 
 
-def populate_boundary_variable(ncoutb, cmspec, out_boundary, coef):
-    """Populate an boundary variable (i.e. for the BC file)
+def ioapi_datetime(yyyyddd: int, hhmmss: int) -> datetime.datetime:
+    """The time of an I/O API TFLAG pair"""
+    return datetime.datetime.strptime(f"{int(yyyyddd):07d}", "%Y%j") + datetime.timedelta(
+        hours=int(hhmmss) // 10000, minutes=int(hhmmss) // 100 % 100, seconds=int(hhmmss) % 100
+    )
+
+
+def as_datetimes(times) -> list[datetime.datetime]:
+    """CAMS times, which netCDF4 returns as cftime, as plain datetimes"""
+    return [datetime.datetime(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
+
+
+def index_at_or_before(times: list[datetime.datetime], time: datetime.datetime) -> int:
+    """Index of the latest of `times` at or before `time`
+
+    If every one of `times` is later, the nearest is used with a warning.
+    """
+    earlier = [i for i, t in enumerate(times) if t <= time]
+    if earlier:
+        return earlier[-1]
+    warnings.warn(
+        f"All CAMS times are after {time:%Y-%m-%d %H:%M:%S}, using the nearest: "
+        f"{times[0]:%Y-%m-%d %H:%M:%S}"
+    )
+    return 0
+
+
+def bcon_record_times(
+    date: datetime.date, cams_times: list[datetime.datetime]
+) -> list[datetime.datetime]:
+    """Times of the BCON records for one day, at the CAMS time step from 00:00 to 24:00
+
+    The step is the shortest interval between CAMS times, so the records fall on the
+    CAMS times themselves: 3-hourly for EAC4, 6-hourly for the inversion and the
+    forecasts. A file with a single time gives records at 00:00 and 24:00 only. The
+    24:00 record lets CMAQ interpolate up to the end of the day, as it requires.
+    """
+    times = sorted(set(cams_times))
+    gaps = numpy.array([(b - a).total_seconds() for a, b in itertools.pairwise(times)])
+    step = int(gaps.min()) if gaps.size else 86400
+    if 86400 % step:
+        raise ValueError(
+            f"The CAMS time step of {step / 3600:g} hours does not divide a day, so the "
+            "BCON records cannot start and end at midnight"
+        )
+    start = datetime.datetime.combine(date, datetime.time())
+    return [start + datetime.timedelta(seconds=s) for s in range(0, 86400 + step, step)]
+
+
+def write_bcon(
+    template_bcon_file: pathlib.Path,
+    output_file: pathlib.Path,
+    times: list[datetime.datetime],
+    species: dict[str, numpy.ndarray],
+    attrs: dict | None = None,
+):
+    """Write a time-stepped BCON file with the layout and attributes of the template
+
+    The template from CMAQ's BCON tool in profile mode is time-independent
+    (TSTEP = 0) with a single record. The output has one record per time, with
+    SDATE, STIME, TSTEP and TFLAG set to match. Species not given keep the
+    template's record at every time.
 
     Args:
-        ncoutb: connection to the output file for the boundary conditions
-        cmspec: the name of the CMAQ species
-        out_boundary: numpy array of concentrations at boundary points
-        coef: Coefficient to multiply the values by
-
-    Returns:
-        Nothing
+        template_bcon_file: BCON file made by CMAQ's BCON tool
+        output_file: path of the BCON file to write
+        times: time of each record, evenly spaced
+        species: values of each species to write, shape (time, LAY, PERIM)
+        attrs: global attributes to add
     """
-    ncoutb.variables[cmspec][:] = ncoutb.variables[cmspec][:] + numpy.fmax(
-        out_boundary[:] * coef, 1.0e-30
-    )
+    step = int((times[1] - times[0]).total_seconds()) if len(times) > 1 else 0
+    if any((b - a).total_seconds() != step for a, b in itertools.pairwise(times)):
+        raise ValueError("BCON records must be evenly spaced")
+
+    def hhmmss(seconds):
+        return seconds // 3600 * 10000 + seconds // 60 % 60 * 100 + seconds % 60
+
+    with (
+        netCDF4.Dataset(template_bcon_file, "r") as template,
+        netCDF4.Dataset(output_file, "w", format=template.data_model) as output,
+    ):
+        missing = set(species) - set(template.variables)
+        if missing:
+            raise ValueError(
+                f"{template_bcon_file} has no {', '.join(sorted(missing))}; "
+                "make the template with a mechanism that includes it"
+            )
+        for name, dimension in template.dimensions.items():
+            output.createDimension(name, None if name == "TSTEP" else len(dimension))
+        output.setncatts({name: template.getncattr(name) for name in template.ncattrs()})
+        output.setncatts(
+            {
+                "SDATE": numpy.int32(int(times[0].strftime("%Y%j"))),
+                "STIME": numpy.int32(int(times[0].strftime("%H%M%S"))),
+                "TSTEP": numpy.int32(hhmmss(step)),
+                **(attrs or {}),
+            }
+        )
+        for name, variable in template.variables.items():
+            out = output.createVariable(
+                name, variable.dtype, variable.dimensions, zlib=template.data_model == "NETCDF4"
+            )
+            out.setncatts({attr: variable.getncattr(attr) for attr in variable.ncattrs()})
+            if name == "TFLAG":
+                flags = [[int(t.strftime("%Y%j")), int(t.strftime("%H%M%S"))] for t in times]
+                out[:] = numpy.repeat(
+                    numpy.array(flags, dtype=numpy.int32)[:, numpy.newaxis, :],
+                    len(template.dimensions["VAR"]),
+                    axis=1,
+                )
+            elif name in species:
+                out[:] = species[name]
+            else:
+                out[:] = numpy.repeat(variable[:1], len(times), axis=0)
 
 
 def print_interior_variable(cmspec, out_interior, factor):
@@ -248,12 +348,6 @@ def interpolate_from_cams_to_cmaq_grid(
         outBCON = chem_dir / f"BCON.{domain.id}.{domain.mcip_suffix}.{mech}.nc"
         outICON = chem_dir / f"ICON.{domain.id}.{domain.mcip_suffix}.{mech}.nc"
 
-        if do_BCs:
-            if os.path.exists(outBCON):
-                os.remove(outBCON)
-            shutil.copyfile(template_bcon_file, outBCON)
-            print(f"copy {template_bcon_file} to {outBCON}")
-
         if do_ICs:
             if os.path.exists(outICON):
                 os.remove(outICON)
@@ -268,165 +362,104 @@ def interpolate_from_cams_to_cmaq_grid(
             netCDF4.Dataset(srfFile, "r", format="NETCDF4") as ncsrf,
             open_cams(input_cams_file, cams_product) as cams,
         ):
-            if do_BCs:
-                print("write BCs to file: ", outBCON)
-                ncoutb = netCDF4.Dataset(outBCON, "r+", format="NETCDF4")
-                all_vars = list(ncoutb.variables.keys())[1:]
-                nvars = len(all_vars)
-
             if do_ICs:
                 print("write ICs to file: ", outICON)
                 ncouti = netCDF4.Dataset(outICON, "r+", format="NETCDF4")
-                all_vars = list(ncouti.variables.keys())[1:]
-                nvars = len(all_vars)
 
-            lens = dict()
-            for k in list(nccro.dimensions.keys()):
-                lens[k] = len(nccro.dimensions[k])
-
-            lens["PERIM"] = len(ncbdy.dimensions["PERIM"])
-            lens["LAY"] = len(ncmet.dimensions["LAY"])
-            lens["VAR"] = nvars
-            lens["TSTEP"] = 1
-
+            nlay = len(ncmet.dimensions["LAY"])
             LAT = nccro.variables["LAT"][:].squeeze()
             LON = nccro.variables["LON"][:].squeeze()
             LATP = ncbdy.variables["LAT"][:].squeeze()
             LONP = ncbdy.variables["LON"][:].squeeze()
             sigma = ncmet.getncattr("VGLVLS")
             mtop = ncmet.getncattr("VGTOP")
-            MZdates = cams.times
+            cams_times = as_datetimes(cams.times)
             latmz = cams.lat
             lonmz = cams.lon
             PSURF = ncsrf.variables["PRSFC"][:].squeeze()
-            TFLAG = ncsrf.variables["TFLAG"][:, 0, :].squeeze()
-            yyyy = TFLAG[:, 0] // 1000
-            jjj = TFLAG[:, 0] % 1000
-            hh = TFLAG[:, 1] // 10000
-            mm = (TFLAG[:, 1] - hh * 10000) / 100
-            ss = TFLAG[:, 1] % 100
-            ntimemod = len(yyyy)
-            timesmod = [
-                datetime.datetime(int(yyyy[i]), 1, 1, 0, 0, 0)
-                + datetime.timedelta(
-                    days=float(jjj[i] - 1)
-                    + float(hh[i]) / 24.0
-                    + float(mm[i]) / (24.0 * 60.0)
-                    + float(ss[i]) / (24.0 * 60.0 * 60.0)
-                )
-                for i in range(ntimemod)
-            ]
-            itimes = numpy.where([t.date() == date for t in timesmod])[0]
-            itime0 = itimes[0]
-            itime1 = itimes[-1] + 2
-            timesmod = timesmod[itime0:itime1]
-            TFLAG = TFLAG[itime0:itime1]
+            # the index of each MCIP time, which runs hourly from 00:00 to 24:00
+            mcip_index = {
+                ioapi_datetime(*flag): i for i, flag in enumerate(ncsrf.variables["TFLAG"][:, 0, :])
+            }
+            day_start = datetime.datetime.combine(date, datetime.time())
+            if day_start not in mcip_index:
+                raise ValueError(f"{srfFile} has no record at {day_start}")
+
+            cams_attrs = {"CAMS_PRODUCT": cams.product}
+            if cams.release:
+                cams_attrs["CAMS_RELEASE"] = cams.release
 
             LATMZ, LONMZ = numpy.meshgrid(latmz, lonmz, indexing="ij")
+            Factor = 1.0e3  ## convert from ppm to ppb
+            ##
             if do_ICs:
+                spec = "CH4"
+                if spec not in list(ncouti.variables.keys()):
+                    warnings.warn(
+                        f"Species {spec} was not found in template CMAQ IC file "
+                        f"-- creating blank variable..."
+                    )
+                    isnetcdf4 = ncouti.data_model == "NETCDF4"
+                    ncouti.createVariable(
+                        varname=spec,
+                        datatype="f4",
+                        dimensions=ncouti.variables[default_spec].dimensions,
+                        zlib=isnetcdf4,
+                    )
+                    ncouti.long_name = f"{spec:16}"
+                    ncouti.units = "{:16}".format("ppmV")
+                    ncouti.var_desc = "{:80}".format("Variable " + spec)
+                ncouti.variables[spec][:] = 0.0
+
                 near_interior = numpy.stack(
                     numpy.unravel_index(nearest_points(LATMZ, LONMZ, LAT, LON), LATMZ.shape),
                     axis=-1,
                 )
-            near_boundary = numpy.stack(
-                numpy.unravel_index(nearest_points(LATMZ, LONMZ, LATP, LONP), LATMZ.shape),
-                axis=-1,
-            )
-
-            iMZtime_for_each_CMtime = numpy.zeros((len(timesmod)), dtype=int)
-            for itime, time in enumerate(timesmod):
-                dtime = numpy.array(
-                    [((time - t).total_seconds()) / (24.0 * 60.0 * 60.0) for t in MZdates]
+                layer_pressure = cmaq_layer_pressures(
+                    PSURF[mcip_index[day_start]].ravel(), sigma, mtop
                 )
-                if all(dtime < 0.0):
-                    imin = numpy.argmin(numpy.abs(dtime))
-                    iMZtime_for_each_CMtime[itime] = imin
-                    warnings.warn(
-                        "All dates were negative for date {}, using nearest match: {}".format(
-                            date.strftime("%Y-%m-%d %H:%M:%S"),
-                            MZdates[imin].strftime("%Y-%m-%d %H:%M:%S"),
-                        )
-                    )
-                else:
-                    iMZtime_for_each_CMtime[itime] = numpy.where(dtime >= 0)[0][-1]
-
-            iMZtime = iMZtime_for_each_CMtime[0]
-
-            ## set the values to zero for species that we *WILL* interpolate to
-            ALL_CM_SPEC = ["CH4"]
-            for spec in ALL_CM_SPEC:
-                if do_ICs:
-                    if spec not in list(ncouti.variables.keys()):
-                        warnings.warn(
-                            f"Species {spec} was not found in template CMAQ IC file "
-                            f"-- creating blank variable..."
-                        )
-                        isnetcdf4 = ncouti.data_model == "NETCDF4"
-                        ncouti.createVariable(
-                            varname=spec,
-                            datatype="f4",
-                            dimensions=ncouti.variables[default_spec].dimensions,
-                            zlib=isnetcdf4,
-                        )
-                        ncouti.long_name = f"{spec:16}"
-                        ncouti.units = "{:16}".format("ppmV")
-                        ncouti.var_desc = "{:80}".format("Variable " + spec)
-                    ncouti.variables[spec][:] = 0.0
-                if do_BCs:
-                    if spec not in list(ncoutb.variables.keys()):
-                        warnings.warn(
-                            f"Species {spec} was not found in template CMAQ BC file "
-                            f"-- creating blank variable..."
-                        )
-                        isnetcdf4 = ncoutb.data_model == "NETCDF4"
-                        ncoutb.createVariable(
-                            varname=spec,
-                            datatype="f4",
-                            dimensions=ncoutb.variables[default_spec].dimensions,
-                            zlib=isnetcdf4,
-                        )
-                        ncoutb.long_name = f"{spec:16}"
-                        ncoutb.units = "{:16}".format("ppmV")
-                        ncoutb.var_desc = "{:80}".format("Variable " + spec)
-                    ncoutb.variables[spec][:] = 0.0
-
-            profile = cams.profile(iMZtime)
-            Factor = 1.0e3  ## convert from ppm to ppb
-            ##
-            if do_ICs:
-                layer_pressure = cmaq_layer_pressures(PSURF[itime0].ravel(), sigma, mtop)
                 out_interior = interpolate_columns(
-                    profile,
+                    cams.profile(index_at_or_before(cams_times, day_start)),
                     near_interior[..., 0].ravel(),
                     near_interior[..., 1].ravel(),
                     layer_pressure,
-                ).reshape((lens["LAY"], *LON.shape))
+                ).reshape((nlay, *LON.shape))
                 out_interior += bias_correct
                 print_interior_variable("CH4", out_interior, Factor)
+                populate_interior_variable(ncouti, "CH4", out_interior, 1.0)
+                ncouti.setncatts(cams_attrs)
+                ncouti.close()
             ##
             if do_BCs:
+                print("write BCs to file: ", outBCON)
+                near_boundary = numpy.stack(
+                    numpy.unravel_index(nearest_points(LATMZ, LONMZ, LATP, LONP), LATMZ.shape),
+                    axis=-1,
+                )
                 # a perimeter point takes the surface pressure of its nearest CMAQ cell
-                perimeter_psurf = PSURF[itime0].ravel()[nearest_points(LAT, LON, LATP, LONP)]
-                out_boundary = interpolate_columns(
-                    profile,
-                    near_boundary[:, 0],
-                    near_boundary[:, 1],
-                    cmaq_layer_pressures(perimeter_psurf, sigma, mtop),
-                )[numpy.newaxis]
+                perimeter_cell = nearest_points(LAT, LON, LATP, LONP)
+                record_times = bcon_record_times(date, cams_times)
+                out_boundary = numpy.empty((len(record_times), nlay, len(LATP)), numpy.float32)
+                for irec, time in enumerate(record_times):
+                    if time not in mcip_index:
+                        raise ValueError(f"{srfFile} has no record at {time}")
+                    perimeter_psurf = PSURF[mcip_index[time]].ravel()[perimeter_cell]
+                    # the latest CAMS time at or before the record, which holds the last
+                    # CAMS time over the end of a file that stops before 24:00
+                    out_boundary[irec] = interpolate_columns(
+                        cams.profile(index_at_or_before(cams_times, time)),
+                        near_boundary[:, 0],
+                        near_boundary[:, 1],
+                        cmaq_layer_pressures(perimeter_psurf, sigma, mtop),
+                    )
                 out_boundary += bias_correct
                 print_boundary_variable("CH4", out_boundary, Factor)
-            ##
-            if do_ICs:
-                populate_interior_variable(ncouti, "CH4", out_interior, 1.0)
-            ##
-            if do_BCs:
-                populate_boundary_variable(ncoutb, "CH4", out_boundary, 1.0)
-
-            for output in [*([ncouti] if do_ICs else []), *([ncoutb] if do_BCs else [])]:
-                output.setncattr("CAMS_PRODUCT", cams.product)
-                if cams.release:
-                    output.setncattr("CAMS_RELEASE", cams.release)
-            if do_ICs:
-                ncouti.close()
-            if do_BCs:
-                ncoutb.close()
+                if os.path.exists(outBCON):
+                    os.remove(outBCON)
+                write_bcon(
+                    template_bcon_file,
+                    outBCON,
+                    record_times,
+                    {"CH4": numpy.fmax(out_boundary, 1.0e-30)},
+                    attrs=cams_attrs,
+                )
