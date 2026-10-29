@@ -140,7 +140,7 @@ settings are read by `make_prior.py` and `make_bcon_map.py`. See
 | --- | --- | --- | --- |
 | `BCON_MAP_FILE` | path | A boundary map file from `make_bcon_map.py`, possibly edited by hand. If unset, `make_prior.py` builds one from the settings below and saves it next to the prior as `bcon_map.nc`. | unset |
 | `BCON_SEGMENT_KM` | float | Target length of a boundary segment along each edge | `1000` |
-| `BCON_STEP_DAYS` | float | Target length of a control time step, in days | `5` |
+| `BCON_STEP_DAYS` | float | Target length of a control time step, in days. Must be a whole number with the pipeline's daily BCON files, which are time-independent. | `5` |
 | `BCON_NBANDS` | int | Number of vertical bands, each holding about the same air mass | `4` |
 | `BCON_REMAINDER` | str | How lengths that don't divide exactly are split: `spread` (nearest whole number of equal pieces) or `end` (full pieces plus a shorter last one) | `spread` |
 | `BCON_UNC` | float | Prior 1-sigma uncertainty of each offset, in ppm | `0.02` |

@@ -152,10 +152,10 @@ def map_sense(sensitivity):
     # ADJ_LGRID_BC is the sensitivity to each BCON record and cell (CF/ppm), the
     # adjoint of adding the offset to BCON in prepare_model
     p = PhysicalAdjointData
-    for ymd, _ in bcon_offset.base_bcon_files():
+    for date, ymd, _ in bcon_offset.base_bcon_files():
         sense_fname = sensitivity.file_data[f"bcon.{ymd}"]["actual"]
         bcon_offset.check_grid(sense_fname, p.bcon_region_map)
-        rec_step = bcon_offset.record_steps(sense_fname, p.bcon_step_start, p.bcon_step_end)
+        rec_step = bcon_offset.record_steps(sense_fname, date, p.bcon_step_start, p.bcon_step_end)
         sense_vars = ncf.get_variable(sense_fname, p.spcs)
         for spc in p.spcs:
             bcon_dict[spc] += bcon_map.collapse(

@@ -1,5 +1,6 @@
 """The boundary offset as a PhysicalData term: its file format and its bounds."""
 
+import datetime
 import shutil
 
 import netCDF4
@@ -11,7 +12,7 @@ from openmethane.fourdvar import user_driver
 from openmethane.fourdvar.datadef import PhysicalAdjointData, PhysicalData
 from openmethane.fourdvar.datadef.abstract import _physical_abstract_data
 from openmethane.fourdvar.datadef.abstract._physical_abstract_data import PhysicalAbstractData
-from openmethane.fourdvar.params import cmaq_config, input_defn
+from openmethane.fourdvar.params import cmaq_config, date_defn, input_defn
 from openmethane.fourdvar.util import bcon_offset
 
 NROWS, NCOLS, NLAYS = 10, 10, 32
@@ -145,6 +146,32 @@ def test_offset_lower_bound(physical_params, bcon_file):
     mapped = np.broadcast_to(region_map >= 0, field.shape)
     assert np.isclose(field[mapped].min(), 0, atol=1e-6)
     assert field[mapped].min() >= -1e-6
+
+
+def test_offset_lower_bound_daily_files(physical_params, test_data_dir, tmp_path, monkeypatch):
+    """Each day's time-independent BCON (TSTEP = 0) counts towards its own step."""
+    region_map = physical_params["bcon_region_map"]
+    monkeypatch.setattr(date_defn, "start_date", datetime.date(2022, 12, 7))
+    monkeypatch.setattr(date_defn, "end_date", datetime.date(2022, 12, 10))
+    monkeypatch.setattr(cmaq_config, "bcon_file", str(tmp_path / "BCON.<YYYYMMDD>.nc"))
+    lowest = {"20221207": 1.2, "20221209": 0.4}  # one cell of region 0, on days 1 and 3
+    for ymd in ("20221207", "20221208", "20221209", "20221210"):
+        path = tmp_path / f"BCON.{ymd}.nc"
+        shutil.copy(test_data_dir / "cmaq" / "template_bcon_profile_CH4only_d01.nc", path)
+        with netCDF4.Dataset(path, "a") as nc:
+            assert nc.TSTEP == 0
+            ch4 = np.full(nc.variables["CH4"].shape, 1.9)
+            ch4[0, 3, 2] = lowest.get(ymd, 1.9)
+            nc.variables["CH4"][:] = ch4
+
+    lower = bcon_offset.offset_lower_bound(
+        "CH4", region_map, [0, 2 * 86400], [2 * 86400, 4 * 86400], physical_params["bcon_region"]
+    )
+
+    expected = np.full((2, physical_params["bcon_region"]), -1.9)
+    expected[0, region_map[3, 2]] = -1.2
+    expected[1, region_map[3, 2]] = -0.4
+    np.testing.assert_allclose(lower, expected, rtol=1e-6)
 
 
 @pytest.mark.parametrize("allow_negative_emissions", (True, False))

@@ -255,28 +255,48 @@ def build_steps(
     return end - lengths, end
 
 
+def check_steps_at_midnight(step_start: np.ndarray, step_end: np.ndarray) -> None:
+    """Raise ValueError unless every control step starts and ends at midnight.
+
+    A time-independent BCON file holds one record for its whole day, which a
+    step edge inside the day would have to split.
+    """
+    edges = np.concatenate([np.asarray(step_start), np.asarray(step_end)])
+    if (edges % 86400 != 0).any():
+        raise ValueError(
+            "time-independent BCON files (TSTEP = 0) hold one record per day, so every "
+            "boundary control step must start and end at midnight (BCON_STEP_DAYS must "
+            "be a whole number of days)"
+        )
+
+
 def record_steps(
-    record_seconds: np.ndarray | None, step_start: np.ndarray, step_end: np.ndarray
+    record_seconds: np.ndarray | None,
+    step_start: np.ndarray,
+    step_end: np.ndarray,
+    day_start: float | None = None,
 ) -> np.ndarray:
     """Control step of each BCON record.
 
     `record_seconds` is each record's time in seconds from the start of the
-    run, or None for a time-independent BCON file, which only works with a
-    single control step. A record belongs to the step containing it; records
-    before the run go to the first step and records at or after the run end to
-    the last, so the 24:00 record of a daily file and the 00:00 record of the
-    next day's file can land in different steps, each consistent with its own
-    file.
+    run, or None for a time-independent BCON file. A record belongs to the step
+    containing it; records before the run go to the first step and records at
+    or after the run end to the last, so the 24:00 record of a daily file and
+    the 00:00 record of the next day's file can land in different steps, each
+    consistent with its own file.
+
+    The pipeline writes a time-independent file for each day, whose one record
+    holds for that whole day. It belongs to the step containing the day, so
+    `day_start`, the start of the file's day in seconds from the start of the
+    run, is needed, and every step must start and end at midnight.
     """
     step_start = np.asarray(step_start)
     step_end = np.asarray(step_end)
     if record_seconds is None:
-        if step_start.size != 1:
-            raise ValueError(
-                "a time-independent BCON file (TSTEP = 0) can only be used with a single "
-                f"boundary control step, but the map has {step_start.size}"
-            )
-        return np.zeros(1, dtype=int)
+        if day_start is None:
+            raise ValueError("a time-independent BCON file needs the start of its day")
+        check_steps_at_midnight(step_start, step_end)
+        record_seconds = np.array([day_start])
     steps = np.searchsorted(step_start, np.asarray(record_seconds), side="right") - 1
     return np.clip(steps, 0, step_start.size - 1)
 
@@ -472,11 +492,8 @@ def build_bcon_map(  # noqa: PLR0913
         raise ValueError("end_date must not be before start_date")
     step_hours = max(1, round(step_days * 24))
     step_start, step_end = build_steps(ndays * 24, step_hours, remainder, min_fraction)
-    if int(attrs["TSTEP"]) == 0 and step_start.size > 1:
-        raise ValueError(
-            f"{bcon_file} is time-independent (TSTEP = 0), so the run can only have one "
-            f"boundary control step, but {step_days} days per step gives {step_start.size}"
-        )
+    if int(attrs["TSTEP"]) == 0:
+        check_steps_at_midnight(step_start, step_end)
 
     lon, lat = _region_lonlat(attrs, region_map, ncols, nrows, nregion)
     return make_map_dataset(

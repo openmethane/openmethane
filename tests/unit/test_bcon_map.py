@@ -201,10 +201,27 @@ def test_record_steps_daily_files():
     assert bcon_map.record_steps(day2, start, end).tolist() == [1] * 9
 
 
-def test_record_steps_time_independent():
-    assert bcon_map.record_steps(None, [0], [86400]).tolist() == [0]
-    with pytest.raises(ValueError, match="time-independent"):
-        bcon_map.record_steps(None, [0, 86400], [86400, 2 * 86400])
+@pytest.mark.parametrize("day, expected", ((0, 0), (4, 0), (5, 1), (9, 1)))
+def test_record_steps_time_independent(day, expected):
+    """A daily TSTEP = 0 file's one record belongs to the step containing its day."""
+    start, end = np.array([0, 5 * 86400]), np.array([5 * 86400, 10 * 86400])
+
+    steps = bcon_map.record_steps(None, start, end, day_start=day * 86400)
+
+    assert steps.tolist() == [expected]
+
+
+def test_record_steps_time_independent_needs_midnight_steps():
+    """A step edge at noon would split a day's only record."""
+    start, end = np.array([0, 43200]), np.array([43200, 86400])
+
+    with pytest.raises(ValueError, match="midnight"):
+        bcon_map.record_steps(None, start, end, day_start=0)
+
+
+def test_record_steps_time_independent_needs_its_day():
+    with pytest.raises(ValueError, match="start of its day"):
+        bcon_map.record_steps(None, [0], [86400])
 
 
 def test_ioapi_record_seconds():
@@ -298,9 +315,20 @@ def test_build_and_read_bcon_map(bcon_file, tmp_path):
         bcon_map.read_bcon_map(path, day, datetime.date(2022, 12, 8))
 
 
-def test_build_bcon_map_time_independent_needs_one_step(bcon_file):
-    """The test BCON has TSTEP = 0, so a run longer than a step cannot use it."""
-    with pytest.raises(ValueError, match="time-independent"):
+def test_build_bcon_map_time_independent_steps(bcon_file):
+    """The test BCON has TSTEP = 0, like the pipeline's daily files."""
+    ds = bcon_map.build_bcon_map(
+        bcon_file, datetime.date(2022, 12, 1), datetime.date(2022, 12, 10), step_days=5
+    )
+
+    one_day = np.timedelta64(1, "D")
+    start = np.datetime64("2022-12-01")
+    assert ((ds["STEP_START"].values - start) / one_day).tolist() == [0, 5]
+    assert ((ds["STEP_END"].values - start) / one_day).tolist() == [5, 10]
+
+
+def test_build_bcon_map_time_independent_needs_whole_days(bcon_file):
+    with pytest.raises(ValueError, match="midnight"):
         bcon_map.build_bcon_map(
-            bcon_file, datetime.date(2022, 12, 1), datetime.date(2022, 12, 10), step_days=5
+            bcon_file, datetime.date(2022, 12, 1), datetime.date(2022, 12, 10), step_days=2.5
         )
