@@ -67,10 +67,10 @@ def prepare_model(physical_data):
 
     # add the boundary offset to each day's staged BCON
     region_map = physical_data.bcon_region_map
-    for ymd, base_fname in bcon_offset.base_bcon_files():
+    for date, ymd, base_fname in bcon_offset.base_bcon_files():
         bcon_offset.check_grid(base_fname, region_map)
         rec_step = bcon_offset.record_steps(
-            base_fname, physical_data.bcon_step_start, physical_data.bcon_step_end
+            base_fname, date, physical_data.bcon_step_start, physical_data.bcon_step_end
         )
         bcon_dict = {}
         for spc in physical_data.spcs:

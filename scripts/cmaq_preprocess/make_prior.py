@@ -79,6 +79,9 @@ def load_bcon_map(save_path: str):
         ncols=int(ncf.get_attr(bcon_file, "NCOLS")),
         nrows=int(ncf.get_attr(bcon_file, "NROWS")),
     )
+    # a hand-edited map can put a step edge inside a day of a time-independent BCON
+    if bcon_map.file_record_seconds(bcon_file, start) is None:
+        bcon_map.check_steps_at_midnight(step_start, step_end)
     return region_map, step_start, step_end, unc
 
 

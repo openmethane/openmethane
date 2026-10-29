@@ -136,5 +136,8 @@ The perimeter is laid out as in the I/O API `BNDARY3` format with `NTHIK = 1`:
 south, east, north, west. Each side includes one corner: south and east at
 their ends, north and west at their starts.
 
-A time-independent BCON file (`TSTEP = 0`, as in the test target) has a
-single record for the whole run, so it can only be used with one control step.
+The pipeline writes one BCON file per day, and each is time-independent
+(`TSTEP = 0`): a single record that holds for that whole day. Each day's record
+belongs to the control step that contains the day, so with these files every
+step must start and end at midnight, and `BCON_STEP_DAYS` must be a whole number
+of days. A hand-edited map is checked for this when the prior is made.
