@@ -64,6 +64,13 @@ requests a month at a time and fetches each month with parallel range requests.
 The forecasts' forecast start and lead time are joined into one valid-time axis
 before saving.
 
+A last, small request fetches 00:00 on the day after the end date, so the last
+day's 24:00 BCON record has a CAMS field of its own. For EAC4 that is the next
+day's 00:00. For the forecasts it is the 24 h lead of the last day's forecast,
+which is published with that day's other leads, before the next day's forecast.
+If the request fails, for example because the date is past the end of EAC4, the
+download goes ahead without it and logs a warning.
+
 Requires ADS credentials. Skip with `SKIP_CAMS_DOWNLOAD`.
 
 ### setup_for_cmaq
@@ -85,11 +92,11 @@ The substantial step. `scripts/cmaq_preprocess/setup_for_cmaq.py`:
   start of the run. Each day's BCON has a record at every CAMS time from 00:00 to
   24:00, each using that hour's MCIP surface pressure, and CMAQ interpolates
   linearly between them. The 24:00 record uses the next day's 00:00 CAMS field
-  where the CAMS file has one. EAC4 and forecast files stop at the last day's
-  final step before midnight, and so does the inversion when the run ends on
-  the last day of a month, because each monthly inversion file stops at 18:00
-  on its last day. In those cases the last day's 24:00 record repeats that
-  final field.
+  where the CAMS file has one. An EAC4 or forecast file whose extra 00:00 step
+  could not be downloaded stops at the last day's final step before midnight,
+  and so does the inversion when the run ends on the last day of a month,
+  because each monthly inversion file stops at 18:00 on its last day. In those
+  cases the last day's 24:00 record repeats that final field.
 
 Afterwards there are results in `MET_DIR` and `CTM_DIR`.
 
