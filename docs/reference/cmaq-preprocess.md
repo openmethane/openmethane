@@ -96,7 +96,8 @@ The substantial step. `scripts/cmaq_preprocess/setup_for_cmaq.py`:
   could not be downloaded stops at the last day's final step before midnight,
   and so does the inversion when the run ends on the last day of a month,
   because each monthly inversion file stops at 18:00 on its last day. In those
-  cases the last day's 24:00 record repeats that final field.
+  cases the last day's 24:00 record repeats that final field, and
+  `setup_for_cmaq.py` warns that it does.
 
 Afterwards there are results in `MET_DIR` and `CTM_DIR`.
 

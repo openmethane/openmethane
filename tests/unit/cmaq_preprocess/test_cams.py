@@ -27,6 +27,8 @@ EAC4_FILE = TEST_DATA / "cams" / "cams_eac4_methane_2022-12-07.nc"
 # MCIP, and thinned to every fifth point of the 0.1° grid to keep it small
 FORECASTS_FILE = TEST_DATA / "cams" / "cams_forecasts_2024-12-07_as_2022-12-07.nc"
 BCON_TEMPLATE = TEST_DATA / "cmaq" / "template_bcon_profile_CH4only_d01.nc"
+# the EAC4 fixture stops at 21:00, so its 24:00 BCON record repeats that field and warns
+HOLDS_THE_LAST_FIELD = pytest.mark.filterwarnings("ignore:.*repeat its last field:UserWarning")
 DOMAIN = Domain(1, "au-test", "v1", "LamCon_34S_150E", "au-test_v1")
 
 # One CAMS column of three levels, ordered from the surface up, in ppmV and Pa
@@ -280,7 +282,7 @@ def test_interpolation_preserves_the_pressure_weighted_column_mean(product, path
     "product, path, release, surface_ppmv",
     [
         ("inversion", INVERSION_FILE, "v25r1", 1.904),
-        ("eac4", EAC4_FILE, None, 1.772),
+        pytest.param("eac4", EAC4_FILE, None, 1.772, marks=HOLDS_THE_LAST_FIELD),
         ("forecasts", FORECASTS_FILE, None, 1.895),
     ],
 )
@@ -396,7 +398,9 @@ def test_write_bcon_rejects_uneven_records(tmp_path):
     "product, path, record_hours",
     [
         ("inversion", INVERSION_FILE, [0, 6, 12, 18, 24]),
-        ("eac4", EAC4_FILE, [0, 3, 6, 9, 12, 15, 18, 21, 24]),
+        pytest.param(
+            "eac4", EAC4_FILE, [0, 3, 6, 9, 12, 15, 18, 21, 24], marks=HOLDS_THE_LAST_FIELD
+        ),
         ("forecasts", FORECASTS_FILE, [0, 6, 12, 18, 24]),
     ],
 )
@@ -423,6 +427,26 @@ def test_bcon_has_a_record_at_each_cams_time_of_the_day(tmp_path, product, path,
     assert times == hours(*record_hours)
     # CAMS methane changes through the day, so the records differ
     assert np.abs(np.diff(ch4, axis=0)).max() > 1e-3
+
+
+def test_bcon_warns_when_its_24_00_record_repeats_the_last_cams_time(tmp_path):
+    with pytest.warns(
+        UserWarning,
+        match="ends at 2022-12-07 21:00, so the BCON records of "
+        "2022-12-07 after that time repeat its last field",
+    ):
+        interpolate_from_cams_to_cmaq_grid(
+            dates=[datetime.date(2022, 12, 7)],
+            domain=DOMAIN,
+            mech="CH4only",
+            input_cams_file=EAC4_FILE,
+            template_icon_file=TEST_DATA / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+            template_bcon_file=BCON_TEMPLATE,
+            met_dir=TEST_DATA / "mcip",
+            ctm_dir=tmp_path,
+            force_update=True,
+            cams_product="eac4",
+        )
 
 
 def test_dates_outside_the_file_fail_before_anything_is_written(tmp_path):

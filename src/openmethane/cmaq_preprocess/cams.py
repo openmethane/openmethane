@@ -439,6 +439,12 @@ def interpolate_from_cams_to_cmaq_grid(
                 # a perimeter point takes the surface pressure of its nearest CMAQ cell
                 perimeter_cell = nearest_points(LAT, LON, LATP, LONP)
                 record_times = bcon_record_times(date, cams_times)
+                held = [time for time in record_times if time > max(cams_times)]
+                if held:
+                    warnings.warn(
+                        f"{input_cams_file} ends at {max(cams_times):%Y-%m-%d %H:%M}, so the "
+                        f"BCON records of {date} after that time repeat its last field"
+                    )
                 out_boundary = numpy.empty((len(record_times), nlay, len(LATP)), numpy.float32)
                 for irec, time in enumerate(record_times):
                     if time not in mcip_index:
