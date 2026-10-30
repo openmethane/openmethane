@@ -8,10 +8,13 @@ import numpy as np
 import pytest
 
 from openmethane.cmaq_preprocess.cams import (
+    bcon_record_times,
     cmaq_layer_pressures,
+    index_at_or_before,
     interpolate_columns,
     interpolate_from_cams_to_cmaq_grid,
     nearest_points,
+    write_bcon,
 )
 from openmethane.cmaq_preprocess.cams_readers import CamsProfile, open_cams
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
@@ -23,6 +26,7 @@ EAC4_FILE = TEST_DATA / "cams" / "cams_eac4_methane_2022-12-07.nc"
 # The forecasts start in 2024, so this is 2024-12-07 relabelled to the date of the test
 # MCIP, and thinned to every fifth point of the 0.1° grid to keep it small
 FORECASTS_FILE = TEST_DATA / "cams" / "cams_forecasts_2024-12-07_as_2022-12-07.nc"
+BCON_TEMPLATE = TEST_DATA / "cmaq" / "template_bcon_profile_CH4only_d01.nc"
 DOMAIN = Domain(1, "au-test", "v1", "LamCon_34S_150E", "au-test_v1")
 
 # One CAMS column of three levels, ordered from the surface up, in ppmV and Pa
@@ -304,6 +308,121 @@ def test_icon_and_bcon_are_filled_in_ppmv_and_record_the_product(
             assert surface_layer.mean() == pytest.approx(surface_ppmv, abs=0.01)
             assert out.getncattr("CAMS_PRODUCT") == product
             assert getattr(out, "CAMS_RELEASE", None) == release
+
+
+def hours(*values):
+    return [datetime.datetime(2022, 12, 7) + datetime.timedelta(hours=h) for h in values]
+
+
+def test_bcon_records_follow_a_3_hourly_cams_step_to_midnight():
+    cams_times = hours(0, 3, 6, 9, 12, 15, 18, 21)
+
+    times = bcon_record_times(datetime.date(2022, 12, 7), cams_times)
+
+    assert times == hours(0, 3, 6, 9, 12, 15, 18, 21, 24)
+
+
+def test_bcon_records_follow_a_6_hourly_cams_step_on_any_day_of_the_file():
+    cams_times = hours(0, 6, 12, 18, 24, 30, 36, 42, 48)
+
+    times = bcon_record_times(datetime.date(2022, 12, 8), cams_times)
+
+    assert times == hours(24, 30, 36, 42, 48)
+
+
+def test_bcon_records_of_a_single_cams_time_are_the_start_and_end_of_the_day():
+    times = bcon_record_times(datetime.date(2022, 12, 7), hours(0))
+
+    assert times == hours(0, 24)
+
+
+def test_bcon_records_need_a_cams_step_that_divides_a_day():
+    with pytest.raises(ValueError, match="5 hours does not divide a day"):
+        bcon_record_times(datetime.date(2022, 12, 7), hours(0, 5, 10))
+
+
+def test_index_at_or_before_takes_an_exact_time():
+    assert index_at_or_before(hours(0, 6, 12), hours(6)[0]) == 1
+
+
+def test_index_at_or_before_takes_the_latest_earlier_time():
+    assert index_at_or_before(hours(0, 6, 12), hours(11)[0]) == 1
+
+
+def test_index_at_or_before_holds_the_last_time_past_the_end():
+    assert index_at_or_before(hours(0, 6, 12, 18), hours(24)[0]) == 3
+
+
+def test_index_at_or_before_warns_and_takes_the_first_time_when_all_are_later():
+    with pytest.warns(UserWarning, match="All CAMS times are after"):
+        index = index_at_or_before(hours(6, 12), hours(0)[0])
+
+    assert index == 0
+
+
+def test_write_bcon_sets_the_time_axis_of_the_records(tmp_path):
+    times = hours(0, 6, 12, 18, 24)
+    ch4 = np.arange(5 * 32 * 44, dtype=np.float32).reshape(5, 32, 44)
+
+    write_bcon(BCON_TEMPLATE, tmp_path / "BCON.nc", times, {"CH4": ch4}, attrs={"A": "b"})
+
+    with netCDF4.Dataset(tmp_path / "BCON.nc") as out:
+        assert (out.SDATE, out.STIME, out.TSTEP) == (2022341, 0, 60000)
+        assert out.dimensions["TSTEP"].isunlimited()
+        np.testing.assert_array_equal(
+            out.variables["TFLAG"][:, 0, :],
+            [[2022341, 0], [2022341, 60000], [2022341, 120000], [2022341, 180000], [2022342, 0]],
+        )
+        np.testing.assert_array_equal(out.variables["CH4"][:], ch4)
+        assert out.A == "b"
+        assert out.NCOLS == 10
+
+
+def test_write_bcon_rejects_a_species_missing_from_the_template(tmp_path):
+    ch4 = np.zeros((2, 32, 44), dtype=np.float32)
+
+    with pytest.raises(ValueError, match="has no O3"):
+        write_bcon(BCON_TEMPLATE, tmp_path / "BCON.nc", hours(0, 24), {"O3": ch4})
+
+
+def test_write_bcon_rejects_uneven_records(tmp_path):
+    ch4 = np.zeros((3, 32, 44), dtype=np.float32)
+
+    with pytest.raises(ValueError, match="evenly spaced"):
+        write_bcon(BCON_TEMPLATE, tmp_path / "BCON.nc", hours(0, 6, 24), {"CH4": ch4})
+
+
+@pytest.mark.parametrize(
+    "product, path, record_hours",
+    [
+        ("inversion", INVERSION_FILE, [0, 6, 12, 18, 24]),
+        ("eac4", EAC4_FILE, [0, 3, 6, 9, 12, 15, 18, 21, 24]),
+        ("forecasts", FORECASTS_FILE, [0, 6, 12, 18, 24]),
+    ],
+)
+def test_bcon_has_a_record_at_each_cams_time_of_the_day(tmp_path, product, path, record_hours):
+    interpolate_from_cams_to_cmaq_grid(
+        dates=[datetime.date(2022, 12, 7)],
+        domain=DOMAIN,
+        mech="CH4only",
+        input_cams_file=path,
+        template_icon_file=TEST_DATA / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+        template_bcon_file=BCON_TEMPLATE,
+        met_dir=TEST_DATA / "mcip",
+        ctm_dir=tmp_path,
+        force_update=True,
+        cams_product=product,
+    )
+
+    with netCDF4.Dataset(tmp_path / "2022-12-07" / "d01" / "BCON.d01.au-test_v1.CH4only.nc") as out:
+        times = [
+            datetime.datetime.strptime(f"{date}{time:06d}", "%Y%j%H%M%S")
+            for date, time in out.variables["TFLAG"][:, 0, :]
+        ]
+        ch4 = out.variables["CH4"][:]
+    assert times == hours(*record_hours)
+    # CAMS methane changes through the day, so the records differ
+    assert np.abs(np.diff(ch4, axis=0)).max() > 1e-3
 
 
 def test_dates_outside_the_file_fail_before_anything_is_written(tmp_path):
