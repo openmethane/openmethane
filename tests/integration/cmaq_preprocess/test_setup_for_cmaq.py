@@ -26,6 +26,8 @@ def _get_filelisting(directory: Path):
     return sorted([os.path.relpath(i, directory) for i in directory.rglob("*") if i.is_file()])
 
 
+# the fetched EAC4 test file stops at 21:00, so the 24:00 BCON record repeats that field
+@pytest.mark.filterwarnings("ignore:.*repeat its last field:UserWarning")
 def test_setup_for_cmaq(
     tmpdir,
     root_dir,

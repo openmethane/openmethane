@@ -93,11 +93,34 @@ def download_inversion(
     """Download the global CAMS inversion files for each month in the date range
 
     Returns one file per month, named `{year}-{month}.nc`, in `directory`.
+
+    Each monthly file stops at 18:00 on its last day. When `end` is the last day of a
+    month, the next month is downloaded too, for its first step: 00:00 on the day after
+    `end`, which the last day's 24:00 BCON record uses. If the next month is not
+    available, for example past the end of the release, it is left out with a warning
+    and the 24:00 record repeats the 18:00 field.
     """
-    return [
+    files = [
         retrieve_inversion_month(year, month, version, directory / f"{year}-{month:02d}.nc")
         for year, month in months_in_range(start, end)
     ]
+    next_day = end + datetime.timedelta(days=1)
+    if next_day.month != end.month:
+        try:
+            files.append(
+                retrieve_inversion_month(
+                    next_day.year,
+                    next_day.month,
+                    version,
+                    directory / f"{next_day.year}-{next_day.month:02d}.nc",
+                )
+            )
+        except RuntimeError as err:
+            logger.warning(
+                f"The CAMS inversion {version} for {next_day:%Y-%m} could not be downloaded, "
+                f"so the 24:00 BCON record of {end} will repeat its 18:00 field: {err}"
+            )
+    return files
 
 
 def retrieve_inversion_month(
@@ -169,9 +192,8 @@ def cut_inversion_to_domain(
     """Keep only the methane, pressure and domain needed from the global monthly files
 
     The time axis keeps the 00:00 step after `end`, because the reader takes the
-    latest CAMS step at or before each model time. That step is only present when
-    `end` is not the last day of a month, since each monthly file stops at 18:00 on
-    its last day.
+    latest CAMS step at or before each model time. When `end` is the last day of a
+    month, that step is in the next month's file, if `download_inversion` could get it.
     """
     lat_min, lat_max, lon_min, lon_max = padded_domain_bounds(domain_file)
     time_start = datetime.datetime.combine(start, datetime.time())
@@ -229,6 +251,8 @@ class PressureLevelProduct:
     time_field: str
     """The request field that selects the times of each day"""
     times: tuple[str, ...]
+    next_midnight: typing.Callable[[datetime.date], tuple[datetime.date, str]]
+    """The request date and time that give 00:00 on the day after the given date"""
     to_valid_time: typing.Callable[[xr.Dataset], xr.Dataset] | None = None
     """Puts the delivered file on one valid time axis, if it does not arrive that way"""
 
@@ -245,6 +269,7 @@ EAC4 = PressureLevelProduct(
     ),
     time_field="time",
     times=tuple(f"{hour:02d}:00" for hour in range(0, 24, 3)),
+    next_midnight=lambda date: (date + datetime.timedelta(days=1), "00:00"),
 )
 FORECASTS = PressureLevelProduct(
     dataset="cams-global-greenhouse-gas-forecasts",
@@ -257,6 +282,8 @@ FORECASTS = PressureLevelProduct(
     time_field="leadtime_hour",
     # the shortest leads of the daily 00Z forecast that give the inversion's 6-hourly steps
     times=("0", "6", "12", "18"),
+    # the 24 h lead exists as soon as the day's other leads do, unlike the next forecast
+    next_midnight=lambda date: (date, "24"),
     to_valid_time=forecasts_by_valid_time,
 )
 # fmt: on
@@ -276,6 +303,10 @@ def download_pressure_levels(
     The ADS cuts each request to the domain and its padding. One request is made per
     calendar month, because a month of the forecasts' 0.1° grid over Australia is
     still a few GB, and each is fetched with parallel range requests.
+
+    A last request fetches 00:00 on the day after `end`, so the last day's 24:00 BCON
+    record has a CAMS field of its own. If that time is not available yet, the download
+    goes ahead without it and the 24:00 record repeats the last time of `end`.
     """
     import cdsapi
 
@@ -283,27 +314,42 @@ def download_pressure_levels(
     spec = PRESSURE_LEVEL_PRODUCTS[product]
     south, north, west, east = padded_domain_bounds(domain_file)
     with tempfile.TemporaryDirectory(dir=destination.parent) as scratch:
+
+        def retrieve(first: datetime.date, last: datetime.date, times: list[str], name: str):
+            request = {
+                "variable": spec.variable,
+                "pressure_level": list(spec.pressure_levels),
+                "date": f"{first.isoformat()}/{last.isoformat()}",
+                spec.time_field: times,
+                "area": [north, west, south, east],
+                "data_format": "netcdf_zip",
+            }
+            result = client.retrieve(spec.dataset, request)
+            archive = pathlib.Path(scratch) / f"{name}.zip"
+            logger.info(f"downloading {result.content_length / 1e6:.0f} MB for {name}")
+            download_in_ranges(result.location, archive, result.content_length)
+            with xr.open_dataset(_extract_netcdf(archive, pathlib.Path(scratch))) as delivered:
+                piece = spec.to_valid_time(delivered) if spec.to_valid_time else delivered
+                return piece.load()
+
         pieces = []
         for year, month in months_in_range(start, end):
             first_of_month = datetime.date(year, month, 1)
             next_month = (first_of_month + datetime.timedelta(days=32)).replace(day=1)
             chunk_start = max(start, first_of_month)
             chunk_end = min(end, next_month - datetime.timedelta(days=1))
-            request = {
-                "variable": spec.variable,
-                "pressure_level": list(spec.pressure_levels),
-                "date": f"{chunk_start.isoformat()}/{chunk_end.isoformat()}",
-                spec.time_field: list(spec.times),
-                "area": [north, west, south, east],
-                "data_format": "netcdf_zip",
-            }
-            result = client.retrieve(spec.dataset, request)
-            archive = pathlib.Path(scratch) / f"{year}-{month:02d}.zip"
-            logger.info(f"downloading {result.content_length / 1e6:.0f} MB for {year}-{month:02d}")
-            download_in_ranges(result.location, archive, result.content_length)
-            with xr.open_dataset(_extract_netcdf(archive, pathlib.Path(scratch))) as delivered:
-                piece = spec.to_valid_time(delivered) if spec.to_valid_time else delivered
-                pieces.append(piece.load())
+            pieces.append(retrieve(chunk_start, chunk_end, list(spec.times), f"{year}-{month:02d}"))
+
+        midnight = datetime.datetime.combine(end + datetime.timedelta(days=1), datetime.time())
+        date, time_of_day = spec.next_midnight(end)
+        try:
+            piece = retrieve(date, date, [time_of_day], "next-midnight")
+            pieces.append(piece.sel(valid_time=[midnight]))
+        except Exception as err:
+            logger.warning(
+                f"CAMS {product} at {midnight:%Y-%m-%d %H:%M} could not be downloaded, so the "
+                f"24:00 BCON record of {end} will repeat its last CAMS time: {err}"
+            )
         downloaded = xr.concat(pieces, dim="valid_time", data_vars="minimal")
     for variable in downloaded.variables.values():
         variable.encoding = {}
