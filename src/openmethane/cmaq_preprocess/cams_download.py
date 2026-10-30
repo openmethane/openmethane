@@ -93,11 +93,34 @@ def download_inversion(
     """Download the global CAMS inversion files for each month in the date range
 
     Returns one file per month, named `{year}-{month}.nc`, in `directory`.
+
+    Each monthly file stops at 18:00 on its last day. When `end` is the last day of a
+    month, the next month is downloaded too, for its first step: 00:00 on the day after
+    `end`, which the last day's 24:00 BCON record uses. If the next month is not
+    available, for example past the end of the release, it is left out with a warning
+    and the 24:00 record repeats the 18:00 field.
     """
-    return [
+    files = [
         retrieve_inversion_month(year, month, version, directory / f"{year}-{month:02d}.nc")
         for year, month in months_in_range(start, end)
     ]
+    next_day = end + datetime.timedelta(days=1)
+    if next_day.month != end.month:
+        try:
+            files.append(
+                retrieve_inversion_month(
+                    next_day.year,
+                    next_day.month,
+                    version,
+                    directory / f"{next_day.year}-{next_day.month:02d}.nc",
+                )
+            )
+        except RuntimeError as err:
+            logger.warning(
+                f"The CAMS inversion {version} for {next_day:%Y-%m} could not be downloaded, "
+                f"so the 24:00 BCON record of {end} will repeat its 18:00 field: {err}"
+            )
+    return files
 
 
 def retrieve_inversion_month(
@@ -169,9 +192,8 @@ def cut_inversion_to_domain(
     """Keep only the methane, pressure and domain needed from the global monthly files
 
     The time axis keeps the 00:00 step after `end`, because the reader takes the
-    latest CAMS step at or before each model time. That step is only present when
-    `end` is not the last day of a month, since each monthly file stops at 18:00 on
-    its last day.
+    latest CAMS step at or before each model time. When `end` is the last day of a
+    month, that step is in the next month's file, if `download_inversion` could get it.
     """
     lat_min, lat_max, lon_min, lon_max = padded_domain_bounds(domain_file)
     time_start = datetime.datetime.combine(start, datetime.time())

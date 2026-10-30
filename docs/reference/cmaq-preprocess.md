@@ -55,8 +55,16 @@ operator chose, and it is recorded in the ICON and BCON files.
 The inversion cannot be subset on the ADS. Each month is a 2.2 GB global file,
 which the script fetches with parallel range requests (about 4 minutes) and cuts
 to the domain, plus 3° of padding, before saving. It needs that much temporary
-disk next to `CAMS_FILE`. If the dates are beyond the inversion's coverage the
-download fails with an error that says so and suggests `CAMS_PRODUCT=forecasts`.
+disk next to `CAMS_FILE` for each month. If the dates are beyond the inversion's
+coverage the download fails with an error that says so and suggests
+`CAMS_PRODUCT=forecasts`.
+
+Each monthly file stops at 18:00 on its last day. When the end date is the last
+day of a month, so for every monthly run, the script downloads the next month
+too and keeps only its first step, 00:00 on the day after the end date, for the
+last day's 24:00 BCON record. That costs another 2.2 GB file and about 4
+minutes. If the next month is not available, for example past the end of the
+release, the download goes ahead without it and logs a warning.
 
 EAC4 and the forecasts are cut on the ADS to the domain in `DOMAIN_FILE`, plus
 3° of padding, so both need `DOMAIN_FILE` as the inversion does. The script
@@ -91,13 +99,10 @@ The substantial step. `scripts/cmaq_preprocess/setup_for_cmaq.py`:
   inversion, `CAMS_RELEASE` as global attributes. ICON is the CAMS field at the
   start of the run. Each day's BCON has a record at every CAMS time from 00:00 to
   24:00, each using that hour's MCIP surface pressure, and CMAQ interpolates
-  linearly between them. The 24:00 record uses the next day's 00:00 CAMS field
-  where the CAMS file has one. An EAC4 or forecast file whose extra 00:00 step
-  could not be downloaded stops at the last day's final step before midnight,
-  and so does the inversion when the run ends on the last day of a month,
-  because each monthly inversion file stops at 18:00 on its last day. In those
-  cases the last day's 24:00 record repeats that final field, and
-  `setup_for_cmaq.py` warns that it does.
+  linearly between them. The 24:00 record uses the next day's 00:00 CAMS field.
+  If the download could not fetch the 00:00 after the end date, the file stops
+  at the last day's final step before midnight. The last day's 24:00 record
+  then repeats that final field, and `setup_for_cmaq.py` warns that it does.
 
 Afterwards there are results in `MET_DIR` and `CTM_DIR`.
 

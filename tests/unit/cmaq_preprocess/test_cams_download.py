@@ -11,7 +11,9 @@ import xarray as xr
 
 from openmethane.cmaq_preprocess import cams_download
 from openmethane.cmaq_preprocess.cams_download import (
+    cut_inversion_to_domain,
     download_in_ranges,
+    download_inversion,
     download_pressure_levels,
     forecasts_by_valid_time,
     months_in_range,
@@ -396,3 +398,103 @@ def test_the_download_goes_ahead_when_the_next_midnight_is_not_available(
         assert saved["valid_time"].values[-1] == np.datetime64("2024-12-07T21:00", "ns")
     assert "2024-12-08 00:00 could not be downloaded" in caplog.text
     assert "24:00 BCON record of 2024-12-07 will repeat" in caplog.text
+
+
+@pytest.fixture
+def ads_inversion_months(monkeypatch):
+    """Record each month the inversion is asked for, and fail the ones in `missing`"""
+    requested = []
+    missing = set()
+
+    def fake_retrieve_inversion_month(year, month, version, destination, client=None):
+        requested.append((year, month))
+        if (year, month) in missing:
+            raise RuntimeError(f"The CAMS inversion {version} has no methane for {year}-{month}")
+        return destination
+
+    monkeypatch.setattr(cams_download, "retrieve_inversion_month", fake_retrieve_inversion_month)
+    return requested, missing
+
+
+def test_inversion_downloads_only_the_months_of_the_range_when_it_ends_mid_month(
+    tmp_path, ads_inversion_months
+):
+    requested, _ = ads_inversion_months
+
+    download_inversion(datetime.date(2024, 9, 20), datetime.date(2024, 10, 30), "v25r1", tmp_path)
+
+    assert requested == [(2024, 9), (2024, 10)]
+
+
+def test_inversion_downloads_the_next_month_when_the_range_ends_on_a_month_end(
+    tmp_path, ads_inversion_months
+):
+    requested, _ = ads_inversion_months
+
+    files = download_inversion(
+        datetime.date(2024, 10, 1), datetime.date(2024, 10, 31), "v25r1", tmp_path
+    )
+
+    assert requested == [(2024, 10), (2024, 11)]
+    assert files == [tmp_path / "2024-10.nc", tmp_path / "2024-11.nc"]
+
+
+def test_inversion_goes_ahead_without_a_next_month_past_the_end_of_the_release(
+    tmp_path, ads_inversion_months, caplog
+):
+    requested, missing = ads_inversion_months
+    missing.add((2026, 1))
+
+    files = download_inversion(
+        datetime.date(2025, 12, 1), datetime.date(2025, 12, 31), "v25r1", tmp_path
+    )
+
+    assert requested == [(2025, 12), (2026, 1)]
+    assert files == [tmp_path / "2025-12.nc"]
+    assert "v25r1 for 2026-01 could not be downloaded" in caplog.text
+    assert "24:00 BCON record of 2025-12-31 will repeat its 18:00 field" in caplog.text
+
+
+def test_inversion_still_fails_when_a_month_of_the_range_is_missing(tmp_path, ads_inversion_months):
+    _, missing = ads_inversion_months
+    missing.add((2026, 1))
+
+    with pytest.raises(RuntimeError, match="has no methane for 2026-1"):
+        download_inversion(datetime.date(2025, 12, 1), datetime.date(2026, 1, 5), "v25r1", tmp_path)
+
+
+def inversion_month(path, first_day, days):
+    """A small monthly inversion file, 6-hourly over `days` days from `first_day`"""
+    times = np.datetime64(first_day, "ns") + np.arange(0, 24 * days, 6).astype("timedelta64[h]")
+    shape = (len(times), 2, 3, 2)
+    xr.Dataset(
+        {
+            "CH4": (("time", "level", "latitude", "longitude"), np.ones(shape)),
+            "ps": (("time", "latitude", "longitude"), np.ones(shape[:1] + shape[2:])),
+            "hyam": (("level",), [0.0, 100.0]),
+            "hybm": (("level",), [1.0, 0.5]),
+        },
+        coords={
+            "time": times,
+            "latitude": [-30.0, -25.0, -20.0],
+            "longitude": [140.0, 150.0],
+        },
+        attrs={"release": "v25r1"},
+    ).to_netcdf(path)
+    return path
+
+
+def test_the_inversion_cut_keeps_only_the_first_step_of_the_next_month(tmp_path, domain_file):
+    months = [
+        inversion_month(tmp_path / "2024-10.nc", "2024-10-30", 2),
+        inversion_month(tmp_path / "2024-11.nc", "2024-11-01", 2),
+    ]
+    destination = tmp_path / "cut.nc"
+
+    cut_inversion_to_domain(
+        months, domain_file, datetime.date(2024, 10, 31), datetime.date(2024, 10, 31), destination
+    )
+
+    with xr.open_dataset(destination) as cut:
+        expected = np.datetime64("2024-10-31") + np.arange(0, 30, 6).astype("timedelta64[h]")
+        np.testing.assert_array_equal(cut["time"].values, expected)
