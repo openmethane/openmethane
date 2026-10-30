@@ -147,3 +147,49 @@ run, so it can only be used with one control step. The test target uses one,
 as did `setup_for_cmaq.py` before it wrote a time axis. Staged BCON files from
 before that change must be deleted and rebuilt before a run with more than one
 step.
+
+## The initial condition
+
+The initial condition (ICON), also built from CAMS, sets the methane already in
+the domain when the run starts. With `INC_ICON` on (the default), the inversion
+also solves for **one offset per species, in ppm, added to every cell and
+layer of the ICON** that CMAQ reads on the first day. As for the boundary, the
+staged ICON (`ICON_FILE`, after the CAMS bias correction) is the prior, so the
+prior offset is 0, and the inversion never modifies the staged file: it writes
+`{CMAQ_BASE}/icon/ICON.nc`, the staged ICON plus the offset. With `INC_ICON`
+off, that file is the staged ICON unchanged.
+
+The prior 1-sigma uncertainty is `ICON_UNC`, by default 0.05 ppm (50 ppb).
+That is larger than `BCON_UNC`, since a single domain-wide value has to absorb
+whatever the bias correction leaves over the whole domain.
+
+The offset is bounded, like the boundary offsets, so that the ICON CMAQ reads
+stays non-negative: its lower bound is minus the smallest staged ICON value.
+The log reports whether it finished on the bound.
+
+### Gradient
+
+The first CONC record of the first day is the initial condition itself. The
+gradient with respect to the offset is the sum over every cell and layer of two
+terms at that record: `ADJ_LGRID` at the initial time, and the adjoint forcing
+on the first CONC record (`ADJ_FORCE`), which `ADJ_LGRID` does not include. A
+finite-difference check through CMAQ on the test domain, forcing every record,
+agrees with this sum to better than 0.1%; `ADJ_LGRID` alone is 28% low there.
+
+The observation operator never puts weight on record 0 of a day (an
+observation at the start of a day is matched to the previous day's last
+record), so in an inversion the forcing term is zero. It is included so that
+the gradient stays exact for any forcing.
+
+### How it interacts with the other unknowns
+
+A uniform change to the initial condition raises every column by about the
+same amount on the first day, and fades as that air leaves the domain over the
+following days. In that window it is hard to tell apart from the offsets of the
+first boundary step and from a uniform change in emissions. The prior
+uncertainties and the timing of the observations separate them. If the ICON
+offset and the early boundary offsets move in opposite directions over the
+iterations, they are trading off against each other.
+
+In a monthly run, only the first few days' observations constrain the ICON
+offset, so it moves less than in a daily run.

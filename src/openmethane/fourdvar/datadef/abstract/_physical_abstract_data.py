@@ -36,18 +36,43 @@ logger = get_logger(__name__)
 # units of PhysicalData.bcon. Prior files from before the boundary term became a
 # concentration offset have a ppm/s flux with no units attribute.
 BCON_UNITS = "ppm"
+# units of PhysicalData.icon, an offset on the initial concentration
+ICON_UNITS = "ppm"
+
+UNITS_HINT = {
+    "bcon": "The boundary term is now an offset on the boundary concentration, not a "
+    "flux at the domain edge; regenerate the prior with make_prior.py.",
+    "icon": "The initial condition term is an offset on the initial concentration; "
+    "regenerate the prior with make_prior.py.",
+}
+
+
+def check_units(filename, group, expected):
+    """Reject a physical data file whose group is not in the expected units."""
+    with netCDF4.Dataset(filename, "r") as nc:
+        units = getattr(nc.groups[group], "units", None)
+    if units != expected:
+        raise ValueError(
+            f"{filename}: the {group} group has units {units!r}, expected {expected!r}. "
+            + UNITS_HINT[group]
+        )
 
 
 def check_bcon_units(filename, expected=BCON_UNITS):
     """Reject a physical data file whose bcon group is not in the expected units."""
+    check_units(filename, "bcon", expected)
+
+
+def check_icon_group(filename, expected=ICON_UNITS):
+    """Reject a physical data file with no icon group, or one in other units."""
     with netCDF4.Dataset(filename, "r") as nc:
-        units = getattr(nc.groups["bcon"], "units", None)
-    if units != expected:
+        has_icon = "icon" in nc.groups
+    if not has_icon:
         raise ValueError(
-            f"{filename}: the bcon group has units {units!r}, expected {expected!r}. "
-            "The boundary term is now an offset on the boundary concentration, not a "
-            "flux at the domain edge; regenerate the prior with make_prior.py."
+            f"{filename} has no icon group, but INC_ICON is on. Regenerate the prior "
+            "with make_prior.py, or set INC_ICON=false."
         )
+    check_units(filename, "icon", expected)
 
 
 def set_step_units(bcon_grp):
@@ -77,15 +102,14 @@ class PhysicalAbstractData(FourDVarData):
     bcon_step_end = None  # end of each bcon timestep, seconds from start_date
     bcon_unc = None  # dict of boundary condition uncertainties (ppm)
 
-    if input_defn.inc_icon is True:
-        icon_unc = None  # dict of icon uncertainty values
-        # this class variable should be overloaded in children
-        icon_units = "NA"  # unit to attach to netCDF archive
+    # icon is an additive offset (ppm) on the staged ICON, see util.icon_offset
+    icon_unc = None  # dict of initial condition uncertainties (ppm), if inc_icon
 
     # these class variables should be overloaded in children
     archive_name = "physical_abstract_data.ncf"  # default archive filename
     emis_units = "NA"  # unit to attach to netCDF archive
     bcon_units = "NA"  # units of the bcon group in the netCDF archive
+    icon_units = "NA"  # units of the icon group in the netCDF archive
 
     def __init__(self, icon_dict, emis_dict, bcon_dict):
         """application: create an instance of PhysicalData
@@ -94,7 +118,7 @@ class PhysicalAbstractData(FourDVarData):
 
         eg: new_phys =  datadef.PhysicalData( filelist )
         """
-        # icon_dict: {var-name: scaling_value}
+        # icon_dict: {var-name: offset}, or None if inc_icon is off
         # emis_dict: {var-name: np.array([time, layer, row, column])}
         # bcon_dict: {var-name: np.array([time, b-region])}
 
@@ -112,8 +136,7 @@ class PhysicalAbstractData(FourDVarData):
 
         for spcs_name in self.spcs:
             if input_defn.inc_icon is True:
-                icon_data = icon_dict[spcs_name]
-                self.icon[spcs_name] = icon_data
+                self.icon[spcs_name] = float(icon_dict[spcs_name])
 
             emis_data = np.array(emis_dict[spcs_name])
             assert len(emis_data.shape) == 4, "emis dimensions invalid."
@@ -164,14 +187,12 @@ class PhysicalAbstractData(FourDVarData):
         root = ncf.create(path=save_path, attr=attr_dict, dim=dim_dict, is_root=True)
 
         if input_defn.inc_icon is True:
-            icon_dim = {"SPC": len(self.spcs)}
-            icon_scale = np.array([self.icon[s] for s in self.spcs])
-            icon_unc = np.array([self.icon_unc[s] for s in self.spcs])
-            icon_var = {
-                "ICON-SCALE": ("f4", ("SPC",), icon_scale),
-                "ICON-UNC": ("f4", ("SPC",), icon_unc),
-            }
-            ncf.create(parent=root, name="icon", dim=icon_dim, var=icon_var, is_root=False)
+            icon_attr = {"units": self.icon_units}
+            icon_var = {}
+            for spc in self.spcs:
+                icon_var[spc] = ("f4", (), self.icon[spc])
+                icon_var[unc(spc)] = ("f4", (), self.icon_unc[spc])
+            ncf.create(parent=root, name="icon", attr=icon_attr, var=icon_var, is_root=False)
 
         #   pdb.set_trace()
         emis_dim = {"TSTEP": None, "LAY": self.nlays_emis}
@@ -249,10 +270,10 @@ class PhysicalAbstractData(FourDVarData):
         bcon_step_end = np.asarray(ncf.get_variable(filename, "STEP_END", group="bcon"))
 
         if input_defn.inc_icon is True:
-            icon_val = ncf.get_variable(filename, "ICON-SCALE", group="icon")
-            icon_dict = {s: v for s, v in zip(spcs_list, icon_val)}
-            icon_unc_val = ncf.get_variable(filename, "ICON-UNC", group="icon")
-            icon_unc = {s: v for s, v in zip(spcs_list, icon_unc_val)}
+            check_icon_group(filename, cls.icon_units)
+            icon_vars = ncf.get_variable(filename, spcs_list + unc_list, group="icon")
+            icon_dict = {spc: float(icon_vars[spc]) for spc in spcs_list}
+            icon_unc = {spc: float(icon_vars[unc(spc)]) for spc in spcs_list}
         emis_dict = ncf.get_variable(filename, spcs_list, group="emis")
         emis_unc = ncf.get_variable(filename, unc_list, group="emis")
         bcon_dict = ncf.get_variable(filename, spcs_list, group="bcon")
@@ -277,7 +298,10 @@ class PhysicalAbstractData(FourDVarData):
         bstep, bregion = bcon_shape[0]
 
         if input_defn.inc_icon is True:
-            icon_lay = ncf.get_attr(template_defn.icon, "NLAYS")
+            # the offset is added to every layer of the staged ICON, so its gradient
+            # needs the sensitivity on all of them
+            icon_file = dt.replace_date(cmaq_config.icon_file, date_defn.start_date)
+            icon_lay = ncf.get_attr(icon_file, "NLAYS")
             sense_lay = ncf.get_attr(template_defn.sense_conc, "NLAYS")
             assert icon_lay == sense_lay, "Must get conc sensitivities for all layers"
 
@@ -299,8 +323,7 @@ class PhysicalAbstractData(FourDVarData):
         for spc in spcs_list:
             msg = "Uncertainty values are invalid for this data."
             if input_defn.inc_icon is True:
-                assert icon_unc[spc].shape == icon_dict[spc].shape, msg
-                assert (icon_unc[spc] > 0).all(), msg
+                assert icon_unc[spc] > 0, msg
             assert emis_unc[spc].shape == emis_dict[spc].shape, msg
             assert (emis_unc[spc] > 0).all(), msg
             assert bcon_unc[spc].shape == bcon_dict[spc].shape, msg

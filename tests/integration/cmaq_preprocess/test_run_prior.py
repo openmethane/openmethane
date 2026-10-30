@@ -11,9 +11,15 @@ def test_make_prior(test_data_dir, tmpdir, compare_dataset, emission_template):
 
     ds = open_datatree(expected_file)
 
-    assert ds.groups == ("/", "/emis", "/bcon")
+    assert ds.groups == ("/", "/emis", "/icon", "/bcon")
 
     assert ds["emis"].sizes == {"TSTEP": 1, "LAY": 1, "ROW": 10, "COL": 10}
+
+    # one initial condition offset per species, prior 0 with ICON_UNC
+    assert ds["icon"].attrs["units"] == "ppm"
+    assert ds["icon"]["CH4"].shape == ()
+    assert ds["icon"]["CH4"] == 0
+    assert np.isclose(ds["icon"]["CH4_UNC"], 0.05)
 
     # the 10-cell test domain is shorter than a 1000 km segment, so one segment
     # per edge, by 4 equal-mass bands
