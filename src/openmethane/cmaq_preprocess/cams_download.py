@@ -168,8 +168,10 @@ def cut_inversion_to_domain(
 ):
     """Keep only the methane, pressure and domain needed from the global monthly files
 
-    The time axis keeps one step past `end`, because the reader takes the latest
-    CAMS step at or before each model time.
+    The time axis keeps the 00:00 step after `end`, because the reader takes the
+    latest CAMS step at or before each model time. That step is only present when
+    `end` is not the last day of a month, since each monthly file stops at 18:00 on
+    its last day.
     """
     lat_min, lat_max, lon_min, lon_max = padded_domain_bounds(domain_file)
     time_start = datetime.datetime.combine(start, datetime.time())

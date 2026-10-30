@@ -84,9 +84,12 @@ The substantial step. `scripts/cmaq_preprocess/setup_for_cmaq.py`:
   inversion, `CAMS_RELEASE` as global attributes. ICON is the CAMS field at the
   start of the run. Each day's BCON has a record at every CAMS time from 00:00 to
   24:00, each using that hour's MCIP surface pressure, and CMAQ interpolates
-  linearly between them. The 24:00 record uses the next day's 00:00 CAMS field.
-  EAC4 and forecast files stop at the last day's final step before midnight,
-  so the last day's 24:00 record repeats that field.
+  linearly between them. The 24:00 record uses the next day's 00:00 CAMS field
+  where the CAMS file has one. EAC4 and forecast files stop at the last day's
+  final step before midnight, and so does the inversion when the run ends on
+  the last day of a month, because each monthly inversion file stops at 18:00
+  on its last day. In those cases the last day's 24:00 record repeats that
+  final field.
 
 Afterwards there are results in `MET_DIR` and `CTM_DIR`.
 
