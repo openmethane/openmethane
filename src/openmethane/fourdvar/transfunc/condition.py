@@ -18,7 +18,7 @@ import numpy as np
 
 from openmethane.fourdvar.datadef import UnknownData
 from openmethane.fourdvar.datadef.abstract._physical_abstract_data import PhysicalAbstractData
-from openmethane.fourdvar.params.input_defn import inc_icon
+from openmethane.fourdvar.params import input_defn
 
 
 def condition_adjoint(physical_adjoint):
@@ -51,7 +51,7 @@ def phys_to_unk(physical, is_adjoint):
     p = PhysicalAbstractData
     emis_len = p.nstep_emis * p.nlays_emis * p.nrows * p.ncols
     bcon_len = p.nstep_bcon * p.bcon_region
-    if inc_icon is True:
+    if input_defn.inc_icon is True:
         total_len = len(p.spcs) * (1 + emis_len + bcon_len)
     else:
         total_len = len(p.spcs) * (emis_len + bcon_len)
@@ -70,7 +70,7 @@ def phys_to_unk(physical, is_adjoint):
     arg = np.zeros(total_len)
     i = 0
     for spc in PhysicalAbstractData.spcs:
-        if inc_icon is True:
+        if input_defn.inc_icon is True:
             icon = weight(physical.icon[spc], physical.icon_unc[spc])
             arg[i] = icon
             i += 1

@@ -19,7 +19,6 @@ from openmethane.fourdvar.params import (
     archive_defn,
     cmaq_config,
     date_defn,
-    input_defn,
     template_defn,
 )
 
@@ -72,14 +71,15 @@ def build_filedict():
     all_files["AdjointForcingData"] = adjoint_forcing_files
     all_files["SensitivityData"] = sensitivity_files
 
-    if input_defn.inc_icon is True:
-        model_input_files["icon"] = {
-            "actual": cmaq_config.icon_file,
-            "template": template_defn.icon,
-            "archive": archive_defn.icon_file,
-            "date": None,
-        }
-        #'date': date_defn.start_date }
+    # present whether or not the initial condition is solved for, so CMAQ always
+    # reads the run copy; with inc_icon off it is the staged ICON unchanged
+    model_input_files["icon"] = {
+        "actual": cmaq_config.icon_run_file,
+        "template": dt.replace_date(cmaq_config.icon_file, date_defn.start_date),
+        "archive": archive_defn.icon_file,
+        # ICON keeps its own time axis
+        "date": None,
+    }
 
     for date in dt.get_datelist():
         ymd = dt.replace_date("<YYYYMMDD>", date)
@@ -88,6 +88,13 @@ def build_filedict():
             "template": dt.replace_date(template_defn.emis, date),
             "archive": dt.replace_date(archive_defn.emis_file, date),
             "date": date,
+        }
+        model_input_files["bcon." + ymd] = {
+            "actual": dt.replace_date(cmaq_config.bcon_run_file, date),
+            "template": dt.replace_date(cmaq_config.bcon_file, date),
+            "archive": dt.replace_date(archive_defn.bcon_file, date),
+            # BCON keeps its own time axis, which may be time-independent
+            "date": None,
         }
         model_output_files["conc." + ymd] = {
             "actual": dt.replace_date(cmaq_config.conc_file, date),
@@ -112,4 +119,10 @@ def build_filedict():
             "template": template_defn.sense_conc,
             "archive": dt.replace_date(archive_defn.sens_conc_file, date),
             "date": date,
+        }
+        sensitivity_files["bcon." + ymd] = {
+            "actual": dt.replace_date(cmaq_config.bcon_sense_file, date),
+            "template": template_defn.sense_bcon,
+            "archive": dt.replace_date(archive_defn.sens_bcon_file, date),
+            "date": None,
         }

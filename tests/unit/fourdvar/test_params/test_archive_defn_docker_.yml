@@ -1,4 +1,5 @@
 archive_path: /app/data/archive
+bcon_file: bcon.<YYYYMMDD>.nc
 conc_file: conc.<YYYYMMDD>.nc
 desc_name: ''
 description: 'This is a test of the fourdvar system.
@@ -12,5 +13,6 @@ force_file: force.<YYYYMMDD>.nc
 icon_file: icon.nc
 iter_model_output: true
 iter_obs_lite: true
+sens_bcon_file: sens_bcon.<YYYYMMDD>.nc
 sens_conc_file: sens_conc.<YYYYMMDD>.nc
 sens_emis_file: sens_emis.<YYYYMMDD>.nc
