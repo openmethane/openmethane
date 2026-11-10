@@ -274,7 +274,8 @@ def record_steps(
         if step_start.size != 1:
             raise ValueError(
                 "a time-independent BCON file (TSTEP = 0) can only be used with a single "
-                f"boundary control step, but the map has {step_start.size}"
+                f"boundary control step, but the map has {step_start.size}. "
+                "setup_for_cmaq.py now writes BCON files with a time axis, so rebuild older ones"
             )
         return np.zeros(1, dtype=int)
     steps = np.searchsorted(step_start, np.asarray(record_seconds), side="right") - 1
@@ -475,7 +476,8 @@ def build_bcon_map(  # noqa: PLR0913
     if int(attrs["TSTEP"]) == 0 and step_start.size > 1:
         raise ValueError(
             f"{bcon_file} is time-independent (TSTEP = 0), so the run can only have one "
-            f"boundary control step, but {step_days} days per step gives {step_start.size}"
+            f"boundary control step, but {step_days} days per step gives {step_start.size}. "
+            "setup_for_cmaq.py now writes BCON files with a time axis, so rebuild older ones"
         )
 
     lon, lat = _region_lonlat(attrs, region_map, ncols, nrows, nregion)
