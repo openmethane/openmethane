@@ -106,7 +106,8 @@ The `tests/integration/fourdvar/` tests rely on input data which hasn't been pro
 For any change that isn't mechanical (see "Code review" in
 `docs/guides/development.md`), review it from a fresh context before opening
 the pull request, and again after reworking it substantially. Skip this for
-formatter runs, dependency bumps and experiments not for merge.
+formatter runs, dependency bumps and experiments not for merge, or if the
+operator asks you to.
 
 Launch the `reviewer` subagent (`.claude/agents/reviewer.md`). Give it:
 
@@ -117,6 +118,13 @@ Launch the `reviewer` subagent (`.claude/agents/reviewer.md`). Give it:
 
 Don't give it your reasoning or your view of whether the change is correct,
 because it will tend to confirm what it's told.
+
+Independent reviews of the same change find different problems. When a change
+both alters science outputs or what production runs do, and touches error
+handling, downloads, or several modules, offer the operator a second review,
+run in parallel with the same brief. Each review costs tens of thousands of
+tokens, so run the second only if the operator agrees. Merge the two reports,
+counting a finding both raised once, before dealing with them.
 
 Deal with each item it reports:
 
