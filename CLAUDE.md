@@ -101,6 +101,34 @@ Many unit and integration tests require specific binaries to be present (i.e. th
 
 The `tests/integration/fourdvar/` tests rely on input data which hasn't been provided in a reproducible way. These should be fixed when possible.
 
+## Before opening a pull request
+
+For any change that isn't mechanical (see "Code review" in
+`docs/guides/development.md`), review it from a fresh context before opening
+the pull request, and again after reworking it substantially. Skip this for
+formatter runs, dependency bumps and experiments not for merge.
+
+Launch the `reviewer` subagent (`.claude/agents/reviewer.md`). Give it the
+goal of the change and the diff range (e.g. `main...HEAD`). Don't give it your
+reasoning or your view of whether the change is correct, because it will tend
+to confirm what it's told.
+
+Deal with each item it reports:
+
+- **Wrong, with a clear fix:** fix it, if the fix stays within the scope of the
+  task and doesn't go against the operator's instructions or the project's
+  guidance.
+- **Needs the operator's decision:** ask the operator, with the options and
+  your recommendation. This includes items with an obvious fix that would
+  change science outputs or methodology, widen the change beyond what was
+  asked, or make the pull request need human review when it otherwise
+  wouldn't.
+- **Not a problem:** dismiss it, but list it in one line to the operator with
+  your reason, because you're judging criticism of your own work.
+
+This review is part of preparing the change. Don't mention it or its findings
+in the pull request description or comments.
+
 ## Release Process
 
 Changelog entries go in `changelog/` using towncrier conventions (named `{PR_NUMBER}.{type}.md` where type is `breaking`, `feature`, `improvement`, `fix`, `docs`, or `trivial`). A PR can have several entries, and each separate change needs its own file, because newlines in a file do not make separate bullets in the changelog. Add a counter to tell files apart, e.g. `123.feature.1.md` and `123.feature.2.md`, and use `breaking` for any change to existing behaviour. Releases are cut via the GitHub Actions `release.yaml` workflow.

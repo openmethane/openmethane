@@ -292,6 +292,15 @@ fail on bad input instead of producing NaNs. These changes don't need review,
 but the reason has to give the evidence that the outputs don't change, not
 just say so. If you can't write that sentence, choose "needed".
 
+### Agent review before a pull request
+
+If you use an agent such as Claude Code to prepare a change, `CLAUDE.md`
+asks it to review anything that isn't mechanical with a fresh reviewer
+(`.claude/agents/reviewer.md`) before it opens the pull request. The agent
+fixes clear problems itself and brings anything else to you. This is part of
+preparing the change, not a substitute for human review: it doesn't change
+whether a pull request needs review.
+
 ### Not needed doesn't mean merged immediately
 
 For a "not needed" pull request, say when you'll merge it. This gives
