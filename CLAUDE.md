@@ -108,10 +108,15 @@ For any change that isn't mechanical (see "Code review" in
 the pull request, and again after reworking it substantially. Skip this for
 formatter runs, dependency bumps and experiments not for merge.
 
-Launch the `reviewer` subagent (`.claude/agents/reviewer.md`). Give it the
-goal of the change and the diff range (e.g. `main...HEAD`). Don't give it your
-reasoning or your view of whether the change is correct, because it will tend
-to confirm what it's told.
+Launch the `reviewer` subagent (`.claude/agents/reviewer.md`). Give it:
+
+- the goal of the change and the diff range (e.g. `main...HEAD`)
+- the numbers of any issues the change addresses
+- any constraints the operator set during the task, such as an approach to use
+  or avoid, or something to leave unchanged
+
+Don't give it your reasoning or your view of whether the change is correct,
+because it will tend to confirm what it's told.
 
 Deal with each item it reports:
 

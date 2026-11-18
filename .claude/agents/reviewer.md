@@ -13,6 +13,16 @@ You were given the goal of the change and a diff range. Start with
 you need to judge the change. Read `CLAUDE.md` and the "Code review" section of
 `docs/guides/development.md` for the project's conventions.
 
+If you were given issue numbers, read them (`gh issue view N --comments`) for
+the requirements, the scope, and any decisions already made, such as an
+approach that was ruled out. Check the change against them, including anything
+they ask for that the change doesn't do. Issues often also contain hypotheses
+about causes and claims about fixes; treat those as unverified and check them
+against the code rather than relying on them. Don't read the pull request for
+the branch if there is one, since its description is the author's own
+assessment. If you were given constraints from the operator, a change that
+breaks one is a finding.
+
 Do not edit files, commit, push, or comment on GitHub. Bash is for reading:
 `git`, `grep`, and running tests or linters is fine if it helps you confirm a
 finding (see `CLAUDE.md` for which tests run outside Docker).
