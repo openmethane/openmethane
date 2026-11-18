@@ -226,6 +226,93 @@ Use `get_logger` from `openmethane.util.logger` rather than configuring
 variables consistently across the project. See
 [Troubleshooting](../troubleshooting.md#logging).
 
+## Code review
+
+Review isn't only for catching bugs. It keeps the team aware of how the
+project is changing and builds agreement on decisions. Not every pull request
+benefits from that. The author of a pull request decides whether it needs a
+human review, and says so on the first line of the description, where it
+shows up in email notifications:
+
+```markdown
+**Review:** needed — changes science outputs: the default SWIR AOD cutoff drops more soundings
+```
+
+```markdown
+**Review:** not needed — patch dependency updates, CI passing; merging Thursday unless someone objects
+```
+
+Always give a reason. The reason lets everyone else check the decision at a
+glance, and shows over time whether these categories need adjusting.
+
+The lists below are a guide, not rules, and some judgement is still needed.
+When a change doesn't clearly fit, ask: would the rest of the team want to
+know about this, or have a say in it? If so, it needs review.
+
+### Review needed
+
+- **Changes to science outputs.** Any change to the posterior emissions, or to
+  what feeds them (observation files, the observation operator, ICON and
+  BCON, the prior handling, the cost function, the minimiser and its
+  defaults), needs review, however small the fix that causes it. So does a
+  change to the alerts.
+- **Refactors that change structure or behaviour across more than one file.**
+- **New concepts or features**, including new data sources, control
+  variables, diagnostics, output files and methodology decisions. A new
+  feature needs review even when existing outputs don't change.
+- **Documentation changes.** If something is worth documenting, it's worth
+  the rest of the team knowing about it and agreeing with it. This doesn't
+  include fixes to typos, grammar or formatting, which are mechanical changes.
+- **Changes that make a daily or monthly run fail, or stop failing, where it
+  didn't before.** Make sure whoever looks after production runs knows about
+  these.
+
+### Review not needed
+
+- **Infrastructure changes** made by the person who looks after the
+  infrastructure.
+- **Mechanical changes**, such as small corrections and bug fixes whose
+  correctness is established by tests, tool-generated changes such as
+  running a formatter, and fixes to typos, grammar or formatting in
+  documentation. Being mechanical is what matters here, not size: a
+  formatter run that touches every file is still mechanical.
+- **Changes to tests only**, such as a new regression test, as long as the
+  code under test doesn't change.
+- **Minor or patch dependency updates.** Major version updates need review.
+- **Small changes to logging, warnings, types and project settings.**
+- **Experiments that won't be merged.** Say so on the first line, for example
+  `**Review:** not needed — experiment, not for merge`. Discussion of the
+  results belongs in the issue the experiment is for.
+
+### Science code isn't the same as science outputs
+
+A change can touch science code without changing any outputs. For example,
+it can fix a crash in a path that never produced results, or make the run
+fail on bad input instead of producing NaNs. These changes don't need review,
+but the reason has to give the evidence that the outputs don't change, not
+just say so. If you can't write that sentence, choose "needed".
+
+### Not needed doesn't mean merged immediately
+
+For a "not needed" pull request, say when you'll merge it. This gives
+everyone a chance to ask for a review before then. Anyone can switch a pull
+request to "needed", and then it waits for a review as usual.
+
+### Examples
+
+| Pull request | First line |
+|---|---|
+| [#243](https://github.com/openmethane/openmethane/pull/243) | **Review:** not needed — automated `uv format` across the codebase, plus fixes for warnings from the test suite |
+| [#257](https://github.com/openmethane/openmethane/pull/257) | **Review:** not needed — tests only: a regression guard for #236; no source code changes |
+| [#287](https://github.com/openmethane/openmethane/pull/287) | **Review:** not needed — security fix: removes the compromised eMudhra CA roots from the image; minor dependency updates, CI passing |
+| [#292](https://github.com/openmethane/openmethane/pull/292) | **Review:** not needed — experiment, not for merge |
+| [#280](https://github.com/openmethane/openmethane/pull/280) | **Review:** needed — changes science outputs: the default SWIR AOD cutoff drops more soundings |
+| [#291](https://github.com/openmethane/openmethane/pull/291) | **Review:** needed — changes science outputs: each daily BCON now has a record at every CAMS time instead of one snapshot |
+| [#281](https://github.com/openmethane/openmethane/pull/281) | **Review:** needed — new feature: cost decomposition in the logs and gradient files in the archive; existing outputs unchanged |
+
+#281 doesn't change any existing outputs, but it adds new ones and a new
+diagnostic for the team to rely on, so it still needs review.
+
 ## Changelog
 
 Every pull request adds a file to `changelog/`, following
