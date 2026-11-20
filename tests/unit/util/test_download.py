@@ -140,15 +140,18 @@ def test_a_response_shorter_than_its_content_length_fails(tmp_path, monkeypatch)
     assert list(tmp_path.iterdir()) == []
 
 
-def test_a_partial_file_from_an_earlier_attempt_is_replaced(server, session, tmp_path):
+def test_another_download_in_progress_is_left_alone(server, session, tmp_path):
     server.replies["/data.grib2"] = [Reply(body=b"GRIB data")]
     dest = tmp_path / "data.grib2"
-    (tmp_path / "data.grib2.part").write_bytes(b"left over from an interrupted run")
+    # Another run downloading the same file into a shared directory.
+    other = tmp_path / "data.grib2.0123456789abcdef.part"
+    other.write_bytes(b"another run's partial download")
 
     download(server.url("/data.grib2"), dest, session=session)
 
     assert dest.read_bytes() == b"GRIB data"
-    assert list(tmp_path.iterdir()) == [dest]
+    assert other.read_bytes() == b"another run's partial download"
+    assert sorted(tmp_path.iterdir()) == [dest, other]
 
 
 def test_fetch_missing_downloads_every_file_in_order(server, session, tmp_path):

@@ -41,13 +41,19 @@ def solve_decomposition(
     SUBHDOMAIN spreads the remaining columns and rows one per subdomain, which
     is what that solver assumes.
     """
-    return shared.solve_decomposition(
+    decomposition = shared.solve_decomposition(
         grid_cols=grid_cols,
         grid_rows=grid_rows,
         target_ranks=target_ranks,
         min_cells_per_rank=min_cells_per_rank,
         halo_width=HALO_WIDTH,
     )
+    if grid_cols < min_cells_per_rank or grid_rows < min_cells_per_rank:
+        logger.warning(
+            f"{grid_cols}x{grid_rows} grid is too small to split into subdomains of at"
+            f" least {min_cells_per_rank} cells, running CMAQ in serial"
+        )
+    return decomposition
 
 
 def read_grid_size(path: str) -> tuple[int, int]:

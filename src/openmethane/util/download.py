@@ -9,6 +9,7 @@ import logging
 import os
 import pathlib
 import urllib.parse
+import uuid
 from collections.abc import Iterable
 
 import requests
@@ -61,9 +62,12 @@ def download(url: str, dest: str | os.PathLike, *, session: requests.Session) ->
     """
     Download a URL to a file.
 
-    The response is written to `<dest>.part` and moved to `dest` only once it
-    is complete, so an interrupted download never leaves a truncated file that
-    a later run would take as finished. An existing file at `dest` is replaced.
+    The response is written to a temporary `<dest>.<random>.part` file in the
+    same directory and moved to `dest` only once it is complete, so an
+    interrupted download never leaves a truncated file that a later run would
+    take as finished. The temporary name is unique, so two runs downloading
+    the same file into a shared directory don't write into each other's. An
+    existing file at `dest` is replaced.
 
     Parameters
     ----------
@@ -85,7 +89,7 @@ def download(url: str, dest: str | os.PathLike, *, session: requests.Session) ->
         the response is shorter or longer than its Content-Length.
     """
     dest = pathlib.Path(dest)
-    partial = dest.with_name(dest.name + ".part")
+    partial = dest.with_name(f"{dest.name}.{uuid.uuid4().hex}.part")
 
     try:
         with session.get(url, stream=True, timeout=TIMEOUT_SECONDS) as response:
@@ -150,7 +154,8 @@ def fetch_missing(
     ------
     DownloadFailed
         If any download fails. Downloads already running are left to finish,
-        and any not yet started are cancelled.
+        and any not yet started are cancelled. Other errors, such as a full
+        disk, are raised as they are, also cancelling the rest.
     ValueError
         If two URLs would be saved under the same file name.
     """
@@ -173,7 +178,7 @@ def fetch_missing(
         try:
             for future in concurrent.futures.as_completed(futures):
                 logger.info(f"downloaded {future.result()}")
-        except DownloadFailed:
+        except Exception:
             for future in futures:
                 future.cancel()
             raise

@@ -1,4 +1,5 @@
 import pathlib
+import pickle
 import sys
 
 import pytest
@@ -101,6 +102,25 @@ def test_arguments_with_spaces_are_passed_whole(tmp_path):
     run_program(args, cwd=tmp_path, log_path=log_path)
 
     assert log_path.read_text() == f"{['a path/with spaces', str(tmp_path / 'b c')]}\n"
+
+
+def test_a_failure_survives_pickling_for_a_process_pool(tmp_path):
+    failure = ProgramFailed("wrf.exe", 2, tmp_path / "wrf.log", ["oops\n"], "SUCCESS COMPLETE WRF")
+
+    # Trusted data: the exception was pickled in this process.
+    restored = pickle.loads(pickle.dumps(failure))  # noqa: S301
+
+    assert restored.program == "wrf.exe"
+    assert restored.exit_code == 2
+    assert restored.log_path == tmp_path / "wrf.log"
+    assert restored.tail == ["oops\n"]
+    assert restored.missing_success_text == "SUCCESS COMPLETE WRF"
+    assert str(restored) == str(failure)
+
+
+def test_no_arguments_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="must name a program"):
+        run_program([], cwd=tmp_path, log_path=tmp_path / "program.log")
 
 
 def test_a_missing_program_is_reported_as_not_found(tmp_path):

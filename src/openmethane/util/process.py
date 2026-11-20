@@ -47,6 +47,14 @@ class ProgramFailed(RuntimeError):
         tail_text = "".join(tail) or "(empty)\n"
         super().__init__(f"{program} {reason}. Full output in {log_path}. Last lines:\n{tail_text}")
 
+    def __reduce__(self):
+        # Rebuild from the constructor's arguments rather than the message, so
+        # the exception survives the trip back from a process pool worker.
+        return (
+            type(self),
+            (self.program, self.exit_code, self.log_path, self.tail, self.missing_success_text),
+        )
+
 
 def run_program(
     args: Sequence[str | os.PathLike],
@@ -75,18 +83,25 @@ def run_program(
     env
         Variables to set for the program, on top of the current environment.
     success_text
-        Text the program prints only when it succeeds, such as WRF's
-        "SUCCESS COMPLETE WRF". If given, a run whose output lacks it fails
-        even with exit code 0, since some programs exit 0 after an error.
+        Text the program prints to stdout or stderr only when it succeeds,
+        such as ungrib's "Successful completion of ungrib". If given, a run
+        whose output lacks it fails even with exit code 0, since some programs
+        exit 0 after an error. Only the program's own output is searched, so
+        this can't check MPI builds of real.exe and wrf.exe, which write their
+        success line to `rsl.out.0000` instead.
 
     Raises
     ------
     ProgramFailed
         If the exit code is not 0, or `success_text` is not in the output.
     FileNotFoundError
-        If the program does not exist.
+        If the program or `cwd` does not exist.
+    ValueError
+        If `args` is empty.
     """
     args = [os.fspath(arg) for arg in args]
+    if not args:
+        raise ValueError("args must name a program to run")
     program = pathlib.Path(args[0]).name
     log_path = pathlib.Path(log_path)
     log_path.parent.mkdir(parents=True, exist_ok=True)

@@ -48,13 +48,12 @@ def test_every_subdomain_is_at_least_the_minimum():
     assert decomposition.ranks <= 1000
 
 
-def test_falls_back_to_serial_for_a_grid_below_the_minimum(caplog):
+def test_falls_back_to_serial_for_a_grid_below_the_minimum():
     decomposition = solve_decomposition(
         grid_cols=5, grid_rows=5, target_ranks=24, min_cells_per_rank=10, halo_width=3
     )
 
     assert decomposition == Decomposition(1, 1)
-    assert "too small to split" in caplog.text
 
 
 def test_rejects_a_minimum_below_the_halo_width():

@@ -7,13 +7,10 @@ from the number of ranks available. It reads no configuration, so each model
 passes its own halo width and minimum subdomain size.
 """
 
-import logging
 import math
 
 import attrs
 import attrs.validators
-
-logger = logging.getLogger(__name__)
 
 
 @attrs.frozen
@@ -99,7 +96,8 @@ def solve_decomposition(
 
     Returns
     -------
-    The chosen decomposition, at worst 1x1.
+    The chosen decomposition. 1x1 if the grid is narrower or shorter than
+    `min_cells_per_rank`, which callers may want to warn about.
     """
     if target_ranks < 1:
         raise ValueError(f"target_ranks must be positive, got {target_ranks}")
@@ -135,13 +133,6 @@ def solve_decomposition(
                 best = candidate
                 best_score = score
 
-    if best is None:
-        # The grid is smaller than the minimum in at least one direction. Serial
-        # runs swap no halo, so 1x1 is still valid, just not parallel.
-        logger.warning(
-            f"{grid_cols}x{grid_rows} grid is too small to split into subdomains of at"
-            f" least {min_cells_per_rank} cells, running in serial"
-        )
-        return Decomposition(1, 1)
-
-    return best
+    # None if the grid is smaller than the minimum in either direction. Serial
+    # runs swap no halo, so 1x1 is still valid, just not parallel.
+    return best or Decomposition(1, 1)
