@@ -1,9 +1,7 @@
 """NCEP GDAS/FNL analyses: which are needed, and fetching them.
 
 WRF is driven by the 0.25° GDAS/FNL analyses (ds083.3, DOI 10.5065/D65Q4T4Z),
-one every 6 hours. ungrib reads the global files whole: cutting them to the
-domain first changes met_em at rounding level, and so WRF's output at noise
-level, for about a minute and a half of WPS saved a day.
+one every 6 hours. ungrib reads the global files whole.
 """
 
 import datetime
