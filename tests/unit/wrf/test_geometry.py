@@ -13,9 +13,12 @@ INDEX_TEST_PROJECTION = {
     "stand_lon": 133.302,
     "geog_data_res": "usgs_30s+default",
 }
-OUTER = DomainGeometry(name="outer", e_we=40, e_sn=40, dx=10000, dy=10000, **INDEX_TEST_PROJECTION)
+OUTER = DomainGeometry(
+    name="outer", version="v1", e_we=40, e_sn=40, dx=10000, dy=10000, **INDEX_TEST_PROJECTION
+)
 TARGET = DomainGeometry(
     name="target",
+    version="v1",
     e_we=31,
     e_sn=31,
     dx=10000 / 3,
@@ -28,6 +31,7 @@ TARGET = DomainGeometry(
 )
 DUMMY = DomainGeometry(
     name="dummy",
+    version="v1",
     e_we=31,
     e_sn=31,
     dx=10000 / 3,
@@ -44,6 +48,7 @@ def nest_of(parent: str, name: str, dx: float) -> DomainGeometry:
     """A small nest at ratio 3 in the named parent, whose spacing is 3 times dx."""
     return DomainGeometry(
         name=name,
+        version="v1",
         e_we=31,
         e_sn=31,
         dx=dx,
@@ -66,7 +71,7 @@ def nest_of(parent: str, name: str, dx: float) -> DomainGeometry:
 def test_loads_the_geometry_of_the_domains_we_run(name, e_we, e_sn, ref_x, geog_data_res):
     geometry = load_geometry(name, "v1")
 
-    assert geometry.name == name
+    assert (geometry.name, geometry.version) == (name, "v1")
     assert (geometry.e_we, geometry.e_sn, geometry.dx, geometry.dy) == (e_we, e_sn, 10000, 10000)
     assert geometry.ref_x == ref_x
     assert geometry.geog_data_res == geog_data_res
@@ -95,8 +100,9 @@ def test_attributes_for_other_programs_are_ignored():
         "wrf_parent_grid_ratio": 3,
     }
 
-    geometry = DomainGeometry.from_attributes("target", attributes)
+    geometry = DomainGeometry.from_attributes("target", "v2", attributes)
 
+    assert geometry.version == "v2"
     assert geometry.parent == "outer"
     assert geometry.parent_grid_ratio == 3
 
@@ -107,12 +113,12 @@ def test_unknown_attributes_are_rejected_rather_than_ignored():
     attributes["wrf_e_ew"] = 40
 
     with pytest.raises(GeometryError, match="Unknown attributes for domain outer: wrf_e_ew"):
-        DomainGeometry.from_attributes("outer", attributes)
+        DomainGeometry.from_attributes("outer", "v1", attributes)
 
 
 def test_missing_attributes_are_reported():
     with pytest.raises(GeometryError, match="Incomplete geometry for domain outer"):
-        DomainGeometry.from_attributes("outer", {"wrf_map_proj": "lambert"})
+        DomainGeometry.from_attributes("outer", "v1", {"wrf_map_proj": "lambert"})
 
 
 def test_one_domain_is_d01():

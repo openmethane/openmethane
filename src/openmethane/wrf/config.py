@@ -1,11 +1,9 @@
 """Configuration of the WRF step.
 
-`WrfConfig` holds every setting in its final form. It is built by a
-constructor for each source of configuration, so the rest of the WRF code
-never knows which was used:
-- `from_env`: the environment the production WRF job sets today.
-- `from_dict`: the run configuration's `wrf` section, once #299 defines it
-  (#326).
+`WrfConfig` holds every setting in its final form. `from_env` builds it from
+the environment the production WRF job sets today. Any other source of
+configuration gets its own constructor that builds the same object, so the
+rest of the WRF code never knows which was used.
 """
 
 import datetime
@@ -17,10 +15,6 @@ import attrs.validators
 
 from openmethane.wrf.geometry import DomainSet, GeometryError
 from openmethane.wrf.install import WrfInstall
-
-DEFAULT_STORE_PATH = "/app/data"
-DEFAULT_CHK_PATH = "/mnt/scratch"
-DEFAULT_FNL_CACHE_PATH = "/app/data/fnl"
 
 
 class WrfConfigError(ValueError):
@@ -46,8 +40,6 @@ class WrfConfig:
     """First day to produce output for"""
     end_date: datetime.date
     """Last day to produce output for, inclusive"""
-    domain_version: str
-    """Version of the published domains, for fetching their geo_em files"""
     domains: DomainSet
     """The domains that run together, numbered for WRF"""
     output_path: pathlib.Path
@@ -58,6 +50,8 @@ class WrfConfig:
     """Where met_em files are kept between windows and reused if present"""
     fnl_cache_path: pathlib.Path
     """Where downloaded FNL analyses are kept, shared between runs"""
+    install: WrfInstall
+    """Where the WRF and WPS programs are"""
     num_hours_spin_up: int = attrs.field(default=12, validator=attrs.validators.ge(0))
     """Hours each window runs before its first kept hour"""
     num_hours_per_run: int = attrs.field(default=24, validator=attrs.validators.gt(0))
@@ -66,8 +60,6 @@ class WrfConfig:
     """Ranks to run wrf.exe on. None works them out from the grid and the cores"""
     force: bool = False
     """Run even if the output is already complete"""
-    install: WrfInstall = attrs.field(factory=WrfInstall)
-    """Where the WRF and WPS programs are"""
 
     def __attrs_post_init__(self):
         if self.end_date < self.start_date:
@@ -83,12 +75,19 @@ class WrfConfig:
         | `START_DATE` | The day to run, YYYY-MM-DD. One day is run | required |
         | `DOMAIN_NAME` | The domain to run | required |
         | `DOMAIN_VERSION` | Its published version | required |
-        | `STORE_PATH` | Output goes in `${STORE_PATH}/wrf/${DOMAIN_NAME}` | `/app/data` |
-        | `CHK_PATH` | Scratch is `${CHK_PATH}/wrf/${DOMAIN_NAME}` | `/mnt/scratch` |
+        | `STORE_PATH` | Output goes in `${STORE_PATH}/wrf/${DOMAIN_NAME}` | required |
+        | `CHK_PATH` | Scratch is `${CHK_PATH}/wrf/${DOMAIN_NAME}` | required |
+        | `WRF_INSTALL_DIR` | WRF's install folder | required |
+        | `WPS_INSTALL_DIR` | WPS's install folder | required |
         | `FORCE_WRF` | `true` to rerun a day whose output is complete | `false` |
         | `NCPUS` | MPI ranks for wrf.exe | worked out |
-        | `FNL_CACHE_PATH` | Where FNL analyses are kept | `/app/data/fnl` |
         | `MET_EM_CACHE_PATH` | Where met_em files are kept | `<scratch>/metem` |
+        | `FNL_CACHE_PATH` | Where FNL analyses are kept | `<scratch>/fnl` |
+
+        No path outside the run's scratch folder has a default, since no one
+        value suits every system. The openmethane image sets `WRF_INSTALL_DIR`
+        and `WPS_INSTALL_DIR` for its own layout. Left in scratch, FNL analyses
+        are downloaded again by every run; set `FNL_CACHE_PATH` to share them.
 
         `END_DATE` is ignored, as setup-wrf ignores it: the job runs one day.
 
@@ -129,6 +128,11 @@ class WrfConfig:
             except GeometryError as error:
                 problems.append(str(error))
 
+        store_path = required("STORE_PATH")
+        chk_path = required("CHK_PATH")
+        wrf_install_dir = required("WRF_INSTALL_DIR")
+        wps_install_dir = required("WPS_INSTALL_DIR")
+
         force_text = environ.get("FORCE_WRF", "").strip().lower()
         if force_text not in ("", "true", "false"):
             problems.append(f"FORCE_WRF must be true or false, got {environ['FORCE_WRF']!r}")
@@ -146,21 +150,19 @@ class WrfConfig:
         if problems:
             raise WrfConfigError(problems)
 
-        output_path = pathlib.Path(environ.get("STORE_PATH") or DEFAULT_STORE_PATH)
-        scratch_path = pathlib.Path(environ.get("CHK_PATH") or DEFAULT_CHK_PATH)
-        output_path = output_path / "wrf" / domain_name
-        scratch_path = scratch_path / "wrf" / domain_name
+        output_path = pathlib.Path(store_path) / "wrf" / domain_name
+        scratch_path = pathlib.Path(chk_path) / "wrf" / domain_name
         return cls(
             start_date=start_date,
             end_date=start_date,
-            domain_version=domain_version,
             domains=domains,
             output_path=output_path,
             scratch_path=scratch_path,
             met_em_cache_path=pathlib.Path(
                 environ.get("MET_EM_CACHE_PATH") or scratch_path / "metem"
             ),
-            fnl_cache_path=pathlib.Path(environ.get("FNL_CACHE_PATH") or DEFAULT_FNL_CACHE_PATH),
+            fnl_cache_path=pathlib.Path(environ.get("FNL_CACHE_PATH") or scratch_path / "fnl"),
+            install=WrfInstall(wrf_dir=wrf_install_dir, wps_dir=wps_install_dir),
             mpi_ranks=mpi_ranks,
             force=force_text == "true",
         )

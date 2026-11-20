@@ -25,8 +25,8 @@ def installed(tmp_path) -> pathlib.Path:
     return tmp_path
 
 
-def test_defaults_to_the_image_paths():
-    install = WrfInstall()
+def test_paths_are_derived_from_the_install_folders():
+    install = WrfInstall(wrf_dir="/opt/wrf", wps_dir="/opt/wps")
 
     assert install.wrf_exe == pathlib.Path("/opt/wrf/main/wrf.exe")
     assert install.ungrib_exe == pathlib.Path("/opt/wps/ungrib.exe")

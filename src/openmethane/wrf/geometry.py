@@ -38,6 +38,8 @@ class DomainGeometry:
 
     name: str
     """The domain's name, such as aust10km"""
+    version: str
+    """The domain's published version, such as v1. A nest's version needn't match its parent's"""
     map_proj: str = attrs.field(validator=attrs.validators.in_(MAP_PROJECTIONS))
     """WPS map projection"""
     ref_lat: float
@@ -79,7 +81,7 @@ class DomainGeometry:
         return self.parent is not None
 
     @classmethod
-    def from_attributes(cls, name: str, attributes: dict) -> "DomainGeometry":
+    def from_attributes(cls, name: str, version: str, attributes: dict) -> "DomainGeometry":
         """
         Build a geometry from #297's domain attributes.
 
@@ -87,6 +89,8 @@ class DomainGeometry:
         ----------
         name
             The domain's name.
+        version
+            The domain's published version.
         attributes
             The domain's attributes. `wrf_` attributes and `parent_domain_name`
             are read, and other attributes, which describe the domain for
@@ -106,12 +110,16 @@ class DomainGeometry:
         if unknown:
             raise GeometryError(f"Unknown attributes for domain {name}: {', '.join(unknown)}")
         try:
-            return cls(name=name, **fields)
+            return cls(name=name, version=version, **fields)
         except TypeError as error:
             raise GeometryError(f"Incomplete geometry for domain {name}: {error}") from error
 
 
-_ATTRIBUTE_FIELDS = {field.name for field in attrs.fields(DomainGeometry)} - {"name", "parent"}
+_ATTRIBUTE_FIELDS = {field.name for field in attrs.fields(DomainGeometry)} - {
+    "name",
+    "version",
+    "parent",
+}
 
 
 def load_geometry(name: str, version: str) -> DomainGeometry:
@@ -143,7 +151,7 @@ def load_geometry(name: str, version: str) -> DomainGeometry:
         raise GeometryError(
             f"No WRF geometry for domain {name!r} version {version!r}. Known: {', '.join(known)}"
         )
-    return DomainGeometry.from_attributes(name, yaml.safe_load(resource.read_text()))
+    return DomainGeometry.from_attributes(name, version, yaml.safe_load(resource.read_text()))
 
 
 @attrs.frozen
@@ -168,6 +176,10 @@ class Domain:
     @property
     def name(self) -> str:
         return self.geometry.name
+
+    @property
+    def version(self) -> str:
+        return self.geometry.version
 
 
 @attrs.frozen

@@ -11,6 +11,7 @@ from openmethane.wrf.outputs import (
 
 DAY = datetime.date(2022, 12, 7)
 PROJECTION = {
+    "version": "v1",
     "map_proj": "lambert",
     "ref_lat": -33.5,
     "ref_lon": 150.0,

@@ -12,15 +12,15 @@ class InstallError(RuntimeError):
 @attrs.frozen
 class WrfInstall:
     """
-    The WRF and WPS installs, at the paths the openmethane image puts them.
+    The WRF and WPS installs.
 
-    Every path is derived from the two install folders, as in the image built
-    from the docker-wrf image.
+    Every path is derived from the two install folders, laid out as the
+    docker-wrf image builds them.
     """
 
-    wrf_dir: pathlib.Path = attrs.field(default=pathlib.Path("/opt/wrf"), converter=pathlib.Path)
+    wrf_dir: pathlib.Path = attrs.field(converter=pathlib.Path)
     """WRF's install folder"""
-    wps_dir: pathlib.Path = attrs.field(default=pathlib.Path("/opt/wps"), converter=pathlib.Path)
+    wps_dir: pathlib.Path = attrs.field(converter=pathlib.Path)
     """WPS's install folder"""
 
     @property
