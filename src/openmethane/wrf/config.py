@@ -123,9 +123,9 @@ class WrfConfig:
         domain_name = required("DOMAIN_NAME")
         domain_version = required("DOMAIN_VERSION")
         domains = None
-        if domain_name is not None:
+        if domain_name is not None and domain_version is not None:
             try:
-                domains = DomainSet.load([domain_name])
+                domains = DomainSet.load([(domain_name, domain_version)])
             except GeometryError as error:
                 problems.append(str(error))
 

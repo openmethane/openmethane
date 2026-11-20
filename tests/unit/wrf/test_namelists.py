@@ -65,7 +65,7 @@ def differences(ours: dict, theirs: dict, ignore: set[str]) -> list[str]:
 @pytest.mark.parametrize("domain_name", ("au-test", "aust10km"))
 def test_namelist_input_matches_setup_wrf(domain_name, test_data_dir):
     fixture = test_data_dir / "wrf-namelists" / "setup-wrf-0.9.2" / domain_name
-    domains = DomainSet.load([domain_name])
+    domains = DomainSet.load([(domain_name, "v1")])
 
     namelist = build_wrf_namelist(domains, WINDOW, num_metgrid_levels=34, num_metgrid_soil_levels=4)
 
@@ -93,7 +93,7 @@ def test_namelist_input_matches_setup_wrf(domain_name, test_data_dir):
 )
 def test_namelist_wps_matches_setup_wrf(domain_name, allowed, test_data_dir):
     fixture = test_data_dir / "wrf-namelists" / "setup-wrf-0.9.2" / domain_name
-    domains = DomainSet.load([domain_name])
+    domains = DomainSet.load([(domain_name, "v1")])
 
     namelist = build_wps_namelist(domains, WINDOW)
 
@@ -207,6 +207,21 @@ def test_a_per_domain_list_must_match_the_domains():
             num_metgrid_soil_levels=4,
             model_config=model_config,
         )
+
+
+def test_the_model_configuration_passed_in_is_left_unchanged():
+    model_config = read_model_config()
+    before = model_config.todict()
+
+    build_wrf_namelist(
+        DomainSet.from_geometries(INDEX_TEST),
+        WINDOW,
+        num_metgrid_levels=34,
+        num_metgrid_soil_levels=4,
+        model_config=model_config,
+    )
+
+    assert model_config.todict() == before
 
 
 def test_a_per_domain_list_of_the_right_length_is_kept():

@@ -74,6 +74,7 @@ def test_every_problem_is_reported_at_once():
     env = {
         "START_DATE": "07/12/2022",
         "DOMAIN_NAME": "nowhere",
+        "DOMAIN_VERSION": "v1",
         "FORCE_WRF": "yes",
         "NCPUS": "lots",
     }
@@ -81,13 +82,17 @@ def test_every_problem_is_reported_at_once():
     with pytest.raises(WrfConfigError) as raised:
         WrfConfig.from_env(env)
 
-    problems = raised.value.problems
-    assert len(problems) == 5
-    assert "START_DATE must be a date as YYYY-MM-DD, got '07/12/2022'" in problems
-    assert "DOMAIN_VERSION is required" in problems
-    assert any("No WRF geometry for domain 'nowhere'" in problem for problem in problems)
-    assert "FORCE_WRF must be true or false, got 'yes'" in problems
-    assert "NCPUS must be a positive whole number, got 'lots'" in problems
+    assert raised.value.problems == [
+        "START_DATE must be a date as YYYY-MM-DD, got '07/12/2022'",
+        "No WRF geometry for domain 'nowhere' version 'v1'. Known: au-test v1, aust10km v1",
+        "FORCE_WRF must be true or false, got 'yes'",
+        "NCPUS must be a positive whole number, got 'lots'",
+    ]
+
+
+def test_a_version_with_no_geometry_is_an_error():
+    with pytest.raises(WrfConfigError, match="domain 'aust10km' version 'v2'"):
+        WrfConfig.from_env(PRODUCTION_ENV | {"DOMAIN_VERSION": "v2"})
 
 
 def test_missing_required_variables_are_named():

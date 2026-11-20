@@ -6,11 +6,13 @@ to a domain: the same nest can be `d02` in one run and `d03` in another.
 `DomainSet` assigns it.
 
 Until the domain file carries WRF's geometry (#297), each domain's geometry is
-read from a small YAML file in `openmethane/wrf/domains/`, using the attribute
-names #297 proposes, so the switch to the domain file only changes the reader.
+read from a small YAML file, `openmethane/wrf/domains/<name>/<version>.yaml`,
+using the attribute names #297 proposes, so the switch to the domain file
+mostly changes the reader.
 """
 
 import importlib.resources
+import math
 from collections.abc import Iterable, Sequence
 
 import attrs
@@ -86,18 +88,21 @@ class DomainGeometry:
         name
             The domain's name.
         attributes
-            `wrf_`-prefixed attributes, plus `parent_domain_name` for a nest.
-            Unknown attributes are an error, so a typo isn't silently ignored.
+            The domain's attributes. `wrf_` attributes and `parent_domain_name`
+            are read, and other attributes, which describe the domain for
+            other programs, are ignored. An unknown `wrf_` attribute is an
+            error, so a typo isn't silently ignored.
         """
         fields = {}
         unknown = []
         for key, value in attributes.items():
             if key == "parent_domain_name":
                 fields["parent"] = value
-            elif key.startswith("wrf_") and key[4:] in _ATTRIBUTE_FIELDS:
-                fields[key[4:]] = value
-            else:
-                unknown.append(key)
+            elif key.startswith("wrf_"):
+                if key[4:] in _ATTRIBUTE_FIELDS:
+                    fields[key[4:]] = value
+                else:
+                    unknown.append(key)
         if unknown:
             raise GeometryError(f"Unknown attributes for domain {name}: {', '.join(unknown)}")
         try:
@@ -109,7 +114,7 @@ class DomainGeometry:
 _ATTRIBUTE_FIELDS = {field.name for field in attrs.fields(DomainGeometry)} - {"name", "parent"}
 
 
-def load_geometry(name: str) -> DomainGeometry:
+def load_geometry(name: str, version: str) -> DomainGeometry:
     """
     Load a domain's geometry from the files shipped with openmethane.
 
@@ -117,20 +122,27 @@ def load_geometry(name: str) -> DomainGeometry:
     ----------
     name
         The domain's name, such as aust10km.
+    version
+        The published version of the domain, such as v1.
 
     Raises
     ------
     GeometryError
-        If there is no geometry for the domain, or it is invalid.
+        If there is no geometry for that version of the domain, or it is invalid.
     """
-    resource = importlib.resources.files("openmethane.wrf.domains") / f"{name}.yaml"
+    domains = importlib.resources.files("openmethane.wrf.domains")
+    resource = domains / name / f"{version}.yaml"
     if not resource.is_file():
         known = sorted(
-            entry.name.removesuffix(".yaml")
-            for entry in importlib.resources.files("openmethane.wrf.domains").iterdir()
-            if entry.name.endswith(".yaml")
+            f"{entry.name} {version_file.name.removesuffix('.yaml')}"
+            for entry in domains.iterdir()
+            if entry.is_dir() and not entry.name.startswith("_")
+            for version_file in entry.iterdir()
+            if version_file.name.endswith(".yaml")
         )
-        raise GeometryError(f"No WRF geometry for domain {name!r}. Known: {', '.join(known)}")
+        raise GeometryError(
+            f"No WRF geometry for domain {name!r} version {version!r}. Known: {', '.join(known)}"
+        )
     return DomainGeometry.from_attributes(name, yaml.safe_load(resource.read_text()))
 
 
@@ -218,6 +230,13 @@ class DomainSet:
                 parent = domains[index_of[geometry.parent] - 1]
                 dx = parent.dx / geometry.parent_grid_ratio
                 dy = parent.dy / geometry.parent_grid_ratio
+                # WRF derives a nest's spacing from its parent's, so a
+                # different value in the geometry is a mistake somewhere.
+                if not (math.isclose(geometry.dx, dx) and math.isclose(geometry.dy, dy)):
+                    raise GeometryError(
+                        f"Domain {geometry.name} has spacing {geometry.dx} x {geometry.dy},"
+                        f" but its parent's over the ratio is {dx} x {dy}"
+                    )
                 parent_index = parent.index
             else:
                 dx, dy, parent_index = geometry.dx, geometry.dy, 1
@@ -233,9 +252,9 @@ class DomainSet:
         return cls(tuple(domains))
 
     @classmethod
-    def load(cls, names: Sequence[str]) -> "DomainSet":
-        """Number the named domains, with geometry from `load_geometry`."""
-        return cls.from_geometries(load_geometry(name) for name in names)
+    def load(cls, domains: Sequence[tuple[str, str]]) -> "DomainSet":
+        """Number the domains, given as (name, version), with geometry from `load_geometry`."""
+        return cls.from_geometries(load_geometry(name, version) for name, version in domains)
 
     @property
     def outer(self) -> Domain:
@@ -247,6 +266,14 @@ class DomainSet:
 
     def __iter__(self):
         return iter(self.domains)
+
+    def grid_cells(self) -> list[tuple[int, int]]:
+        """
+        Each domain's size in cells, (south-north, west-east), as in its geo_em.
+
+        One less than `e_sn` and `e_we`, which count the staggered grid.
+        """
+        return [(domain.geometry.e_sn - 1, domain.geometry.e_we - 1) for domain in self.domains]
 
     def per_domain(self, attribute: str) -> list:
         """One value of a `Domain` or `DomainGeometry` attribute per domain, in WRF order."""

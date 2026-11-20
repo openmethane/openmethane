@@ -40,14 +40,14 @@ DUMMY = DomainGeometry(
 )
 
 
-def nest_of(parent: str, name: str) -> DomainGeometry:
-    """A small nest at ratio 3 in the named parent."""
+def nest_of(parent: str, name: str, dx: float) -> DomainGeometry:
+    """A small nest at ratio 3 in the named parent, whose spacing is 3 times dx."""
     return DomainGeometry(
         name=name,
         e_we=31,
         e_sn=31,
-        dx=1000,
-        dy=1000,
+        dx=dx,
+        dy=dx,
         parent=parent,
         parent_grid_ratio=3,
         i_parent_start=2,
@@ -64,7 +64,7 @@ def nest_of(parent: str, name: str) -> DomainGeometry:
     ),
 )
 def test_loads_the_geometry_of_the_domains_we_run(name, e_we, e_sn, ref_x, geog_data_res):
-    geometry = load_geometry(name)
+    geometry = load_geometry(name, "v1")
 
     assert geometry.name == name
     assert (geometry.e_we, geometry.e_sn, geometry.dx, geometry.dy) == (e_we, e_sn, 10000, 10000)
@@ -75,8 +75,30 @@ def test_loads_the_geometry_of_the_domains_we_run(name, e_we, e_sn, ref_x, geog_
 
 
 def test_an_unknown_domain_names_the_known_ones():
-    with pytest.raises(GeometryError, match="No WRF geometry for domain 'nowhere'.*aust10km"):
-        load_geometry("nowhere")
+    with pytest.raises(GeometryError, match="No WRF geometry for domain 'nowhere'.*aust10km v1"):
+        load_geometry("nowhere", "v1")
+
+
+def test_an_unknown_version_of_a_known_domain_is_an_error():
+    with pytest.raises(GeometryError, match="domain 'aust10km' version 'v2'"):
+        load_geometry("aust10km", "v2")
+
+
+def test_attributes_for_other_programs_are_ignored():
+    attributes = {f"wrf_{key}": value for key, value in INDEX_TEST_PROJECTION.items()}
+    attributes |= {"wrf_e_we": 31, "wrf_e_sn": 31, "wrf_dx": 10000 / 3, "wrf_dy": 10000 / 3}
+    attributes |= {
+        "parent_domain_name": "outer",
+        "parent_domain_version": "v1",
+        "parent_cmaq_col_offset": 7,
+        "domain_format_version": 1,
+        "wrf_parent_grid_ratio": 3,
+    }
+
+    geometry = DomainGeometry.from_attributes("target", attributes)
+
+    assert geometry.parent == "outer"
+    assert geometry.parent_grid_ratio == 3
 
 
 def test_unknown_attributes_are_rejected_rather_than_ignored():
@@ -121,12 +143,17 @@ def test_swapping_siblings_swaps_their_numbers():
 
 def test_a_nest_of_a_nest_follows_every_domain_nearer_the_outer_one():
     domains = DomainSet.from_geometries(
-        [OUTER, TARGET, nest_of("target", "inner"), DUMMY, nest_of("dummy", "inner2")]
+        [
+            OUTER,
+            TARGET,
+            nest_of("target", "inner", 10000 / 9),
+            DUMMY,
+            nest_of("dummy", "inner2", 10000 / 9),
+        ]
     )
 
     assert domains.per_domain("name") == ["outer", "target", "dummy", "inner", "inner2"]
     assert domains.per_domain("parent_index") == [1, 1, 1, 2, 3]
-    # Each nest's spacing is its parent's over the ratio, whatever it was given.
     assert domains.per_domain("dx") == pytest.approx(
         [10000, 10000 / 3, 10000 / 3, 10000 / 9, 10000 / 9]
     )
@@ -136,12 +163,12 @@ def test_a_set_needs_exactly_one_outer_domain():
     with pytest.raises(GeometryError, match="exactly one outer domain, got 0"):
         DomainSet.from_geometries([TARGET])
     with pytest.raises(GeometryError, match="exactly one outer domain, got 2"):
-        DomainSet.from_geometries([OUTER, load_geometry("au-test")])
+        DomainSet.from_geometries([OUTER, load_geometry("au-test", "v1")])
 
 
 def test_a_nest_needs_its_parent_in_the_set():
     with pytest.raises(GeometryError, match="target is nested in outer, which isn't in the run"):
-        DomainSet.from_geometries([load_geometry("au-test"), TARGET])
+        DomainSet.from_geometries([load_geometry("au-test", "v1"), TARGET])
 
 
 def test_domain_names_must_be_unique():
@@ -151,4 +178,22 @@ def test_domain_names_must_be_unique():
 
 def test_nesting_in_a_loop_is_rejected():
     with pytest.raises(GeometryError, match="nested in a loop"):
-        DomainSet.from_geometries([OUTER, nest_of("b", "a"), nest_of("a", "b")])
+        DomainSet.from_geometries([OUTER, nest_of("b", "a", 1000), nest_of("a", "b", 1000)])
+
+
+def test_a_nest_spacing_that_disagrees_with_its_parent_is_an_error():
+    with pytest.raises(GeometryError, match="inner has spacing 1000 x 1000, but its parent's"):
+        DomainSet.from_geometries([OUTER, TARGET, nest_of("target", "inner", 1000)])
+
+
+def test_grid_cells_are_one_less_than_the_staggered_size():
+    domains = DomainSet.from_geometries([OUTER, TARGET])
+
+    assert domains.grid_cells() == [(39, 39), (30, 30)]
+
+
+def test_au_test_grid_cells_match_its_geo_em():
+    # geo_em.d01.nc for au-test v1 is 14 x 14 cells
+    domains = DomainSet.load([("au-test", "v1")])
+
+    assert domains.grid_cells() == [(14, 14)]

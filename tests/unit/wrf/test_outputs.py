@@ -31,7 +31,7 @@ def test_names_match_the_files_mcip_reads(test_data_dir):
         path.name for path in (test_data_dir / "wrf" / "au-test" / "2022120700").iterdir()
     )
 
-    names = expected_files(DomainSet.load(["au-test"]), DAY)
+    names = expected_files(DomainSet.load([("au-test", "v1")]), DAY)
 
     assert sorted(names) == committed
 

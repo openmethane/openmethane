@@ -5,6 +5,7 @@ Everything in `namelist.input` that is neither geometry nor time comes from the
 model configuration template, `model_config/namelist.input`.
 """
 
+import copy
 import importlib.resources
 
 import f90nml
@@ -254,7 +255,8 @@ def build_wrf_namelist(
         or single-valued, or a per-domain list of the wrong length.
     """
     count = len(domains)
-    namelist = read_model_config() if model_config is None else model_config.copy()
+    # A deep copy, since the groups are changed in place below
+    namelist = read_model_config() if model_config is None else copy.deepcopy(model_config)
     _expand_per_domain(namelist, count)
 
     time_control = namelist.setdefault("time_control", f90nml.Namelist())

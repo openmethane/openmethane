@@ -64,7 +64,8 @@ def safe_mpi_ranks(grids: list[tuple[int, int]], cpu_count: int) -> int:
     ----------
     grids
         Each domain's size in cells as (rows, columns), south-north by
-        west-east, as in its geo_em file.
+        west-east, as in its geo_em file. `DomainSet.grid_cells` gives them;
+        the namelist's `e_sn` and `e_we` are one larger.
     cpu_count
         Most ranks to use.
     """
