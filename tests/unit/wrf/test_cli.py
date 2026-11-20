@@ -23,6 +23,8 @@ def production_env(monkeypatch, tmp_path):
         "DOMAIN_VERSION": "v1",
         "STORE_PATH": str(tmp_path / "store"),
         "CHK_PATH": str(tmp_path / "chk"),
+        "WRF_INSTALL_DIR": str(tmp_path / "wrf"),
+        "WPS_INSTALL_DIR": str(tmp_path / "wps"),
     }.items():
         monkeypatch.setenv(name, value)
 
