@@ -129,6 +129,24 @@ def test_missing_required_variables_are_named():
     ]
 
 
+def test_relative_paths_are_made_absolute(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    env = PRODUCTION_ENV | {"STORE_PATH": "store", "CHK_PATH": "chk", "FNL_CACHE_PATH": "fnl"}
+
+    config = WrfConfig.from_env(env)
+
+    assert config.output_path == tmp_path / "store" / "wrf" / "aust10km"
+    assert config.scratch_path == tmp_path / "chk" / "wrf" / "aust10km"
+    assert config.met_em_cache_path == tmp_path / "chk" / "wrf" / "aust10km" / "metem"
+    assert config.fnl_cache_path == tmp_path / "fnl"
+
+
+@pytest.mark.parametrize("store, chk", (("/data", "/data"), ("/data", "/data/wrf/aust10km/x")))
+def test_scratch_and_output_must_be_separate(store, chk):
+    with pytest.raises(WrfConfigError, match="CHK_PATH and STORE_PATH must be separate"):
+        WrfConfig.from_env(PRODUCTION_ENV | {"STORE_PATH": store, "CHK_PATH": chk})
+
+
 def test_ncpus_must_be_positive():
     with pytest.raises(WrfConfigError, match="NCPUS must be a positive whole number, got '0'"):
         WrfConfig.from_env(PRODUCTION_ENV | {"NCPUS": "0"})

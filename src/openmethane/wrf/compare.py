@@ -9,6 +9,7 @@ the same binary, inputs, namelist and MPI rank count.
 """
 
 import fnmatch
+import os
 import pathlib
 from collections.abc import Iterable
 
@@ -166,7 +167,12 @@ def compare_runs(
 
     for path in sorted(files_ours & files_theirs):
         a, b = ours / path, theirs / path
-        if pathlib.PurePosixPath(path).name in NAMELISTS:
+        if a.is_symlink() or b.is_symlink():
+            # Compare a link by where it points, which works even if it dangles
+            target_a = os.readlink(a) if a.is_symlink() else "(a file)"
+            target_b = os.readlink(b) if b.is_symlink() else "(a file)"
+            differences = [] if target_a == target_b else [f"links to {target_a} != {target_b}"]
+        elif pathlib.PurePosixPath(path).name in NAMELISTS:
             differences = compare_namelists(a, b)
         elif path.endswith(".nc"):
             differences = compare_netcdf(a, b)

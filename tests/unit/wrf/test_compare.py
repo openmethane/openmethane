@@ -50,6 +50,18 @@ def test_logs_are_not_compared():
     assert not is_log("2022120700/WRFOUT_d01_2022-12-07T0000Z.nc")
 
 
+def test_dangling_links_compare_by_their_target(tmp_path):
+    for run in ("ours", "theirs"):
+        (tmp_path / run).mkdir()
+        (tmp_path / run / "geo_em.d01.nc").symlink_to("/chk/wrf/au-test/geo_em.d01.nc")
+    (tmp_path / "theirs" / "met_em.nc").symlink_to("/elsewhere/met_em.nc")
+    (tmp_path / "ours" / "met_em.nc").symlink_to("/chk/met_em.nc")
+
+    report = compare_runs(tmp_path / "ours", tmp_path / "theirs")
+
+    assert report == {"met_em.nc": ["links to /chk/met_em.nc != /elsewhere/met_em.nc"]}
+
+
 def test_compares_two_output_folders(tmp_path):
     for run in ("ours", "theirs"):
         (tmp_path / run / "2022120700").mkdir(parents=True)

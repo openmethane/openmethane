@@ -67,7 +67,7 @@ def run_wps(
     window_dir
         The window's working folder.
     subsets
-        The analyses, cut to the domains.
+        The analyses to read, whole.
     install
         Where WPS is.
     cache_path
