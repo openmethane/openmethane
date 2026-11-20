@@ -4,6 +4,16 @@ import sys
 
 import pytest
 
+# Modules that read no configuration on import, so any part of the project can
+# import them. A module listed here stays importable without setting up the
+# environment that the older fourdvar modules need.
+MODULES = (
+    "openmethane.util.process",
+    "openmethane.util.download",
+    "openmethane.util.logging",
+    "openmethane.util.decomposition",
+)
+
 # Imports the module with os.environ replaced by a mapping that records every
 # read, and an audit hook recording every file opened that isn't Python code.
 # Third-party packages are imported first, since what they read on import
@@ -38,16 +48,8 @@ print(json.dumps({"env": RecordingEnviron.reads, "files": opened}))
 """
 
 
-@pytest.mark.parametrize(
-    "module",
-    (
-        "openmethane.util.process",
-        "openmethane.util.download",
-        "openmethane.util.logging",
-        "openmethane.util.decomposition",
-    ),
-)
-def test_importing_a_shared_utility_reads_no_environment_or_files(module):
+@pytest.mark.parametrize("module", MODULES)
+def test_importing_the_module_reads_no_environment_or_files(module):
     result = subprocess.run(
         [sys.executable, "-B", "-c", CHECK_IMPORT, module],  # noqa: S603
         capture_output=True,
@@ -59,7 +61,7 @@ def test_importing_a_shared_utility_reads_no_environment_or_files(module):
 
 
 def test_the_check_reports_a_module_that_reads_environment_and_files(tmp_path):
-    # A module that does on import what the shared utilities must not, so a
+    # A module that does on import what the listed modules must not, so a
     # check that has stopped recording anything can't pass the test above.
     (tmp_path / "settings.txt").write_text("")
     (tmp_path / "reads_on_import.py").write_text(
