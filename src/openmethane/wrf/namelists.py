@@ -148,10 +148,14 @@ class NamelistError(ValueError):
     """The model configuration template can't be applied to a domain set."""
 
 
+def model_config_file(name: str):
+    """A file of the model configuration shipped with openmethane, such as add_remove_var.txt."""
+    return importlib.resources.files(MODEL_CONFIG) / name
+
+
 def read_model_config() -> f90nml.Namelist:
     """Read the model configuration template shipped with openmethane."""
-    text = (importlib.resources.files(MODEL_CONFIG) / "namelist.input").read_text()
-    return f90nml.reads(text)
+    return f90nml.reads(model_config_file("namelist.input").read_text())
 
 
 def build_wps_namelist(
@@ -199,7 +203,7 @@ def build_wps_namelist(
     if geog_data_path is not None:
         geogrid["geog_data_path"] = geog_data_path
 
-    return f90nml.Namelist(
+    return _ordered(
         {
             "share": {
                 "wrf_core": "ARW",
@@ -220,6 +224,18 @@ def build_wps_namelist(
                 "io_form_metgrid": 2,
             },
         }
+    )
+
+
+def _ordered(groups: dict) -> f90nml.Namelist:
+    """
+    A namelist that keeps the order groups and settings were given in.
+
+    f90nml sorts a plain dict, but WPS reads its groups in a fixed order and
+    stops at the end of the file, so a group written too early is never read.
+    """
+    return f90nml.Namelist(
+        [(name, f90nml.Namelist(list(settings.items()))) for name, settings in groups.items()]
     )
 
 
