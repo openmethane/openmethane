@@ -13,6 +13,7 @@ from collections.abc import Mapping
 import attrs
 import attrs.validators
 
+from openmethane.wrf.fnl import FNL_DATASET_ROOT
 from openmethane.wrf.geometry import DomainSet, GeometryError
 from openmethane.wrf.install import WrfInstall
 
@@ -60,6 +61,8 @@ class WrfConfig:
     """Ranks to run wrf.exe on. None works them out from the grid and the cores"""
     force: bool = False
     """Run even if the output is already complete"""
+    fnl_dataset_root: str = FNL_DATASET_ROOT
+    """Where FNL analyses are downloaded from"""
 
     def __attrs_post_init__(self):
         if self.end_date < self.start_date:
@@ -83,6 +86,7 @@ class WrfConfig:
         | `NCPUS` | MPI ranks for wrf.exe | worked out |
         | `MET_EM_CACHE_PATH` | Where met_em files are kept | `<scratch>/metem` |
         | `FNL_CACHE_PATH` | Where FNL analyses are kept | `<scratch>/fnl` |
+        | `FNL_DATASET_ROOT` | Where FNL analyses are downloaded from | GDEX |
 
         No path outside the run's scratch folder has a default, since no one
         value suits every system. The openmethane image sets `WRF_INSTALL_DIR`
@@ -165,4 +169,5 @@ class WrfConfig:
             install=WrfInstall(wrf_dir=wrf_install_dir, wps_dir=wps_install_dir),
             mpi_ranks=mpi_ranks,
             force=force_text == "true",
+            fnl_dataset_root=environ.get("FNL_DATASET_ROOT") or FNL_DATASET_ROOT,
         )
