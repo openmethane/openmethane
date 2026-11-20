@@ -120,7 +120,6 @@ def stub_config(tmp_path, stub_install) -> WrfConfig:
     config = WrfConfig(
         start_date=datetime.date(2022, 12, 7),
         end_date=datetime.date(2022, 12, 7),
-        domain_version="v1",
         domains=DomainSet.load([("au-test", "v1")]),
         output_path=tmp_path / "store" / "wrf" / "au-test",
         scratch_path=tmp_path / "chk" / "wrf" / "au-test",
