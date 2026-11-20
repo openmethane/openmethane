@@ -12,16 +12,24 @@ MODULES = (
     "openmethane.util.download",
     "openmethane.util.logging",
     "openmethane.util.decomposition",
+    "openmethane.wrf.config",
+    "openmethane.wrf.geometry",
+    "openmethane.wrf.install",
+    "openmethane.wrf.mpi",
+    "openmethane.wrf.namelists",
+    "openmethane.wrf.outputs",
+    "openmethane.wrf.windows",
 )
 
 # Imports the module with os.environ replaced by a mapping that records every
 # read, and an audit hook recording every file opened that isn't Python code.
 # Third-party packages are imported first, since what they read on import
-# (urllib3 reads SSLKEYLOGFILE) is outside openmethane's control. Run it with
+# (urllib3 reads SSLKEYLOGFILE, and importlib.resources seeds `random` from
+# /dev/urandom) is outside openmethane's control. Run it with
 # -B, or a checkout with no bytecode cache records the .pyc files it writes.
 CHECK_IMPORT = """
-import importlib, json, os, sys
-import attrs, requests, urllib3
+import importlib, importlib.resources, json, os, sys
+import attrs, f90nml, requests, urllib3, yaml
 
 class RecordingEnviron(dict):
     reads = []
