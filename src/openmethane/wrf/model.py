@@ -64,11 +64,7 @@ def run_real(window_dir: pathlib.Path, install: WrfInstall, log_dir: pathlib.Pat
     the working folder.
     """
     _clear_rsl(window_dir)
-    run_program(
-        ["mpirun", "-np", "1", install.real_exe],
-        cwd=window_dir,
-        log_path=log_dir / "real.log",
-    )
+    _run_mpi(1, install.real_exe, window_dir, log_dir / "real.log")
     _check_rsl(window_dir, "real.exe", REAL_SUCCESS, log_dir / "real.log")
 
     real_rsl = window_dir / REAL_RSL_DIR
@@ -90,14 +86,18 @@ def run_wrf(
     """
     _clear_rsl(window_dir)
     logger.info(f"running wrf.exe on {ranks} ranks")
-    run_program(
-        ["mpirun", "-np", str(ranks), install.wrf_exe],
-        cwd=window_dir,
-        log_path=log_dir / "wrf.log",
-    )
+    _run_mpi(ranks, install.wrf_exe, window_dir, log_dir / "wrf.log")
     _check_rsl(window_dir, "wrf.exe", WRF_SUCCESS, log_dir / "wrf.log")
     for restart in window_dir.glob("wrfrst*"):
         restart.unlink()
+
+
+def _run_mpi(ranks: int, program: pathlib.Path, cwd: pathlib.Path, log_path: pathlib.Path) -> None:
+    """Run a program under mpirun, reporting a failure as the program's rather than mpirun's."""
+    try:
+        run_program(["mpirun", "-np", str(ranks), program], cwd=cwd, log_path=log_path)
+    except ProgramFailed as error:
+        raise ProgramFailed(program.name, error.exit_code, error.log_path, error.tail) from error
 
 
 def _clear_rsl(window_dir: pathlib.Path) -> None:
