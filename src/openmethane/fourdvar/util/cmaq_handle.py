@@ -130,10 +130,11 @@ def setup_run():
     env_dict["DEPV_TRAC_1"] = cmaq_config.depv_trac
     # env_dict['OCEAN_1'] = cmaq_config.ocean_file
     env_dict["EMIS_1"] = cmaq_config.emis_file
-    env_dict["BNDY_GASC_1"] = cmaq_config.bcon_file
-    env_dict["BNDY_AERO_1"] = cmaq_config.bcon_file
-    env_dict["BNDY_NONR_1"] = cmaq_config.bcon_file
-    env_dict["BNDY_TRAC_1"] = cmaq_config.bcon_file
+    # the backward run replays advection, so it must read the same BCON
+    env_dict["BNDY_GASC_1"] = cmaq_config.bcon_run_file
+    env_dict["BNDY_AERO_1"] = cmaq_config.bcon_run_file
+    env_dict["BNDY_NONR_1"] = cmaq_config.bcon_run_file
+    env_dict["BNDY_TRAC_1"] = cmaq_config.bcon_run_file
     env_dict["GRID_DOT_2D"] = cmaq_config.grid_dot_2d
     env_dict["GRID_CRO_2D"] = cmaq_config.grid_cro_2d
     env_dict["MET_CRO_2D"] = cmaq_config.met_cro_2d
@@ -326,10 +327,10 @@ def run_fwd_single(date: datetime.date, is_first: bool) -> None:
     env_dict["CTM_PROGNAME"] = cmaq_config.fwd_prog
 
     if is_first is True:
-        env_dict["INIT_GASC_1"] = cmaq_config.icon_file
-        env_dict["INIT_AERO_1"] = cmaq_config.icon_file
-        env_dict["INIT_NONR_1"] = cmaq_config.icon_file
-        env_dict["INIT_TRAC_1"] = cmaq_config.icon_file
+        env_dict["INIT_GASC_1"] = cmaq_config.icon_run_file
+        env_dict["INIT_AERO_1"] = cmaq_config.icon_run_file
+        env_dict["INIT_NONR_1"] = cmaq_config.icon_run_file
+        env_dict["INIT_TRAC_1"] = cmaq_config.icon_run_file
         env_dict["CTM_XFIRST_IN"] = ""
     else:
         prev_grid = dt.move_tag(cmaq_config.last_grid_file, -1)
@@ -373,6 +374,7 @@ def run_bwd_single(date, is_first):
     env_dict["ADJ_LGRID"] = cmaq_config.conc_sense_file + " -v"
     env_dict["ADJ_LGRID_EM"] = cmaq_config.emis_sense_file + " -v"
     env_dict["ADJ_LGRID_EM_SF"] = cmaq_config.emis_scale_sense_file + " -v"
+    env_dict["ADJ_LGRID_BC"] = cmaq_config.bcon_sense_file + " -v"
     env_dict["ADJ_FORCE"] = cmaq_config.force_file
 
     if cmaq_config.sense_sync is True:
