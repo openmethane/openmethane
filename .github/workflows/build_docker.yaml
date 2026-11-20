@@ -250,9 +250,9 @@ jobs:
     needs: [ build, changes ]
     if: needs.changes.outputs.wrf == 'true' || github.event_name != 'pull_request'
     env:
-      # setup-wrf 0.9.2's output for the same day, for parity until setup-wrf is
-      # archived (#324)
-      SETUP_WRF_FIXTURE: https://openmethane.s3.amazonaws.com/tests/wrf/setup-wrf-0.9.2-au-test-2022-12-07.tar.gz
+      # Holds setup-wrf 0.9.2's output for the same day. See "WRF test data" in
+      # docs/guides/development.md
+      WRF_TEST_DATA_URL: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261120.tar.gz
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -290,14 +290,14 @@ jobs:
           key: wrf-fnl-au-test-2022-12-07
       - name: Compare with setup-wrf
         run: |
-          mkdir ${{ steps.data-path.outputs.DATA_PATH }}/setup-wrf
-          curl -sSfL "$SETUP_WRF_FIXTURE" | tar -xz -C ${{ steps.data-path.outputs.DATA_PATH }}/setup-wrf
+          mkdir ${{ steps.data-path.outputs.DATA_PATH }}/wrf-test-data
+          curl -sSfL "$WRF_TEST_DATA_URL" | tar -xz -C ${{ steps.data-path.outputs.DATA_PATH }}/wrf-test-data
           # setup-wrf also published its generated scripts and a link into
           # scratch, which the WRF step doesn't make
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
             ${{ needs.build.outputs.registry-image-id }} \
             python scripts/wrf/compare_wrf_runs.py \
-              /app/data/store/wrf/au-test /app/data/setup-wrf/au-test \
+              /app/data/store/wrf/au-test /app/data/wrf-test-data/setup-wrf-0.9.2/au-test \
               --ignore 'main.sh' --ignore '*/*.sh' --ignore '*/checkWrfoutInBackground.py' \
               --ignore '*/geo_em.d01.nc'
       - name: Upload WRF output
