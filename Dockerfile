@@ -130,6 +130,9 @@ EOT
 
 COPY --from=wrf-runtime /staging/wrf /opt/wrf
 COPY --from=wrf-runtime /staging/wps /opt/wps
+# Where the WRF step finds them
+ENV WRF_INSTALL_DIR=/opt/wrf \
+  WPS_INSTALL_DIR=/opt/wps
 
 COPY docker/check-binaries.sh /usr/local/bin/check-binaries.sh
 RUN check-binaries.sh --command mpirun --command csh \
