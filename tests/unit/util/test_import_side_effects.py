@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 
@@ -6,7 +7,8 @@ import pytest
 # Imports the module with os.environ replaced by a mapping that records every
 # read, and an audit hook recording every file opened that isn't Python code.
 # Third-party packages are imported first, since what they read on import
-# (urllib3 reads SSLKEYLOGFILE) is outside openmethane's control.
+# (urllib3 reads SSLKEYLOGFILE) is outside openmethane's control. Run it with
+# -B, or a checkout with no bytecode cache records the .pyc files it writes.
 CHECK_IMPORT = """
 import importlib, json, os, sys
 import attrs, requests, urllib3
@@ -47,10 +49,34 @@ print(json.dumps({"env": RecordingEnviron.reads, "files": opened}))
 )
 def test_importing_a_shared_utility_reads_no_environment_or_files(module):
     result = subprocess.run(
-        [sys.executable, "-c", CHECK_IMPORT, module],  # noqa: S603
+        [sys.executable, "-B", "-c", CHECK_IMPORT, module],  # noqa: S603
         capture_output=True,
         text=True,
         check=True,
     )
 
     assert result.stdout.strip() == '{"env": [], "files": []}', result.stderr
+
+
+def test_the_check_reports_a_module_that_reads_environment_and_files(tmp_path):
+    # A module that does on import what the shared utilities must not, so a
+    # check that has stopped recording anything can't pass the test above.
+    (tmp_path / "settings.txt").write_text("")
+    (tmp_path / "reads_on_import.py").write_text(
+        "import os, pathlib\n"
+        "os.getenv('PROBE_VARIABLE')\n"
+        "pathlib.Path(__file__).with_name('settings.txt').read_text()\n"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", CHECK_IMPORT, "reads_on_import"],  # noqa: S603
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+
+    assert json.loads(result.stdout) == {
+        "env": ["PROBE_VARIABLE"],
+        "files": [str(tmp_path / "settings.txt")],
+    }, result.stderr

@@ -95,6 +95,16 @@ def test_env_is_added_to_the_current_environment(tmp_path, monkeypatch):
     assert log_path.read_text() == "inherited added\n"
 
 
+def test_without_env_the_program_inherits_the_current_environment(tmp_path, monkeypatch):
+    monkeypatch.setenv("FROM_PARENT", "inherited")
+    log_path = tmp_path / "program.log"
+    code = "import os; print(os.environ.get('FROM_PARENT', 'missing'))"
+
+    run_program(python(code), cwd=tmp_path, log_path=log_path)
+
+    assert log_path.read_text() == "inherited\n"
+
+
 def test_arguments_with_spaces_are_passed_whole(tmp_path):
     log_path = tmp_path / "program.log"
     args = [*python("import sys; print(sys.argv[1:])"), "a path/with spaces", tmp_path / "b c"]
