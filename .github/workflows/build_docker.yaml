@@ -194,6 +194,115 @@ jobs:
           path: ${{ steps.data-path.outputs.DATA_PATH }}
           retention-days: 5
 
+  # Decide which path-dependent jobs to run. Filtering here rather than with
+  # on.pull_request.paths means skipped jobs still report to required checks.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      wrf: ${{ steps.filter.outputs.wrf }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Find changed paths
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            wrf:
+              - 'src/openmethane/wrf/**'
+              - 'src/openmethane/util/process.py'
+              - 'src/openmethane/util/download.py'
+              - 'src/openmethane/util/logging.py'
+              - 'scripts/wrf/**'
+              - 'tests/unit/wrf/**'
+              - 'Dockerfile'
+              - 'docker/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/build_docker.yaml'
+
+  # Lint the code written to the project's newer standard. Widen the paths as
+  # other modules are brought up to it.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+      - name: Check and format-check with ruff
+        run: |
+          PATHS="src/openmethane/wrf scripts/wrf tests/unit/wrf
+            src/openmethane/util/process.py src/openmethane/util/download.py
+            src/openmethane/util/logging.py src/openmethane/util/decomposition.py
+            tests/unit/util"
+          uv run --only-group dev ruff check $PATHS
+          uv run --only-group dev ruff format --check $PATHS
+
+  # Run WRF for a real au-test day and compare the output with setup-wrf's.
+  # Runs when WRF paths change, and always on main, tags and manual runs.
+  test-wrf:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    needs: [ build, changes ]
+    if: needs.changes.outputs.wrf == 'true' || github.event_name != 'pull_request'
+    env:
+      # setup-wrf 0.9.2's output for the same day, for parity until setup-wrf is
+      # archived (#324)
+      SETUP_WRF_FIXTURE: https://openmethane.s3.amazonaws.com/tests/wrf/setup-wrf-0.9.2-au-test-2022-12-07.tar.gz
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up data path
+        id: data-path
+        run: |
+          mkdir $RUNNER_TEMP/data
+          # Make the folder writable by user 1000 in the docker container
+          sudo chmod a+w $RUNNER_TEMP/data
+          echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
+      - name: Cache FNL analyses
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
+          key: wrf-fnl-au-test-2022-12-07
+      - name: Run WRF
+        run: |
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
+            -e DOMAIN_NAME=au-test \
+            -e DOMAIN_VERSION=v1 \
+            -e START_DATE=2022-12-07 \
+            -e STORE_PATH=/app/data/store \
+            -e CHK_PATH=/app/data/chk \
+            -e FNL_CACHE_PATH=/app/data/fnl \
+            -e NCPUS=1 \
+            ${{ needs.build.outputs.registry-image-id }} \
+            wrf run
+      - name: Compare with setup-wrf
+        run: |
+          mkdir ${{ steps.data-path.outputs.DATA_PATH }}/setup-wrf
+          curl -sSfL "$SETUP_WRF_FIXTURE" | tar -xz -C ${{ steps.data-path.outputs.DATA_PATH }}/setup-wrf
+          # setup-wrf also published its generated scripts and a link into
+          # scratch, which the WRF step doesn't make
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
+            ${{ needs.build.outputs.registry-image-id }} \
+            python scripts/wrf/compare_wrf_runs.py \
+              /app/data/store/wrf/au-test /app/data/setup-wrf/au-test \
+              --ignore 'main.sh' --ignore '*/*.sh' --ignore '*/checkWrfoutInBackground.py' \
+              --ignore '*/geo_em.d01.nc'
+      - name: Upload WRF output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: wrf-output
+          # met_em names hold colons, which artifacts don't allow
+          path: |
+            ${{ steps.data-path.outputs.DATA_PATH }}/store/wrf/au-test/*/
+            !${{ steps.data-path.outputs.DATA_PATH }}/store/wrf/au-test/metem/
+          retention-days: 5
+
   # Determine additional tags to apply to the image
   image-tags:
     runs-on: ubuntu-latest
