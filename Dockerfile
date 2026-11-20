@@ -4,7 +4,9 @@
 FROM segment/chamber:2 AS chamber
 
 # WRF and WPS, from https://github.com/openmethane/docker-wrf. Pinned by digest
-# because docker-wrf overwrites the 4.5.1 tag on every push to main.
+# because docker-wrf overwrites the 4.5.1 tag on every push to main. Changing
+# the digest changes the model that produces the meteorology, so treat it as a
+# possible change to science outputs: compare WRF output before and after.
 FROM ghcr.io/openmethane/wrf:4.5.1@sha256:7cd949adef3bc1172a139f6d472e050aceba8296dbd78d743e1737a831249759 AS wrf
 
 # Stage only the files needed to run WPS, real.exe and wrf.exe, at the paths
@@ -18,9 +20,10 @@ mkdir -p /staging/wrf/main /staging/wrf/run \
     /staging/wps/geogrid /staging/wps/metgrid /staging/wps/ungrib
 
 cp /opt/wrf/main/wrf.exe /opt/wrf/main/real.exe /staging/wrf/main/
-# run/ links the programs from main/; only its data files are needed
+# run/ links the programs from main/; only its data files are needed. The
+# `+` form makes find fail if cp does, so a dangling link fails the build.
 find /opt/wrf/run -mindepth 1 -maxdepth 1 ! -name '*.exe' \
-    -exec cp -L {} /staging/wrf/run/ \;
+    -exec cp -L -t /staging/wrf/run/ {} +
 
 cp -L /opt/wps/geogrid.exe /opt/wps/ungrib.exe /opt/wps/metgrid.exe \
     /opt/wps/link_grib.csh /staging/wps/

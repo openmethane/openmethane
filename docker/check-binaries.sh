@@ -61,11 +61,16 @@ for folder in "${folders[@]}"; do
     checked=$((checked + 1))
 
     # ldd exits non-zero for a static binary, which needs no libraries.
-    missing=$(ldd "$file" 2>/dev/null | awk '/not found/ {print $1}' || true)
-    for library in $missing; do
-      echo "MISSING LIBRARY: $file needs $library" >&2
+    # "lib.so => not found" is a missing library. "version `X' not found" is a
+    # library too old for the binary, usually a different Debian release.
+    while IFS= read -r line; do
+      if [[ "$line" == *"=> not found"* ]]; then
+        echo "MISSING LIBRARY: $file needs ${line%% =>*}" >&2
+      else
+        echo "WRONG LIBRARY VERSION: $file: $line" >&2
+      fi
       failed=1
-    done
+    done < <(ldd "$file" 2>&1 | grep "not found" | sed 's/^[[:space:]]*//' || true)
   done < <(find -L "$folder" -type f -print0)
 
   echo "checked $checked binaries under $folder"
@@ -76,7 +81,8 @@ for folder in "${folders[@]}"; do
 done
 
 if [[ $failed -ne 0 ]]; then
-  echo "Binary check failed. Add the missing packages to the Dockerfile." >&2
+  echo "Binary check failed. Add the missing packages to the Dockerfile, or for a" >&2
+  echo "wrong library version, check both images are on the same Debian release." >&2
   exit 1
 fi
 echo "All binaries found their libraries."
