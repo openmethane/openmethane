@@ -3,6 +3,35 @@
 # Secret management
 FROM segment/chamber:2 AS chamber
 
+# WRF and WPS, from https://github.com/openmethane/docker-wrf. Pinned by digest
+# because docker-wrf overwrites the 4.5.1 tag on every push to main. Changing
+# the digest changes the model that produces the meteorology, so treat it as a
+# possible change to science outputs: compare WRF output before and after.
+FROM ghcr.io/openmethane/wrf:4.5.1@sha256:7cd949adef3bc1172a139f6d472e050aceba8296dbd78d743e1737a831249759 AS wrf
+
+# Stage only the files needed to run WPS, real.exe and wrf.exe, at the paths
+# they have in the wrf image. This leaves out the sources, object files and
+# unused programs, about 465 MB. cp -L follows symlinks: some files in run/
+# link into the build tree, and the WPS programs link into their src/ folders.
+FROM wrf AS wrf-runtime
+RUN <<EOT
+set -eu
+mkdir -p /staging/wrf/main /staging/wrf/run \
+    /staging/wps/geogrid /staging/wps/metgrid /staging/wps/ungrib
+
+cp /opt/wrf/main/wrf.exe /opt/wrf/main/real.exe /staging/wrf/main/
+# run/ links the programs from main/; only its data files are needed. The
+# `+` form makes find fail if cp does, so a dangling link fails the build.
+find /opt/wrf/run -mindepth 1 -maxdepth 1 ! -name '*.exe' \
+    -exec cp -L -t /staging/wrf/run/ {} +
+
+cp -L /opt/wps/geogrid.exe /opt/wps/ungrib.exe /opt/wps/metgrid.exe \
+    /opt/wps/link_grib.csh /staging/wps/
+cp -L /opt/wps/geogrid/GEOGRID.TBL* /staging/wps/geogrid/
+cp -L /opt/wps/metgrid/METGRID.TBL* /staging/wps/metgrid/
+cp -rL /opt/wps/ungrib/Variable_Tables /staging/wps/ungrib/
+EOT
+
 # First, build the application in the `/app` directory
 FROM ghcr.io/astral-sh/uv:trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
@@ -75,6 +104,39 @@ apt-get install -qyy \
 apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
+
+# The libraries the WRF and WPS binaries link against directly, and
+# the programs they run (mpirun, and csh for link_grib.csh). Installed by name
+# rather than relying on the cmaq-adjoint base happening to have them.
+# docker/check-binaries.sh, run below, fails the build if this list falls
+# behind the binaries.
+RUN <<EOT
+set -e
+apt-get update -qy
+apt-get install -qyy \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    libgfortran5 \
+    libmpich12 \
+    libnetcdf22 \
+    libnetcdff7 \
+    libpng16-16t64 \
+    mpich \
+    csh
+
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+EOT
+
+COPY --from=wrf-runtime /staging/wrf /opt/wrf
+COPY --from=wrf-runtime /staging/wps /opt/wps
+# Where the WRF step finds them
+ENV WRF_INSTALL_DIR=/opt/wrf \
+  WPS_INSTALL_DIR=/opt/wps
+
+COPY docker/check-binaries.sh /usr/local/bin/check-binaries.sh
+RUN check-binaries.sh --command mpirun --command csh \
+    /opt/wrf /opt/wps /opt/cmaq/bin
 
 # Secret management
 COPY --from=chamber /chamber /bin/chamber
