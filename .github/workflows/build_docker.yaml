@@ -263,8 +263,9 @@ jobs:
           # Make the folder writable by user 1000 in the docker container
           sudo chmod a+w $RUNNER_TEMP/data
           echo "DATA_PATH=$RUNNER_TEMP/data" >> $GITHUB_OUTPUT
-      - name: Cache FNL analyses
-        uses: actions/cache@v6
+      - name: Restore cached FNL analyses
+        id: fnl-cache
+        uses: actions/cache/restore@v6
         with:
           path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
           key: wrf-fnl-au-test-2022-12-07
@@ -280,6 +281,13 @@ jobs:
             -e NCPUS=1 \
             ${{ needs.build.outputs.registry-image-id }} \
             wrf run
+      # Saved even if a later step fails, so the 3 GB isn't downloaded again
+      - name: Save FNL analyses to the cache
+        if: ${{ always() && steps.fnl-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
+          key: wrf-fnl-au-test-2022-12-07
       - name: Compare with setup-wrf
         run: |
           mkdir ${{ steps.data-path.outputs.DATA_PATH }}/setup-wrf

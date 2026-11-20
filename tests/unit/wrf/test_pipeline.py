@@ -7,7 +7,7 @@ import pytest
 
 from openmethane.util.process import ProgramFailed
 from openmethane.wrf import pipeline
-from openmethane.wrf.outputs import day_folder, expected_files
+from openmethane.wrf.outputs import day_folder, expected_files, is_complete
 
 DAY = datetime.date(2022, 12, 7)
 EVERY_PROGRAM = ["link_grib.csh", "ungrib.exe", "metgrid.exe", "real.exe", "wrf.exe"]
@@ -98,6 +98,8 @@ def test_a_day_with_raw_output_left_runs_again(stub_config, tmp_path):
 
     assert ran
     assert stub_calls(tmp_path) == EVERY_PROGRAM
+    # The stale raw file is gone, so the day is now complete
+    assert is_complete(stub_config.output_path, stub_config.domains, DAY)
 
 
 def test_a_failure_publishes_logs_and_met_em_but_no_output(stub_config, monkeypatch):
@@ -161,6 +163,22 @@ def test_a_missing_success_line_fails_even_with_exit_code_0(stub_config, monkeyp
 
     with pytest.raises(ProgramFailed, match="did not print 'SUCCESS COMPLETE REAL_EM INIT'"):
         pipeline.run(stub_config)
+
+    # What real.exe wrote is removed, so a retry doesn't take it as finished
+    window = stub_config.scratch_path / "2022120700"
+    assert not [path.name for path in window.glob("wr*_d01")]
+
+
+def test_only_this_runs_met_em_files_are_published(stub_config):
+    # A cache shared with another day
+    stub_config.met_em_cache_path.mkdir(parents=True)
+    (stub_config.met_em_cache_path / "met_em.d01.2023-01-01_00:00:00.nc").touch()
+
+    pipeline.run(stub_config)
+
+    published = sorted(path.name for path in (stub_config.output_path / "metem").iterdir())
+    assert len(published) == 7
+    assert "met_em.d01.2023-01-01_00:00:00.nc" not in published
 
 
 def test_restart_files_are_removed(stub_config, monkeypatch):

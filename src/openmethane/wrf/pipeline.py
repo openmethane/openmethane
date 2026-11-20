@@ -5,11 +5,14 @@ is published to the output folder at the end:
 - on success, each window's averaged output, namelists and logs, the met_em
   cache and the geo_em files, and scratch is removed;
 - on failure, only logs and the met_em cache, whose files are complete by
-  construction, and scratch is kept so a retry on the same host can reuse it.
+  construction, and scratch is left in place.
 
 A retry reuses whatever earlier work it finds: FNL analyses in the cache,
-met_em files in the met_em cache, and real.exe's output in a window's folder.
-They come from the same inputs, so they can't be stale.
+met_em files in the met_em cache or published by an earlier run, and
+real.exe's output in a window's folder. They come from the same inputs, so
+they can't be stale. In the openmethane image the entrypoint empties
+`CHK_PATH` when the command ends, so there only the FNL cache and published
+met_em files survive to a retry.
 """
 
 import logging
@@ -187,7 +190,14 @@ def run_real(config: WrfConfig, window: RunWindow) -> None:
         num_metgrid_soil_levels=soil_levels,
     ).write(folder / "namelist.input", force=True)
 
-    model.run_real(folder, config.install, folder / LOG_DIR)
+    try:
+        model.run_real(folder, config.install, folder / LOG_DIR)
+    except BaseException:
+        # real.exe may have written some of its output before failing, which a
+        # retry would otherwise take as finished
+        for path in model.real_outputs(folder, config.domains):
+            path.unlink(missing_ok=True)
+        raise
     for name in needed:
         (folder / name).unlink()
 
@@ -224,8 +234,15 @@ def publish(config: WrfConfig, windows: list[RunWindow], succeeded: bool) -> Non
     kept. After success everything is copied, and scratch is removed.
     """
     config.output_path.mkdir(parents=True, exist_ok=True)
-    if config.met_em_cache_path.is_dir():
-        _copy_files(config.met_em_cache_path.glob("met_em.*.nc"), config.output_path / "metem")
+    # Only this run's met_em files, in case the cache is shared with other runs
+    needed = {
+        name
+        for window in windows
+        for name in wps.needed_met_em(config.domains, window.analysis_times())
+    }
+    _copy_files(
+        (config.met_em_cache_path / name for name in sorted(needed)), config.output_path / "metem"
+    )
 
     for window in windows:
         folder = window_dir(config, window)
@@ -240,6 +257,9 @@ def publish(config: WrfConfig, windows: list[RunWindow], succeeded: bool) -> Non
         )
         if succeeded:
             _copy_files(folder.glob("WRFOUT_*.nc"), destination)
+            # Raw output from an earlier failed run would leave the day incomplete
+            for stale in destination.glob("wrfout_*"):
+                stale.unlink()
 
     if not succeeded:
         logger.info(f"kept {config.scratch_path} for a retry")

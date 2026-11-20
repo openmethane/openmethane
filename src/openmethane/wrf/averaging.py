@@ -7,6 +7,10 @@ run holds a single frame, so its "mean" is instantaneous.
 
 The arithmetic is setup-wrf's `average_fields`, unchanged, because MCIP's
 input must not change at the level of rounding.
+
+setup-wrf then ran `nccopy -d1` over the netCDF-3 files left in the folder.
+The averaged files are already netCDF-4 and the raw files are gone by then,
+so it changed nothing, and isn't repeated here.
 """
 
 import datetime

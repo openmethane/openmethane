@@ -57,8 +57,10 @@ asked for is complete, unless `FORCE_WRF=true` or `--force` is given.
 
 If any program fails, the WRF step publishes only the logs and the `metem/`
 files, and no averaged output, so an incomplete day is never mistaken for a
-complete one. It keeps its scratch folder, so a retry on the same host reuses
-what was already done. A retry elsewhere reuses the published `metem/` files.
+complete one. A retry reuses the published `metem/` files, and the FNL
+analyses in `FNL_CACHE_PATH`. Run outside the image, the scratch folder is
+left in place, and a retry also reuses real.exe's output there. In the image,
+the entrypoint empties `CHK_PATH` when the command ends.
 
 ## Compared with setup-wrf
 

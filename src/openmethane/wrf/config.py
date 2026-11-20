@@ -154,8 +154,18 @@ class WrfConfig:
         if problems:
             raise WrfConfigError(problems)
 
-        output_path = pathlib.Path(store_path) / "wrf" / domain_name
-        scratch_path = pathlib.Path(chk_path) / "wrf" / domain_name
+        # Absolute, since programs run in each window's folder and links made
+        # there must not depend on where the command was started.
+        output_path = pathlib.Path(store_path).absolute() / "wrf" / domain_name
+        scratch_path = pathlib.Path(chk_path).absolute() / "wrf" / domain_name
+        if output_path.is_relative_to(scratch_path) or scratch_path.is_relative_to(output_path):
+            # Scratch is removed after a successful run, with anything inside it
+            raise WrfConfigError(
+                [
+                    "CHK_PATH and STORE_PATH must be separate folders,"
+                    f" got {scratch_path} and {output_path}"
+                ]
+            )
         return cls(
             start_date=start_date,
             end_date=start_date,
@@ -164,9 +174,14 @@ class WrfConfig:
             scratch_path=scratch_path,
             met_em_cache_path=pathlib.Path(
                 environ.get("MET_EM_CACHE_PATH") or scratch_path / "metem"
+            ).absolute(),
+            fnl_cache_path=pathlib.Path(
+                environ.get("FNL_CACHE_PATH") or scratch_path / "fnl"
+            ).absolute(),
+            install=WrfInstall(
+                wrf_dir=pathlib.Path(wrf_install_dir).absolute(),
+                wps_dir=pathlib.Path(wps_install_dir).absolute(),
             ),
-            fnl_cache_path=pathlib.Path(environ.get("FNL_CACHE_PATH") or scratch_path / "fnl"),
-            install=WrfInstall(wrf_dir=wrf_install_dir, wps_dir=wps_install_dir),
             mpi_ranks=mpi_ranks,
             force=force_text == "true",
             fnl_dataset_root=environ.get("FNL_DATASET_ROOT") or FNL_DATASET_ROOT,
