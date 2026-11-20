@@ -47,7 +47,7 @@ repository's Docker image. See [Installing locally](guides/local-install.md) if
 you need the binaries outside the published image.
 
 The image also contains the WRF and WPS programs, copied from the
-[docker-wrf](https://github.com/openmethane/docker-wrf) image, and wgrib2.
+[docker-wrf](https://github.com/openmethane/docker-wrf) image.
 Nothing in this repository runs them yet: WRF still runs from setup-wrf's image
 until the move tracked in
 [#316](https://github.com/openmethane/openmethane/issues/316) is done.

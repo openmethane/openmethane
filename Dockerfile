@@ -32,29 +32,6 @@ cp -L /opt/wps/metgrid/METGRID.TBL* /staging/wps/metgrid/
 cp -rL /opt/wps/ungrib/Variable_Tables /staging/wps/ungrib/
 EOT
 
-# wgrib2 subsets the FNL analyses before ungrib. It isn't packaged by Debian,
-# so build it from source.
-FROM debian:trixie-slim AS wgrib2-builder
-ARG WGRIB2_VERSION=3.8.0
-ADD --checksum=sha256:39faebada36da5457c75f0980bb68fa299b221b3e6b335bb7d29006a35830c54 \
-    https://github.com/NOAA-EMC/wgrib2/archive/refs/tags/v${WGRIB2_VERSION}.tar.gz /tmp/wgrib2.tar.gz
-RUN <<EOT
-set -eu
-apt-get update -qy
-apt-get install -qyy \
-    -o APT::Install-Recommends=false \
-    -o APT::Install-Suggests=false \
-    build-essential \
-    cmake
-
-mkdir -p /tmp/wgrib2-src
-tar -xzf /tmp/wgrib2.tar.gz -C /tmp/wgrib2-src --strip-components=1
-cmake -S /tmp/wgrib2-src -B /tmp/wgrib2-src/build \
-    -DCMAKE_INSTALL_PREFIX=/opt/wgrib2 -G "Unix Makefiles"
-make -C /tmp/wgrib2-src/build -j"$(nproc)"
-make -C /tmp/wgrib2-src/build install
-EOT
-
 # First, build the application in the `/app` directory
 FROM ghcr.io/astral-sh/uv:trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
@@ -128,7 +105,7 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
-# The libraries the WRF, WPS and wgrib2 binaries link against directly, and
+# The libraries the WRF and WPS binaries link against directly, and
 # the programs they run (mpirun, and csh for link_grib.csh). Installed by name
 # rather than relying on the cmaq-adjoint base happening to have them.
 # docker/check-binaries.sh, run below, fails the build if this list falls
@@ -153,13 +130,10 @@ EOT
 
 COPY --from=wrf-runtime /staging/wrf /opt/wrf
 COPY --from=wrf-runtime /staging/wps /opt/wps
-# Only the program: the libraries and headers beside it are for linking against wgrib2
-COPY --from=wgrib2-builder /opt/wgrib2/bin/wgrib2 /opt/wgrib2/bin/wgrib2
-ENV PATH="/opt/wgrib2/bin:$PATH"
 
 COPY docker/check-binaries.sh /usr/local/bin/check-binaries.sh
-RUN check-binaries.sh --command mpirun --command csh --command wgrib2 \
-    /opt/wrf /opt/wps /opt/wgrib2 /opt/cmaq/bin
+RUN check-binaries.sh --command mpirun --command csh \
+    /opt/wrf /opt/wps /opt/cmaq/bin
 
 # Secret management
 COPY --from=chamber /chamber /bin/chamber
