@@ -226,6 +226,23 @@ Use `get_logger` from `openmethane.util.logger` rather than configuring
 variables consistently across the project. See
 [Troubleshooting](../troubleshooting.md#logging).
 
+A new command with its own entry point can instead use
+`logging.getLogger(__name__)` in each module and call
+`configure_logging` from `openmethane.util.logging` once, in the entry point.
+That module reads `LOG_LEVEL` when it is called rather than on import.
+
+## Shared utilities
+
+These modules in `openmethane.util` read no configuration on import, so any
+part of the project can use them. Prefer them in new code.
+
+| Module | Use it to |
+| --- | --- |
+| `process` | Run an external program with `run_program`: a list of arguments, output to a log file, failure from the exit code and an optional success line, never from stderr |
+| `download` | Download files with `download` or `fetch_missing`: retries with backoff, and a file only appears once it is complete |
+| `logging` | Configure logging once, from an entry point |
+| `decomposition` | Split a grid across MPI ranks with `solve_decomposition`, given the model's halo width |
+
 ## Code review
 
 Review isn't only for catching bugs. It keeps the team aware of how the
