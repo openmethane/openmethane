@@ -60,13 +60,19 @@ A domain needs three files:
 3. Copy `namelist.wps`, `namelist.wrf` and `add_remove_var.txt` from
    `domains/aust10km` into it, and give `namelist.wps` the same settings as your
    YAML file.
-4. Run setup-wrf's `scripts/run-wrf.sh` for your `DOMAIN_NAME` and any
-   `START_DATE` with data available. It runs geogrid, since your domain isn't
-   published, and leaves `wrf/{DOMAIN_NAME}/geo_em.d01.nc` in its data
-   directory.
+4. Download WRF's static geography data, which geogrid reads, following
+   setup-wrf's README (`make data/geog`, or `scripts/download-geog.sh` from
+   either repository; it is about 30 GB once unpacked). Then run setup-wrf's
+   `scripts/run-wrf.sh` for your `DOMAIN_NAME` and any `START_DATE` with data
+   available. It runs geogrid, since your domain isn't published, and leaves
+   `wrf/{DOMAIN_NAME}/geo_em.d01.nc` in its data directory.
 5. Build the `openmethane` image from your checkout, which now holds your YAML
-   file, with `make build`, and run the WRF step and CMAQ preprocessing for one
-   day with it (see [Using your domain](#using-your-domain)).
+   file, with `make build`. With it, run the WRF step for one day (see
+   [Using your domain](#using-your-domain) for where `geo_em.d01.nc` goes),
+   then `scripts/cmaq_preprocess/run-cmaq-preprocess.sh` with
+   `SKIP_CAMS_DOWNLOAD=true`. The CAMS download needs the domain file, which
+   doesn't exist yet. MCIP runs first and is all that's needed here; the steps
+   after it need the domain file too, so expect them to fail.
 6. Locate `mcip/{START_DATE}/d01/GRIDCRO2D_{DOMAIN_NAME}_v1` in that day's data
    directory.
 7. Check out the [openmethane-prior repo](https://github.com/openmethane/openmethane-prior)

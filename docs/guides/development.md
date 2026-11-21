@@ -101,8 +101,9 @@ make test-wrf
 ```
 
 The first run downloads the day's FNL analyses, about 3.4 GB, into `data/fnl`,
-and later runs reuse them. Set `WRF_TEST_FNL_CACHE_PATH` to keep them somewhere
-else.
+and later runs reuse them. When running pytest in a container yourself, as CI
+does, `WRF_TEST_FNL_CACHE_PATH` sets another folder in the container to keep
+them in.
 
 ### WRF test data
 
