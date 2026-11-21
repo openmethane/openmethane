@@ -35,20 +35,13 @@ echo "Running om-daily end-to-end, data will be stored in $DATA_PATH"
 # fetch the domain file from the data store
 fetch_domain_file "$DATA_PATH"
 
-# This only has to be done once assuming $DATA_ROOT isn't cleared
-if [[ -d "$DATA_ROOT/geog/WPS_GEOG" ]]; then
-  echo "WPS_GEOG is present, skipping wrf-download_geog"
-else
-  # JobName: wrf-download_geog
-  docker run --name="wrf-download_geog" --rm \
-    --env-file "$ENV_FILE" -v "$DATA_ROOT":"$STORE_ROOT" \
-    "$SETUP_WRF_IMAGE" bash ./scripts/download-geog.sh
-fi
-
 # JobName: wrf-run
+# FNL analyses are kept at the root of $DATA_ROOT, so that days sharing an
+# analysis download it once
 docker run --name="e2e-daily-wrf-run" --rm \
   --env-file "$ENV_FILE" -v "$DATA_ROOT":"$STORE_ROOT" \
-  "$SETUP_WRF_IMAGE" bash scripts/run-wrf.sh
+  -e FNL_CACHE_PATH="$STORE_ROOT/fnl" \
+  "$OPENMETHANE_IMAGE" wrf run
 
 # JobName: prior-generate
 docker run --name="e2e-daily-prior-generate" --rm \

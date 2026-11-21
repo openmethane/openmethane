@@ -61,6 +61,9 @@ markers = [
     # Deselect with `-m "not network"` to run offline, or when a third-party
     # outage should not be allowed to fail the suite.
     "network: hits a third-party service over the network",
+    # Left out of `make test`, since they need the WRF and WPS programs and
+    # take minutes. `make test-wrf` runs them in the image.
+    "wrf_integration: runs the real WRF and WPS programs",
 ]
 filterwarnings = [
     # Warnings fail the suite, so that new ones are dealt with as they appear

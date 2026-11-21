@@ -15,7 +15,11 @@ uv sync
 # Run tests locally (builds Docker image, then runs pytest inside it)
 make docker-test
 # To run tests without Docker (only works inside the container):
-TARGET=docker-test uv run python -m pytest -r a -v tests --ignore=tests/integration/fourdvar
+TARGET=docker-test uv run python -m pytest -r a -v tests --ignore=tests/integration/fourdvar -m "not wrf_integration"
+
+# Run WRF for a real au-test day in Docker (about 5 minutes; 3.4 GB of FNL
+# analyses are downloaded into data/fnl the first time)
+make test-wrf
 
 # Run a single test (must be run inside the Docker container)
 TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
@@ -50,19 +54,22 @@ When changing behaviour, check whether `docs/reference/parameters.md` (env vars)
 
 ## Architecture
 
-The pipeline has three major stages that run sequentially:
+The pipeline has four major stages that run sequentially:
 
-### 1. CMAQ Preprocessing (`scripts/cmaq_preprocess/`, `src/openmethane/cmaq_preprocess/`)
+### 1. WRF (`src/openmethane/wrf/`)
+Produces hourly meteorology for MCIP. The `wrf` console script (`wrf run`; `uv run wrf run` from a checkout) downloads NCEP FNL analyses and the domain's published `geo_em`, runs ungrib, metgrid, real.exe and wrf.exe, averages the output and publishes it to `${STORE_PATH}/wrf/${DOMAIN_NAME}`. Unlike `fourdvar`, it reads its configuration from the environment when it starts (`WrfConfig.from_env`), never at import time, and doesn't load `.env.${TARGET}`. Domain geometry lives in `src/openmethane/wrf/domains/`. The output contract is `docs/reference/wrf-outputs.md`.
+
+### 2. CMAQ Preprocessing (`scripts/cmaq_preprocess/`, `src/openmethane/cmaq_preprocess/`)
 Prepares model inputs:
 - `download_cams_input.py` — downloads CAMS CH4 boundary conditions
 - `setup_for_cmaq.py` — drives MCIP/ICON/BCON csh scripts (`scripts/cmaq/run.mcip`, `run.icon`, `run.bcon`) to generate meteorological/boundary condition files
 - `make_emis_template.py`, `make_template.py`, `make_prior.py` — create CMAQ emissions templates and prior flux estimate
 
-### 2. Observation Preprocessing (`scripts/obs_preprocess/`, `src/openmethane/obs_preprocess/`)
+### 3. Observation Preprocessing (`scripts/obs_preprocess/`, `src/openmethane/obs_preprocess/`)
 - `fetch_tropomi.py` — finds TropOMI granules crossing the `DOMAIN_FILE` domain in the CDSE catalogue and downloads them from the public `meeo-s5p` S3 mirror (no credentials needed)
 - `tropomi_methane_preprocess.py` — converts raw TropOMI into model-compatible observation files
 
-### 3. 4D-Var Assimilation (`src/openmethane/fourdvar/`)
+### 4. 4D-Var Assimilation (`src/openmethane/fourdvar/`)
 The core inversion. Key modules:
 - `params/` — configuration loaded **at import time** from env vars + `.env.${TARGET}` file
 - `datadef/` — typed data containers (PhysicalData, UnknownData, ModelInputData, etc.)
@@ -100,6 +107,8 @@ Tests use `pytest-regressions` for data regression testing — output files are 
 Many unit and integration tests require specific binaries to be present (i.e. the CMAQ adjoint binary, or tools like `ncatted`) and will fail if run locally. Excluding tests in `tests/integration/fourdvar/`, all tests should pass inside Docker, which can be run with `make docker-test`.
 
 The `tests/integration/fourdvar/` tests rely on input data which hasn't been provided in a reproducible way. These should be fixed when possible.
+
+Tests marked `wrf_integration` (`tests/integration/wrf/`) run the real WRF and WPS programs and are left out of `make test`; run them with `make test-wrf`. The WRF unit tests in `tests/unit/wrf/` use stub programs instead and run everywhere.
 
 ## Before opening a pull request
 

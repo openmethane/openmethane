@@ -46,8 +46,8 @@ What is being modelled. These are the settings that change between runs.
 | --- | --- | --- | --- |
 | `MET_DIR` | path | MCIP output directory | *required* |
 | `CTM_DIR` | path | CMAQ template/output directory | *required* |
-| `WRF_DIR` | path | WRF output directory, from setup-wrf | *required* |
-| `GEO_DIR` | path | Directory containing the `geo_em.d??.nc` geometry file, from setup-wrf | *required* |
+| `WRF_DIR` | path | WRF output directory, from the [WRF step](wrf-outputs.md) | *required* |
+| `GEO_DIR` | path | Directory containing the `geo_em.d??.nc` geometry file, from the [WRF step](wrf-outputs.md) | *required* |
 | `TEMPLATE_DIR` | path | CMAQ template directory | `${STORE_PATH}/templates` |
 | `CHK_PATH` | path | CMAQ checkpoint files. Large and frequently rewritten — use fast scratch disk. Cleared by the container entrypoint. | `{CMAQ_BASE}/chkpnt` |
 | `PRIOR_FILE` | path | The prior emissions estimate, from openmethane-prior | *required* |
@@ -221,13 +221,14 @@ part of the model configuration.
 | Variable | Description | Default |
 | --- | --- | --- |
 | `DATA_ROOT` | Host directory holding all runs, mounted into each container at `/app/data` | `/tmp/openmethane-e2e` |
-| `OPENMETHANE_IMAGE` | Image used for openmethane steps | `ghcr.io/openmethane/openmethane:stable` |
-| `OPENMETHANE_PRIOR_IMAGE` | Image used for the prior | `ghcr.io/openmethane/openmethane-prior:stable` |
-| `SETUP_WRF_IMAGE` | Image used for WRF | `ghcr.io/openmethane/setup-wrf:stable` |
-| `BUILD_LOCAL_DOCKER` | Set `true` to build the three images from local checkouts instead of pulling | `false` |
+| `OPENMETHANE_IMAGE` | Image used for openmethane steps, including WRF | `ghcr.io/openmethane/openmethane:stable`, or `openmethane` with `BUILD_LOCAL_DOCKER=true` |
+| `OPENMETHANE_PRIOR_IMAGE` | Image used for the prior | `ghcr.io/openmethane/openmethane-prior:stable`, or `openmethane-prior` with `BUILD_LOCAL_DOCKER=true` |
+| `BUILD_LOCAL_DOCKER` | Set `true` to build the two images from local checkouts and run them instead of pulling | `false` |
 | `ALERTS_BASELINE_NAME` | Filename of the domain's shared alerts baseline, at the root of `DATA_ROOT` | `alerts-baseline.${DOMAIN_NAME}-${DOMAIN_VERSION}.nc` |
 | `RUN_TYPE` | `daily` or `monthly`, set by each script | — |
 
 The run parameters `START_DATE`, `END_DATE`, `DOMAIN_NAME`, `DOMAIN_VERSION`,
 `NCPUS` and `BOUNDARY_TRIM` are also defaulted here (to a single day of
 `au-test`) and written into the env file passed to each container.
+`docker-e2e-daily.sh` sets the WRF job's `FNL_CACHE_PATH` to `fnl/` at the root
+of `DATA_ROOT`, so that every day shares the analyses.

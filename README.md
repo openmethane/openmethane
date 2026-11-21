@@ -40,18 +40,17 @@ Full documentation index: **[docs/](docs/README.md)**
 
 ## Related repositories
 
-Running the full pipeline needs two companion repositories, each of which also
-publishes a public Docker image:
+Running the full pipeline needs one companion repository, which also publishes
+a public Docker image:
 
 - [openmethane-prior](https://github.com/openmethane/openmethane-prior) — builds
   the initial (prior) emissions estimate from inventories and land-use data.
-- [setup-wrf](https://github.com/openmethane/setup-wrf) — runs the WRF weather
-  model to produce the meteorology that drives atmospheric transport, and holds
-  the domain definitions.
 
 The CMAQ adjoint model is built in
-[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) and bundled into this
-repository's Docker image.
+[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint), and the WRF weather
+model in [docker-wrf](https://github.com/openmethane/docker-wrf). Both are
+bundled into this repository's Docker image, which runs WRF with its `wrf`
+command.
 
 > [!NOTE]
 > The CMAQ-Adjoint repository and its container image are not public, so the
