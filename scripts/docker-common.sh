@@ -13,16 +13,17 @@
 
 DOCKER_COMMON_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
-OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"ghcr.io/openmethane/openmethane-prior:stable"}
-SETUP_WRF_IMAGE=${SETUP_WRF_IMAGE:-"ghcr.io/openmethane/setup-wrf:stable"}
-
 BUILD_LOCAL_DOCKER=${BUILD_LOCAL_DOCKER:-false}
 if [[ "$BUILD_LOCAL_DOCKER" == true ]]; then
   # Build docker containers using locally checked out versions, so that local
   # changes can be easily tested
   bash "$DOCKER_COMMON_DIR/docker-build-all.sh"
+  OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"openmethane"}
+  OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"openmethane-prior"}
 fi
+
+OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
+OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"ghcr.io/openmethane/openmethane-prior:stable"}
 
 # the location on disk where data and results will be stored
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
