@@ -18,7 +18,7 @@ Run whole workflows. These are the entry points for most users.
 | `scripts/docker-e2e-monthly.sh` | Runs the complete [monthly workflow](../overview.md#monthly-workflow), including the inversion. |
 | `scripts/docker-alerts-baseline.sh` | Builds the [alerts baseline](../overview.md#alerts-workflows) for a domain from the daily runs between `START_DATE` and `END_DATE`. |
 | `scripts/docker-create-alerts.sh` | Creates alerts for the single day `START_DATE`, from that day's daily run and the domain's baseline. |
-| `scripts/docker-build-all.sh` | Builds `setup-wrf`, `openmethane-prior` and `openmethane` images from local checkouts. Invoked by the above when `BUILD_LOCAL_DOCKER=true`. |
+| `scripts/docker-build-all.sh` | Builds the `openmethane-prior` and `openmethane` images from local checkouts. Invoked by the above when `BUILD_LOCAL_DOCKER=true`. |
 | `scripts/run-all.sh` | Runs CMAQ preprocessing, TROPOMI fetch and preprocessing, bias correction and the inversion in one process, inside a single container. Simpler than the e2e scripts but assumes WRF output and the prior already exist. |
 
 All four `docker-*` workflow scripts source `scripts/docker-common.sh`, which
@@ -45,6 +45,7 @@ outputs](wrf-outputs.md).
 | --- | --- |
 | `wrf run` | Runs the whole WRF step and publishes the output: downloads the FNL analyses, runs ungrib and metgrid, real.exe and wrf.exe, and averages each hour. Exits early if the output is complete; `--force` runs it anyway. Exit code 1 if a stage fails, 2 if the configuration is invalid. `uv run wrf run` from a checkout |
 | `wrf prepare`, `fetch`, `wps`, `real`, `wrf`, `average` | One stage at a time, for development. Each finds earlier stages' output in scratch |
+| `scripts/download-geog.sh` | Downloads WRF's static geography data into `data/geog/WPS_GEOG`: the high-resolution datasets, or the low-resolution ones with `--low-res`. Only geogrid reads it, which the `wrf` command doesn't run, so a WRF run doesn't need it. Kept for the domain creation tool ([#298](https://github.com/openmethane/openmethane/issues/298)) |
 | `scripts/wrf/compare_wrf_runs.py OURS THEIRS` | Compares two WRF output folders and reports every difference by file, variable and attribute. Exits 1 if they differ. Logs are never compared; `--ignore GLOB` leaves out more |
 
 ## CMAQ preprocessing
@@ -142,11 +143,12 @@ than the rest of the codebase.
 | --- | --- |
 | `install` | `uv sync` |
 | `build` | Build the `openmethane` Docker image on top of `ghcr.io/openmethane/cmaq-adjoint`. |
-| `test` | Run the test suite. Requires the container. |
+| `test` | Run the test suite, except the WRF integration tests. Requires the container. |
 | `docker-test` | Build the image, then run the tests inside it. |
+| `test-wrf` | Build the image, then run the WRF integration tests inside it: a real au-test day, about 5 minutes. Downloads the day's FNL analyses into `data/fnl` the first time. |
 | `test-regen` | Regenerate regression fixtures. |
 | `prepare-templates` | Run the three template generation scripts. |
-| `fetch-domains` | Download the WRF geometry and Open Methane domain files for `aust10km` and `au-test` into `data/`. |
+| `fetch-domains` | Download the WRF geometry and Open Methane domain files for `aust10km` and `au-test` from the public data store into `data/`. |
 | `fetch-test-data` | Download the `au-test` geometry and domain files, plus the CAMS file the tests need. Run by `docker-test`. |
 | `changelog-draft` | Preview the next release's changelog. |
 | `format` | Format with ruff. |

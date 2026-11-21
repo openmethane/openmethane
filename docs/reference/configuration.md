@@ -17,6 +17,12 @@ Configuration is read when `openmethane.fourdvar.params` is first imported, by
 - **Changing an environment variable mid-process has no effect.** Anything that
   needs different configuration must be a separate process.
 
+The `wrf` command is the exception. It reads its
+[own variables](parameters.md#wrf) from the environment when it starts, and
+nothing at import time. It doesn't load `.env.${TARGET}`, so every one of its
+variables has to be in the environment itself. The image sets
+`WRF_INSTALL_DIR` and `WPS_INSTALL_DIR`.
+
 ## Targets
 
 The `TARGET` environment variable (default `docker`) names an environment. On

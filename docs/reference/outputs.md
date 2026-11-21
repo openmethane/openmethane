@@ -148,6 +148,7 @@ Not published, but useful when debugging a run.
 | `tropomi/<YYYY-MM-DD>/*.nc` | daily | The raw TROPOMI granules as downloaded, whole rather than cropped. Reused if the fetch is rerun. |
 | `simulobs.pic.gz` | daily | Simulated observations — what the satellite should have seen given the prior. Compared against the processed observations to produce alerts. |
 | `input/test_obs.pic.gz` | daily | The processed TROPOMI observations, in `fourdvar`'s format. Matched by `OBS_FILE_GLOB`. |
+| `wrf/<DOMAIN_NAME>/` | daily | Hourly WRF meteorology, the `met_em` files it was made from, and the WRF logs. See [WRF outputs](wrf-outputs.md). |
 | MCIP output in `MET_DIR` | daily | Meteorology on the CMAQ grid. Reused by the monthly workflow rather than regenerated. |
 | CMAQ templates in `CTM_DIR` | preprocessing | Concentration, forcing and sensitivity templates. |
 

@@ -39,7 +39,7 @@ directly:
 
 ```shell
 TARGET=docker-test uv run python -m pytest -r a -v tests \
-  --ignore=tests/integration/fourdvar
+  --ignore=tests/integration/fourdvar -m "not wrf_integration"
 ```
 
 A single test:
@@ -67,7 +67,7 @@ suite:
 
 ```shell
 TARGET=docker-test uv run python -m pytest -r a -v tests \
-  --ignore=tests/integration/fourdvar -m "not network"
+  --ignore=tests/integration/fourdvar -m "not network and not wrf_integration"
 ```
 
 Two categories of test will not pass outside the container:
@@ -89,10 +89,27 @@ change in a fixture is usually the bug, not the fixture being stale:
 make test-regen
 ```
 
+### WRF integration tests
+
+Tests marked `wrf_integration`, in `tests/integration/wrf/`, run the real WRF
+and WPS programs for au-test on 2022-12-07 and check the published output
+against the [WRF output contract](../reference/wrf-outputs.md). They take about
+5 minutes and need the image, so `make test` leaves them out. Run them with:
+
+```shell
+make test-wrf
+```
+
+The first run downloads the day's FNL analyses, about 3.4 GB, into `data/fnl`,
+and later runs reuse them. Set `WRF_TEST_FNL_CACHE_PATH` to keep them somewhere
+else.
+
 ### WRF test data
 
-The `test-wrf` CI job runs WRF for au-test on 2022-12-07 and compares the
-output with setup-wrf's for the same day. setup-wrf's output is in a bundle in
+The `test-wrf` CI job runs the WRF integration tests, then runs WRF again and
+compares the output with setup-wrf's for the same day, until production has
+moved off setup-wrf
+([#323](https://github.com/openmethane/openmethane/issues/323)). setup-wrf's output is in a bundle in
 the Open Methane public data store,
 `https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.<YYYYMMDD>.tar.gz`,
 with a README inside saying how it was made. The FNL analyses aren't in it:
@@ -122,16 +139,16 @@ uv run ruff format .    # or: make format
 daily or monthly workflow as a sequence of containers, mirroring production.
 
 By default they pull the published `stable` images. To exercise your local
-changes, build first — this assumes `openmethane`, `openmethane-prior` and
-`setup-wrf` are checked out in the same parent folder:
+changes, build first — this assumes `openmethane` and `openmethane-prior` are
+checked out in the same parent folder:
 
 ```shell
 BUILD_LOCAL_DOCKER=true bash scripts/docker-e2e-daily.sh
 ```
 
-Individual images can also be overridden with `OPENMETHANE_IMAGE`,
-`OPENMETHANE_PRIOR_IMAGE` and `SETUP_WRF_IMAGE`, which is useful for testing one
-changed component against known-good versions of the others.
+Individual images can also be overridden with `OPENMETHANE_IMAGE` and
+`OPENMETHANE_PRIOR_IMAGE`, which is useful for testing one changed component
+against known-good versions of the others.
 
 Alerts have their own pair of scripts, `scripts/docker-alerts-baseline.sh` and
 `scripts/docker-create-alerts.sh`, which read the outputs of completed daily
