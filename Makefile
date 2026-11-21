@@ -71,25 +71,30 @@ fetch-test-data: data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/d
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
-	curl -L https://openmethane.s3.amazonaws.com/domains/aust10km/v1/geo_em.d01.nc \
-		-o data/domains/aust10km/v1/geo_em.d01.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/aust10km/v1/geo_em.d01.nc \
+		-o data/domains/aust10km/v1/geo_em.d01.nc.part
+	mv data/domains/aust10km/v1/geo_em.d01.nc.part data/domains/aust10km/v1/geo_em.d01.nc
 
 data/domains/au-test/v1/geo_em.d01.nc:
 	mkdir -p data/domains/au-test/v1
-	curl -L https://openmethane.s3.amazonaws.com/domains/au-test/v1/geo_em.d01.nc \
-		-o data/domains/au-test/v1/geo_em.d01.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/au-test/v1/geo_em.d01.nc \
+		-o data/domains/au-test/v1/geo_em.d01.nc.part
+	mv data/domains/au-test/v1/geo_em.d01.nc.part data/domains/au-test/v1/geo_em.d01.nc
 
 data/domains/aust10km/v1/domain.aust10km.nc:
 	mkdir -p data/domains/aust10km/v1
-	curl -L https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc \
-		-o data/domains/aust10km/v1/domain.aust10km.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc \
+		-o data/domains/aust10km/v1/domain.aust10km.nc.part
+	mv data/domains/aust10km/v1/domain.aust10km.nc.part data/domains/aust10km/v1/domain.aust10km.nc
 
 data/domains/au-test/v1/domain.au-test.nc:
 	mkdir -p data/domains/au-test/v1
-	curl -L https://openmethane.s3.amazonaws.com/domains/au-test/v1/domain.au-test.nc \
-		-o data/domains/au-test/v1/domain.au-test.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/au-test/v1/domain.au-test.nc \
+		-o data/domains/au-test/v1/domain.au-test.nc.part
+	mv data/domains/au-test/v1/domain.au-test.nc.part data/domains/au-test/v1/domain.au-test.nc
 
 data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc:
 	mkdir -p data/cams
-	curl -L https://openmethane.s3.amazonaws.com/tests/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc \
-		-o data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
+	curl -fL https://openmethane.s3.amazonaws.com/tests/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc \
+		-o data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc.part
+	mv data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc.part data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc

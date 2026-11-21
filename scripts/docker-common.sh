@@ -73,9 +73,18 @@ require_env() {
 fetch_domain_file() {
   local data_path="$1"
 
-  if [[ ! -f "$data_path/domain.$DOMAIN_NAME.nc" ]]; then
-    curl -s -o "$data_path/domain.$DOMAIN_NAME.nc" \
-      "https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
+  local path="$data_path/domain.$DOMAIN_NAME.nc"
+  local url="https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
+
+  if [[ ! -f "$path" ]]; then
+    # Downloaded beside the final path, so a failed download leaves nothing
+    # that a later run would take for the domain file
+    if ! curl -sSf -o "$path.part" "$url"; then
+      rm -f "$path.part"
+      echo "Error: couldn't download the domain file for $DOMAIN_NAME $DOMAIN_VERSION from $url" >&2
+      return 1
+    fi
+    mv "$path.part" "$path"
   fi
 }
 
