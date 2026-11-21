@@ -60,11 +60,18 @@ image, so this only works on a compatible host — check with `ldd`, and build f
 source if anything is missing. The tag must match the base image in the
 [`Dockerfile`](../../Dockerfile).
 
-Running the full pipeline additionally needs WRF itself, from
-[setup-wrf](https://github.com/openmethane/setup-wrf), and the prior, from
-[openmethane-prior](https://github.com/openmethane/openmethane-prior). Each has
-its own installation instructions. You can also mix approaches: run those two
-stages from their public Docker images and only this repository natively.
+Running the full pipeline additionally needs WRF and WPS, for the `wrf`
+command, and the prior, from
+[openmethane-prior](https://github.com/openmethane/openmethane-prior), which has
+its own installation instructions. Point
+[`WRF_INSTALL_DIR` and `WPS_INSTALL_DIR`](../reference/parameters.md#wrf) at WRF
+and WPS install folders, laid out as their builds leave them. The published
+`openmethane` image has them at `/opt/wrf` and `/opt/wps`, and they can be
+copied out as above, with the same caveat about libraries. The `wrf` command
+reads its settings from the environment only, not from the `.env.${TARGET}` file
+described below. You can also mix
+approaches: run WRF and the prior from their public Docker images and only the
+rest of this repository natively.
 
 ## 1. System packages
 
@@ -170,7 +177,9 @@ make fetch-domains
 ```
 
 This places the `au-test` and `aust10km` WRF geometry (`geo_em.d01.nc`) and Open
-Methane domain (`domain.${DOMAIN_NAME}.nc`) files under `data/domains/`.
+Methane domain (`domain.${DOMAIN_NAME}.nc`) files under `data/domains/`, from the
+public data store. The `wrf` command downloads the `geo_em.d01.nc` it needs
+itself.
 
 ## 5. Verify the install
 

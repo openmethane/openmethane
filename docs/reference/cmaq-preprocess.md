@@ -1,7 +1,7 @@
 # CMAQ preprocessing
 
-CMAQ preprocessing turns the outputs of the other two repositories — WRF
-meteorology and the prior emissions estimate — into the specific set of files the
+CMAQ preprocessing turns WRF meteorology, from the `wrf` command, and the prior
+emissions estimate, from openmethane-prior, into the specific set of files the
 CMAQ adjoint expects to find on disk.
 
 This is the stage that most commonly fails on a new domain, because it is where
@@ -18,9 +18,9 @@ bash scripts/cmaq_preprocess/run-cmaq-preprocess.sh
 Before this stage can run:
 
 - **WRF has been run** for the period, producing output in `WRF_DIR`, and the
-  domain geometry file `geo_em.d??.nc` is in `GEO_DIR`. Both come from
-  [setup-wrf](https://github.com/openmethane/setup-wrf). Example WRF output for
-  the `au-test` domain is tracked in `tests/test-data/wrf`.
+  domain geometry file `geo_em.d??.nc` is in `GEO_DIR`. Both come from the
+  `wrf` command, as described in [WRF outputs](wrf-outputs.md). Example WRF
+  output for the `au-test` domain is tracked in `tests/test-data/wrf`.
 - **The prior has been generated**, at `PRIOR_FILE`, by
   [openmethane-prior](https://github.com/openmethane/openmethane-prior).
 - **The CMAQ binaries are available** in `CMAQ_BIN`, and the adjoint executables

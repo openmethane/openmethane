@@ -29,13 +29,12 @@ itself, see [Architecture](reference/architecture.md).
 
 ## Repositories
 
-Running the full pipeline needs three repositories.
+Running the full pipeline needs two repositories.
 
 | Repository | Responsibility |
 | --- | --- |
 | [openmethane-prior](https://github.com/openmethane/openmethane-prior) | Produces the prior emissions estimate for a domain, by sector (livestock, fugitives, industry, wetlands, fires, …). Ships with downloadable input data so it runs out of the box for Australia. |
-| [setup-wrf](https://github.com/openmethane/setup-wrf) | Runs the WRF weather model to produce the meteorology that drives atmospheric transport. Also holds the domain definitions. |
-| **openmethane** (this repo) | Converts WRF output into CMAQ inputs, processes TROPOMI satellite observations, and runs the CMAQ adjoint inversion. |
+| **openmethane** (this repo) | Runs the WRF weather model to produce the meteorology that drives atmospheric transport, converts its output into CMAQ inputs, processes TROPOMI satellite observations, and runs the CMAQ adjoint inversion. |
 
 Each publishes a public Docker image to the GitHub Container Registry, so you do
 not need to install any of them from source to run the pipeline. See the
@@ -47,9 +46,10 @@ repository's Docker image. See [Installing locally](guides/local-install.md) if
 you need the binaries outside the published image.
 
 The image also contains the WRF and WPS programs, copied from the
-[docker-wrf](https://github.com/openmethane/docker-wrf) image.
-Nothing in this repository runs them yet: WRF still runs from setup-wrf's image
-until the move tracked in
+[docker-wrf](https://github.com/openmethane/docker-wrf) image, which the `wrf`
+command runs. WRF used to run from a separate repository,
+[setup-wrf](https://github.com/openmethane/setup-wrf). Production still runs it
+from there until the move tracked in
 [#316](https://github.com/openmethane/openmethane/issues/316) is done.
 
 ## Two workflows
@@ -75,7 +75,9 @@ atmosphere forwards from the prior. It does **not** perform an inversion.
 
 These steps are independent and can run in parallel:
 
-- **WRF** — runs `scripts/run-wrf.sh` in setup-wrf to produce meteorology.
+- **WRF** — `wrf run` downloads the day's NCEP FNL analyses and runs WPS,
+  real.exe and wrf.exe to produce hourly meteorology. See
+  [WRF outputs](reference/wrf-outputs.md).
 - **Prior** — runs `scripts/run.sh` in openmethane-prior to produce
   `prior-emissions.nc`.
 - **Fetch observations** — downloads the day's TROPOMI methane granules.
@@ -137,7 +139,8 @@ A few ideas recur throughout the configuration and documentation.
 and the map projection that grid sits on. Domains are versioned and identified
 by `DOMAIN_NAME` and `DOMAIN_VERSION` — for example `aust10km` `v1`, the whole
 Australian land mass in 10 km cells. Domains must be defined in a way that WRF
-and MCIP accept, so they originate in setup-wrf. See
+and MCIP accept, so each has a WRF geometry in `src/openmethane/wrf/domains/`
+and a `geo_em.d01.nc` file made by WRF's geogrid. See
 [Creating a custom domain](guides/custom-domain.md).
 
 **Target.** Which environment the code is running in, set by the `TARGET`
