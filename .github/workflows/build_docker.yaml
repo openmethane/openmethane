@@ -218,6 +218,7 @@ jobs:
               - 'src/openmethane/util/logging.py'
               - 'scripts/wrf/**'
               - 'tests/unit/wrf/**'
+              - 'tests/integration/wrf/**'
               - 'Dockerfile'
               - 'docker/**'
               - 'pyproject.toml'
@@ -235,15 +236,17 @@ jobs:
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - name: Check and format-check with ruff
         run: |
-          PATHS="src/openmethane/wrf scripts/wrf tests/unit/wrf
+          PATHS="src/openmethane/wrf scripts/wrf tests/unit/wrf tests/integration/wrf
             src/openmethane/util/process.py src/openmethane/util/download.py
             src/openmethane/util/logging.py src/openmethane/util/decomposition.py
             tests/unit/util"
           uv run --only-group dev ruff check $PATHS
           uv run --only-group dev ruff format --check $PATHS
 
-  # Run WRF for a real au-test day and compare the output with setup-wrf's.
-  # Runs when WRF paths change, and always on main, tags and manual runs.
+  # Run WRF for a real au-test day: the integration test checks the output
+  # contract, and a second run is compared with setup-wrf's output until the
+  # cutover (#323). Runs when WRF paths change, and always on main, tags and
+  # manual runs.
   test-wrf:
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -269,6 +272,13 @@ jobs:
         with:
           path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
           key: wrf-fnl-au-test-2022-12-07
+      - name: Run the WRF integration tests
+        run: |
+          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
+            -e TARGET=docker-test \
+            -e WRF_TEST_FNL_CACHE_PATH=/app/data/fnl \
+            ${{ needs.build.outputs.registry-image-id }} \
+            python -m pytest -r a -v tests/integration/wrf -m wrf_integration
       - name: Run WRF
         run: |
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
