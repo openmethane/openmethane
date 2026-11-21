@@ -219,6 +219,8 @@ jobs:
               - 'scripts/wrf/**'
               - 'tests/unit/wrf/**'
               - 'tests/integration/wrf/**'
+              - 'tests/test-data/wrf/**'
+              - 'tests/conftest.py'
               - 'Dockerfile'
               - 'docker/**'
               - 'pyproject.toml'
