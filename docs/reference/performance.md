@@ -150,6 +150,26 @@ the domain and the number of steps, not the rank count. Put them on fast local
 disk with room to spare — see
 [Disk fills up during a run](../troubleshooting.md#disk-fills-up-during-a-run).
 
+## WRF ranks
+
+WRF is the other step that runs in parallel. WPS and real.exe run on one rank,
+and wrf.exe on `NCPUS` ranks under `mpirun`. WRF splits the grid itself, into
+the most nearly square pair of factors of the rank count, so only the count is
+chosen.
+
+- **With `NCPUS` set**, wrf.exe runs on exactly that many ranks. Too many for
+  the grid makes WRF fail: each rank's patch should be at least 10 cells in
+  each direction. `au-test`, 14 x 14 cells, runs on one rank, which is why the
+  end-to-end scripts default `NCPUS` to `1`.
+- **With `NCPUS` unset**, the `wrf` command picks the most ranks, up to the
+  host's physical cores, whose factors are within a factor of two of each other
+  and give every patch at least 10 cells each way. It counts physical cores,
+  not hardware threads, as WRF runs faster with one rank per core. It doesn't
+  see a container's CPU limit, so set `NCPUS` when running in one.
+
+The rank count is logged when wrf.exe starts. In the end-to-end scripts,
+`NCPUS` also sets the parallelism of TROPOMI preprocessing.
+
 ## Measuring a run
 
 > **Temporary.** The image currently starts through a debugging entrypoint,
@@ -194,8 +214,7 @@ Some caveats:
   5.19 or newer.
 - **The numbers describe the container's cgroup.** Run with `--cgroupns=host`
   they would describe the whole machine instead.
-- `wrf-run` and `prior-generate` run from different images and do not log these
-  lines.
+- `prior-generate` runs from a different image and does not log these lines.
 
 Set `OM_METRICS=0` to turn the logging off.
 

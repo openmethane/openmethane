@@ -58,14 +58,13 @@ to a change in emissions.
 
 ## 1. Choose or create a domain
 
-Existing domains, defined in
-[setup-wrf](https://github.com/openmethane/setup-wrf/tree/main/domains):
+Existing domains, whose WRF geometry is in
+[`src/openmethane/wrf/domains`](../../src/openmethane/wrf/domains) and whose
+files are in the public data store:
 
 | Domain     | Coverage | Notes |
 |------------| --- | --- |
 | `aust10km` | All of Australia, 10 km cells | The production domain. 454 x 430 cells. |
-| `aust25km` | All of Australia, 25 km cells | Coarser and considerably cheaper. |
-| `aust-nsw` | New South Wales | Regional. |
 | `au-test`  | Tiny | Test domain, not scientifically meaningful. |
 
 If none of these cover your area of interest at the resolution you need, see
@@ -105,7 +104,7 @@ Relevant settings:
 | Setting | Effect |
 | --- | --- |
 | `NUM_PROC_TOTAL` | Number of MPI processes to run CMAQ across. The grid is decomposed to suit the domain size, so the same value works for any domain. Set `NUM_PROC_ROWS`/`NUM_PROC_COLS` instead to pin the decomposition. |
-| `NCPUS` | Parallelism for WRF and for TROPOMI preprocessing. |
+| `NCPUS` | MPI ranks for WRF, and parallelism for TROPOMI preprocessing. WRF runs on exactly this many, so keep it within what the grid allows — see [WRF ranks](../reference/performance.md#wrf-ranks). |
 | `MAX_ITERATIONS` | Caps the inversion at this many successful L-BFGS-B iterations (default 20). Lower it to bound runtime. |
 | `BOUNDARY_TRIM` | Cells removed from each edge of the domain for boundary conditions. `5` for `aust10km`; small domains need a smaller value or MCIP will trim the domain away entirely. |
 | `CHK_PATH` | Where CMAQ checkpoint files go. These are large and written repeatedly — put them on fast local disk. |
@@ -135,8 +134,10 @@ done
 Each run writes to `${DATA_ROOT}/daily/${DOMAIN_NAME}/${DOMAIN_VERSION}/${START_DATE}`.
 
 Days are independent, so they can be run in parallel or across machines if you
-have the capacity — the only shared state is WRF's geography data under
-`${DATA_ROOT}/geog`, which is downloaded once.
+have the capacity — the only shared state is the FNL analyses that drive WRF,
+kept under `${DATA_ROOT}/fnl`. Each day downloads the ones it needs that aren't
+there yet, so days run at the same time may download the same analysis twice,
+but never corrupt it.
 
 ## 5. Run the inversion
 

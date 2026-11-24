@@ -13,16 +13,17 @@
 
 DOCKER_COMMON_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
-OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"ghcr.io/openmethane/openmethane-prior:stable"}
-SETUP_WRF_IMAGE=${SETUP_WRF_IMAGE:-"ghcr.io/openmethane/setup-wrf:stable"}
-
 BUILD_LOCAL_DOCKER=${BUILD_LOCAL_DOCKER:-false}
 if [[ "$BUILD_LOCAL_DOCKER" == true ]]; then
   # Build docker containers using locally checked out versions, so that local
   # changes can be easily tested
   bash "$DOCKER_COMMON_DIR/docker-build-all.sh"
+  OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"openmethane"}
+  OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"openmethane-prior"}
 fi
+
+OPENMETHANE_IMAGE=${OPENMETHANE_IMAGE:-"ghcr.io/openmethane/openmethane:stable"}
+OPENMETHANE_PRIOR_IMAGE=${OPENMETHANE_PRIOR_IMAGE:-"ghcr.io/openmethane/openmethane-prior:stable"}
 
 # the location on disk where data and results will be stored
 DATA_ROOT=${DATA_ROOT:-"/tmp/openmethane-e2e"}
@@ -72,9 +73,18 @@ require_env() {
 fetch_domain_file() {
   local data_path="$1"
 
-  if [[ ! -f "$data_path/domain.$DOMAIN_NAME.nc" ]]; then
-    curl -s -o "$data_path/domain.$DOMAIN_NAME.nc" \
-      "https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
+  local path="$data_path/domain.$DOMAIN_NAME.nc"
+  local url="https://openmethane.s3.amazonaws.com/domains/$DOMAIN_NAME/$DOMAIN_VERSION/domain.$DOMAIN_NAME.nc"
+
+  if [[ ! -f "$path" ]]; then
+    # Downloaded beside the final path, so a failed download leaves nothing
+    # that a later run would take for the domain file
+    if ! curl -sSf -o "$path.part" "$url"; then
+      rm -f "$path.part"
+      echo "Error: couldn't download the domain file for $DOMAIN_NAME $DOMAIN_VERSION from $url" >&2
+      return 1
+    fi
+    mv "$path.part" "$path"
   fi
 }
 

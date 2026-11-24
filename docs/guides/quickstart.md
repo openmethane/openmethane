@@ -23,8 +23,10 @@ Once this works, see [Running your own domain](running-a-domain.md).
   ```
 
   Run every command below from the repository root.
-- Roughly 20 GB of free disk. Most of it goes on WRF's global geography data,
-  which is downloaded once and reused.
+- Roughly 15 GB of free disk for the three days below. Most of it goes on the
+  NCEP FNL analyses that drive WRF: global files of about 480 MB each, one for
+  every 6 hours. They are kept in `fnl/` under the data root, so a day reuses
+  the files it shares with the day before.
 
 You do not need Python, `uv`, or a compiler.
 
@@ -68,7 +70,7 @@ simulation. Run it for a day that has TROPOMI coverage:
 START_DATE=2022-10-29 bash scripts/docker-e2e-daily.sh
 ```
 
-This pulls the three published images and runs each step of the
+This pulls the two published images and runs each step of the
 [daily workflow](../overview.md#daily-workflow) as a separate container,
 mirroring how production runs them. Results are written to
 `/tmp/openmethane-e2e/daily/au-test/v1/2022-10-29` — override the root with
@@ -139,8 +141,8 @@ if either is missing.
 ## Using locally built images
 
 By default the scripts pull `ghcr.io/openmethane/*:stable`. To test local
-changes instead, check out `openmethane-prior` and `setup-wrf` as siblings of
-this repository and build:
+changes instead, check out `openmethane-prior` as a sibling of this repository
+and build:
 
 ```shell
 BUILD_LOCAL_DOCKER=true bash scripts/docker-e2e-daily.sh

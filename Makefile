@@ -29,12 +29,12 @@ build:  ## Build the docker container locally
 fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc
 
 .PHONY: test
-test:  ## Run the tests
-	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar
+test:  ## Run the tests, except the WRF integration tests
+	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar -m "not wrf_integration"
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/obs_preprocess --force-regen
+	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/obs_preprocess -m "not wrf_integration" --force-regen
 
 # Processing steps
 .PHONY: prepare-templates
@@ -56,31 +56,45 @@ docker-test: build fetch-test-data ## Run the tests
 		openmethane \
 		make test
 
+.PHONY: test-wrf
+test-wrf: build  ## Run WRF for a real au-test day in Docker. Downloads 3.4 GB of FNL analyses into data/fnl the first time
+	docker run --rm -it \
+		-v $(PWD):/app \
+		-v /app/.venv \
+		-e TARGET=docker-test \
+		openmethane \
+		python -m pytest -r a -v tests/integration/wrf -m wrf_integration
+
 ## Fetch the domain files and CAMS data required for tests
 .PHONY: fetch-test-data
 fetch-test-data: data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/aust10km/geo_em.d01.nc \
-		-o data/domains/aust10km/v1/geo_em.d01.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/aust10km/v1/geo_em.d01.nc \
+		-o data/domains/aust10km/v1/geo_em.d01.nc.part
+	mv data/domains/aust10km/v1/geo_em.d01.nc.part data/domains/aust10km/v1/geo_em.d01.nc
 
 data/domains/au-test/v1/geo_em.d01.nc:
 	mkdir -p data/domains/au-test/v1
-	curl -L https://github.com/openmethane/setup-wrf/raw/main/domains/au-test/geo_em.d01.nc \
-		-o data/domains/au-test/v1/geo_em.d01.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/au-test/v1/geo_em.d01.nc \
+		-o data/domains/au-test/v1/geo_em.d01.nc.part
+	mv data/domains/au-test/v1/geo_em.d01.nc.part data/domains/au-test/v1/geo_em.d01.nc
 
 data/domains/aust10km/v1/domain.aust10km.nc:
 	mkdir -p data/domains/aust10km/v1
-	curl -L https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc \
-		-o data/domains/aust10km/v1/domain.aust10km.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/aust10km/v1/domain.aust10km.nc \
+		-o data/domains/aust10km/v1/domain.aust10km.nc.part
+	mv data/domains/aust10km/v1/domain.aust10km.nc.part data/domains/aust10km/v1/domain.aust10km.nc
 
 data/domains/au-test/v1/domain.au-test.nc:
 	mkdir -p data/domains/au-test/v1
-	curl -L https://openmethane.s3.amazonaws.com/domains/au-test/v1/domain.au-test.nc \
-		-o data/domains/au-test/v1/domain.au-test.nc
+	curl -fL https://openmethane.s3.amazonaws.com/domains/au-test/v1/domain.au-test.nc \
+		-o data/domains/au-test/v1/domain.au-test.nc.part
+	mv data/domains/au-test/v1/domain.au-test.nc.part data/domains/au-test/v1/domain.au-test.nc
 
 data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc:
 	mkdir -p data/cams
-	curl -L https://openmethane.s3.amazonaws.com/tests/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc \
-		-o data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
+	curl -fL https://openmethane.s3.amazonaws.com/tests/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc \
+		-o data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc.part
+	mv data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc.part data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
