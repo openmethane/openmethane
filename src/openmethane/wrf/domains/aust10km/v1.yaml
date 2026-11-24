@@ -1,0 +1,17 @@
+# WRF geometry of aust10km v1, using the domain-file attribute names proposed
+# in https://github.com/openmethane/openmethane/issues/297. Copied from
+# setup-wrf 0.9.2's domains/aust10km/namelist.wps. Replaced by the domain file
+# itself under #327.
+wrf_map_proj: lambert
+wrf_ref_lat: -27.644
+wrf_ref_lon: 133.302
+wrf_truelat1: -15.0
+wrf_truelat2: -40.0
+wrf_stand_lon: 133.302
+wrf_ref_x: 233.5
+wrf_ref_y: 221.5
+wrf_e_we: 467
+wrf_e_sn: 443
+wrf_dx: 10000
+wrf_dy: 10000
+wrf_geog_data_res: usgs_10m+default
