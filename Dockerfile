@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Adapted from https://github.com/astral-sh/uv-docker-example/blob/main/standalone.Dockerfile
 
 # Secret management
@@ -32,6 +33,27 @@ cp -L /opt/wps/metgrid/METGRID.TBL* /staging/wps/metgrid/
 cp -rL /opt/wps/ungrib/Variable_Tables /staging/wps/ungrib/
 EOT
 
+# The CMAQ and CMAQ-Adjoint models, as Debian packages attached to their GitHub
+# releases. Each is fetched into its own stage, pinned by URL and checksum, and
+# installed from a bind mount on that stage below, so the .deb never becomes
+# part of an image layer.
+#
+# Changing a version changes the model that produces the results, so treat it
+# as a possible change to science outputs. To try an unmerged model change,
+# replace a stage when building, without editing this file; see "Testing an
+# unmerged model change" in docs/guides/development.md. A pin to a `dev-pr`
+# pre-release is for testing only, and CI fails if one is merged.
+
+# https://github.com/openmethane/CMAQ: MCIP, ICON and BCON
+FROM scratch AS cmaq-deb
+ADD --checksum=sha256:c4e21a26bd74363e486765726a6c8b7df46060555fab0f09f42a1d54b7231c24 \
+    https://github.com/openmethane/CMAQ/releases/download/v1.1.0/openmethane-cmaq_1.1.0_amd64.deb /
+
+# https://github.com/openmethane/CMAQ-Adjoint: ADJOINT_FWD and ADJOINT_BWD
+FROM scratch AS cmaq-adjoint-deb
+ADD --checksum=sha256:6ca0028960aec72ff8d8380500c93b776977203bca4129d9cf0d54fe9307486c \
+    https://github.com/openmethane/CMAQ-Adjoint/releases/download/v2.2.0/openmethane-cmaq-adjoint_2.2.0_amd64.deb /
+
 # First, build the application in the `/app` directory
 FROM ghcr.io/astral-sh/uv:trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
@@ -61,8 +83,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev
 
 # Then, use a final image without uv for our runtime environment
-# https://github.com/openmethane/CMAQ-Adjoint
-FROM ghcr.io/openmethane/cmaq-adjoint:2.0.1
+FROM debian:trixie-slim
 
 # These will be overwritten in GHA due to https://github.com/docker/metadata-action/issues/295
 # These must be duplicated in .github/workflows/build_docker.yaml
@@ -86,7 +107,25 @@ ENV TARGET=docker
 RUN groupadd --system --gid 1000 app \
  && useradd --system --gid 1000 --uid 1000 --create-home app
 
-# Install the bare minimum software requirements on top of cmaq-adjoint
+# Install the models. apt installs the libraries, mpich and csh they declare in
+# their Depends, so nothing here lists them. The bind mounts mean the .deb files
+# are not left in the image. The file names are matched, rather than every .deb,
+# because a CMAQ build also makes openmethane-cmaq-dev, which isn't wanted here.
+RUN --mount=type=bind,from=cmaq-deb,target=/debs/cmaq \
+    --mount=type=bind,from=cmaq-adjoint-deb,target=/debs/cmaq-adjoint <<EOT
+set -e
+apt-get update -qy
+apt-get install -qyy \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    /debs/cmaq/openmethane-cmaq_*.deb \
+    /debs/cmaq-adjoint/openmethane-cmaq-adjoint_*.deb
+
+apt-get clean
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+EOT
+
+# Install the bare minimum software requirements
 RUN <<EOT
 set -e
 apt-get update -qy
@@ -106,8 +145,9 @@ rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
 # The libraries the WRF and WPS binaries link against directly, and
-# the programs they run (mpirun, and csh for link_grib.csh). Installed by name
-# rather than relying on the cmaq-adjoint base happening to have them.
+# the programs they run (mpirun, and csh for link_grib.csh). The models above
+# declare their own, but WRF and WPS are copied from another image rather than
+# installed from a package, so these are listed here until they are (#331).
 # docker/check-binaries.sh, run below, fails the build if this list falls
 # behind the binaries.
 RUN <<EOT
@@ -136,7 +176,8 @@ ENV WRF_INSTALL_DIR=/opt/wrf \
 
 COPY docker/check-binaries.sh /usr/local/bin/check-binaries.sh
 RUN check-binaries.sh --command mpirun --command csh \
-    /opt/wrf /opt/wps /opt/cmaq/bin
+    --package openmethane-cmaq --package openmethane-cmaq-adjoint \
+    /opt/wrf /opt/wps
 
 # Secret management
 COPY --from=chamber /chamber /bin/chamber

@@ -230,3 +230,6 @@ data
 
 # Environment file with sensitive information
 .env
+
+# Model packages for testing an unmerged change, see docs/guides/development.md
+debs/

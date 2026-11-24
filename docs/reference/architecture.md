@@ -163,6 +163,42 @@ run. They should be fixed when possible. Until then, treat a change to
 residual, adjoint — without optimising, which is the quickest way to find where
 a chain change breaks.
 
+## How the models get into the image
+
+The `openmethane` image is built `FROM debian:trixie-slim`. It doesn't inherit
+from a model's image. The compiled models are installed from Debian packages
+that each model repository attaches to its GitHub releases:
+
+| Package | From | Contains |
+| --- | --- | --- |
+| `openmethane-cmaq` | [CMAQ](https://github.com/openmethane/CMAQ) | `mcip.exe`, the ICON and BCON executables and their runtime `.nml` files, under `/opt/cmaq/bin`. |
+| `openmethane-cmaq-adjoint` | [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) | `ADJOINT_FWD` and `ADJOINT_BWD`, under `/opt/cmaq/bin`. |
+
+WRF and WPS are still copied from the `docker-wrf` image, until they are
+packaged too ([#331](https://github.com/openmethane/openmethane/issues/331)).
+
+In the `Dockerfile`, each package is fetched by a named stage, pinned by URL and
+checksum, and installed with apt from a bind mount on that stage, so the `.deb`
+never becomes part of an image layer. This means:
+
+- **apt resolves the runtime libraries.** Each package's `Depends:` is generated
+  from its binaries, so the models declare the libraries, `mpich` and `csh` they
+  need, rather than inheriting whatever another image installed.
+- **Compatibility comes from the package names.** Debian puts a library's ABI in
+  its package name (`libnetcdff7`, `libmpich12`), so a library from the same
+  Debian release is compatible. If a release drops one, the build fails, not a
+  run.
+- **The build checks the result.** `docker/check-binaries.sh` runs `ldd` over
+  every ELF file in each model package, and fails the build on a missing
+  library, or if `mpirun` or `csh` is missing.
+- **A version bump is one line,** and changes the model that produces the
+  results, so review it as a possible change to science outputs.
+- **The versions are visible.** `dpkg-query -W 'openmethane-*'` in an image lists
+  the model versions it contains.
+
+To build with an unmerged model change, see
+[Testing an unmerged model change](../guides/development.md#testing-an-unmerged-model-change).
+
 ## Historical notes
 
 `data_space_definitions.txt` and `transform_definitions.txt` in this directory

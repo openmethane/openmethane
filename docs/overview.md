@@ -40,10 +40,11 @@ Each publishes a public Docker image to the GitHub Container Registry, so you do
 not need to install any of them from source to run the pipeline. See the
 [Quickstart](guides/quickstart.md).
 
-The CMAQ adjoint model itself is built in
-[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) and baked into this
-repository's Docker image. See [Installing locally](guides/local-install.md) if
-you need the binaries outside the published image.
+The CMAQ models are built in [CMAQ](https://github.com/openmethane/CMAQ) and
+[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint), which publish them
+as Debian packages that this repository's Docker image installs. See
+[Installing locally](guides/local-install.md) if you need the binaries outside
+the published image.
 
 The image also contains the WRF and WPS programs, copied from the
 [docker-wrf](https://github.com/openmethane/docker-wrf) image, which the `wrf`

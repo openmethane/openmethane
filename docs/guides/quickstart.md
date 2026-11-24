@@ -148,8 +148,8 @@ and build:
 BUILD_LOCAL_DOCKER=true bash scripts/docker-e2e-daily.sh
 ```
 
-Building the `openmethane` image pulls the CMAQ-Adjoint base image, which takes
-a while the first time — see [Development](development.md).
+Building the `openmethane` image downloads the model packages and the WRF
+image, which takes a while the first time — see [Development](development.md).
 
 Individual images can also be pinned without building, which is useful for
 reproducing a specific run:

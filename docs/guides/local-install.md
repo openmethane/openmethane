@@ -10,15 +10,15 @@ debug the models, integrate with a system that cannot run containers, or run on
 an HPC cluster where containers are unavailable.
 
 > [!IMPORTANT]
-> **The CMAQ adjoint binaries are the hard part.** Everything else on this page
-> installs from packages or from source in the usual way, but the adjoint model
-> has to be built from
-> [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint), which is slow and
-> particular about its compilers and NetCDF build.
+> **The CMAQ binaries are the hard part.** Everything else on this page installs
+> from packages or from source in the usual way, but the models are compiled
+> Fortran, and particular about their compilers and NetCDF build.
 >
-> If you would rather not build it, the compiled binaries can be copied out of
-> `ghcr.io/openmethane/cmaq-adjoint`, which is public — see
-> [Taking the binaries from the image](#taking-the-binaries-from-the-image).
+> Take them from the Debian packages attached to the
+> [CMAQ](https://github.com/openmethane/CMAQ/releases) and
+> [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint/releases) releases,
+> which are what the Docker image uses — see
+> [Taking the binaries from the release packages](#taking-the-binaries-from-the-release-packages).
 
 ## What you need to provide
 
@@ -43,22 +43,45 @@ directory, which is where the build leaves them.
 `ADJOINT_FWD` and `ADJOINT_BWD` are configured separately by absolute path, so
 they may live elsewhere.
 
-### Taking the binaries from the image
+### Taking the binaries from the release packages
 
-Building CMAQ-Adjoint from source is the supported path, but if you only need
-the binaries you can lift them out of the published image, which is public:
+The models are published as Debian 13 (trixie) packages attached to each GitHub
+release: `openmethane-cmaq` from [CMAQ](https://github.com/openmethane/CMAQ/releases)
+and `openmethane-cmaq-adjoint` from
+[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint/releases). Use the
+versions the [`Dockerfile`](../../Dockerfile) pins. You don't need to install
+them: `dpkg-deb -x` unpacks a package into a folder, on any Linux system with
+`dpkg-deb`, and without it `ar x <deb>` followed by `tar -xf data.tar.*` does the
+same.
 
 ```shell
-CONTAINER=$(docker create ghcr.io/openmethane/cmaq-adjoint:2.0.1)
-docker cp "${CONTAINER}:/opt/cmaq/bin" ./cmaq-bin
-docker rm "${CONTAINER}"
+dpkg-deb -x openmethane-cmaq_<version>_amd64.deb ./cmaq-root
+dpkg-deb -x openmethane-cmaq-adjoint_<version>_amd64.deb ./cmaq-root
 ```
 
-Then point `CMAQ_BIN` at `./cmaq-bin` and `ADJOINT_FWD`/`ADJOINT_BWD` at the two
-executables inside it. They are dynamically linked against the libraries in that
-image, so this only works on a compatible host — check with `ldd`, and build from
-source if anything is missing. The tag must match the base image in the
-[`Dockerfile`](../../Dockerfile).
+Both put their files under `opt/cmaq/bin`, so `CMAQ_BIN` is
+`./cmaq-root/opt/cmaq/bin`, and `ADJOINT_FWD` and `ADJOINT_BWD` are the two
+executables inside it.
+
+The binaries are dynamically linked, so this only works on a host with
+compatible libraries, which is any Debian 13 system or similar. List what they
+need with:
+
+```shell
+dpkg-deb -f openmethane-cmaq-adjoint_<version>_amd64.deb Depends
+```
+
+and check with `ldd` that nothing is "not found". On a host with a different C
+library or NetCDF, build from source instead.
+
+### Building from source
+
+Building the models from source is documented, but not supported: neither
+repository supports native builds. The build documents are
+[CMAQ's `docs/building.md`](https://github.com/openmethane/CMAQ/blob/main/docs/building.md)
+and
+[CMAQ-Adjoint's `docs/building.md`](https://github.com/openmethane/CMAQ-Adjoint/blob/main/docs/building.md).
+Build the versions the `Dockerfile` pins.
 
 Running the full pipeline additionally needs WRF and WPS, for the `wrf`
 command, and the prior, from
@@ -67,7 +90,7 @@ its own installation instructions. Point
 [`WRF_INSTALL_DIR` and `WPS_INSTALL_DIR`](../reference/parameters.md#wrf) at WRF
 and WPS install folders, laid out as their builds leave them. The published
 `openmethane` image has them at `/opt/wrf` and `/opt/wps`, and they can be
-copied out as above, with the same caveat about libraries. The `wrf` command
+copied out with `docker create` and `docker cp`, with the same caveat about libraries. The `wrf` command
 reads its settings from the environment only, not from the `.env.${TARGET}` file
 described below. You can also mix
 approaches: run WRF and the prior from their public Docker images and only the
@@ -75,7 +98,7 @@ rest of this repository natively.
 
 ## 1. System packages
 
-The container installs these on top of Debian bookworm; the equivalents are
+The container installs these on top of Debian trixie; the equivalents are
 needed locally. On a Debian or Ubuntu host:
 
 ```shell
@@ -97,9 +120,10 @@ Two of these are load-bearing and easy to overlook:
 - **`nco`** — provides `ncatted`, `ncks` and friends, used to manipulate NetCDF
   attributes. Some tests and preprocessing steps depend on it.
 
-The CMAQ binaries themselves will have their own runtime library requirements,
-typically NetCDF, I/O API and an MPI implementation. These depend on how they
-were built, so check against your build.
+The CMAQ binaries need NetCDF-Fortran and an MPI implementation (`mpich`). If you
+took them from the release packages, `dpkg-deb -f <deb> Depends` lists exactly
+what they need. If you built them yourself, these depend on how they were built,
+so check against your build.
 
 ## 2. Python dependencies
 
