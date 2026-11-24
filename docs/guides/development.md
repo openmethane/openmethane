@@ -89,6 +89,26 @@ change in a fixture is usually the bug, not the fixture being stale:
 make test-regen
 ```
 
+### WRF test data
+
+The `test-wrf` CI job runs WRF for au-test on 2022-12-07 and compares the
+output with setup-wrf's for the same day. setup-wrf's output is in a bundle in
+the Open Methane public data store,
+`https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.<YYYYMMDD>.tar.gz`,
+with a README inside saying how it was made. The FNL analyses aren't in it:
+the job downloads them from GDEX and caches them.
+
+The bundle is date-stamped, so changing it doesn't change what older commits
+fetch. To change it, unpack the current bundle into a folder outside the
+repository, make the change, update its README, and pack it again:
+
+```shell
+tar -C wrf-test-data -czf wrf-test-data.$(date +%Y%m%d).tar.gz .
+```
+
+Upload it beside the old one and point `WRF_TEST_DATA_URL` in
+`.github/workflows/build_docker.yaml` at it, in the same change.
+
 ## Linting and formatting
 
 ```shell

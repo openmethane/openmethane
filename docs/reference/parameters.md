@@ -144,6 +144,26 @@ value.
 | `SKIP_TEMPLATE_GENERATION` | str | Set to any non-empty value to skip template generation | unset |
 | `SKIP_TROPOMI_DOWNLOAD` | str | Set to any non-empty value to skip the TROPOMI download in `run-all.sh` | unset |
 
+## WRF
+
+Read by the `wrf` command. In the WRF job, `NCPUS` and `CHK_PATH` mean what
+this table says, not what they mean elsewhere in this page.
+
+| Variable | Type | Description | Default |
+| --- | --- | --- | --- |
+| `START_DATE` | date | The day to run. One day is run; `END_DATE` is ignored | required |
+| `DOMAIN_NAME` | str | The domain to run | required |
+| `DOMAIN_VERSION` | str | Its published version, which chooses its geometry and `geo_em` | required |
+| `STORE_PATH` | path | Output goes in `${STORE_PATH}/wrf/${DOMAIN_NAME}`. See [WRF outputs](wrf-outputs.md) | required |
+| `CHK_PATH` | path | Scratch for the run is `${CHK_PATH}/wrf/${DOMAIN_NAME}`, removed after a successful run | required |
+| `WRF_INSTALL_DIR` | path | WRF's install folder | required; `/opt/wrf` in the image |
+| `WPS_INSTALL_DIR` | path | WPS's install folder | required; `/opt/wps` in the image |
+| `FORCE_WRF` | bool | `true` to run a day whose output is already complete | `false` |
+| `NCPUS` | int | MPI ranks for wrf.exe. Unset, the most that suit the grid and the physical cores, which ignores a container's CPU limit | worked out |
+| `FNL_CACHE_PATH` | path | Where FNL analyses are kept. Set it outside scratch to share them between runs; left in scratch, every run downloads its own | `<scratch>/fnl` |
+| `MET_EM_CACHE_PATH` | path | Where `met_em` files are kept between runs | `<scratch>/metem` |
+| `FNL_DATASET_ROOT` | URL | Where FNL analyses are downloaded from | GDEX, `https://data.gdex.ucar.edu/d083003/` |
+
 ## Observation preprocessing
 
 | Variable | Type | Description | Default |

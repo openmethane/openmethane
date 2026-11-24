@@ -35,6 +35,18 @@ directly.
 `scripts/docker-entrypoint.sh` is the container entrypoint. It runs the given
 command and clears `CHK_PATH` afterwards, including on failure.
 
+## WRF
+
+Produces the meteorology that drives CMAQ. Configured by the [WRF
+variables](parameters.md#wrf); the output is described in [WRF
+outputs](wrf-outputs.md).
+
+| Command | Description |
+| --- | --- |
+| `wrf run` | Runs the whole WRF step and publishes the output: downloads the FNL analyses, runs ungrib and metgrid, real.exe and wrf.exe, and averages each hour. Exits early if the output is complete; `--force` runs it anyway. Exit code 1 if a stage fails, 2 if the configuration is invalid. `uv run wrf run` from a checkout |
+| `wrf prepare`, `fetch`, `wps`, `real`, `wrf`, `average` | One stage at a time, for development. Each finds earlier stages' output in scratch |
+| `scripts/wrf/compare_wrf_runs.py OURS THEIRS` | Compares two WRF output folders and reports every difference by file, variable and attribute. Exits 1 if they differ. Logs are never compared; `--ignore GLOB` leaves out more |
+
 ## CMAQ preprocessing
 
 Turns WRF meteorology and the prior into inputs CMAQ can read. See

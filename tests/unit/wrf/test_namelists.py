@@ -158,6 +158,17 @@ def test_wps_lists_each_domain_and_takes_spacing_from_the_outer_one():
     assert "ref_x" not in settings["geogrid"]
 
 
+def test_wps_groups_are_written_in_the_order_wps_reads_them():
+    domains = DomainSet.load([("au-test", "v1")])
+
+    namelist = build_wps_namelist(domains, WINDOW)
+
+    written = str(namelist)
+    groups = [line.strip() for line in written.splitlines() if line.startswith("&")]
+    assert groups == ["&share", "&geogrid", "&ungrib", "&metgrid"]
+    assert written.index("wrf_core") < written.index("max_dom") < written.index("start_date")
+
+
 def test_wps_and_wrf_namelists_agree_on_the_geometry():
     # setup-wrf checked this at run time; building both from one domain set
     # makes it true by construction.

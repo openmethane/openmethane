@@ -12,13 +12,20 @@ MODULES = (
     "openmethane.util.download",
     "openmethane.util.logging",
     "openmethane.util.decomposition",
+    "openmethane.wrf.averaging",
+    "openmethane.wrf.cli",
+    "openmethane.wrf.compare",
     "openmethane.wrf.config",
+    "openmethane.wrf.fnl",
     "openmethane.wrf.geometry",
     "openmethane.wrf.install",
+    "openmethane.wrf.model",
     "openmethane.wrf.mpi",
     "openmethane.wrf.namelists",
     "openmethane.wrf.outputs",
+    "openmethane.wrf.pipeline",
     "openmethane.wrf.windows",
+    "openmethane.wrf.wps",
 )
 
 # Imports the module with os.environ replaced by a mapping that records every
@@ -29,7 +36,7 @@ MODULES = (
 # -B, or a checkout with no bytecode cache records the .pyc files it writes.
 CHECK_IMPORT = """
 import importlib, importlib.resources, json, os, sys
-import attrs, f90nml, requests, urllib3, yaml
+import attrs, cyclopts, f90nml, netCDF4, numpy, requests, urllib3, yaml
 
 class RecordingEnviron(dict):
     reads = []
