@@ -174,10 +174,17 @@ COPY --from=wrf-runtime /staging/wps /opt/wps
 ENV WRF_INSTALL_DIR=/opt/wrf \
   WPS_INSTALL_DIR=/opt/wps
 
+# The models are also checked at the paths .env.docker* point CMAQ_BIN,
+# ADJOINT_FWD and ADJOINT_BWD at, in case a package changes where it installs.
 COPY docker/check-binaries.sh /usr/local/bin/check-binaries.sh
 RUN check-binaries.sh --command mpirun --command csh \
     --package openmethane-cmaq --package openmethane-cmaq-adjoint \
-    /opt/wrf /opt/wps
+    /opt/wrf /opt/wps /opt/cmaq/bin \
+ && test -x /opt/cmaq/bin/mcip.exe \
+ && test -x /opt/cmaq/bin/ICON_CH4only/ICON_CH4only \
+ && test -x /opt/cmaq/bin/BCON_CH4only/BCON_CH4only \
+ && test -x /opt/cmaq/bin/ADJOINT_FWD \
+ && test -x /opt/cmaq/bin/ADJOINT_BWD
 
 # Secret management
 COPY --from=chamber /chamber /bin/chamber
