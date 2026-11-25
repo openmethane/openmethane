@@ -4,39 +4,10 @@
 # Secret management
 FROM segment/chamber:2 AS chamber
 
-# WRF and WPS, from https://github.com/openmethane/docker-wrf. Pinned by digest
-# because docker-wrf overwrites the 4.5.1 tag on every push to main. Changing
-# the digest changes the model that produces the meteorology, so treat it as a
-# possible change to science outputs: compare WRF output before and after.
-FROM ghcr.io/openmethane/wrf:4.5.1@sha256:7cd949adef3bc1172a139f6d472e050aceba8296dbd78d743e1737a831249759 AS wrf
-
-# Stage only the files needed to run WPS, real.exe and wrf.exe, at the paths
-# they have in the wrf image. This leaves out the sources, object files and
-# unused programs, about 465 MB. cp -L follows symlinks: some files in run/
-# link into the build tree, and the WPS programs link into their src/ folders.
-FROM wrf AS wrf-runtime
-RUN <<EOT
-set -eu
-mkdir -p /staging/wrf/main /staging/wrf/run \
-    /staging/wps/geogrid /staging/wps/metgrid /staging/wps/ungrib
-
-cp /opt/wrf/main/wrf.exe /opt/wrf/main/real.exe /staging/wrf/main/
-# run/ links the programs from main/; only its data files are needed. The
-# `+` form makes find fail if cp does, so a dangling link fails the build.
-find /opt/wrf/run -mindepth 1 -maxdepth 1 ! -name '*.exe' \
-    -exec cp -L -t /staging/wrf/run/ {} +
-
-cp -L /opt/wps/geogrid.exe /opt/wps/ungrib.exe /opt/wps/metgrid.exe \
-    /opt/wps/link_grib.csh /staging/wps/
-cp -L /opt/wps/geogrid/GEOGRID.TBL* /staging/wps/geogrid/
-cp -L /opt/wps/metgrid/METGRID.TBL* /staging/wps/metgrid/
-cp -rL /opt/wps/ungrib/Variable_Tables /staging/wps/ungrib/
-EOT
-
-# The CMAQ and CMAQ-Adjoint models, as Debian packages attached to their GitHub
-# releases. Each is fetched into its own stage, pinned by URL and checksum, and
-# installed from a bind mount on that stage below, so the .deb never becomes
-# part of an image layer.
+# The models: CMAQ, CMAQ-Adjoint, and WRF with WPS, as Debian packages attached
+# to their GitHub releases. Each is fetched into its own stage, pinned by URL
+# and checksum, and installed from a bind mount on that stage below, so the .deb
+# never becomes part of an image layer.
 #
 # Changing a version changes the model that produces the results, so treat it
 # as a possible change to science outputs. To try an unmerged model change,
@@ -53,6 +24,11 @@ ADD --checksum=sha256:c4e21a26bd74363e486765726a6c8b7df46060555fab0f09f42a1d54b7
 FROM scratch AS cmaq-adjoint-deb
 ADD --checksum=sha256:6ca0028960aec72ff8d8380500c93b776977203bca4129d9cf0d54fe9307486c \
     https://github.com/openmethane/CMAQ-Adjoint/releases/download/v2.2.0/openmethane-cmaq-adjoint_2.2.0_amd64.deb /
+
+# https://github.com/openmethane/build-wrf: WRF and WPS, in /opt/wrf and /opt/wps
+FROM scratch AS wrf-deb
+ADD --checksum=sha256:e45b2a0aa45fb69a90798ac1444ead2e59d528690e220dcc616f8d92fb771500 \
+    https://github.com/openmethane/build-wrf/releases/download/v4.5.1-1/openmethane-wrf_4.5.1-1_amd64.deb /
 
 # First, build the application in the `/app` directory
 FROM ghcr.io/astral-sh/uv:trixie-slim AS builder
@@ -112,14 +88,16 @@ RUN groupadd --system --gid 1000 app \
 # are not left in the image. The file names are matched, rather than every .deb,
 # because a CMAQ build also makes openmethane-cmaq-dev, which isn't wanted here.
 RUN --mount=type=bind,from=cmaq-deb,target=/debs/cmaq \
-    --mount=type=bind,from=cmaq-adjoint-deb,target=/debs/cmaq-adjoint <<EOT
+    --mount=type=bind,from=cmaq-adjoint-deb,target=/debs/cmaq-adjoint \
+    --mount=type=bind,from=wrf-deb,target=/debs/wrf <<EOT
 set -e
 apt-get update -qy
 apt-get install -qyy \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     /debs/cmaq/openmethane-cmaq_*.deb \
-    /debs/cmaq-adjoint/openmethane-cmaq-adjoint_*.deb
+    /debs/cmaq-adjoint/openmethane-cmaq-adjoint_*.deb \
+    /debs/wrf/openmethane-wrf_*.deb
 
 apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -144,42 +122,23 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
-# The libraries the WRF and WPS binaries link against directly, and
-# the programs they run (mpirun, and csh for link_grib.csh). The models above
-# declare their own, but WRF and WPS are copied from another image rather than
-# installed from a package, so these are listed here until they are (#331).
-# docker/check-binaries.sh, run below, fails the build if this list falls
-# behind the binaries.
-RUN <<EOT
-set -e
-apt-get update -qy
-apt-get install -qyy \
-    -o APT::Install-Recommends=false \
-    -o APT::Install-Suggests=false \
-    libgfortran5 \
-    libmpich12 \
-    libnetcdf22 \
-    libnetcdff7 \
-    libpng16-16t64 \
-    mpich \
-    csh
-
-apt-get clean
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-EOT
-
-COPY --from=wrf-runtime /staging/wrf /opt/wrf
-COPY --from=wrf-runtime /staging/wps /opt/wps
 # Where the WRF step finds them
 ENV WRF_INSTALL_DIR=/opt/wrf \
   WPS_INSTALL_DIR=/opt/wps
 
-# The models are also checked at the paths .env.docker* point CMAQ_BIN,
-# ADJOINT_FWD and ADJOINT_BWD at, in case a package changes where it installs.
+# The models are also checked at the paths the WRF step and .env.docker* point
+# at, in case a package changes where it installs.
 COPY docker/check-binaries.sh /usr/local/bin/check-binaries.sh
 RUN check-binaries.sh --command mpirun --command csh \
     --package openmethane-cmaq --package openmethane-cmaq-adjoint \
+    --package openmethane-wrf \
     /opt/wrf /opt/wps /opt/cmaq/bin \
+ && test -x /opt/wrf/main/wrf.exe \
+ && test -x /opt/wrf/main/real.exe \
+ && test -x /opt/wps/geogrid.exe \
+ && test -x /opt/wps/ungrib.exe \
+ && test -x /opt/wps/metgrid.exe \
+ && test -x /opt/wps/link_grib.csh \
  && test -x /opt/cmaq/bin/mcip.exe \
  && test -x /opt/cmaq/bin/ICON_CH4only/ICON_CH4only \
  && test -x /opt/cmaq/bin/BCON_CH4only/BCON_CH4only \

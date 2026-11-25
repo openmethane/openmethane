@@ -409,9 +409,9 @@ OPENMETHANE_IMAGE=ghcr.io/openmethane/openmethane:pr-201 \
 
 ### Testing an unmerged model change
 
-The `Dockerfile` installs CMAQ and CMAQ-Adjoint from named stages, `cmaq-deb`
-and `cmaq-adjoint-deb`, which fetch each package from a GitHub release, pinned
-by URL and checksum. BuildKit can replace a named stage when building, so an
+The `Dockerfile` installs CMAQ, CMAQ-Adjoint, and WRF with WPS, from named
+stages, `cmaq-deb`, `cmaq-adjoint-deb` and `wrf-deb`, which fetch each package
+from a GitHub release, pinned by URL and checksum. BuildKit can replace a named stage when building, so an
 image with an unmerged model change needs no edit to the `Dockerfile`.
 
 **Locally**, take the package from the model pull request's CI run. The artifact
@@ -425,8 +425,9 @@ gh run download "$RUN_ID" -R openmethane/CMAQ-Adjoint -n debs -D debs/cmaq-adjoi
 docker build --build-context cmaq-adjoint-deb=./debs/cmaq-adjoint -t openmethane:dev .
 ```
 
-The same works for CMAQ, with `-R openmethane/CMAQ`, `-D debs/cmaq` and
-`--build-context cmaq-deb=./debs/cmaq`. A CMAQ run also downloads
+The same works for WRF and WPS, with `-R openmethane/build-wrf`, `-D debs/wrf`
+and `--build-context wrf-deb=./debs/wrf`, and for CMAQ, with `-R openmethane/CMAQ`,
+`-D debs/cmaq` and `--build-context cmaq-deb=./debs/cmaq`. A CMAQ run also downloads
 `openmethane-cmaq-dev`, which the image doesn't install and ignores. The
 `debs/` folder is in `.gitignore` and `.dockerignore`.
 

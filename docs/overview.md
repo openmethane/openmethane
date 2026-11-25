@@ -46,8 +46,8 @@ as Debian packages that this repository's Docker image installs. See
 [Installing locally](guides/local-install.md) if you need the binaries outside
 the published image.
 
-The image also contains the WRF and WPS programs, copied from the
-[docker-wrf](https://github.com/openmethane/docker-wrf) image, which the `wrf`
+The image also contains the WRF and WPS programs, installed from the
+[build-wrf](https://github.com/openmethane/build-wrf) package, which the `wrf`
 command runs. WRF used to run from a separate repository,
 [setup-wrf](https://github.com/openmethane/setup-wrf). Production still runs it
 from there until the move tracked in

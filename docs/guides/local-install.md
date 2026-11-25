@@ -46,9 +46,10 @@ they may live elsewhere.
 ### Taking the binaries from the release packages
 
 The models are published as Debian 13 (trixie) packages attached to each GitHub
-release: `openmethane-cmaq` from [CMAQ](https://github.com/openmethane/CMAQ/releases)
-and `openmethane-cmaq-adjoint` from
-[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint/releases). Use the
+release: `openmethane-cmaq` from [CMAQ](https://github.com/openmethane/CMAQ/releases),
+`openmethane-cmaq-adjoint` from
+[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint/releases) and
+`openmethane-wrf` from [build-wrf](https://github.com/openmethane/build-wrf/releases). Use the
 versions the [`Dockerfile`](../../Dockerfile) pins. You don't need to install
 them: `dpkg-deb -x` unpacks a package into a folder, on any Linux system with
 `dpkg-deb`, and without it `ar x <deb>` followed by `tar -xf data.tar.*` does the
@@ -59,9 +60,10 @@ dpkg-deb -x openmethane-cmaq_<version>_amd64.deb ./cmaq-root
 dpkg-deb -x openmethane-cmaq-adjoint_<version>_amd64.deb ./cmaq-root
 ```
 
-Both put their files under `opt/cmaq/bin`, so `CMAQ_BIN` is
+The two CMAQ packages put their files under `opt/cmaq/bin`, so `CMAQ_BIN` is
 `./cmaq-root/opt/cmaq/bin`, and `ADJOINT_FWD` and `ADJOINT_BWD` are the two
-executables inside it.
+executables inside it. `openmethane-wrf` puts WRF under `opt/wrf` and WPS under
+`opt/wps`, which are the folders `WRF_INSTALL_DIR` and `WPS_INSTALL_DIR` name.
 
 The binaries are dynamically linked, so this only works on a host with
 compatible libraries, which is any Debian 13 system or similar. List what they
@@ -83,15 +85,13 @@ and
 [CMAQ-Adjoint's `docs/building.md`](https://github.com/openmethane/CMAQ-Adjoint/blob/main/docs/building.md).
 Build the versions the `Dockerfile` pins.
 
-Running the full pipeline additionally needs WRF and WPS, for the `wrf`
-command, and the prior, from
+Running the full pipeline additionally needs the prior, from
 [openmethane-prior](https://github.com/openmethane/openmethane-prior), which has
-its own installation instructions. Point
-[`WRF_INSTALL_DIR` and `WPS_INSTALL_DIR`](../reference/parameters.md#wrf) at WRF
-and WPS install folders, laid out as their builds leave them. The published
-`openmethane` image has them at `/opt/wrf` and `/opt/wps`, and they can be
-copied out with `docker create` and `docker cp`, with the same caveat about libraries. The `wrf` command
-reads its settings from the environment only, not from the `.env.${TARGET}` file
+its own installation instructions. The `wrf` command needs WRF and WPS, from
+the package above or built from
+[build-wrf's `docs/building.md`](https://github.com/openmethane/build-wrf/blob/main/docs/building.md).
+Point [`WRF_INSTALL_DIR` and `WPS_INSTALL_DIR`](../reference/parameters.md#wrf)
+at their install folders. The `wrf` command reads its settings from the environment only, not from the `.env.${TARGET}` file
 described below. You can also mix
 approaches: run WRF and the prior from their public Docker images and only the
 rest of this repository natively.
@@ -120,8 +120,8 @@ Two of these are load-bearing and easy to overlook:
 - **`nco`** — provides `ncatted`, `ncks` and friends, used to manipulate NetCDF
   attributes. Some tests and preprocessing steps depend on it.
 
-The CMAQ binaries need NetCDF-Fortran and an MPI implementation (`mpich`). If you
-took them from the release packages, `dpkg-deb -f <deb> Depends` lists exactly
+The CMAQ, WRF and WPS binaries need NetCDF-Fortran and an MPI implementation
+(`mpich`). If you took them from the release packages, `dpkg-deb -f <deb> Depends` lists exactly
 what they need. If you built them yourself, these depend on how they were built,
 so check against your build.
 

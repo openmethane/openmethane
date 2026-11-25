@@ -15,7 +15,7 @@ class WrfInstall:
     The WRF and WPS installs.
 
     Every path is derived from the two install folders, laid out as the
-    docker-wrf image builds them.
+    openmethane-wrf package installs them.
     """
 
     wrf_dir: pathlib.Path = attrs.field(converter=pathlib.Path)

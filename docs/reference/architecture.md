@@ -173,9 +173,10 @@ that each model repository attaches to its GitHub releases:
 | --- | --- | --- |
 | `openmethane-cmaq` | [CMAQ](https://github.com/openmethane/CMAQ) | `mcip.exe`, the ICON and BCON executables and their runtime `.nml` files, under `/opt/cmaq/bin`. |
 | `openmethane-cmaq-adjoint` | [CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) | `ADJOINT_FWD` and `ADJOINT_BWD`, under `/opt/cmaq/bin`. |
+| `openmethane-wrf` | [build-wrf](https://github.com/openmethane/build-wrf) | `wrf.exe` and `real.exe` with WRF's run-time tables under `/opt/wrf`, and the WPS programs and tables under `/opt/wps`. |
 
-WRF and WPS are still copied from the `docker-wrf` image, until they are
-packaged too ([#331](https://github.com/openmethane/openmethane/issues/331)).
+The `wrf` command finds WRF and WPS through `WRF_INSTALL_DIR` and
+`WPS_INSTALL_DIR`, which the image sets to those two folders.
 
 In the `Dockerfile`, each package is fetched by a named stage, pinned by URL and
 checksum, and installed with apt from a bind mount on that stage, so the `.deb`
@@ -190,7 +191,8 @@ never becomes part of an image layer. This means:
   run.
 - **The build checks the result.** `docker/check-binaries.sh` runs `ldd` over
   every ELF file in each model package, and fails the build on a missing
-  library, or if `mpirun` or `csh` is missing.
+  library, or if `mpirun` or `csh` is missing. It also checks that `wrf.exe`,
+  `real.exe` and the WPS programs are at the paths the `wrf` command uses.
 - **A version bump is one line,** and changes the model that produces the
   results, so review it as a possible change to science outputs.
 - **The versions are visible.** `dpkg-query -W 'openmethane-*'` in an image lists
