@@ -135,10 +135,12 @@ RUN check-binaries.sh --command mpirun --command csh \
     /opt/wrf /opt/wps /opt/cmaq/bin \
  && test -x /opt/wrf/main/wrf.exe \
  && test -x /opt/wrf/main/real.exe \
- && test -x /opt/wps/geogrid.exe \
  && test -x /opt/wps/ungrib.exe \
  && test -x /opt/wps/metgrid.exe \
  && test -x /opt/wps/link_grib.csh \
+ && test -f /opt/wps/metgrid/METGRID.TBL \
+ && test -f /opt/wps/ungrib/Variable_Tables/Vtable.GFS \
+ && test -n "$(ls /opt/wrf/run)" \
  && test -x /opt/cmaq/bin/mcip.exe \
  && test -x /opt/cmaq/bin/ICON_CH4only/ICON_CH4only \
  && test -x /opt/cmaq/bin/BCON_CH4only/BCON_CH4only \

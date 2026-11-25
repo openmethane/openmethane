@@ -9,12 +9,10 @@
 # library, if any library is "not found". Each --command NAME must also be on
 # PATH, for programs that are run rather than linked, such as mpirun.
 #
-# The model packages declare their own libraries in Depends, so this checks
-# that apt resolved them all. The WRF and WPS binaries are copied from another
-# image, so their libraries are installed by name in the Dockerfile, and this
-# script is what keeps that list honest. When it reports a missing library for
-# a folder, run `dpkg -S <library>` in the image the binary came from to find
-# the package.
+# The model packages, WRF and WPS included, declare their own libraries in
+# Depends, so this checks that apt resolved them all. A missing library means a
+# package's Depends is incomplete, which is fixed in the package, or that the
+# image and the package were built on different Debian releases.
 #
 # ldd can't see libraries loaded at run time (dlopen), or data files. Running
 # the programs for real is the only full check.
@@ -108,9 +106,9 @@ for package in "${packages[@]}"; do
 done
 
 if [[ $failed -ne 0 ]]; then
-  echo "Binary check failed. Add the missing packages to the Dockerfile, or for a" >&2
-  echo "wrong library version, check the models and the image are on the same" >&2
-  echo "Debian release." >&2
+  echo "Binary check failed. A library that is not found means a package's Depends" >&2
+  echo "is incomplete. For a wrong library version, check the models and the image" >&2
+  echo "are on the same Debian release." >&2
   exit 1
 fi
 echo "All binaries found their libraries."

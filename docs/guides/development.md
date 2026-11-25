@@ -20,9 +20,9 @@ uv sync
 linting, unit tests that don't touch the models, and editor tooling.
 
 > [!NOTE]
-> Building the `openmethane` image downloads the CMAQ and CMAQ-Adjoint packages
-> from GitHub releases and the WRF image from `ghcr.io`. Both are public and
-> need no authentication, but the first `make build` on a machine takes a while.
+> Building the `openmethane` image downloads the CMAQ, CMAQ-Adjoint, and WRF and
+> WPS packages from GitHub releases. They are public and need no
+> authentication, but the first `make build` on a machine takes a while.
 
 ## Running the tests
 
