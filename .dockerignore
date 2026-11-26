@@ -11,3 +11,10 @@ data
 
 # Model packages for testing an unmerged change, see docs/guides/development.md
 debs/
+
+# Local checkout state. CI builds from the Git ref, which has none of these, so
+# this only keeps local images the same as the published one.
+.git
+.idea
+.ruff_cache
+.pytest_cache
