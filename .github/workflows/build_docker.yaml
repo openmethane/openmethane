@@ -272,7 +272,7 @@ jobs:
     env:
       # Holds the reference output for the same day. See "WRF test data" in
       # docs/guides/development.md
-      WRF_TEST_DATA_URL: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261126.tar.gz
+      WRF_TEST_DATA_URL: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261127.tar.gz
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
