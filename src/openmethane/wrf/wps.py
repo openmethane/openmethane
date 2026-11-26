@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 MET_EM_TIME_FORMAT = "%Y-%m-%d_%H:%M:%S"
 
 # Intermediate files ungrib and metgrid leave in the working folder
-INTERMEDIATE_PATTERNS = ("ERA:*", "SST:*", "FILE:*", "PFILE:*", "GRIBFILE.*", "fort.*")
+INTERMEDIATE_PATTERNS = ("ERA:*", "FILE:*", "PFILE:*", "GRIBFILE.*", "fort.*")
 
 
 class WpsError(RuntimeError):
