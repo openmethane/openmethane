@@ -8,3 +8,6 @@ data
 # Byte-compiled / optimized / DLL files
 **/__pycache__/
 **/*.py[cod]
+
+# Model packages for testing an unmerged change, see docs/guides/development.md
+debs/

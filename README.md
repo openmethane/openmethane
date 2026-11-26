@@ -46,11 +46,11 @@ a public Docker image:
 - [openmethane-prior](https://github.com/openmethane/openmethane-prior) — builds
   the initial (prior) emissions estimate from inventories and land-use data.
 
-The CMAQ adjoint model is built in
-[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint), and the WRF weather
-model in [docker-wrf](https://github.com/openmethane/docker-wrf). Both are
-bundled into this repository's Docker image, which runs WRF with its `wrf`
-command.
+The models are built in [CMAQ](https://github.com/openmethane/CMAQ),
+[CMAQ-Adjoint](https://github.com/openmethane/CMAQ-Adjoint) and
+[build-wrf](https://github.com/openmethane/build-wrf) (WRF and WPS), which
+publish them as Debian packages. All are installed into this repository's Docker
+image, which runs WRF with its `wrf` command.
 
 > [!NOTE]
 > The CMAQ-Adjoint repository and its container image are not public, so the

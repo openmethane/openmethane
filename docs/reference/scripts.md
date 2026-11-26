@@ -142,7 +142,7 @@ than the rest of the codebase.
 | Target | Description |
 | --- | --- |
 | `install` | `uv sync` |
-| `build` | Build the `openmethane` Docker image on top of `ghcr.io/openmethane/cmaq-adjoint`. |
+| `build` | Build the `openmethane` Docker image from `debian:trixie-slim`, installing the CMAQ models from their release packages. |
 | `test` | Run the test suite, except the WRF integration tests. Requires the container. |
 | `docker-test` | Build the image, then run the tests inside it. |
 | `test-wrf` | Build the image, then run the WRF integration tests inside it: a real au-test day, about 5 minutes. Downloads the day's FNL analyses into `data/fnl` the first time. |

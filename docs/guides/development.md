@@ -20,9 +20,9 @@ uv sync
 linting, unit tests that don't touch the models, and editor tooling.
 
 > [!NOTE]
-> Building the `openmethane` image pulls `ghcr.io/openmethane/cmaq-adjoint` as
-> its base. That image is public and needs no authentication, but it is large,
-> so the first `make build` on a machine takes a while.
+> Building the `openmethane` image downloads the CMAQ, CMAQ-Adjoint, and WRF and
+> WPS packages from GitHub releases. They are public and need no
+> authentication, but the first `make build` on a machine takes a while.
 
 ## Running the tests
 
@@ -406,6 +406,59 @@ reviewer's problem exactly:
 OPENMETHANE_IMAGE=ghcr.io/openmethane/openmethane:pr-201 \
   bash scripts/docker-e2e-daily.sh
 ```
+
+### Testing an unmerged model change
+
+The `Dockerfile` installs CMAQ, CMAQ-Adjoint, and WRF with WPS, from named
+stages, `cmaq-deb`, `cmaq-adjoint-deb` and `wrf-deb`, which fetch each package
+from a GitHub release, pinned by URL and checksum. BuildKit can replace a named stage when building, so an
+image with an unmerged model change needs no edit to the `Dockerfile`.
+
+**Locally**, take the package from the model pull request's CI run. The artifact
+is called `debs`. `<branch>` is the model pull request's branch:
+
+```shell
+RUN_ID=$(gh run list -R openmethane/CMAQ-Adjoint --branch <branch> --workflow build.yaml \
+  --status success --limit 1 --json databaseId -q '.[0].databaseId')
+gh run download "$RUN_ID" -R openmethane/CMAQ-Adjoint -n debs -D debs/cmaq-adjoint
+
+docker build --build-context cmaq-adjoint-deb=./debs/cmaq-adjoint -t openmethane:dev .
+```
+
+The same works for WRF and WPS, with `-R openmethane/build-wrf`, `-D debs/wrf`
+and `--build-context wrf-deb=./debs/wrf`, and for CMAQ, with `-R openmethane/CMAQ`,
+`-D debs/cmaq` and `--build-context cmaq-deb=./debs/cmaq`. A CMAQ run also downloads
+`openmethane-cmaq-dev`, which the image doesn't install and ignores. The
+`debs/` folder is in `.gitignore` and `.dockerignore`.
+
+**In CI, or in AWS**, the model repository's `Publish dev build` workflow
+attaches the package to a pre-release tagged `dev-pr<PR>-<sha7>`. Run it on the
+model pull request's branch:
+
+```shell
+gh workflow run dev-build.yaml -R openmethane/CMAQ-Adjoint --ref <branch>
+```
+
+The workflow's job summary lists the `ADD --checksum=… <url> /` line to paste
+into the matching stage of the `Dockerfile`. Pin it in the Open Methane pull
+request, and its CI builds and pushes the pull request image as usual, ready to
+run in AWS.
+
+**A dev pin can't be merged.** CI fails if the `Dockerfile` downloads from a
+`dev-pr` release, and the model repository deletes the pre-release when its pull
+request closes. Move the pin to a real release before merging, and treat the
+change as a possible change to science outputs.
+
+### Checking what an image contains
+
+```shell
+docker run --rm --entrypoint dpkg-query ghcr.io/openmethane/openmethane:latest \
+  -W 'openmethane-*'
+```
+
+lists the version of each model package in an image. The build also runs
+`docker/check-binaries.sh`, which fails if a model binary can't find a library,
+or `mpirun` or `csh` is missing.
 
 ## Preparing a release
 

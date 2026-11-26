@@ -14,6 +14,21 @@ env:
   IMAGE: openmethane/openmethane
 
 jobs:
+  # A dev-pr pre-release is a model change that hasn't been merged and released
+  # yet. It may be pinned in a pull request to test the change in AWS, but must
+  # move to a real release before merging.
+  no-dev-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Check the Dockerfile pins no dev-pr pre-release
+        run: |
+          if grep -nE 'releases/download/dev-pr' Dockerfile; then
+            echo "::error file=Dockerfile::Pin a released model version instead of a dev-pr pre-release"
+            exit 1
+          fi
+
   build:
     runs-on: ubuntu-latest
     strategy:
