@@ -19,6 +19,51 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.7.0 (2026-11-26)
+
+### ⚠️ Breaking Changes
+
+- Changed `scripts/docker-e2e-daily.sh` to run WRF with the `wrf run` command from the `openmethane` image, rather than from setup-wrf's image ([#316](https://github.com/openmethane/openmethane/issues/316)).
+
+  - `SETUP_WRF_IMAGE` has been removed. Set `OPENMETHANE_IMAGE` to choose the image WRF runs from; it needs a version that includes the `wrf` command.
+  - WRF's geography data is no longer downloaded, since a WRF run doesn't read it. An existing `${DATA_ROOT}/geog` folder, about 33 GB, can be deleted.
+  - FNL analyses are kept in `${DATA_ROOT}/fnl`, as before, and shared by every day.
+  - `BUILD_LOCAL_DOCKER=true` no longer builds setup-wrf, so a setup-wrf checkout beside this repository is no longer needed.
+
+  ([#338](https://github.com/openmethane/openmethane/pull/338))
+- Changed the `openmethane` image to be built from `debian:trixie-slim`, with the CMAQ models and WRF and WPS installed from Debian packages, rather than built on the `ghcr.io/openmethane/cmaq-adjoint` image and copying WRF and WPS out of the `ghcr.io/openmethane/wrf` image ([#315](https://github.com/openmethane/openmethane/issues/315), [#331](https://github.com/openmethane/openmethane/issues/331)).
+
+  - Previously the image inherited the models, their libraries and everything else in the `cmaq` and `cmaq-adjoint` images. Now `openmethane-cmaq` 1.1.0, `openmethane-cmaq-adjoint` 2.2.0 and `openmethane-wrf` 4.5.1-1 are installed from their GitHub releases, pinned by URL and checksum, and apt installs the libraries they declare. The image build fails if a model binary can't find a library.
+  - The CMAQ-Adjoint version changed from 2.0.1 to 2.2.0. The CMAQ binaries (MCIP, ICON and BCON) and `ADJOINT_FWD` are unchanged. `ADJOINT_BWD` can now write the sensitivity to the lateral boundary conditions when `ADJ_LGRID_BC` is set, and does nothing different when it isn't.
+  - The I/O API build tree (`/opt/lib`), the CMAQ sources, `wget`, and the `M3HOME`, `M3LIB`, `BIN_DIR`, `CMAQ_ADJOINT_VERSION` and `OPENMETHANE_CMAQ_VERSION` environment variables are no longer in the image. Open Methane doesn't use any of them. Anything built on the `openmethane` image that does must install or set them itself.
+
+  Note: `dpkg-query -W 'openmethane-*'` in an image lists the model versions it contains.
+
+  ([#340](https://github.com/openmethane/openmethane/pull/340))
+
+### 🆕 Features
+
+- Added the WRF and WPS programs to the openmethane image, ahead of running WRF from Open Methane ([#316](https://github.com/openmethane/openmethane/issues/316)). The image is about 290 MB larger. The build now fails if any WRF, WPS or CMAQ binary is missing a shared library. ([#334](https://github.com/openmethane/openmethane/pull/334))
+- Added the `wrf` command, which runs the WRF weather model for Open Methane ([#316](https://github.com/openmethane/openmethane/issues/316)): it downloads the FNL analyses, runs WPS, real.exe and wrf.exe, averages each hour of output and publishes it in the layout CMAQ preprocessing reads. Its output is identical to setup-wrf's. Production still runs WRF from setup-wrf.
+
+  The output is described in [WRF outputs](https://github.com/openmethane/openmethane/blob/main/docs/reference/wrf-outputs.md). ([#336](https://github.com/openmethane/openmethane/pull/336))
+
+### 🐛 Bug Fixes
+
+- Fixed `BUILD_LOCAL_DOCKER=true` in the workflow scripts, which built local images but then ran the published `stable` ones. It now runs the images it built, unless `OPENMETHANE_IMAGE` or `OPENMETHANE_PRIOR_IMAGE` is set. ([#338](https://github.com/openmethane/openmethane/pull/338))
+- Fixed the workflow scripts and `make fetch-domains` saving an error page as the domain file when a domain wasn't published. They now stop with an error naming the domain and URL, and leave no file behind. ([#338](https://github.com/openmethane/openmethane/pull/338))
+
+### 📚 Improved Documentation
+
+- Added guidance on deciding whether a pull request needs review, and a review line at the top of the pull request template. ([#314](https://github.com/openmethane/openmethane/pull/314))
+- Updated the documentation for running WRF from the `openmethane` image. The [custom domain guide](https://github.com/openmethane/openmethane/blob/main/docs/guides/custom-domain.md) now describes the WRF geometry file a domain needs in this repository, and uses setup-wrf only to make a new domain's `geo_em.d01.nc` until the domain creation tool ([#298](https://github.com/openmethane/openmethane/issues/298)) is available. ([#338](https://github.com/openmethane/openmethane/pull/338))
+- Documented how the models get into the image ([architecture](https://github.com/openmethane/openmethane/blob/main/docs/reference/architecture.md#how-the-models-get-into-the-image)), and how to build an image with an unmerged CMAQ, CMAQ-Adjoint or WRF change ([development guide](https://github.com/openmethane/openmethane/blob/main/docs/guides/development.md#testing-an-unmerged-model-change)). The [local install guide](https://github.com/openmethane/openmethane/blob/main/docs/guides/local-install.md) now takes the CMAQ, WRF and WPS binaries from the release packages instead of the `cmaq-adjoint` image, links to the models' build documents, and says Debian trixie instead of bookworm. ([#340](https://github.com/openmethane/openmethane/pull/340))
+
+### 🔧 Trivial/Internal Changes
+
+- [#332](https://github.com/openmethane/openmethane/pull/332), [#333](https://github.com/openmethane/openmethane/pull/333), [#335](https://github.com/openmethane/openmethane/pull/335)
+
+
 ## openmethane v1.6.1 (2026-10-28)
 
 ### ⚠️ Breaking Changes
