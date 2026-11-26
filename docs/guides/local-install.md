@@ -49,7 +49,7 @@ Building CMAQ-Adjoint from source is the supported path, but if you only need
 the binaries you can lift them out of the published image, which is public:
 
 ```shell
-CONTAINER=$(docker create ghcr.io/openmethane/cmaq-adjoint:2.0.1)
+CONTAINER=$(docker create ghcr.io/openmethane/cmaq-adjoint:2.1.0)
 docker cp "${CONTAINER}:/opt/cmaq/bin" ./cmaq-bin
 docker rm "${CONTAINER}"
 ```

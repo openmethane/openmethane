@@ -35,6 +35,7 @@ Look-up material, not meant to be read end to end.
 | [Outputs](reference/outputs.md) | The files a run produces and what the variables mean. |
 | [WRF outputs](reference/wrf-outputs.md) | The meteorology the WRF step publishes for CMAQ preprocessing, and when a day of it is complete. |
 | [Architecture](reference/architecture.md) | Internals of the 4D-Var inversion: data types and the transform chain. |
+| [Boundary conditions](reference/boundary-conditions.md) | How the inversion corrects the boundary and initial conditions: the offsets, their resolution, uncertainty and bounds, and the boundary map file. |
 | [Assessing convergence](reference/assessing-convergence.md) | What the optimiser is minimising, when to stop it, and how to read the chi-squared statistic. |
 
 ## Other

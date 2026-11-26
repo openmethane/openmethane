@@ -14,8 +14,11 @@
 # limitations under the License.
 #
 
-from openmethane.fourdvar.datadef.abstract._physical_abstract_data import PhysicalAbstractData
-from openmethane.fourdvar.params.input_defn import inc_icon
+from openmethane.fourdvar.datadef.abstract._physical_abstract_data import (
+    BCON_UNITS,
+    ICON_UNITS,
+    PhysicalAbstractData,
+)
 
 
 class PhysicalData(PhysicalAbstractData):
@@ -25,5 +28,5 @@ class PhysicalData(PhysicalAbstractData):
 
     archive_name = "physical_data.ncf"
     emis_units = "mol/(s*m^2)"
-    if inc_icon is True:
-        icon_units = "ppm"
+    bcon_units = BCON_UNITS
+    icon_units = ICON_UNITS

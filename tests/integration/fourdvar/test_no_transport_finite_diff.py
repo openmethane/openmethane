@@ -33,6 +33,7 @@ from openmethane.fourdvar.params import (
     archive_defn,
     cmaq_config,
     date_defn,
+    input_defn,
     template_defn,
 )
 
@@ -50,6 +51,8 @@ def make_perturbation(init_vector, scale):
     - Only on the surface layer
     - In the middle of the domain
     - For every species
+    and, when it is solved for, increase the initial condition offset by its
+    uncertainty*scale.
     """
     unknown = d.UnknownData(init_vector)
     p = transform(unknown, d.PhysicalData)
@@ -59,6 +62,8 @@ def make_perturbation(init_vector, scale):
         p.emis[spc][0, 0, r : 2 * r, c : 2 * c] += (
             scale * p.emis_unc[spc][0, 0, r : 2 * r, c : 2 * c]
         )
+        if input_defn.inc_icon is True:
+            p.icon[spc] += scale * p.icon_unc[spc]
     # convert perturbed phys back into vector
     pert_unknown = transform(p, d.UnknownData)
     return pert_unknown.get_vector()
@@ -105,8 +110,8 @@ def fwd_no_transport(model_input):
     e_lay = ncf.get_variable(
         dt.replace_date(template_defn.emis, date_defn.start_date), spcs_list[0]
     ).shape[1]
-    # get icon for each species
-    icon = ncf.get_variable(cmaq_config.icon_file, spcs_list)
+    # get icon for each species from the run copy, which includes the offset
+    icon = ncf.get_variable(cmaq_config.icon_run_file, spcs_list)
     # get constants to convert emission units
     mwair = 28.9628
     ppm_scale = 1e6
