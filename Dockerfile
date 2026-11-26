@@ -103,15 +103,16 @@ apt-get clean
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 EOT
 
-# Install the bare minimum software requirements
+# Install the bare minimum software requirements. make is only for running the
+# tests inside the image (`make fetch-test-data`, `make test`); nothing here
+# compiles, so there is no compiler. csh comes in with the models above.
 RUN <<EOT
 set -e
 apt-get update -qy
 apt-get install -qyy \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
-    build-essential \
-    csh \
+    make \
     nco \
     jq \
     curl \

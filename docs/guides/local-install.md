@@ -104,9 +104,9 @@ needed locally. On a Debian or Ubuntu host:
 ```shell
 sudo apt-get update
 sudo apt-get install -y \
-    build-essential \
     ca-certificates \
     csh \
+    make \
     nco \
     jq \
     curl \

@@ -11,3 +11,13 @@ data
 
 # Model packages for testing an unmerged change, see docs/guides/development.md
 debs/
+
+# Local checkout state. CI builds from the Git ref, which has none of these, so
+# this only affects local builds.
+.git
+.idea
+.ruff_cache
+.pytest_cache
+
+# Credentials (see .env.example). Pass them at run time instead.
+.env
