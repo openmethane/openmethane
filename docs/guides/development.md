@@ -126,7 +126,9 @@ tar -C wrf-test-data -czf wrf-test-data.$(date +%Y%m%d).tar.gz .
 Upload it beside the old one and point `WRF_TEST_DATA_URL` in
 `.github/workflows/build_docker.yaml` at it, in the same change. A change that
 is meant to change WRF's output needs a new bundle made from its own output,
-and review as a change of input meteorology.
+and review as a change of input meteorology. Make it with `wrf run` and the
+same settings as the job's "Run WRF" step, including `NCPUS=1`: the rank count
+changes WRF's output at rounding level.
 
 The unit tests in `tests/unit/wrf/test_namelists.py` do the same for the
 namelists, against fixtures in `tests/unit/wrf/test_namelists/`, which
