@@ -5,10 +5,6 @@ in CMAQ preprocessing, to read. This page is the contract between the two: what
 the WRF step promises, and so what MCIP may rely on. Changing anything here
 needs both sides changed together.
 
-setup-wrf, which ran WRF in production before
-[#316](https://github.com/openmethane/openmethane/issues/316), wrote the same
-layout.
-
 ## Where the output goes
 
 Everything is under `${STORE_PATH}/wrf/${DOMAIN_NAME}/`, which is `WRF_DIR` and
@@ -61,14 +57,3 @@ complete one. A retry reuses the published `metem/` files, and the FNL
 analyses in `FNL_CACHE_PATH` when it is outside the scratch folder. Run outside the image, the scratch folder is
 left in place, and a retry also reuses real.exe's output there. In the image,
 the entrypoint empties `CHK_PATH` when the command ends.
-
-## Compared with setup-wrf
-
-The values in every averaged file and `met_em` file were identical to
-setup-wrf 0.9.2's for the same day when production moved off it, on au-test
-and on two aust10km days ([#323](https://github.com/openmethane/openmethane/issues/323)).
-CI now compares each au-test run with reference output from openmethane
-1.7.1, which has the same values. setup-wrf also published its generated shell scripts
-(`main.sh`, `run.sh`, `cleanup.sh` and others) and a broken link to
-`geo_em.d01.nc` in each day's folder. The WRF step doesn't, and nothing reads
-them.
