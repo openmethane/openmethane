@@ -15,8 +15,7 @@
     j_parent_start = 1
     e_we = 467
     e_sn = 443
-    geog_data_res = 'usgs_10m+default', 'usgs_30s+default', 'usgs_30s+default',
-                    'usgs_30s+default'
+    geog_data_res = 'usgs_10m+default'
     dx = 10000
     dy = 10000
     map_proj = 'lambert'
@@ -25,7 +24,6 @@
     truelat1 = -15.0
     truelat2 = -40.0
     stand_lon = 133.302
-    geog_data_path = 'TEMPLATE'
     ref_x = 233.5
     ref_y = 221.5
 /

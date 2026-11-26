@@ -64,9 +64,11 @@ the entrypoint empties `CHK_PATH` when the command ends.
 
 ## Compared with setup-wrf
 
-The values in every averaged file and `met_em` file are identical to
-setup-wrf 0.9.2's for the same day: `scripts/wrf/compare_wrf_runs.py` checks
-this in CI for au-test. setup-wrf also published its generated shell scripts
+The values in every averaged file and `met_em` file were identical to
+setup-wrf 0.9.2's for the same day when production moved off it, on au-test
+and on two aust10km days ([#323](https://github.com/openmethane/openmethane/issues/323)).
+CI now compares each au-test run with reference output from openmethane
+1.7.1, which has the same values. setup-wrf also published its generated shell scripts
 (`main.sh`, `run.sh`, `cleanup.sh` and others) and a broken link to
 `geo_em.d01.nc` in each day's folder. The WRF step doesn't, and nothing reads
 them.

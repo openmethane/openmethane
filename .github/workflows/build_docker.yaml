@@ -261,18 +261,18 @@ jobs:
           uv run --only-group dev ruff format --check $PATHS
 
   # Run WRF for a real au-test day: the integration test checks the output
-  # contract, and a second run is compared with setup-wrf's output until the
-  # cutover (#323). Runs when WRF paths change, and always on main, tags and
-  # manual runs.
+  # contract, and a second run is compared with reference output for the same
+  # day, so any change to WRF's output is caught. Runs when WRF paths change,
+  # and always on main, tags and manual runs.
   test-wrf:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     needs: [ build, changes ]
     if: needs.changes.outputs.wrf == 'true' || github.event_name != 'pull_request'
     env:
-      # Holds setup-wrf 0.9.2's output for the same day. See "WRF test data" in
+      # Holds the reference output for the same day. See "WRF test data" in
       # docs/guides/development.md
-      WRF_TEST_DATA_URL: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261120.tar.gz
+      WRF_TEST_DATA_URL: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261126.tar.gz
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -315,18 +315,14 @@ jobs:
         with:
           path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
           key: wrf-fnl-au-test-2022-12-07
-      - name: Compare with setup-wrf
+      - name: Compare with the reference output
         run: |
           mkdir ${{ steps.data-path.outputs.DATA_PATH }}/wrf-test-data
           curl -sSfL "$WRF_TEST_DATA_URL" | tar -xz -C ${{ steps.data-path.outputs.DATA_PATH }}/wrf-test-data
-          # setup-wrf also published its generated scripts and a link into
-          # scratch, which the WRF step doesn't make
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
             ${{ needs.build.outputs.registry-image-id }} \
             python scripts/wrf/compare_wrf_runs.py \
-              /app/data/store/wrf/au-test /app/data/wrf-test-data/setup-wrf-0.9.2/au-test \
-              --ignore 'main.sh' --ignore '*/*.sh' --ignore '*/checkWrfoutInBackground.py' \
-              --ignore '*/geo_em.d01.nc'
+              /app/data/store/wrf/au-test /app/data/wrf-test-data/au-test
       - name: Upload WRF output
         if: ${{ always() }}
         uses: actions/upload-artifact@v7

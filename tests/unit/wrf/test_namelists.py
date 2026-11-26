@@ -13,7 +13,7 @@ from openmethane.wrf.namelists import (
 )
 from openmethane.wrf.windows import RunWindow
 
-# The window keeping 2022-12-07, as in the setup-wrf fixtures.
+# The window keeping 2022-12-07, the day the WRF integration test runs.
 WINDOW = RunWindow(
     start=datetime.datetime(2022, 12, 6, 12),
     first_kept=datetime.datetime(2022, 12, 7),
@@ -50,58 +50,26 @@ def as_dict(namelist: f90nml.Namelist) -> dict:
     return f90nml.reads(str(namelist)).todict()
 
 
-def differences(ours: dict, theirs: dict, ignore: set[str]) -> list[str]:
-    """Each setting that differs between two parsed namelists."""
-    found = []
-    for group in sorted(set(ours) | set(theirs)):
-        mine, other = ours.get(group, {}), theirs.get(group, {})
-        for key in sorted(set(mine) | set(other)):
-            if key.startswith("_") or key in ignore:
-                continue
-            if mine.get(key) != other.get(key):
-                found.append(f"{group}.{key}: ours {mine.get(key)!r}, setup-wrf {other.get(key)!r}")
-    return found
-
-
+# The fixtures were first written when these namelists matched setup-wrf 0.9.2's,
+# the version production ran before #323, setting for setting. aust10km's
+# namelist.wps differed only in geog_data_res, which only geogrid reads.
+# A change to a fixture changes what WRF runs, so review it as a science change.
 @pytest.mark.parametrize("domain_name", ("au-test", "aust10km"))
-def test_namelist_input_matches_setup_wrf(domain_name, test_data_dir):
-    fixture = test_data_dir / "wrf-namelists" / "setup-wrf-0.9.2" / domain_name
+def test_namelist_input_is_unchanged(domain_name, file_regression):
     domains = DomainSet.load([(domain_name, "v1")])
 
     namelist = build_wrf_namelist(domains, WINDOW, num_metgrid_levels=34, num_metgrid_soil_levels=4)
 
-    assert (
-        differences(as_dict(namelist), f90nml.read(fixture / "namelist.input").todict(), set())
-        == []
-    )
+    file_regression.check(str(namelist), basename=f"{domain_name}_namelist", extension=".input")
 
 
-@pytest.mark.parametrize(
-    "domain_name, allowed",
-    (
-        ("au-test", []),
-        # setup-wrf's aust10km template lists four resolutions, left over from a
-        # multi-domain template. With one domain WPS reads only the first, and
-        # only geogrid reads it at all.
-        (
-            "aust10km",
-            [
-                "geogrid.geog_data_res: ours 'usgs_10m+default', setup-wrf"
-                " ['usgs_10m+default', 'usgs_30s+default', 'usgs_30s+default', 'usgs_30s+default']"
-            ],
-        ),
-    ),
-)
-def test_namelist_wps_matches_setup_wrf(domain_name, allowed, test_data_dir):
-    fixture = test_data_dir / "wrf-namelists" / "setup-wrf-0.9.2" / domain_name
+@pytest.mark.parametrize("domain_name", ("au-test", "aust10km"))
+def test_namelist_wps_is_unchanged(domain_name, file_regression):
     domains = DomainSet.load([(domain_name, "v1")])
 
     namelist = build_wps_namelist(domains, WINDOW)
 
-    found = differences(
-        as_dict(namelist), f90nml.read(fixture / "namelist.wps").todict(), {"geog_data_path"}
-    )
-    assert found == allowed
+    file_regression.check(str(namelist), basename=f"{domain_name}_namelist", extension=".wps")
 
 
 def test_nests_get_their_own_geometry_and_boundaries():
