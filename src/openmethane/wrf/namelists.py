@@ -217,10 +217,7 @@ def build_wps_namelist(
             "geogrid": geogrid,
             "ungrib": {"out_format": "WPS", "prefix": ANALYSIS_PREFIX},
             "metgrid": {
-                # No SST intermediate files are made, and metgrid skips the
-                # missing ones. Kept until #328 checks that removing it
-                # leaves met_em unchanged.
-                "fg_name": [ANALYSIS_PREFIX, "SST"],
+                "fg_name": [ANALYSIS_PREFIX],
                 "io_form_metgrid": 2,
             },
         }
