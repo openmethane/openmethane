@@ -13,8 +13,11 @@ data
 debs/
 
 # Local checkout state. CI builds from the Git ref, which has none of these, so
-# this only keeps local images the same as the published one.
+# this only affects local builds.
 .git
 .idea
 .ruff_cache
 .pytest_cache
+
+# Credentials (see .env.example). Pass them at run time instead.
+.env
