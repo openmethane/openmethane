@@ -47,7 +47,8 @@ A domain needs three files:
 > [!NOTE]
 > Nothing in this repository runs geogrid yet, so for now a new domain's
 > `geo_em.d01.nc` is made with [setup-wrf](https://github.com/openmethane/setup-wrf),
-> where WRF used to run. The domain creation tool
+> where WRF used to run. setup-wrf is archived, but its repository can still
+> be cloned and used for this. The domain creation tool
 > ([#298](https://github.com/openmethane/openmethane/issues/298)) will replace
 > steps 2 to 4.
 

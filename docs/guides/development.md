@@ -108,9 +108,8 @@ them in.
 ### WRF test data
 
 The `test-wrf` CI job runs the WRF integration tests, then runs WRF again and
-compares the output with setup-wrf's for the same day, until setup-wrf is
-archived ([#324](https://github.com/openmethane/openmethane/issues/324)).
-setup-wrf's output is in a bundle in
+compares the output with reference output for the same day, so any change to
+WRF's output fails the job. The reference output is in a bundle in
 the Open Methane public data store,
 `https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.<YYYYMMDD>.tar.gz`,
 with a README inside saying how it was made. The FNL analyses aren't in it:
@@ -125,7 +124,15 @@ tar -C wrf-test-data -czf wrf-test-data.$(date +%Y%m%d).tar.gz .
 ```
 
 Upload it beside the old one and point `WRF_TEST_DATA_URL` in
-`.github/workflows/build_docker.yaml` at it, in the same change.
+`.github/workflows/build_docker.yaml` at it, in the same change. A change that
+is meant to change WRF's output needs a new bundle made from its own output,
+and review as a change of input meteorology. Make it with `wrf run` and the
+same settings as the job's "Run WRF" step, including `NCPUS=1`: the rank count
+changes WRF's output at rounding level.
+
+The unit tests in `tests/unit/wrf/test_namelists.py` do the same for the
+namelists, against fixtures in `tests/unit/wrf/test_namelists/`, which
+`make test-regen` rewrites.
 
 ## Linting and formatting
 

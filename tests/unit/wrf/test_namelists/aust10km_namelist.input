@@ -3,18 +3,6 @@
     run_hours = 0
     run_minutes = 0
     run_seconds = 0
-    start_year = 2022
-    start_month = 12
-    start_day = 6
-    start_hour = 12
-    start_minute = 0
-    start_second = 0
-    end_year = 2022
-    end_month = 12
-    end_day = 8
-    end_hour = 0
-    end_minute = 0
-    end_second = 0
     interval_seconds = 21600
     input_from_file = .true.
     history_interval = 5
@@ -32,23 +20,38 @@
     auxinput4_inname = 'wrflowinp_d<domain>'
     io_form_auxinput4 = 2
     auxinput4_interval = 360
-    history_begin_h = 12
     use_netcdf_classic = .true.
     debug_level = 0
+    start_year = 2022
+    start_month = 12
+    start_day = 6
+    start_hour = 12
+    start_minute = 0
+    start_second = 0
+    end_year = 2022
+    end_month = 12
+    end_day = 8
+    end_hour = 0
+    end_minute = 0
+    end_second = 0
+    history_begin_h = 12
 /
 
 &domains
     time_step = 30
     time_step_fract_num = 0
     time_step_fract_den = 1
-    max_dom = 1
-    s_we = 1
-    e_we = 15
-    s_sn = 1
-    e_sn = 15
     s_vert = 1
     e_vert = 33
+    feedback = 0
+    smooth_option = 1
+    max_dom = 1
+    s_we = 1
+    e_we = 467
+    s_sn = 1
+    e_sn = 443
     num_metgrid_levels = 34
+    num_metgrid_soil_levels = 4
     dx = 10000
     dy = 10000
     grid_id = 1
@@ -57,9 +60,6 @@
     j_parent_start = 1
     parent_grid_ratio = 1
     parent_time_step_ratio = 1
-    feedback = 0
-    smooth_option = 1
-    num_metgrid_soil_levels = 4
 /
 
 &physics
@@ -110,7 +110,6 @@
     spec_bdy_width = 5
     spec_zone = 1
     relax_zone = 4
-    specified = .true.
     periodic_x = .false.
     symmetric_xs = .false.
     symmetric_xe = .false.
@@ -121,6 +120,7 @@
     symmetric_ye = .false.
     open_ys = .false.
     open_ye = .false.
+    specified = .true.
     nested = .false.
 /
 

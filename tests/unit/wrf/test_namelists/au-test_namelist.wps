@@ -24,7 +24,6 @@
     truelat1 = -15.0
     truelat2 = -40.0
     stand_lon = 133.302
-    geog_data_path = 'TEMPLATE'
     ref_x = -145.5
     ref_y = -30.5
 /

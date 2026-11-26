@@ -121,8 +121,8 @@ or fetch provided domains with:
 make fetch-domains
 ```
 
-This downloads the `au-test` and `aust10km` domains from
-[setup-wrf](https://github.com/openmethane/setup-wrf) into `data/domains`.
+This downloads the `au-test` and `aust10km` domains from the Open Methane
+public data store into `data/domains`.
 
 ## Running
 
