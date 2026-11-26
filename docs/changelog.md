@@ -19,6 +19,13 @@ of rst and use slightly different categories.
 
 <!-- towncrier release notes start -->
 
+## openmethane v1.7.1 (2026-11-26)
+
+### 🎉 Improvements
+
+- Removed the C and C++ compilers and other build tools from the Docker image, which made it about 270 MB smaller. `make` is still installed. If you compiled code or unpacked `.bz2` or `.xz` files inside the image, install the tools you need on top of it. ([#342](https://github.com/openmethane/openmethane/pull/342))
+
+
 ## openmethane v1.7.0 (2026-11-26)
 
 ### ⚠️ Breaking Changes
