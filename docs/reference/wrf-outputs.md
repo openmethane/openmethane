@@ -5,9 +5,9 @@ in CMAQ preprocessing, to read. This page is the contract between the two: what
 the WRF step promises, and so what MCIP may rely on. Changing anything here
 needs both sides changed together.
 
-Until WRF runs from Open Methane in production
-([#316](https://github.com/openmethane/openmethane/issues/316)), setup-wrf writes the
-same layout.
+setup-wrf, which ran WRF in production before
+[#316](https://github.com/openmethane/openmethane/issues/316), wrote the same
+layout.
 
 ## Where the output goes
 

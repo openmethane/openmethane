@@ -108,9 +108,9 @@ them in.
 ### WRF test data
 
 The `test-wrf` CI job runs the WRF integration tests, then runs WRF again and
-compares the output with setup-wrf's for the same day, until production has
-moved off setup-wrf
-([#323](https://github.com/openmethane/openmethane/issues/323)). setup-wrf's output is in a bundle in
+compares the output with setup-wrf's for the same day, until setup-wrf is
+archived ([#324](https://github.com/openmethane/openmethane/issues/324)).
+setup-wrf's output is in a bundle in
 the Open Methane public data store,
 `https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.<YYYYMMDD>.tar.gz`,
 with a README inside saying how it was made. The FNL analyses aren't in it:

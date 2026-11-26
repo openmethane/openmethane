@@ -49,9 +49,8 @@ the published image.
 The image also contains the WRF and WPS programs, installed from the
 [build-wrf](https://github.com/openmethane/build-wrf) package, which the `wrf`
 command runs. WRF used to run from a separate repository,
-[setup-wrf](https://github.com/openmethane/setup-wrf). Production still runs it
-from there until the move tracked in
-[#316](https://github.com/openmethane/openmethane/issues/316) is done.
+[setup-wrf](https://github.com/openmethane/setup-wrf), which is now archived
+([#316](https://github.com/openmethane/openmethane/issues/316)).
 
 ## Two workflows
 
