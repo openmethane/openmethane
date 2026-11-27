@@ -177,7 +177,7 @@ jobs:
             /bin/bash -c $'
               cd /app
               make fetch-test-data
-              python -m pytest -r a -v tests/integration/pipeline --basetemp=/app/data/pytest
+              python -m pytest -r a -v tests/integration/workflows --basetemp=/app/data/pytest
             '
 
       - name: Run fourdvar integration tests
