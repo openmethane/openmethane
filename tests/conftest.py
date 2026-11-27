@@ -13,6 +13,9 @@ TESTS_DIR = Path(__file__).parent
 ROOT_DIR = TESTS_DIR.parent
 BUNDLES_FILE = TESTS_DIR / "test-data" / "bundles.yaml"
 
+# Everything from here to `_start_unconfigured()`, plus `_reload_params` and
+# `target_environment`, works around `fourdvar.params` and `util.logger`
+# reading the environment when imported. Delete it once nothing does (#352).
 NO_ENV_FILE_TARGET = "pytest"
 """
 A `TARGET` with no `.env.${TARGET}` file, so no file fills in configuration a
