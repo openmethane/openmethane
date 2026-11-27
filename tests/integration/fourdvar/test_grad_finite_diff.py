@@ -16,6 +16,7 @@
 import time
 
 import numpy as np
+import pytest
 
 import openmethane.fourdvar._main_driver as main
 import openmethane.fourdvar.datadef as d
@@ -23,6 +24,9 @@ import openmethane.fourdvar.user_driver as user
 import openmethane.fourdvar.util.archive_handle as archive
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn
+
+# Marks every test in this module, since each runs the CMAQ adjoint
+pytestmark = pytest.mark.adjoint
 
 
 def test_fourdvar_grad_finite_diff(target_environment):

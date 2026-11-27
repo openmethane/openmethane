@@ -89,6 +89,7 @@ def test_setup_run_passes_create_chk_to_the_model(monkeypatch):
     assert cmaq_handle.setup_run()["CREATE_CHK"] == "F"
 
 
+@pytest.mark.adjoint
 def test_concentrations_are_unchanged_without_checkpoints(fwd_run):
     """The CONC field is what `transfunc.obs_operator` reads, so it has to match exactly."""
     with_chk_file, with_chk_written = fwd_run(True, "with_chk")

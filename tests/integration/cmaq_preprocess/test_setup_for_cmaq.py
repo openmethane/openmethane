@@ -26,6 +26,7 @@ def _get_filelisting(directory: Path):
     return sorted([os.path.relpath(i, directory) for i in directory.rglob("*") if i.is_file()])
 
 
+@pytest.mark.cmaq
 def test_setup_for_cmaq(
     tmpdir,
     root_dir,

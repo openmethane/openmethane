@@ -22,6 +22,7 @@ This test is only valid for 1-hour resolution output & sensitivities.
 import os
 
 import numpy as np
+import pytest
 
 import openmethane.fourdvar.datadef as d
 import openmethane.fourdvar.user_driver as user
@@ -35,6 +36,9 @@ from openmethane.fourdvar.params import (
     date_defn,
     template_defn,
 )
+
+# Marks every test in this module, since each runs the CMAQ adjoint
+pytestmark = pytest.mark.adjoint
 
 spcs_list = ["CH4"]  # species to perturb within CMAQ.
 tsec = 3600.0  # seconds per timestep, DO NOT MODIFY

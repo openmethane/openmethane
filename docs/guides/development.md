@@ -38,9 +38,13 @@ Inside the container (or on a machine with everything installed), run it
 directly:
 
 ```shell
-TARGET=docker-test uv run python -m pytest -r a -v tests \
-  --ignore=tests/integration/fourdvar -m "not wrf_integration"
+TARGET=docker-test uv run python -m pytest -r a -v
 ```
+
+This runs everything, including the WRF integration test, which takes about 5
+minutes and downloads the day's FNL analyses, about 3.4 GB, into `data/fnl` the
+first time (see [WRF integration tests](#wrf-integration-tests)). It leaves out
+`tests/integration/fourdvar/`, which runs only when named on the command line.
 
 A single test:
 
@@ -52,7 +56,7 @@ TARGET=docker-test uv run python -m pytest -v \
 Or from the host, without an interactive shell:
 
 ```shell
-docker run --rm -v $(PWD):/app -v /app/.venv openmethane \
+docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
   TARGET=docker-test uv run python -m pytest -v \
   tests/unit/cmaq_preprocess/test_wrf.py::test_name
 ```
@@ -66,14 +70,34 @@ Deselect them to run offline, or to keep somebody else's outage from failing the
 suite:
 
 ```shell
-TARGET=docker-test uv run python -m pytest -r a -v tests \
-  --ignore=tests/integration/fourdvar -m "not network and not wrf_integration"
+TARGET=docker-test uv run python -m pytest -r a -v -m "not network"
 ```
+
+Markers say what a test needs or costs, so you can leave those tests out:
+
+| Marker | The test |
+| --- | --- |
+| `network` | Can contact a third-party service when its cache is empty |
+| `wrf` | Runs the WRF or WPS programs, which only exist in the image |
+| `cmaq` | Runs MCIP, ICON or BCON, which only exist in the image |
+| `adjoint` | Runs the CMAQ adjoint, which only exists in the image |
+| `slow` | Takes over a minute |
+
+For a quick run:
+
+```shell
+TARGET=docker-test uv run python -m pytest -r a -v -m "not slow and not network"
+```
+
+Markers are registered in `pyproject.toml`, and a misspelt one on a test fails
+collection. A marker that follows from a fixture, like `network` for the FNL
+cache, is added in `tests/conftest.py`, so tests using the fixture don't repeat
+it.
 
 Two categories of test will not pass outside the container:
 
 - Tests requiring binaries such as the CMAQ adjoint or `ncatted`.
-- Everything under `tests/integration/fourdvar/`, which is excluded above. These
+- Everything under `tests/integration/fourdvar/`, which is left out by default. These
   depend on input data that has not been provided in a reproducible way. They
   should be fixed when possible.
 
@@ -91,13 +115,14 @@ make test-regen
 
 ### WRF integration tests
 
-Tests marked `wrf_integration`, in `tests/integration/wrf/`, run the real WRF
-and WPS programs for au-test on 2022-12-07 and check the published output
-against the [WRF output contract](../reference/wrf-outputs.md). They take about
-5 minutes and need the image, so `make test` leaves them out. Run them with:
+The tests in `tests/integration/wrf/` run the real WRF and WPS programs for
+au-test on 2022-12-07 and check the published output against the
+[WRF output contract](../reference/wrf-outputs.md). They take about 5 minutes
+and need the image. To run only them, after `make build`:
 
 ```shell
-make test-wrf
+docker run --rm -v "$PWD":/app -v /app/.venv -e TARGET=docker-test openmethane \
+  python -m pytest -r a -v tests/integration/wrf
 ```
 
 The first run downloads the day's FNL analyses, about 3.4 GB, into `data/fnl`,
@@ -237,8 +262,7 @@ locally — you can still edit and run the Python code.
 Tests run as normal once attached, without the `docker run` wrapper:
 
 ```shell
-TARGET=docker-test python -m pytest -r a -v tests \
-  --ignore=tests/integration/fourdvar
+TARGET=docker-test python -m pytest -r a -v
 ```
 
 The `/app/.venv` volume keeps the container's virtual environment from being

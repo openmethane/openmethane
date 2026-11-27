@@ -1,8 +1,8 @@
 """Run the WRF step for a real au-test day and check what it publishes.
 
 Needs the WRF and WPS programs, so it only runs in the openmethane image, and
-takes about 5 minutes. It is marked `wrf_integration`, which `make test`
-leaves out; run it with `make test-wrf`.
+takes about 5 minutes. The first run downloads 3.4 GB of FNL analyses, so it
+is also `network` (added in tests/conftest.py for `fnl_cache_path`).
 
 The checks are of the contract in docs/reference/wrf-outputs.md, the layout and
 structure MCIP relies on, not of values, so they still hold when the WRF
@@ -21,7 +21,8 @@ from openmethane.wrf.config import WrfConfig
 from openmethane.wrf.geometry import DomainSet
 from openmethane.wrf.install import WrfInstall
 
-pytestmark = pytest.mark.wrf_integration
+# Marks every test in this module, since each runs WRF
+pytestmark = [pytest.mark.wrf, pytest.mark.slow]
 
 DAY = datetime.date(2022, 12, 7)
 

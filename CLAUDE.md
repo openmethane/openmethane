@@ -12,19 +12,19 @@ Open Methane implements a 4D-Var data assimilation workflow using the CMAQ adjoi
 # Install dependencies
 uv sync
 
-# Run tests locally (builds Docker image, then runs pytest inside it)
+# Run tests locally (builds Docker image, then runs pytest inside it). Includes
+# WRF for a real au-test day (about 5 minutes; 3.4 GB of FNL analyses are
+# downloaded into data/fnl the first time)
 make docker-test
 # To run tests without Docker (only works inside the container):
-TARGET=docker-test uv run python -m pytest -r a -v tests --ignore=tests/integration/fourdvar -m "not wrf_integration"
-
-# Run WRF for a real au-test day in Docker (about 5 minutes; 3.4 GB of FNL
-# analyses are downloaded into data/fnl the first time)
-make test-wrf
+TARGET=docker-test uv run python -m pytest -r a -v
+# Quicker, leaving out slow tests and those that reach third-party services:
+TARGET=docker-test uv run python -m pytest -r a -v -m "not slow and not network"
 
 # Run a single test (must be run inside the Docker container)
 TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 # Or from the host:
-docker run --rm -v $(PWD):/app -v /app/.venv openmethane \
+docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
   TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 
 # Lint and format
@@ -108,7 +108,7 @@ Many unit and integration tests require specific binaries to be present (i.e. th
 
 The `tests/integration/fourdvar/` tests rely on input data which hasn't been provided in a reproducible way. These should be fixed when possible.
 
-Tests marked `wrf_integration` (`tests/integration/wrf/`) run the real WRF and WPS programs and are left out of `make test`; run them with `make test-wrf`. The WRF unit tests in `tests/unit/wrf/` use stub programs instead and run everywhere.
+Markers say what a test needs or costs: `network`, `wrf`, `cmaq`, `adjoint` and `slow`, registered in `pyproject.toml` and enforced by `--strict-markers`. Markers that follow from a fixture are added by the `FIXTURE_MARKERS` hook in `tests/conftest.py`. Plain `pytest` runs everything except `tests/integration/fourdvar/`, including the WRF test in `tests/integration/wrf/`. The WRF unit tests in `tests/unit/wrf/` use stub programs instead and run everywhere.
 
 ## Before opening a pull request
 

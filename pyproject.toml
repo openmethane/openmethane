@@ -56,14 +56,23 @@ build-backend = "uv_build"
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
+    "--strict-markers",
+    # These tests make no assertions (#216). Naming the folder on the command
+    # line still runs them.
+    "--ignore=tests/integration/fourdvar",
 ]
+testpaths = ["tests"]
+# A marker says what a test needs or costs, so it can be deselected. Markers
+# that follow from a fixture are added in tests/conftest.py. Quick local run:
+# `-m "not slow and not network"`.
 markers = [
-    # Deselect with `-m "not network"` to run offline, or when a third-party
-    # outage should not be allowed to fail the suite.
-    "network: hits a third-party service over the network",
-    # Left out of `make test`, since they need the WRF and WPS programs and
-    # take minutes. `make test-wrf` runs them in the image.
-    "wrf_integration: runs the real WRF and WPS programs",
+    # Deselect to run offline, or when a third-party outage should not be
+    # allowed to fail the suite.
+    "network: can contact a third-party service on a cold cache",
+    "wrf: runs the WRF or WPS programs, which only exist in the image",
+    "cmaq: runs MCIP, ICON or BCON, which only exist in the image",
+    "adjoint: runs ADJOINT_FWD or ADJOINT_BWD, which only exist in the image",
+    "slow: takes over a minute",
 ]
 filterwarnings = [
     # Warnings fail the suite, so that new ones are dealt with as they appear
