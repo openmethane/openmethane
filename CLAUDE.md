@@ -17,15 +17,15 @@ uv sync
 # downloaded into data/fnl the first time)
 make docker-test
 # Inside the container, which has no uv:
-python -m pytest -r a -v
+pytest -r a -v
 # Quicker, leaving out slow tests and those that reach third-party services:
-python -m pytest -r a -v -m "not slow and not network"
+pytest -r a -v -m "not slow and not network"
 
 # Run a single test (must be run inside the Docker container)
-python -m pytest -v tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
+pytest -v tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
 # Or from the host:
 docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
-  python -m pytest -v tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
+  pytest -v tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
 
 # Lint and format
 uv run ruff check .

@@ -37,7 +37,7 @@ make docker-test
 For a quick run inside the container:
 
 ```shell
-python -m pytest -r a -v -m "not slow and not network"
+pytest -r a -v -m "not slow and not network"
 ```
 
 See [Testing](testing.md) for running single tests, markers, test data and
@@ -146,7 +146,7 @@ locally — you can still edit and run the Python code.
 Tests run as normal once attached, without the `docker run` wrapper:
 
 ```shell
-python -m pytest -r a -v
+pytest -r a -v
 ```
 
 The `/app/.venv` volume keeps the container's virtual environment from being

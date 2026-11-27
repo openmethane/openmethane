@@ -227,7 +227,7 @@ the adjoint:
 ```shell
 make fetch-test-data # fetch domains and data required for the test suite
 
-uv run python -m pytest -r a -v -m "not wrf and not cmaq and not adjoint"
+uv run pytest -r a -v -m "not wrf and not cmaq and not adjoint"
 ```
 
 The tests set their own configuration and read test data tracked in the
