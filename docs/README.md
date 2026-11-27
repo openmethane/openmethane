@@ -18,7 +18,8 @@ Task-oriented walkthroughs, roughly in the order you are likely to need them.
 | [Running your own domain](guides/running-a-domain.md) | You have an area and a time period you care about and want emissions estimates for it. |
 | [Creating a custom domain](guides/custom-domain.md) | Your area of interest isn't covered by an existing domain, so you need to define a new grid. |
 | [Installing locally](guides/local-install.md) | You want to run Open Methane on a Linux machine without Docker. |
-| [Development](guides/development.md) | You want to change the code, run the tests, or cut a release. |
+| [Development](guides/development.md) | You want to change the code or cut a release. |
+| [Testing](guides/testing.md) | You want to run the tests, or change the test data they use. |
 
 ## Reference
 

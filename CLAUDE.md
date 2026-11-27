@@ -102,6 +102,9 @@ Sensitive credentials (EarthData, CAMS/ECMWF) go in `.env` (based on `.env.examp
 
 ## Testing
 
+Running the tests, markers, test data bundles and regression fixtures are in
+`docs/guides/testing.md`; read it before changing tests or test data.
+
 Tests use `pytest-regressions` for data regression testing — output files are compared against fixtures in `tests/test-data/`. When changing data-producing code, run `make test-regen` to update fixtures, then review the diffs carefully.
 
 Many unit and integration tests require specific binaries to be present (i.e. the CMAQ adjoint binary, or tools like `ncatted`) and will fail if run locally. Excluding tests in `tests/integration/fourdvar/`, all tests should pass inside Docker, which can be run with `make docker-test`.

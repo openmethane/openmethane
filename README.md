@@ -61,8 +61,8 @@ image, which runs WRF with its `wrf` command.
 ## Contributing
 
 Bug reports and pull requests are welcome. See
-[Development](docs/guides/development.md) for how to set up, run the tests, and
-add a changelog entry.
+[Development](docs/guides/development.md) for how to set up and add a changelog
+entry, and [Testing](docs/guides/testing.md) for how to run the tests.
 
 ## License
 
