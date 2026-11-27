@@ -27,7 +27,7 @@ pytestmark = [pytest.mark.cmaq, pytest.mark.adjoint, pytest.mark.slow]
 
 def test_simulates_the_days_observations(au_test_config, tmp_path, root_dir, test_data_dir):
     store = tmp_path / "store"
-    ctm_day = store / "cmaq" / "2022-12-07" / "d01"
+    ctm_day = store / "cmaq" / "<YYYY-MM-DD>" / "d01"
     # The paths .env.docker sets, under this test's STORE_PATH
     au_test_config(
         MET_DIR=store / "mcip",

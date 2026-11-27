@@ -25,9 +25,9 @@ pytestmark = [pytest.mark.adjoint, pytest.mark.slow]
 
 
 @pytest.fixture
-def daily_output(tmp_path, test_data_dir):
+def daily_output(tmp_path, test_data_dir) -> None:
     """
-    A daily run's output for 2022-12-07, laid out where the monthly workflow
+    Lay out a daily run's output for 2022-12-07 where the monthly workflow
     reads it, under `STORE_PATH` (`tmp_path / "store"`).
 
     MCIP and the observations are the tracked test data. ICON and BCON are the
@@ -51,7 +51,6 @@ def daily_output(tmp_path, test_data_dir):
     shutil.copy(
         test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz", day / "input" / "test_obs.pic.gz"
     )
-    return day
 
 
 def test_inverts_the_daily_run(au_test_config, daily_output, tmp_path, root_dir):
