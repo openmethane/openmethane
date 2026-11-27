@@ -143,9 +143,8 @@ than the rest of the codebase.
 | --- | --- |
 | `install` | `uv sync` |
 | `build` | Build the `openmethane` Docker image from `debian:trixie-slim`, installing the CMAQ models from their release packages. |
-| `test` | Run the test suite, except the WRF integration tests. Requires the container. |
+| `test` | Run the test suite, including WRF for a real au-test day, about 5 minutes. Downloads the day's FNL analyses into `data/fnl` the first time. Requires the container. |
 | `docker-test` | Build the image, then run the tests inside it. |
-| `test-wrf` | Build the image, then run the WRF integration tests inside it: a real au-test day, about 5 minutes. Downloads the day's FNL analyses into `data/fnl` the first time. |
 | `test-regen` | Regenerate regression fixtures. |
 | `prepare-templates` | Run the three template generation scripts. |
 | `fetch-domains` | Download the WRF geometry and Open Methane domain files for `aust10km` and `au-test` from the public data store into `data/`. |

@@ -29,12 +29,12 @@ build:  ## Build the docker container locally
 fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/domain.aust10km.nc data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc
 
 .PHONY: test
-test:  ## Run the tests, except the WRF integration tests
-	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar -m "not wrf_integration"
+test:  ## Run the tests. The WRF test downloads 3.4 GB of FNL analyses into data/fnl the first time
+	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/fourdvar --ignore=tests/integration/obs_preprocess -m "not wrf_integration" --force-regen
+	TARGET=docker-test $(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/obs_preprocess -m "not wrf" --force-regen
 
 # Processing steps
 .PHONY: prepare-templates
@@ -55,15 +55,6 @@ docker-test: build fetch-test-data ## Run the tests
 		-v ~/.cdsapirc:/home/app/.cdsapirc \
 		openmethane \
 		make test
-
-.PHONY: test-wrf
-test-wrf: build  ## Run WRF for a real au-test day in Docker. Downloads 3.4 GB of FNL analyses into data/fnl the first time
-	docker run --rm -it \
-		-v $(PWD):/app \
-		-v /app/.venv \
-		-e TARGET=docker-test \
-		openmethane \
-		python -m pytest -r a -v tests/integration/wrf -m wrf_integration
 
 ## Fetch the domain files and CAMS data required for tests
 .PHONY: fetch-test-data

@@ -16,6 +16,24 @@ from openmethane.fourdvar.params import (
     template_defn,
 )
 
+FIXTURE_MARKERS = {
+    "fnl_cache_path": ("network",),
+}
+"""
+Markers a test gets for using a fixture, directly or through another fixture.
+Pytest can't mark fixtures, so a test using an expensive fixture would
+otherwise have to repeat its markers.
+"""
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items):
+    # tryfirst, so the markers are in place before `-m` deselects
+    for item in items:
+        for fixture in getattr(item, "fixturenames", ()):
+            for marker in FIXTURE_MARKERS.get(fixture, ()):
+                item.add_marker(marker)
+
 
 @pytest.fixture
 def root_dir() -> Path:

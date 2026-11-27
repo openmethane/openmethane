@@ -295,7 +295,7 @@ jobs:
             -e TARGET=docker-test \
             -e WRF_TEST_FNL_CACHE_PATH=/app/data/fnl \
             ${{ needs.build.outputs.registry-image-id }} \
-            python -m pytest -r a -v tests/integration/wrf -m wrf_integration
+            python -m pytest -r a -v tests/integration/wrf -m wrf
       - name: Run WRF
         run: |
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
