@@ -4,6 +4,48 @@ This guide covers running the test suite, the test data it uses, and how to
 update that data. For setting up a checkout, see
 [Development](development.md).
 
+## How we test
+
+Open Methane is mostly glue between programs we don't maintain: WRF and WPS,
+MCIP, ICON and BCON, and CMAQ-Adjoint, which is tested in its own repository.
+Whether a program turns its inputs into the right outputs is for its
+maintainers to test. Our tests check the glue: the configuration, namelists,
+arguments and environment we give each program, the files it reads and
+writes, and the Python that reads one program's output and writes the next
+one's input.
+
+A stub program stands in for a real one and records the arguments and
+environment it was started with, so a test can check them quickly, outside
+the image. `tests/unit/wrf` tests the WRF workflow this way. But a stub checks
+only what we expect, and we wrote those expectations, so it can't catch a
+wrong belief about the program: a variable it ignores or reads under another
+name, an attribute it writes differently than we assumed, or an output whose
+meaning we misread. Nor can it catch a broken build of the models in the
+image. So some tests also run the real programs.
+
+The suite has four kinds of test:
+
+| Kind | What runs | What it checks | Where |
+| --- | --- | --- | --- |
+| Unit tests | Our Python, with stub programs where a program would run | Our code's output, and the arguments and environment it gives each program | `tests/unit/` |
+| Stage tests | One stage of a workflow on test data in `tests/test-data/`, with its programs for real where it runs any | The stage's output, against regression fixtures where it has them | `tests/integration/` folders named for the stage |
+| Contract runs | One program, for real, on the inputs our glue makes | The program accepts our inputs and writes what our glue reads; its values against recorded output, so any change in them is seen | `tests/integration/wrf/` |
+| Workflow tests | The daily and monthly workflows' steps in order, with the real programs | Each step runs and finds what the step before it wrote | `tests/integration/workflows/` |
+
+When adding a test:
+
+- Test what our code does, not whether a program's output is right for its
+  inputs.
+- Call the code under test in the test body. Fixtures only arrange, however
+  expensive the call: the WRF test runs WRF in its body.
+- Take the `au_test_config` fixture for configuration (see
+  [Configuration](#configuration)).
+- Make every check of what the code does a pytest test, so it runs locally
+  as it does in CI.
+- Put new test data that is binary, or text over 50 KB, in a bundle (see
+  [Test data bundles](#test-data-bundles)), not in git.
+- Mark the test with what it needs or costs (see [Markers](#markers)).
+
 ## Running the tests
 
 The test suite needs the compiled models and command-line tools that only exist
