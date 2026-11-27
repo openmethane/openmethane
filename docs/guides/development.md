@@ -61,19 +61,10 @@ docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
   tests/unit/cmaq_preprocess/test_wrf.py::test_name
 ```
 
-Tests set their own configuration, so `TARGET` and any `.env` file make no
-difference to them. `tests/conftest.py` removes the configuration variables
-when pytest starts, and a test that needs configuration takes a fixture that
-sets every variable it reads: `au_test_config` sets up au-test on 2022-12-07
-with inputs from `tests/test-data/` and `data/`, and `STORE_PATH` in the test's
-temporary folder. A test that reads configuration without such a fixture gets
-paths under `/nonexistent-test-configuration`, which fail when read, or the
-code's defaults, such as dates in July 2022, but never a value from a `.env`
-file or your shell. The tests of `.env` loading itself read `.env` files,
-through `target_environment`. One exception remains:
-`scripts/obs_preprocess/fetch_tropomi.py` loads the repository's `.env` (the
-credentials file) when imported, so its variables reach tests that don't take
-a configuration fixture.
+Tests set their own configuration, so `TARGET` and `.env` files are ignored. A
+test that needs configuration takes the `au_test_config` fixture. An error
+naming `/nonexistent-test-configuration` means a test read configuration
+without it.
 
 Test data too large or binary for git is in bundles in the Open Methane public
 data store, listed with their hashes in `tests/test-data/bundles.yaml`. A test
