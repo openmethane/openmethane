@@ -16,16 +16,16 @@ uv sync
 # WRF for a real au-test day (about 5 minutes; 3.4 GB of FNL analyses are
 # downloaded into data/fnl the first time)
 make docker-test
-# To run tests without Docker (only works inside the container):
-uv run python -m pytest -r a -v
+# Inside the container, which has no uv:
+python -m pytest -r a -v
 # Quicker, leaving out slow tests and those that reach third-party services:
-uv run python -m pytest -r a -v -m "not slow and not network"
+python -m pytest -r a -v -m "not slow and not network"
 
 # Run a single test (must be run inside the Docker container)
-uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
+python -m pytest -v tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
 # Or from the host:
 docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
-  uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
+  python -m pytest -v tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
 
 # Lint and format
 uv run ruff check .

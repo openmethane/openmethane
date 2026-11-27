@@ -34,10 +34,10 @@ in the container, so the canonical way to run it builds the image and runs
 make docker-test
 ```
 
-For a quick run:
+For a quick run inside the container:
 
 ```shell
-uv run python -m pytest -r a -v -m "not slow and not network"
+python -m pytest -r a -v -m "not slow and not network"
 ```
 
 See [Testing](testing.md) for running single tests, markers, test data and
