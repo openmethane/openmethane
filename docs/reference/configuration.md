@@ -37,7 +37,7 @@ Tracked targets:
 | Target | Purpose |
 | --- | --- |
 | `docker` | Running in the container. Paths under `STORE_PATH`, which is supplied per run. |
-| `docker-test` | Development, and the `test-e2e` CI job. Points at test data tracked in the repository under `tests/test-data/`, so it needs no previous run. Also pins `START_DATE`, `END_DATE` and `DOMAIN_NAME`. The pytest suite doesn't use it: tests set their own configuration. |
+| `docker-test` | Development. Points at test data tracked in the repository under `tests/test-data/`, so it needs no previous run. Also pins `START_DATE`, `END_DATE` and `DOMAIN_NAME`. The pytest suite doesn't use it: tests set their own configuration. |
 | `docker-monthly` | The monthly workflow, where meteorology and observations come from previous daily runs rather than being generated. |
 
 For local development, set `TARGET=docker-test`.
