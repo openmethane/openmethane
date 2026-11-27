@@ -9,7 +9,7 @@ then checks the output twice: its layout and structure against the contract in
 docs/reference/wrf-outputs.md, which say why MCIP would break, and its values
 against the reference output in the `wrf` bundle (`wrf_data`), which say that
 anything changed. A change meant to change WRF's output needs a new bundle;
-see "WRF test data" in docs/guides/development.md.
+see "WRF test data" in docs/guides/testing.md.
 """
 
 import datetime

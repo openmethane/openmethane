@@ -48,6 +48,9 @@ guides are in `docs/guides/`, look-up material in `docs/reference/`. The root
 `README.md` is deliberately kept to a project description plus signposting —
 detail belongs in `docs/`.
 
+Running the tests, markers, test data bundles and regression fixtures are in
+`docs/guides/testing.md`; read it before changing tests or test data.
+
 When changing behaviour, check whether `docs/reference/parameters.md` (env vars),
 `docs/reference/scripts.md` (script inventory) or `docs/reference/outputs.md`
 (output files) need updating alongside.

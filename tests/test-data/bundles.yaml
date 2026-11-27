@@ -5,7 +5,7 @@
 #
 # A bundle is never changed once uploaded: a new one gets a new date stamp, so
 # older commits keep fetching the bundle they name. See "WRF test data" in
-# docs/guides/development.md for how to replace one.
+# docs/guides/testing.md for how to replace one.
 
 wrf:
   url: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261127.tar.gz
