@@ -46,7 +46,6 @@ outputs](wrf-outputs.md).
 | `wrf run` | Runs the whole WRF step and publishes the output: downloads the FNL analyses, runs ungrib and metgrid, real.exe and wrf.exe, and averages each hour. Exits early if the output is complete; `--force` runs it anyway. Exit code 1 if a stage fails, 2 if the configuration is invalid. `uv run wrf run` from a checkout |
 | `wrf prepare`, `fetch`, `wps`, `real`, `wrf`, `average` | One stage at a time, for development. Each finds earlier stages' output in scratch |
 | `scripts/download-geog.sh` | Downloads WRF's static geography data into `data/geog/WPS_GEOG`: the high-resolution datasets, or the low-resolution ones with `--low-res`. Only geogrid reads it, which the `wrf` command doesn't run, so a WRF run doesn't need it. Kept for the domain creation tool ([#298](https://github.com/openmethane/openmethane/issues/298)) |
-| `scripts/wrf/compare_wrf_runs.py OURS THEIRS` | Compares two WRF output folders and reports every difference by file, variable and attribute. Exits 1 if they differ. Logs are never compared; `--ignore GLOB` leaves out more |
 
 ## CMAQ preprocessing
 

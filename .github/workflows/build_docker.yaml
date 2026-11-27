@@ -231,10 +231,10 @@ jobs:
               - 'src/openmethane/util/process.py'
               - 'src/openmethane/util/download.py'
               - 'src/openmethane/util/logging.py'
-              - 'scripts/wrf/**'
               - 'tests/unit/wrf/**'
               - 'tests/integration/wrf/**'
               - 'tests/test-data/wrf/**'
+              - 'tests/test-data/bundles.yaml'
               - 'tests/conftest.py'
               - 'Dockerfile'
               - 'docker/**'
@@ -253,7 +253,7 @@ jobs:
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - name: Check and format-check with ruff
         run: |
-          PATHS="src/openmethane/wrf scripts/wrf tests/unit/wrf tests/integration/wrf
+          PATHS="src/openmethane/wrf tests/unit/wrf tests/integration/wrf
             src/openmethane/util/process.py src/openmethane/util/download.py
             src/openmethane/util/logging.py src/openmethane/util/decomposition.py
             tests/unit/util"
@@ -261,18 +261,14 @@ jobs:
           uv run --only-group dev ruff format --check $PATHS
 
   # Run WRF for a real au-test day: the integration test checks the output
-  # contract, and a second run is compared with reference output for the same
-  # day, so any change to WRF's output is caught. Runs when WRF paths change,
-  # and always on main, tags and manual runs.
+  # contract and compares the output with the `wrf` test data bundle, so any
+  # change to WRF's output is caught. Runs when WRF paths change, and always on
+  # main, tags and manual runs.
   test-wrf:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     needs: [ build, changes ]
     if: needs.changes.outputs.wrf == 'true' || github.event_name != 'pull_request'
-    env:
-      # Holds the reference output for the same day. See "WRF test data" in
-      # docs/guides/development.md
-      WRF_TEST_DATA_URL: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261127.tar.gz
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -289,25 +285,14 @@ jobs:
         with:
           path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
           key: wrf-fnl-au-test-2022-12-07
+      # --basetemp keeps the test's output in the data path, to upload below
       - name: Run the WRF integration tests
         run: |
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
             -e TARGET=docker-test \
             -e WRF_TEST_FNL_CACHE_PATH=/app/data/fnl \
             ${{ needs.build.outputs.registry-image-id }} \
-            python -m pytest -r a -v tests/integration/wrf -m wrf
-      - name: Run WRF
-        run: |
-          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
-            -e DOMAIN_NAME=au-test \
-            -e DOMAIN_VERSION=v1 \
-            -e START_DATE=2022-12-07 \
-            -e STORE_PATH=/app/data/store \
-            -e CHK_PATH=/app/data/chk \
-            -e FNL_CACHE_PATH=/app/data/fnl \
-            -e NCPUS=1 \
-            ${{ needs.build.outputs.registry-image-id }} \
-            wrf run
+            python -m pytest -r a -v tests/integration/wrf -m wrf --basetemp=/app/data/pytest
       # Saved even if a later step fails, so the 3 GB isn't downloaded again
       - name: Save FNL analyses to the cache
         if: ${{ always() && steps.fnl-cache.outputs.cache-hit != 'true' }}
@@ -315,14 +300,13 @@ jobs:
         with:
           path: ${{ steps.data-path.outputs.DATA_PATH }}/fnl
           key: wrf-fnl-au-test-2022-12-07
-      - name: Compare with the reference output
+      # pytest makes its folders readable only by the container's user
+      - name: Make the test output readable
+        if: ${{ always() }}
         run: |
-          mkdir ${{ steps.data-path.outputs.DATA_PATH }}/wrf-test-data
-          curl -sSfL "$WRF_TEST_DATA_URL" | tar -xz -C ${{ steps.data-path.outputs.DATA_PATH }}/wrf-test-data
-          docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
-            ${{ needs.build.outputs.registry-image-id }} \
-            python scripts/wrf/compare_wrf_runs.py \
-              /app/data/store/wrf/au-test /app/data/wrf-test-data/au-test
+          if [ -d ${{ steps.data-path.outputs.DATA_PATH }}/pytest ]; then
+            sudo chmod -R a+rX ${{ steps.data-path.outputs.DATA_PATH }}/pytest
+          fi
       - name: Upload WRF output
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -330,8 +314,8 @@ jobs:
           name: wrf-output
           # met_em names hold colons, which artifacts don't allow
           path: |
-            ${{ steps.data-path.outputs.DATA_PATH }}/store/wrf/au-test/*/
-            !${{ steps.data-path.outputs.DATA_PATH }}/store/wrf/au-test/metem/
+            ${{ steps.data-path.outputs.DATA_PATH }}/pytest/*/store/wrf/au-test/*/
+            !${{ steps.data-path.outputs.DATA_PATH }}/pytest/*/store/wrf/au-test/metem/
           retention-days: 5
 
   # Determine additional tags to apply to the image

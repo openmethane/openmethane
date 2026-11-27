@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import xarray as xr
+import yaml
 
 from openmethane.fourdvar import env
 from openmethane.fourdvar.params import (
@@ -15,6 +16,10 @@ from openmethane.fourdvar.params import (
     root_path_defn,
     template_defn,
 )
+from openmethane.util.download import DownloadFailed, fetch_archive
+
+TESTS_DIR = Path(__file__).parent
+BUNDLES_FILE = TESTS_DIR / "test-data" / "bundles.yaml"
 
 FIXTURE_MARKERS = {
     "fnl_cache_path": ("network",),
@@ -35,14 +40,40 @@ def pytest_collection_modifyitems(items):
                 item.add_marker(marker)
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--test-cache",
+        type=Path,
+        default=TESTS_DIR.parent / "data" / "test-cache",
+        help="Folder to unpack test data bundles into, kept between runs. Default: data/test-cache",
+    )
+
+
 @pytest.fixture
 def root_dir() -> Path:
-    return Path(__file__).parent.parent
+    return TESTS_DIR.parent
 
 
 @pytest.fixture
 def test_data_dir(root_dir) -> Path:
     return root_dir / "tests" / "test-data"
+
+
+def _fetch_bundle(name: str, cache: Path) -> Path:
+    bundle = yaml.safe_load(BUNDLES_FILE.read_text())[name]
+    try:
+        return fetch_archive(bundle["url"], bundle["sha256"], cache / name)
+    except DownloadFailed as error:
+        pytest.fail(f"Couldn't fetch the {name} test data in {BUNDLES_FILE}: {error}")
+
+
+@pytest.fixture(scope="session")
+def wrf_data(pytestconfig) -> Path:
+    """
+    The reference output of the WRF step for au-test on 2022-12-07, downloaded
+    on first use. Holds `au-test/`, laid out as `${STORE_PATH}/wrf/au-test`.
+    """
+    return _fetch_bundle("wrf", pytestconfig.getoption("test_cache"))
 
 
 @pytest.fixture
