@@ -65,6 +65,14 @@ Always set `TARGET=docker-test`. That target points at test data tracked in the
 repository under `tests/test-data/` and `data/`, so tests do not depend on a
 previous run's output.
 
+Test data too large or binary for git is in bundles in the Open Methane public
+data store, listed with their hashes in `tests/test-data/bundles.yaml`. A test
+that needs one downloads it the first time, through a fixture in
+`tests/conftest.py` named after it (`wrf_data` for `wrf`), and unpacks it into `data/test-cache/`, where later runs
+reuse it. `--test-cache` sets another folder. A bundle the cache doesn't hold
+yet needs a connection, but our own bundles aren't marked `network`: unlike a
+third-party service, a bundle in the data store never changes.
+
 A handful of tests do reach third-party services, and are marked `network`.
 Deselect them to run offline, or to keep somebody else's outage from failing the
 suite:
@@ -115,10 +123,11 @@ make test-regen
 
 ### WRF integration tests
 
-The tests in `tests/integration/wrf/` run the real WRF and WPS programs for
-au-test on 2022-12-07 and check the published output against the
-[WRF output contract](../reference/wrf-outputs.md). They take about 5 minutes
-and need the image. To run only them, after `make build`:
+The test in `tests/integration/wrf/` runs `wrf run` with the real WRF and WPS
+programs for au-test on 2022-12-07, checks the published output against the
+[WRF output contract](../reference/wrf-outputs.md), and compares it with the
+`wrf` bundle (see below), so any change to WRF's output fails it. It takes
+about 5 minutes and needs the image. To run only it, after `make build`:
 
 ```shell
 docker run --rm -v "$PWD":/app -v /app/.venv -e TARGET=docker-test openmethane \
@@ -132,13 +141,12 @@ them in.
 
 ### WRF test data
 
-The `test-wrf` CI job runs the WRF integration tests, then runs WRF again and
-compares the output with reference output for the same day, so any change to
-WRF's output fails the job. The reference output is in a bundle in
-the Open Methane public data store,
-`https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.<YYYYMMDD>.tar.gz`,
-with a README inside saying how it was made. The FNL analyses aren't in it:
-the job downloads them from GDEX and caches them.
+The WRF integration test compares its output with the `wrf` bundle,
+`https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.<YYYYMMDD>.tar.gz`
+in the Open Methane public data store. It holds the WRF step's published output
+for the same day, with a README inside saying how it was made. The FNL analyses
+aren't in it: the test downloads them from GDEX, and the `test-wrf` CI job
+caches them.
 
 The bundle is date-stamped, so changing it doesn't change what older commits
 fetch. To change it, unpack the current bundle into a folder outside the
@@ -146,14 +154,17 @@ repository, make the change, update its README, and pack it again:
 
 ```shell
 tar -C wrf-test-data -czf wrf-test-data.$(date +%Y%m%d).tar.gz .
+sha256sum wrf-test-data.$(date +%Y%m%d).tar.gz
 ```
 
-Upload it beside the old one and point `WRF_TEST_DATA_URL` in
-`.github/workflows/build_docker.yaml` at it, in the same change. A change that
-is meant to change WRF's output needs a new bundle made from its own output,
-and review as a change of input meteorology. Make it with `wrf run` and the
-same settings as the job's "Run WRF" step, including `NCPUS=1`: the rank count
-changes WRF's output at rounding level.
+Upload it beside the old one, and in the same change update its `url`,
+`sha256` and `made_by` in `tests/test-data/bundles.yaml`. A change that is
+meant to change WRF's output needs a new bundle made from its own output, and
+review as a change of input meteorology. Make it with `wrf run` and the
+settings the test sets in its `wrf_environment` fixture, including `NCPUS=1`:
+the rank count changes WRF's output at rounding level. The output of a failed
+test is kept under pytest's temporary folder, and in CI is uploaded as the
+`wrf-output` artifact.
 
 The unit tests in `tests/unit/wrf/test_namelists.py` do the same for the
 namelists, against fixtures in `tests/unit/wrf/test_namelists/`, which

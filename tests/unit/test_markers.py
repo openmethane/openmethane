@@ -22,6 +22,6 @@ def test_fixture_markers_reach_the_tests_using_them(root_dir):
     )
 
     assert collected.returncode == 0, collected.stdout + collected.stderr
-    assert "test_wrf_run.py::test_publishes_a_complete_day_in_the_layout_mcip_reads" in (
+    assert "test_wrf_run.py::test_publishes_the_reference_day_in_the_layout_mcip_reads" in (
         collected.stdout
     )

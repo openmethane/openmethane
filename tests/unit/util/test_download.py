@@ -1,5 +1,7 @@
+import hashlib
 import http.server
 import io
+import tarfile
 import threading
 
 import attrs
@@ -10,6 +12,7 @@ from openmethane.util.download import (
     DownloadFailed,
     create_session,
     download,
+    fetch_archive,
     fetch_missing,
 )
 
@@ -198,3 +201,91 @@ def test_fetch_missing_rejects_urls_with_the_same_file_name(session, tmp_path):
 
     with pytest.raises(ValueError, match="share a file name"):
         fetch_missing(urls, tmp_path, session=session)
+
+
+def tarball(files: dict[str, bytes]) -> bytes:
+    """A gzipped tarball holding each relative path with its content."""
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        for name, content in files.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(content)
+            tar.addfile(info, io.BytesIO(content))
+    return buffer.getvalue()
+
+
+def test_fetch_archive_unpacks_into_the_folder(server, session, tmp_path):
+    body = tarball({"README.md": b"read me", "au-test/a.nc": b"data"})
+    server.replies["/bundle.tar.gz"] = [Reply(body=body)]
+    dest = tmp_path / "cache" / "wrf"
+
+    result = fetch_archive(
+        server.url("/bundle.tar.gz"), hashlib.sha256(body).hexdigest(), dest, session=session
+    )
+
+    assert result == dest
+    assert (dest / "README.md").read_bytes() == b"read me"
+    assert (dest / "au-test" / "a.nc").read_bytes() == b"data"
+    # Nothing is left beside it
+    assert [path.name for path in dest.parent.iterdir()] == ["wrf"]
+
+
+def test_fetch_archive_reuses_a_folder_unpacked_from_the_same_archive(server, session, tmp_path):
+    body = tarball({"a.nc": b"data"})
+    server.replies["/bundle.tar.gz"] = [Reply(body=body)]
+    sha256 = hashlib.sha256(body).hexdigest()
+    dest = tmp_path / "wrf"
+    fetch_archive(server.url("/bundle.tar.gz"), sha256, dest, session=session)
+    server.requested.clear()
+
+    fetch_archive(server.url("/bundle.tar.gz"), sha256, dest, session=session)
+
+    assert server.requested == []
+    assert (dest / "a.nc").read_bytes() == b"data"
+
+
+def test_fetch_archive_replaces_a_folder_unpacked_from_another_archive(server, session, tmp_path):
+    old = tarball({"old.nc": b"old"})
+    new = tarball({"new.nc": b"new"})
+    server.replies["/old.tar.gz"] = [Reply(body=old)]
+    server.replies["/new.tar.gz"] = [Reply(body=new)]
+    dest = tmp_path / "wrf"
+    fetch_archive(server.url("/old.tar.gz"), hashlib.sha256(old).hexdigest(), dest, session=session)
+
+    fetch_archive(server.url("/new.tar.gz"), hashlib.sha256(new).hexdigest(), dest, session=session)
+
+    assert sorted(path.name for path in dest.iterdir()) == [".sha256", "new.nc"]
+
+
+def test_fetch_archive_rejects_an_archive_with_the_wrong_hash(server, session, tmp_path):
+    body = tarball({"a.nc": b"data"})
+    server.replies["/bundle.tar.gz"] = [Reply(body=body)]
+    dest = tmp_path / "wrf"
+
+    with pytest.raises(DownloadFailed, match="SHA-256"):
+        fetch_archive(server.url("/bundle.tar.gz"), "0" * 64, dest, session=session)
+
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_fetch_archive_replaces_a_folder_with_no_record_of_its_archive(server, session, tmp_path):
+    body = tarball({"new.nc": b"new"})
+    server.replies["/bundle.tar.gz"] = [Reply(body=body)]
+    dest = tmp_path / "wrf"
+    dest.mkdir()
+    (dest / "left-behind.nc").write_bytes(b"old")
+
+    fetch_archive(
+        server.url("/bundle.tar.gz"), hashlib.sha256(body).hexdigest(), dest, session=session
+    )
+
+    assert sorted(path.name for path in dest.iterdir()) == [".sha256", "new.nc"]
+
+
+def test_fetch_archive_fails_if_the_archive_cannot_be_downloaded(server, session, tmp_path):
+    dest = tmp_path / "wrf"
+
+    with pytest.raises(DownloadFailed):
+        fetch_archive(server.url("/missing.tar.gz"), "0" * 64, dest, session=session)
+
+    assert list(tmp_path.iterdir()) == []

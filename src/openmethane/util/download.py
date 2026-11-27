@@ -5,9 +5,12 @@ file that is present can be trusted and is never fetched again.
 """
 
 import concurrent.futures
+import hashlib
 import logging
 import os
 import pathlib
+import shutil
+import tarfile
 import urllib.parse
 import uuid
 from collections.abc import Iterable
@@ -184,6 +187,85 @@ def fetch_missing(
             raise
 
     return paths
+
+
+ARCHIVE_MARKER = ".sha256"
+"""File `fetch_archive` writes in an unpacked folder, holding the archive's hash"""
+
+
+def fetch_archive(
+    url: str,
+    sha256: str,
+    dest: str | os.PathLike,
+    *,
+    session: requests.Session | None = None,
+) -> pathlib.Path:
+    """
+    Download a gzipped tarball, check its hash and unpack it into a folder.
+
+    The folder records the hash it was unpacked from, so a folder already
+    unpacked from this archive is returned without downloading anything, and
+    one unpacked from any other archive is replaced. The archive is unpacked
+    beside `dest` and moved into place only once complete, so an interrupted
+    run never leaves a partial folder that a later run would take as
+    finished. The archive itself isn't kept.
+
+    Parameters
+    ----------
+    url
+        URL of the `.tar.gz` file.
+    sha256
+        Its expected SHA-256, in hex.
+    dest
+        Folder to unpack it into. Its parent is created if needed.
+    session
+        Session to download with. Defaults to one from `create_session`.
+
+    Returns
+    -------
+    `dest`.
+
+    Raises
+    ------
+    DownloadFailed
+        If the download fails, or the file downloaded doesn't have the
+        expected hash.
+    """
+    dest = pathlib.Path(dest)
+    marker = dest / ARCHIVE_MARKER
+    if marker.is_file() and marker.read_text().strip() == sha256:
+        return dest
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    unique = uuid.uuid4().hex
+    archive = dest.with_name(f"{dest.name}.{unique}.tar.gz")
+    unpacking = dest.with_name(f"{dest.name}.{unique}.unpacking")
+    try:
+        download(url, archive, session=session or create_session())
+        actual = _sha256(archive)
+        if actual != sha256:
+            raise DownloadFailed(f"{url} has SHA-256 {actual}, expected {sha256}")
+
+        with tarfile.open(archive, "r:gz") as tar:
+            tar.extractall(unpacking, filter="data")
+        (unpacking / ARCHIVE_MARKER).write_text(f"{sha256}\n")
+        if dest.exists():
+            shutil.rmtree(dest)
+        unpacking.replace(dest)
+        logger.info(f"unpacked {url} into {dest}")
+    finally:
+        archive.unlink(missing_ok=True)
+        shutil.rmtree(unpacking, ignore_errors=True)
+
+    return dest
+
+
+def _sha256(path: pathlib.Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(CHUNK_BYTES), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _file_name(url: str) -> str:

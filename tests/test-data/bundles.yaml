@@ -1,0 +1,22 @@
+# Test data kept in the Open Methane public data store rather than in git,
+# because it is binary or large. A fixture in tests/conftest.py named after
+# each bundle (`wrf_data` for `wrf`) downloads it on first use, checks its hash
+# and unpacks it into the test cache.
+#
+# A bundle is never changed once uploaded: a new one gets a new date stamp, so
+# older commits keep fetching the bundle they name. See "WRF test data" in
+# docs/guides/development.md for how to replace one.
+
+wrf:
+  url: https://openmethane.s3.amazonaws.com/tests/wrf/wrf-test-data.20261127.tar.gz
+  sha256: 03afa4dba1e8c754e381a211c1c53598698f31e7100b1d52b9afa13bc97abec7
+  # What made it. README.md inside the bundle has the details.
+  made_by:
+    command: wrf run
+    image: ghcr.io/openmethane/openmethane 1.7.1
+    environment: >-
+      DOMAIN_NAME=au-test DOMAIN_VERSION=v1 START_DATE=2022-12-07 NCPUS=1
+    inputs: GDAS/FNL 0.25° analyses from GDEX, 2022-12-06 12Z to 2022-12-08 00Z
+    note: >-
+      namelist.wps was then edited to drop SST from fg_name, matching #347,
+      which changed no other output
