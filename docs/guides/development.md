@@ -79,11 +79,14 @@ These scripts default to the `au-test` 10 x 10 domain and store data in
 `/tmp/openmethane-e2e`. They work on the full domain, but will take many, many
 hours on consumer hardware.
 
-For a shell in the container to run steps by hand:
+For a shell in the container to run steps by hand, with your checkout mounted:
 
 ```shell
-make start
+docker run --rm -it --entrypoint bash -v "$PWD":/app -v /app/.venv openmethane
 ```
+
+`--entrypoint bash` skips the image's entrypoint, which runs its command in the
+background, where an interactive shell exits at once.
 
 Individual steps can also be run through `make`:
 
@@ -112,7 +115,7 @@ Mounting your checkout over `/app` is what makes edits take effect
 without rebuilding — the image ships a copy of the code, and the mount shadows
 it. The virtual environment lives at `/app/.venv`, inside that path, so the
 mount would shadow it too. Keep it by mounting an anonymous volume over the
-`.venv` directory (`-v /app/.venv`), which is what the `make` targets do.
+`.venv` directory (`-v /app/.venv`), as `make docker-test` does.
 
 ### VS Code
 
@@ -151,12 +154,13 @@ pytest -r a -v
 
 The `/app/.venv` volume keeps the container's virtual environment from being
 shadowed by the workspace mount. To also mount data or credentials from the
-host, mirroring what `make start` does, add them to the same `mounts` list:
+host, as `make docker-test` does for CAMS credentials, add them to the same
+`mounts` list:
 
 ```json
 "mounts": [
   "target=/app/.venv,type=volume",
-  "source=${localEnv:HOME}/.cdsapirc,target=/root/.cdsapirc,type=bind"
+  "source=${localEnv:HOME}/.cdsapirc,target=/home/app/.cdsapirc,type=bind"
 ]
 ```
 
