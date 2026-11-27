@@ -37,6 +37,7 @@ from openmethane.fourdvar.params import (
     template_defn,
 )
 
+# Marks every test in this module, since each runs the CMAQ adjoint
 pytestmark = pytest.mark.adjoint
 
 spcs_list = ["CH4"]  # species to perturb within CMAQ.

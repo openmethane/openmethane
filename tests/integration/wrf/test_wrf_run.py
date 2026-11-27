@@ -21,6 +21,7 @@ from openmethane.wrf.config import WrfConfig
 from openmethane.wrf.geometry import DomainSet
 from openmethane.wrf.install import WrfInstall
 
+# Marks every test in this module, since each runs WRF
 pytestmark = [pytest.mark.wrf, pytest.mark.slow]
 
 DAY = datetime.date(2022, 12, 7)

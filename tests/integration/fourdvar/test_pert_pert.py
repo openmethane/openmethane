@@ -27,6 +27,7 @@ from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn
 from openmethane.util.logger import get_logger
 
+# Marks every test in this module, since each runs the CMAQ adjoint
 pytestmark = pytest.mark.adjoint
 
 

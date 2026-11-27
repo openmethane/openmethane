@@ -27,6 +27,7 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn, cmaq_config, template_defn
 
+# Marks every test in this module, since each runs the CMAQ adjoint
 pytestmark = pytest.mark.adjoint
 
 # Configuration knobs, all optional and all read from the environment:
