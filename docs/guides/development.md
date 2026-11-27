@@ -43,7 +43,9 @@ uv run python -m pytest -r a -v
 
 This runs everything, including the WRF integration test, which takes about 5
 minutes and downloads the day's FNL analyses, about 3.4 GB, into `data/fnl` the
-first time (see [WRF integration tests](#wrf-integration-tests)). It leaves out
+first time (see [WRF integration tests](#wrf-integration-tests)), and the
+daily and monthly workflows for the same day in `tests/integration/workflows`,
+which take about 1 and 5 minutes. It leaves out
 `tests/integration/fourdvar/`, which runs only when named on the command line.
 
 A single test:

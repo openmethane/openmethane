@@ -34,7 +34,7 @@ test:  ## Run the tests. The WRF test downloads 3.4 GB of FNL analyses into data
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/obs_preprocess -m "not wrf" --force-regen
+	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/obs_preprocess --ignore=tests/integration/workflows -m "not wrf" --force-regen
 
 # Processing steps
 .PHONY: prepare-templates
