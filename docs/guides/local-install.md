@@ -235,7 +235,7 @@ repository, whatever your target. The `-m`
 expression leaves out the tests that run WRF and the CMAQ programs. Some other
 tests need tools like `ncatted`, and will fail if those are not on your `PATH`
 — see
-[Testing](testing.md).
+[Testing](testing.md#running-the-tests).
 
 Finally, run a single day of CMAQ preprocessing against your own target, which
 is the first step that genuinely exercises the compiled models:
