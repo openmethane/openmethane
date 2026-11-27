@@ -19,14 +19,15 @@ import pytest
 
 import openmethane.fourdvar.datadef as d
 from openmethane.fourdvar._transform import transform
-from openmethane.fourdvar.params.input_defn import obs_file, prior_file
+from openmethane.fourdvar.params import input_defn
 
 # Marks every test in this module, since each runs the CMAQ adjoint
 pytestmark = pytest.mark.adjoint
 
 
-def test_grad_step(target_environment):
-    target_environment("docker-test")
+def test_grad_step(au_test_config, root_dir):
+    # Reads the preprocessed inputs of an earlier run from data/
+    au_test_config(STORE_PATH=root_dir / "data")
 
     _run_grad_step()
 
@@ -34,7 +35,7 @@ def test_grad_step(target_environment):
 def _run_grad_step():
     # TODO: Assert results
 
-    physical = d.PhysicalData.from_file(prior_file)
+    physical = d.PhysicalData.from_file(input_defn.prior_file)
     transform(physical, d.UnknownData)
     # physical.emis['CH4'][...] = 0.
     # physical.emis['CH4'][0,0,56,152]=1.
@@ -46,7 +47,7 @@ def _run_grad_step():
     # sensitivity = d.SensitivityData.create_from_ModelInputData()
     modelOutput = transform(modelInput, d.ModelOutputData)
     modelOutput.get_vector()
-    observed = d.ObservationData.from_file(obs_file)
+    observed = d.ObservationData.from_file(input_defn.obs_file)
     # simul = d.ObservationData.from_file( simulFile )
     # modelInput.archive('/scratch/q90/cm5310/plotting/model_input')
     simul = transform(modelOutput, d.ObservationData)

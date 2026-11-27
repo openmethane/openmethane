@@ -38,7 +38,7 @@ Inside the container (or on a machine with everything installed), run it
 directly:
 
 ```shell
-TARGET=docker-test uv run python -m pytest -r a -v
+uv run python -m pytest -r a -v
 ```
 
 This runs everything, including the WRF integration test, which takes about 5
@@ -49,7 +49,7 @@ first time (see [WRF integration tests](#wrf-integration-tests)). It leaves out
 A single test:
 
 ```shell
-TARGET=docker-test uv run python -m pytest -v \
+uv run python -m pytest -v \
   tests/unit/cmaq_preprocess/test_wrf.py::test_name
 ```
 
@@ -57,13 +57,23 @@ Or from the host, without an interactive shell:
 
 ```shell
 docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
-  TARGET=docker-test uv run python -m pytest -v \
+  uv run python -m pytest -v \
   tests/unit/cmaq_preprocess/test_wrf.py::test_name
 ```
 
-Always set `TARGET=docker-test`. That target points at test data tracked in the
-repository under `tests/test-data/` and `data/`, so tests do not depend on a
-previous run's output.
+Tests set their own configuration, so `TARGET` and any `.env` file make no
+difference to them. `tests/conftest.py` removes the configuration variables
+when pytest starts, and a test that needs configuration takes a fixture that
+sets every variable it reads: `au_test_config` sets up au-test on 2022-12-07
+with inputs from `tests/test-data/` and `data/`, and `STORE_PATH` in the test's
+temporary folder. A test that reads configuration without such a fixture gets
+paths under `/nonexistent-test-configuration`, which fail when read, or the
+code's defaults, such as dates in July 2022, but never a value from a `.env`
+file or your shell. The tests of `.env` loading itself read `.env` files,
+through `target_environment`. One exception remains:
+`scripts/obs_preprocess/fetch_tropomi.py` loads the repository's `.env` (the
+credentials file) when imported, so its variables reach tests that don't take
+a configuration fixture.
 
 Test data too large or binary for git is in bundles in the Open Methane public
 data store, listed with their hashes in `tests/test-data/bundles.yaml`. A test
@@ -78,7 +88,7 @@ Deselect them to run offline, or to keep somebody else's outage from failing the
 suite:
 
 ```shell
-TARGET=docker-test uv run python -m pytest -r a -v -m "not network"
+uv run python -m pytest -r a -v -m "not network"
 ```
 
 Markers say what a test needs or costs, so you can leave those tests out:
@@ -94,7 +104,7 @@ Markers say what a test needs or costs, so you can leave those tests out:
 For a quick run:
 
 ```shell
-TARGET=docker-test uv run python -m pytest -r a -v -m "not slow and not network"
+uv run python -m pytest -r a -v -m "not slow and not network"
 ```
 
 Markers are registered in `pyproject.toml`, and a misspelt one on a test fails
@@ -130,7 +140,7 @@ programs for au-test on 2022-12-07, checks the published output against the
 about 5 minutes and needs the image. To run only it, after `make build`:
 
 ```shell
-docker run --rm -v "$PWD":/app -v /app/.venv -e TARGET=docker-test openmethane \
+docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
   python -m pytest -r a -v tests/integration/wrf
 ```
 
@@ -273,7 +283,7 @@ locally — you can still edit and run the Python code.
 Tests run as normal once attached, without the `docker run` wrapper:
 
 ```shell
-TARGET=docker-test python -m pytest -r a -v
+python -m pytest -r a -v
 ```
 
 The `/app/.venv` volume keeps the container's virtual environment from being

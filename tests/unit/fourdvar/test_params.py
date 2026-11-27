@@ -128,12 +128,10 @@ def test_overrides(target_environment):
         ("false", False),
     ),
 )
-def test_cmaq_kzmin(target_environment, value, expected):
+def test_cmaq_kzmin(au_test_config, value, expected):
     """CMAQ_KZMIN is readable from the environment and defaults to on."""
-    target_environment("docker")
     if value is not None:
-        os.environ["CMAQ_KZMIN"] = value
-    target_environment("docker", clear=False)
+        au_test_config(CMAQ_KZMIN=value)
 
     assert cmaq_config.kzmin is expected
 

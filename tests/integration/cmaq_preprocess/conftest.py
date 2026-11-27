@@ -3,7 +3,7 @@ from scripts.cmaq_preprocess.make_emis_template import make_emissions_templates
 
 
 @pytest.fixture
-def emission_template(test_data_dir, tmpdir, metcro3d_file):
+def emission_template(test_data_dir, tmpdir, metcro3d_file, au_test_config):
     data_dir = tmpdir.mkdir("data")
 
     emis_template = str(data_dir / "emis_record_<YYYY-MM-DD>.nc")

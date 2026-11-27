@@ -227,10 +227,11 @@ the adjoint:
 ```shell
 make fetch-test-data # fetch domains and data required for the test suite
 
-TARGET=docker-test uv run python -m pytest -r a -v -m "not wrf and not cmaq and not adjoint"
+uv run python -m pytest -r a -v -m "not wrf and not cmaq and not adjoint"
 ```
 
-The `docker-test` target uses test data tracked in the repository. The `-m`
+The tests set their own configuration and read test data tracked in the
+repository, whatever your target. The `-m`
 expression leaves out the tests that run WRF and the CMAQ programs. Some other
 tests need tools like `ncatted`, and will fail if those are not on your `PATH`
 — see

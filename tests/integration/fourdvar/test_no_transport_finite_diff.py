@@ -43,9 +43,11 @@ pytestmark = pytest.mark.adjoint
 spcs_list = ["CH4"]  # species to perturb within CMAQ.
 tsec = 3600.0  # seconds per timestep, DO NOT MODIFY
 
-archive_defn.experiment = "tmp_finite_diff_test"
-archive_defn.desc_name = ""
-archive_path = archive.get_archive_path()
+
+def use_test_archive():
+    """Archive to a run of its own, set after configuration reloads archive_defn."""
+    archive_defn.experiment = "tmp_finite_diff_test"
+    archive_defn.desc_name = ""
 
 
 def make_perturbation(init_vector, scale):
@@ -223,6 +225,7 @@ def finite_diff(scale):
     sense_score = 0.5 * ((pert_diff * init_gradient).sum() + (pert_diff * pert_gradient).sum())
 
     force_score = 0.0
+    archive_path = archive.get_archive_path()
     iconc_file = os.path.join(archive_path, "init_conc", archive_defn.conc_file)
     pconc_file = os.path.join(archive_path, "pert_conc", archive_defn.conc_file)
     force_file = os.path.join(archive_path, "force", archive_defn.force_file)
@@ -236,8 +239,10 @@ def finite_diff(scale):
     return sense_score, force_score
 
 
-def test_no_transport_finite_diff(target_environment):
-    target_environment("docker-test")
+def test_no_transport_finite_diff(au_test_config, root_dir):
+    # Reads the preprocessed inputs of an earlier run from data/
+    au_test_config(STORE_PATH=root_dir / "data")
+    use_test_archive()
 
     sense, force = finite_diff(scale=1.0)
     print(40 * "-")
@@ -250,6 +255,7 @@ def test_no_transport_finite_diff(target_environment):
 
 if __name__ == "__main__":
     # perturbation = scale * uncertainty.
+    use_test_archive()
     sense, force = finite_diff(scale=1.0)
     print(40 * "-")
     print(f"sensitivity dot perturbation = {sense}")

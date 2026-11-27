@@ -70,9 +70,8 @@ def test_extra_mpi_arguments_are_ignored_in_serial(decomposition, monkeypatch):
     assert "-bind-to" not in cmd
 
 
-def test_ranks_are_unbound_by_default(target_environment):
+def test_ranks_are_unbound_by_default(au_test_config):
     """Binding is opt-in until it has been timed on a production domain."""
-    target_environment("docker")
 
     assert cmaq_config.mpi_extra_args == ""
 
@@ -108,8 +107,7 @@ def test_checkpointing_disabled_restores_after_a_failed_run(monkeypatch):
     assert cmaq_config.create_chk is True
 
 
-def test_checkpoints_are_written_by_default(target_environment):
+def test_checkpoints_are_written_by_default(au_test_config):
     """ADJOINT_BWD replays these, so the inversion cannot run without them."""
-    target_environment("docker")
 
     assert cmaq_config.create_chk is True

@@ -35,14 +35,13 @@ def test_setup_for_cmaq(
     request,
     data_regression,
     compare_dataset,
-    target_environment,
+    au_test_config,
 ):
     cmaq_dir = Path(tmpdir / "cmaq")
     mcip_dir = Path(tmpdir / "mcip")
     mcip_run_dir = mcip_dir / "2022-12-07" / "d01"
 
     # Override some settings
-    target_environment("docker-test")
     config = load_config_from_env(
         met_dir=mcip_dir,
         ctm_dir=cmaq_dir,

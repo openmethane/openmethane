@@ -32,9 +32,9 @@ from openmethane.fourdvar.params import archive_defn
 pytestmark = pytest.mark.adjoint
 
 
-def test_fourdvar_grad_verbose(target_environment):
-    # Settings are modified locally so this resets them to the default initially
-    target_environment("docker-test")
+def test_fourdvar_grad_verbose(au_test_config, root_dir):
+    # Reads the preprocessed inputs of an earlier run from data/
+    au_test_config(STORE_PATH=root_dir / "data")
 
     _run_grad_verbose()
 
