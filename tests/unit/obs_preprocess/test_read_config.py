@@ -215,14 +215,12 @@ def test_default_cams_file_names_the_domain_but_no_release_for_eac4():
     )
 
 
-def test_the_forecasts_can_be_chosen_with_cams_product(target_environment):
-    target_environment(
-        "docker",
-        overrides={
-            "START_DATE": "2026-01-01",
-            "END_DATE": "2026-01-01",
-            "CAMS_PRODUCT": "forecasts",
-        },
+def test_the_forecasts_can_be_chosen_with_cams_product(au_test_config):
+    au_test_config(
+        START_DATE="2026-01-01",
+        END_DATE="2026-01-01",
+        CAMS_PRODUCT="forecasts",
+        CAMS_FILE=None,
     )
 
     config = load_config_from_env()

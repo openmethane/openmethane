@@ -17,15 +17,15 @@ uv sync
 # downloaded into data/fnl the first time)
 make docker-test
 # To run tests without Docker (only works inside the container):
-TARGET=docker-test uv run python -m pytest -r a -v
+uv run python -m pytest -r a -v
 # Quicker, leaving out slow tests and those that reach third-party services:
-TARGET=docker-test uv run python -m pytest -r a -v -m "not slow and not network"
+uv run python -m pytest -r a -v -m "not slow and not network"
 
 # Run a single test (must be run inside the Docker container)
-TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
+uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 # Or from the host:
 docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
-  TARGET=docker-test uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
+  uv run python -m pytest -v tests/unit/cmaq_preprocess/test_wrf.py::test_name
 
 # Lint and format
 uv run ruff check .
@@ -94,7 +94,7 @@ Available targets: `docker`, `docker-test`, `docker-monthly`
 
 NCI/Gadi is no longer supported. Its job scripts and example `.env.nci*` files live in `examples/nci/` and are provided as-is; they are not covered by tests.
 
-For tests and local development, always set `TARGET=docker-test`. This target uses locally tracked test data under `tests/test-data/` and `data/`.
+For local development, set `TARGET=docker-test`. This target uses locally tracked test data under `tests/test-data/` and `data/`. Tests don't use it: `tests/conftest.py` clears configuration variables at startup and points `TARGET` at a name with no file, and tests that need configuration take the `au_test_config` fixture, which sets every variable. New tests must do the same rather than read a `.env` file.
 
 Key env vars: `START_DATE`, `END_DATE`, `DOMAIN_NAME`, `DOMAIN_VERSION`, `STORE_PATH`, `CMAQ_BIN`, `ADJOINT_FWD`, `ADJOINT_BWD`. See `docs/reference/parameters.md` for the full list.
 

@@ -38,11 +38,7 @@ def copy_cmaq_files(test_data_dir, tmp_path):
     return icon_file, bcon_files
 
 
-def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch):
-    # setup test data
-    monkeypatch.setenv("START_DATE", "2022-12-07")
-    monkeypatch.setenv("END_DATE", "2022-12-07")
-
+def test_bias_zero_after_correct(test_data_dir, tmp_path, au_test_config):
     icon_file, bcon_files = copy_cmaq_files(test_data_dir, tmp_path)
     obs_file = test_data_dir / "obs" / OBS_FILE_NAME
 
@@ -76,7 +72,9 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, monkeypatch):
     assert abs(new_bias) <= 1e-6
 
 
-def test_simulate_static_columns_matches_observation_operator(test_data_dir, tmp_path, monkeypatch):
+def test_simulate_static_columns_matches_observation_operator(
+    test_data_dir, tmp_path, au_test_config
+):
     """The background columns must be built the way the inversion builds its own.
 
     `fourdvar.transfunc.obs_operator` simulates an observation as
@@ -85,8 +83,6 @@ def test_simulate_static_columns_matches_observation_operator(test_data_dir, tmp
     correction it applies is wrong by the mean offset (about -13 ppb for
     TROPOMI CH4).
     """
-    monkeypatch.setenv("START_DATE", "2022-12-07")
-    monkeypatch.setenv("END_DATE", "2022-12-07")
 
     icon_file, _ = copy_cmaq_files(test_data_dir, tmp_path)
     obs = d.ObservationData.from_file(test_data_dir / "obs" / OBS_FILE_NAME)
@@ -111,14 +107,12 @@ def test_simulate_static_columns_matches_observation_operator(test_data_dir, tmp
     assert abs(offsets.mean()) > 1.0
 
 
-def test_correction_closes_the_gap_in_observation_space(test_data_dir, tmp_path, monkeypatch):
+def test_correction_closes_the_gap_in_observation_space(test_data_dir, tmp_path, au_test_config):
     """Applying the bias must make the simulated columns match the satellite mean.
 
     This is the quantity `fourdvar` reports as `bias`, so it is the one that has
     to go to zero.
     """
-    monkeypatch.setenv("START_DATE", "2022-12-07")
-    monkeypatch.setenv("END_DATE", "2022-12-07")
 
     icon_file, bcon_files = copy_cmaq_files(test_data_dir, tmp_path)
     obs_file = test_data_dir / "obs" / OBS_FILE_NAME
@@ -145,10 +139,7 @@ def test_correction_closes_the_gap_in_observation_space(test_data_dir, tmp_path,
     assert abs((observed - simulated).mean()) < 1e-3
 
 
-def test_mean_weight_sum(test_data_dir, monkeypatch):
-    monkeypatch.setenv("START_DATE", "2022-12-07")
-    monkeypatch.setenv("END_DATE", "2022-12-07")
-
+def test_mean_weight_sum(test_data_dir, au_test_config):
     obs = d.ObservationData.from_file(test_data_dir / "obs" / OBS_FILE_NAME)
 
     # the operator carries the kernel over the part of the column the model
@@ -165,7 +156,7 @@ def test_mean_weight_sum(test_data_dir, monkeypatch):
     assert mean_weight_sum(obs) < 1.0
 
 
-def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypatch):
+def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypatch, au_test_config):
     """The correction has to be `(O - F) / (ppm2ppb * W)` exactly.
 
     `O - F` is the residual the driver reports as its first-guess `bias`, so a
@@ -174,8 +165,6 @@ def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypat
     data is a single day on which the operator weight barely varies between
     soundings, so it does not pin the per-sounding weighting.
     """
-    monkeypatch.setenv("START_DATE", "2022-12-07")
-    monkeypatch.setenv("END_DATE", "2022-12-07")
 
     obs_file = test_data_dir / "obs" / OBS_FILE_NAME
     obs = d.ObservationData.from_file(obs_file)

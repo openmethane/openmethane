@@ -40,7 +40,7 @@ FETCH_CASES = [
 
 @pytest.fixture
 def au_test_domain(root_dir, monkeypatch):
-    """Point DOMAIN_FILE at the au-test domain, as the docker-test target does"""
+    """Point DOMAIN_FILE at the au-test domain, as `au_test_config` does"""
     domain_file = root_dir / "data" / "domains" / "au-test" / "v1" / "domain.au-test.nc"
     if not domain_file.exists():
         pytest.skip(f"{domain_file} is missing; run `make fetch-test-data`")

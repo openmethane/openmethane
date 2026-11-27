@@ -27,9 +27,7 @@ from openmethane.postproc.posterior_emissions_postprocess import (
 )
 
 
-def test_posterior_emissions_postprocess(target_environment, test_data_dir):
-    target_environment("docker-test")
-
+def test_posterior_emissions_postprocess(au_test_config, test_data_dir):
     posterior_multipliers = d.PhysicalData.from_file(
         pathlib.Path(test_data_dir, "fourdvar", "posterior-multipliers.nc")
     )
@@ -148,9 +146,7 @@ def test_posterior_emissions_postprocess(target_environment, test_data_dir):
         )
 
 
-def test_posterior_emissions_postprocess_multi_day(target_environment, test_data_dir):
-    target_environment("docker-test")
-
+def test_posterior_emissions_postprocess_multi_day(au_test_config, test_data_dir):
     posterior_multipliers = d.PhysicalData.from_file(
         pathlib.Path(test_data_dir, "fourdvar", "posterior-multipliers.nc")
     )

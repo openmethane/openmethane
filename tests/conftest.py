@@ -1,25 +1,135 @@
+import importlib
 import os
-from importlib import reload
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 import xarray as xr
 import yaml
 
-from openmethane.fourdvar import env
-from openmethane.fourdvar.params import (
-    archive_defn,
-    cmaq_config,
-    data_access,
-    date_defn,
-    input_defn,
-    root_path_defn,
-    template_defn,
-)
 from openmethane.util.download import DownloadFailed, fetch_archive
 
 TESTS_DIR = Path(__file__).parent
+ROOT_DIR = TESTS_DIR.parent
 BUNDLES_FILE = TESTS_DIR / "test-data" / "bundles.yaml"
+
+# Everything from here to `_start_unconfigured()`, plus `_reload_params` and
+# `target_environment`, works around `fourdvar.params` and `util.logger`
+# reading the environment when imported. Delete it once nothing does (#352).
+NO_ENV_FILE_TARGET = "pytest"
+"""
+A `TARGET` with no `.env.${TARGET}` file, so no file fills in configuration a
+test didn't set.
+"""
+
+CONFIG_VARIABLES = (
+    "ADJOINT_BWD",
+    "ADJOINT_FWD",
+    "BCON_FILE",
+    "BOUNDARY_TRIM",
+    "CAMS_FILE",
+    "CAMS_INVERSION_VERSION",
+    "CAMS_PRODUCT",
+    "CAMS_TO_CMAQ_BIAS",
+    "CHK_PATH",
+    "CMAQ_BIN",
+    "CMAQ_KZMIN",
+    "CTM_DIR",
+    "DOMAIN_FILE",
+    "DOMAIN_INDEX",
+    "DOMAIN_MAP_PROJECTION",
+    "DOMAIN_MCIP_SUFFIX",
+    "DOMAIN_NAME",
+    "DOMAIN_VERSION",
+    "EMIS_FILE",
+    "END_DATE",
+    "EXECUTION_ID",
+    "EXPERIMENT",
+    "FORCE_FILE",
+    "FORCE_UPDATE",
+    "GEO_DIR",
+    "ICON_FILE",
+    "LOG_FILE",
+    "LOG_LEVEL",
+    "MET_DIR",
+    "MIN_CELLS_PER_RANK",
+    "MPI_EXTRA_ARGS",
+    "NUM_PROC_COLS",
+    "NUM_PROC_ROWS",
+    "NUM_PROC_TOTAL",
+    "OBS_FILE_GLOB",
+    "OM_LOGGING_FILE",
+    "PBS_JOBFS",
+    "PRIOR_FILE",
+    "ROOT_DIR",
+    "START_DATE",
+    "STORE_PATH",
+    "TARGET",
+    "TEMPLATE_DIR",
+    "TEST_DATA_DIR",
+    "USE_JOBFS",
+    "WRF_DIR",
+)
+"""
+Variables the `.env` files set, and those `fourdvar.params`, the CMAQ
+preprocessing configuration and the logger read when imported or loaded,
+removed from the environment tests start with.
+"""
+
+PROCESS_VARIABLES = ("PATH", "PYTHONPATH", "VIRTUAL_ENV", "LD_LIBRARY_PATH")
+"""
+Variables configuration fixtures keep when they clear the environment, which
+programs need to start. Not an exhaustive list.
+"""
+
+UNCONFIGURED = "/nonexistent-test-configuration"
+"""
+Where the variables that `fourdvar.params` can't import without point, until
+a configuration fixture sets them.
+"""
+
+PARAMS_MODULES = (
+    "openmethane.fourdvar.env",
+    "openmethane.fourdvar.params.root_path_defn",
+    "openmethane.fourdvar.params.input_defn",
+    "openmethane.fourdvar.params.date_defn",
+    "openmethane.fourdvar.params.archive_defn",
+    "openmethane.fourdvar.params.template_defn",
+    "openmethane.fourdvar.params.data_access",
+    "openmethane.fourdvar.params.cmaq_config",
+)
+"""Modules that read their configuration when imported, in dependency order."""
+
+
+def _start_unconfigured() -> None:
+    """
+    Remove configuration from the environment the tests start with.
+
+    Test modules import code that imports `fourdvar.params`, which reads
+    `STORE_PATH` and other variables on import, so this runs when this file is
+    loaded, before any test module is. A test that needs configuration uses a
+    fixture such as `au_test_config`. One that forgets gets paths under
+    `UNCONFIGURED` for the variables params can't import without, which fail
+    when read, and the code's defaults for the rest (dates in July 2022, for
+    example), never a value from a `.env` file or the developer's shell.
+    """
+    for key in CONFIG_VARIABLES:
+        os.environ.pop(key, None)
+    os.environ["TARGET"] = NO_ENV_FILE_TARGET
+    for key in (
+        "STORE_PATH",
+        "MET_DIR",
+        "PRIOR_FILE",
+        "ICON_FILE",
+        "BCON_FILE",
+        "ADJOINT_FWD",
+        "ADJOINT_BWD",
+    ):
+        os.environ[key] = f"{UNCONFIGURED}/{key}"
+
+
+assert not (ROOT_DIR / f".env.{NO_ENV_FILE_TARGET}").exists()
+_start_unconfigured()
 
 FIXTURE_MARKERS = {
     "fnl_cache_path": ("network",),
@@ -44,14 +154,14 @@ def pytest_addoption(parser):
     parser.addoption(
         "--test-cache",
         type=Path,
-        default=TESTS_DIR.parent / "data" / "test-cache",
+        default=ROOT_DIR / "data" / "test-cache",
         help="Folder to unpack test data bundles into, kept between runs. Default: data/test-cache",
     )
 
 
 @pytest.fixture
 def root_dir() -> Path:
-    return TESTS_DIR.parent
+    return ROOT_DIR
 
 
 @pytest.fixture
@@ -149,18 +259,77 @@ def compare_dataset(data_regression):
 
 
 def _reload_params():
-    reload(env)
-    reload(root_path_defn)
-    reload(input_defn)
-    reload(date_defn)
-    reload(archive_defn)
-    reload(template_defn)
-    reload(data_access)
-    reload(cmaq_config)
+    for name in PARAMS_MODULES:
+        importlib.reload(importlib.import_module(name))
+
+
+@pytest.fixture
+def au_test_config(monkeypatch, tmp_path, test_data_dir) -> Callable[..., None]:
+    """
+    Configuration for au-test v1 on 2022-12-07, reading inputs from
+    `tests/test-data` and the domain and CAMS files from `data/`, with
+    `STORE_PATH` in the test's temporary folder.
+
+    Clears the rest of the environment, except what processes need to start,
+    and reloads `fourdvar.params`. Returns a function that sets more variables
+    and reloads again, for example `au_test_config(END_DATE="2022-12-08")`;
+    `None` unsets a variable.
+    """
+    domain_dir = ROOT_DIR / "data" / "domains" / "au-test" / "v1"
+    cams_file = ROOT_DIR / "data" / "cams" / "cams_eac4_methane_2022-12-07-2022-12-07.nc"
+    variables = {
+        "TARGET": NO_ENV_FILE_TARGET,
+        "START_DATE": "2022-12-07",
+        "END_DATE": "2022-12-07",
+        "DOMAIN_NAME": "au-test",
+        "DOMAIN_VERSION": "v1",
+        "DOMAIN_MCIP_SUFFIX": "au-test_v1",
+        "BOUNDARY_TRIM": "1",
+        "STORE_PATH": tmp_path / "store",
+        "TEMPLATE_DIR": test_data_dir / "templates",
+        "MET_DIR": test_data_dir / "mcip",
+        "CTM_DIR": test_data_dir / "cmaq",
+        "WRF_DIR": test_data_dir / "wrf" / "au-test",
+        "GEO_DIR": domain_dir,
+        "DOMAIN_FILE": domain_dir / "domain.au-test.nc",
+        "CAMS_PRODUCT": "eac4",
+        "CAMS_FILE": cams_file,
+        "PRIOR_FILE": test_data_dir / "prior" / "prior-emissions.nc",
+        "ICON_FILE": test_data_dir / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+        "BCON_FILE": test_data_dir / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
+        "CMAQ_BIN": "/opt/cmaq/bin",
+        "ADJOINT_FWD": "/opt/cmaq/bin/ADJOINT_FWD",
+        "ADJOINT_BWD": "/opt/cmaq/bin/ADJOINT_BWD",
+    }
+
+    def configure(**overrides: str | Path | None) -> None:
+        for key, value in overrides.items():
+            if value is None:
+                monkeypatch.delenv(key, raising=False)
+            else:
+                monkeypatch.setenv(key, str(value))
+        _reload_params()
+
+    for key in list(os.environ):
+        if key not in (*PROCESS_VARIABLES, "HOME"):
+            monkeypatch.delenv(key)
+    configure(**variables)
+
+    yield configure
+
+    # Restore the environment before reloading, so later tests see the
+    # unconfigured params rather than this test's
+    monkeypatch.undo()
+    _reload_params()
 
 
 @pytest.fixture
 def target_environment(monkeypatch):
+    """
+    Load the `.env.${TARGET}` file for a target. Only for tests of `.env`
+    loading itself; other tests use a configuration fixture such as
+    `au_test_config`.
+    """
     initial_env = dict(os.environ)
 
     default_variables = {
@@ -173,15 +342,6 @@ def target_environment(monkeypatch):
             "DOMAIN_VERSION": "v1",
         }
     }
-    # Variables not to strip out of the current environment
-    # This isn't an exhaustive list, just some common ones
-    # I'm not certain about the impact on pytest/pycharm
-    extra_variables = [
-        "PATH",
-        "PYTHONPATH",
-        "VIRTUAL_ENV",
-        "LD_LIBRARY_PATH",
-    ]
 
     def run(
         target: str,
@@ -196,7 +356,7 @@ def target_environment(monkeypatch):
         monkeypatch.setenv("HOME", home)
         monkeypatch.setenv("TARGET", target)
 
-        for key in extra_variables:
+        for key in PROCESS_VARIABLES:
             if key in initial_env:
                 os.environ[key] = initial_env[key]
 

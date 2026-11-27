@@ -30,9 +30,7 @@ def clean(value):
     return value
 
 
-def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_regression):
-    target_environment("docker-test")
-
+def test_preprocess(tmp_path, root_dir, test_data_dir, au_test_config, data_regression):
     output_file = tmp_path / "out.pkl.gz"
     runner = CliRunner()
     result = runner.invoke(
@@ -68,14 +66,13 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, target_environment, data_
     assert obs["ch4_column_precision"] != obs["uncertainty"]
 
 
-def test_preprocess_no_input_files(tmp_path, root_dir, test_data_dir, target_environment):
+def test_preprocess_no_input_files(tmp_path, root_dir, test_data_dir, au_test_config):
     """A day with no TROPOMI granules must still produce a domain-metadata file.
 
     Downstream steps (ObservationData.from_file, the obs operator) read this
     file unconditionally, so a day with an instrument outage or no overpass
     must not be silently skipped.
     """
-    target_environment("docker-test")
 
     output_file = tmp_path / "out.pkl.gz"
     runner = CliRunner()

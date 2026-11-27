@@ -18,11 +18,6 @@ import openmethane.fourdvar.util.netcdf_handle as ncf
 from openmethane.fourdvar.params import cmaq_config, date_defn, template_defn
 from openmethane.fourdvar.util import cmaq_handle
 
-pytestmark = pytest.mark.skipif(
-    not os.path.isfile(cmaq_config.fwd_prog),
-    reason=f"ADJOINT_FWD not available at {cmaq_config.fwd_prog}",
-)
-
 CHK_PARAMS = (
     "chem_chk",
     "vdiff_chk",
@@ -65,8 +60,10 @@ def run_fwd_day(date):
 
 
 @pytest.fixture
-def fwd_run(tmp_path, monkeypatch):
+def fwd_run(tmp_path, monkeypatch, au_test_config):
     """Run one forward day at a given CREATE_CHK setting."""
+    if not os.path.isfile(cmaq_config.fwd_prog):
+        pytest.skip(f"ADJOINT_FWD not available at {cmaq_config.fwd_prog}")
 
     def run(create_chk, name):
         monkeypatch.setattr(cmaq_config, "create_chk", create_chk)
@@ -81,7 +78,7 @@ def fwd_run(tmp_path, monkeypatch):
     cmaq_handle.wipeout_fwd()
 
 
-def test_setup_run_passes_create_chk_to_the_model(monkeypatch):
+def test_setup_run_passes_create_chk_to_the_model(monkeypatch, au_test_config):
     monkeypatch.setattr(cmaq_config, "create_chk", True)
     assert cmaq_handle.setup_run()["CREATE_CHK"] == "T"
 

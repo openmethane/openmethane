@@ -37,10 +37,10 @@ Tracked targets:
 | Target | Purpose |
 | --- | --- |
 | `docker` | Running in the container. Paths under `STORE_PATH`, which is supplied per run. |
-| `docker-test` | Tests and development. Points at test data tracked in the repository under `tests/test-data/`, so it needs no network access and no previous run. Also pins `START_DATE`, `END_DATE` and `DOMAIN_NAME`. |
+| `docker-test` | Development, and the `test-e2e` CI job. Points at test data tracked in the repository under `tests/test-data/`, so it needs no previous run. Also pins `START_DATE`, `END_DATE` and `DOMAIN_NAME`. The pytest suite doesn't use it: tests set their own configuration. |
 | `docker-monthly` | The monthly workflow, where meteorology and observations come from previous daily runs rather than being generated. |
 
-For tests and local development, always set `TARGET=docker-test`.
+For local development, set `TARGET=docker-test`.
 
 Unsupported example targets for NCI/Gadi are in
 [`examples/nci`](../../examples/nci/README.md). They must be copied to the

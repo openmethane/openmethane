@@ -148,8 +148,9 @@ def make_pert_template(model_input, layers=None, time=12):
     return result.flatten()
 
 
-def test_fourdvar_grad_cmaq(target_environment):
-    target_environment("docker-test")
+def test_fourdvar_grad_cmaq(au_test_config, root_dir):
+    # Reads the preprocessed inputs of an earlier run from data/
+    au_test_config(STORE_PATH=root_dir / "data")
 
     _run_grad_cmaq()
 

@@ -5,14 +5,16 @@ import pytest
 from openmethane.fourdvar.util import date_handle
 
 
-def test_get_datelist(target_environment):
-    target_environment("docker")
+def test_get_datelist(au_test_config):
     res = date_handle.get_datelist()
     assert res == [datetime.date(2022, 12, 7)]
 
-    # Check that the modified config from target_environment fixture is flowing through as expected
-    target_environment("docker", overrides={"START_DATE": "2022-07-01", "END_DATE": "2022-07-02"})
+
+def test_get_datelist_spans_the_configured_dates(au_test_config):
+    au_test_config(START_DATE="2022-07-01", END_DATE="2022-07-02")
+
     res = date_handle.get_datelist()
+
     assert res == [datetime.date(2022, 7, 1), datetime.date(2022, 7, 2)]
 
 
@@ -28,9 +30,7 @@ def test_get_datelist(target_environment):
         (datetime.date(2022, 7, 22), "<YYYYMMDD>/<YYYY-MM-DD>", "20220722/2022-07-22"),
     ],
 )
-def test_replace_date(target_environment, date, inp, exp):
-    target_environment("docker")
-
+def test_replace_date(date, inp, exp):
     res = date_handle.replace_date(inp, date)
 
     assert res == exp

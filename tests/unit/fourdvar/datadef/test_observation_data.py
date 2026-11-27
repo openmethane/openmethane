@@ -77,9 +77,7 @@ def test_load_observations_from_multiple_files(test_data_dir):
     assert len(obs.observations) == 238
 
 
-def test_observation_data(test_data_dir, target_environment):
-    target_environment("docker-test")
-
+def test_observation_data(test_data_dir, au_test_config):
     obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
     obs.assert_params()
 
@@ -88,9 +86,8 @@ def test_observation_data(test_data_dir, target_environment):
     assert len(obs.weight_grid) == obs.length
 
 
-def test_observation_data_column_operator(test_data_dir, target_environment):
+def test_observation_data_column_operator(test_data_dir, au_test_config):
     """The stored weights and offset must describe the full column operator."""
-    target_environment("docker-test")
 
     obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
 
@@ -123,9 +120,8 @@ def test_observation_data_column_operator(test_data_dir, target_environment):
         assert np.all(coverage[1:] == pytest.approx(1.0))
 
 
-def test_observation_data_retains_retrieval_precision(test_data_dir, target_environment):
+def test_observation_data_retains_retrieval_precision(test_data_dir, au_test_config):
     """The retrieval precision must survive into the loaded observations."""
-    target_environment("docker-test")
 
     obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
 
@@ -141,9 +137,8 @@ def test_observation_data_retains_retrieval_precision(test_data_dir, target_envi
         assert unc > value
 
 
-def test_observation_data_legacy_file_warns(test_data_dir, target_environment, caplog):
+def test_observation_data_legacy_file_warns(test_data_dir, au_test_config, caplog):
     """A file written before the kernel was applied must be flagged loudly."""
-    target_environment("docker-test")
 
     with caplog.at_level(logging.WARNING):
         obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-08.pic.gz")
@@ -151,7 +146,7 @@ def test_observation_data_legacy_file_warns(test_data_dir, target_environment, c
     assert f"this is version {OBS_OPERATOR_VERSION}" in caplog.text
     assert "column averaging kernel" in caplog.text
     # legacy files carry no offset term, so they fall back to a purely linear
-    # operator. Nothing survives the docker-test date range here, but the
+    # operator. Nothing survives the configured date range here, but the
     # default is what any observation that did survive would get.
     assert all(offset == 0.0 for offset in obs.offset_term)
 
@@ -164,7 +159,7 @@ def test_observation_data_legacy_file_warns(test_data_dir, target_environment, c
 
 
 def test_observation_data_handles_a_day_with_no_observations(
-    tmp_path, test_data_dir, target_environment
+    tmp_path, test_data_dir, au_test_config
 ):
     """A monthly run glob must tolerate a day with a metadata-only obs file.
 
@@ -175,7 +170,6 @@ def test_observation_data_handles_a_day_with_no_observations(
     picks up every day's file together, so loading must not choke when one of
     them is empty.
     """
-    target_environment("docker-test")
 
     real_file = test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz"
     domain, *_real_observations = load_list(real_file)
@@ -196,9 +190,7 @@ def test_observation_data_handles_a_day_with_no_observations(
     assert obs.length == 165
 
 
-def test_observation_data_missing(test_data_dir, target_environment):
-    target_environment("docker-test")
-
+def test_observation_data_missing(test_data_dir, au_test_config):
     inp_file = test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz.missing"
     with pytest.raises(
         FileNotFoundError, match=f"No valid observations files found matching {inp_file}"

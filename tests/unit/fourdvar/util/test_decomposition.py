@@ -141,7 +141,7 @@ def test_half_a_configured_decomposition_means_one_rank_across(uncached_decompos
 
 
 def test_rank_target_is_split_across_the_grid_cmaq_is_given(
-    uncached_decomposition, monkeypatch, test_data_dir
+    uncached_decomposition, monkeypatch, test_data_dir, au_test_config
 ):
     grid_cro_2d = test_data_dir / "mcip" / "<YYYY-MM-DD>" / "d01" / "GRIDCRO2D_au-test_v1"
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.npcol", 0)

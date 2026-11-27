@@ -118,7 +118,7 @@ jobs:
           '
       - name: Run pytest unit tests
         run: |
-          docker run --rm -e TARGET=docker-test ${{ needs.build.outputs.registry-image-id }} \
+          docker run --rm ${{ needs.build.outputs.registry-image-id }} \
             /bin/bash -c $'python -m pytest -r a -v tests/unit'
 
   test-integration:
@@ -145,7 +145,6 @@ jobs:
       - name: Run pytest integration tests
         run: |
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
-            -e TARGET=docker-test \
             -e CDSAPI_KEY=${{ secrets.CDSAPI_ADS_KEY }} \
             -e CDSAPI_URL=https://ads.atmosphere.copernicus.eu/api \
             ${{ needs.build.outputs.registry-image-id }} \
@@ -289,7 +288,6 @@ jobs:
       - name: Run the WRF integration tests
         run: |
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
-            -e TARGET=docker-test \
             -e WRF_TEST_FNL_CACHE_PATH=/app/data/fnl \
             ${{ needs.build.outputs.registry-image-id }} \
             python -m pytest -r a -v tests/integration/wrf -m wrf --basetemp=/app/data/pytest
