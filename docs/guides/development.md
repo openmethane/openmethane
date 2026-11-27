@@ -56,7 +56,7 @@ TARGET=docker-test uv run python -m pytest -v \
 Or from the host, without an interactive shell:
 
 ```shell
-docker run --rm -v $(PWD):/app -v /app/.venv openmethane \
+docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
   TARGET=docker-test uv run python -m pytest -v \
   tests/unit/cmaq_preprocess/test_wrf.py::test_name
 ```
@@ -118,10 +118,10 @@ make test-regen
 The tests in `tests/integration/wrf/` run the real WRF and WPS programs for
 au-test on 2022-12-07 and check the published output against the
 [WRF output contract](../reference/wrf-outputs.md). They take about 5 minutes
-and need the image. To run only them:
+and need the image. To run only them, after `make build`:
 
 ```shell
-docker run --rm -v $(PWD):/app -v /app/.venv -e TARGET=docker-test openmethane \
+docker run --rm -v "$PWD":/app -v /app/.venv -e TARGET=docker-test openmethane \
   python -m pytest -r a -v tests/integration/wrf
 ```
 

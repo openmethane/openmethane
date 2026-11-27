@@ -16,6 +16,7 @@
 import os
 
 import numpy as np
+import pytest
 
 import openmethane.fourdvar._main_driver as main
 import openmethane.fourdvar.datadef as d
@@ -25,6 +26,8 @@ import openmethane.fourdvar.util.cmaq_handle as cmaq
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn
 from openmethane.util.logger import get_logger
+
+pytestmark = pytest.mark.adjoint
 
 
 def _run_pert_pert():

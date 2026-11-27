@@ -19,6 +19,7 @@ import pickle
 import time
 
 import numpy as np
+import pytest
 
 import openmethane.fourdvar.datadef as d
 import openmethane.fourdvar.user_driver as user
@@ -26,6 +27,8 @@ import openmethane.fourdvar.util.archive_handle as archive
 import openmethane.fourdvar.util.cmaq_handle as cmaq
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params import archive_defn
+
+pytestmark = pytest.mark.adjoint
 
 
 def test_fourdvar_grad_verbose(target_environment):

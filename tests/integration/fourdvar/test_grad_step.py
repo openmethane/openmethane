@@ -15,10 +15,13 @@
 #
 
 import numpy as np
+import pytest
 
 import openmethane.fourdvar.datadef as d
 from openmethane.fourdvar._transform import transform
 from openmethane.fourdvar.params.input_defn import obs_file, prior_file
+
+pytestmark = pytest.mark.adjoint
 
 
 def test_grad_step(target_environment):
