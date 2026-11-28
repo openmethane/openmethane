@@ -3,7 +3,7 @@ cams_inversion_version: v25r1
 cams_product: eac4
 cams_to_cmaq_bias: 0.0
 cmaq_bin_dir: /opt/cmaq/bin
-cmaq_scripts_dir: /app/scripts/cmaq
+cmaq_scripts_dir: scripts/cmaq
 ctm_dir: /app/tests/test-data/cmaq
 domain:
   index: 1

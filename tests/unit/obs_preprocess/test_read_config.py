@@ -36,11 +36,15 @@ def temp_config_file(tmp_path, request):
 
 
 @pytest.mark.parametrize("target", ["docker", "docker-test"])
-def test_013_valid_config_file(target, data_regression, target_environment):
+def test_013_valid_config_file(target, data_regression, target_environment, pytestconfig):
     target_environment(target)
 
     cmaq_config = load_config_from_env()
+
     data = asdict(cmaq_config)
+    # The scripts folder defaults to one in the checkout, wherever that is, so
+    # it's recorded relative to the repository root.
+    data["cmaq_scripts_dir"] = cmaq_config.cmaq_scripts_dir.relative_to(pytestconfig.rootpath)
     data_regression.check(data, basename=f"config_{target}")
 
 
