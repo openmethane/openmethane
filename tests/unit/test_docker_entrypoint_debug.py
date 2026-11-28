@@ -10,6 +10,7 @@ checked.
 
 import json
 import pathlib
+import signal
 import subprocess
 
 import pytest
@@ -61,6 +62,22 @@ def test_passes_its_input_to_the_command():
 
     assert result.returncode == 0
     assert "from stdin" in result.stdout
+
+
+@pytest.mark.parametrize("signal_number", [signal.SIGINT, signal.SIGQUIT])
+def test_the_command_can_be_interrupted(signal_number):
+    # Ignored signals are listed as a bit mask in /proc, bit n - 1 for signal n.
+    result = subprocess.run(
+        ["/bin/bash", str(ENTRYPOINT), "bash", "-c", "grep SigIgn /proc/$$/status"],  # noqa: S603
+        capture_output=True,
+        text=True,
+        env={"PATH": "/usr/bin:/bin", "OM_METRICS": "0"},
+        timeout=60,
+        check=False,
+    )
+
+    ignored = int(result.stdout.split("SigIgn:")[1].split()[0], 16)
+    assert not ignored & (1 << (signal_number - 1))
 
 
 def test_reports_a_failing_command():
