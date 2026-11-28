@@ -1,0 +1,22 @@
+boundary_trim: 5
+cams_inversion_version: v25r1
+cams_product: inversion
+cams_to_cmaq_bias: 0.0
+cmaq_bin_dir: /opt/cmaq/bin
+cmaq_scripts_dir: /app/scripts/cmaq
+ctm_dir: /app/data/au-test/daily/<YYYY>/<MM>/<DD>/cmaq
+domain:
+  index: 1
+  map_projection: LamCon_34S_150E
+  mcip_suffix: au-test_v1
+  name: au-test
+  version: v1
+end_date: 2022-12-07
+force_update: false
+geo_dir: /app/data/wrf/au-test
+input_cams_file: /app/data/cams/cams_inversion_v25r1_methane_au-test_v1_2022-12-07-2022-12-07.nc
+mech: CH4only
+met_dir: /app/data/au-test/daily/<YYYY>/<MM>/<DD>/mcip
+prepare_ic_and_bc: true
+start_date: 2022-12-07
+wrf_dir: /app/data/wrf/au-test

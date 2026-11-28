@@ -36,6 +36,7 @@ def test_setup_for_cmaq(
     data_regression,
     compare_dataset,
     au_test_config,
+    daily_run_data,
 ):
     cmaq_dir = Path(tmpdir / "cmaq")
     mcip_dir = Path(tmpdir / "mcip")
@@ -74,6 +75,7 @@ def test_setup_for_cmaq(
         (mcip_run_dir / "namelist.mcip")
         .read_text()
         .replace(str(tmpdir), "<tmpdir>")
+        .replace(str(daily_run_data), "<daily_run_data>")
         .replace(str(root_dir), "<root_dir>")
     )
     file_regression.check(

@@ -166,6 +166,7 @@ def root_dir() -> Path:
 
 @pytest.fixture
 def test_data_dir(root_dir) -> Path:
+    """Test data tracked in git: the WRF output MCIP reads, until #337."""
     return root_dir / "tests" / "test-data"
 
 
@@ -186,9 +187,20 @@ def wrf_data(pytestconfig) -> Path:
     return _fetch_bundle("wrf", pytestconfig.getoption("test_cache"))
 
 
+@pytest.fixture(scope="session")
+def daily_run_data(pytestconfig) -> Path:
+    """
+    Inputs and outputs of each step of the daily and monthly workflows for
+    au-test on 2022-12-07, downloaded on first use. Holds a folder per kind of
+    data (`mcip/`, `obs/`, `templates/` and so on) and the domain files in
+    `domains/au-test/v1/`.
+    """
+    return _fetch_bundle("daily_run", pytestconfig.getoption("test_cache"))
+
+
 @pytest.fixture
-def metcro3d_file(test_data_dir, tmpdir):
-    return str(test_data_dir / "mcip" / "2022-12-07" / "d01" / "METCRO3D_au-test_v1")
+def metcro3d_file(daily_run_data):
+    return str(daily_run_data / "mcip" / "2022-12-07" / "d01" / "METCRO3D_au-test_v1")
 
 
 def _clean_attrs(
@@ -264,10 +276,10 @@ def _reload_params():
 
 
 @pytest.fixture
-def au_test_config(monkeypatch, tmp_path, test_data_dir) -> Callable[..., None]:
+def au_test_config(monkeypatch, tmp_path, test_data_dir, daily_run_data) -> Callable[..., None]:
     """
-    Configuration for au-test v1 on 2022-12-07, reading inputs from
-    `tests/test-data` and the domain and CAMS files from `data/`, with
+    Configuration for au-test v1 on 2022-12-07, reading inputs from the
+    `daily_run` bundle and WRF output from `tests/test-data`, with
     `STORE_PATH` in the test's temporary folder.
 
     Clears the rest of the environment, except what processes need to start,
@@ -275,8 +287,7 @@ def au_test_config(monkeypatch, tmp_path, test_data_dir) -> Callable[..., None]:
     and reloads again, for example `au_test_config(END_DATE="2022-12-08")`;
     `None` unsets a variable.
     """
-    domain_dir = ROOT_DIR / "data" / "domains" / "au-test" / "v1"
-    cams_file = ROOT_DIR / "data" / "cams" / "cams_eac4_methane_2022-12-07-2022-12-07.nc"
+    domain_dir = daily_run_data / "domains" / "au-test" / "v1"
     variables = {
         "TARGET": NO_ENV_FILE_TARGET,
         "START_DATE": "2022-12-07",
@@ -286,17 +297,18 @@ def au_test_config(monkeypatch, tmp_path, test_data_dir) -> Callable[..., None]:
         "DOMAIN_MCIP_SUFFIX": "au-test_v1",
         "BOUNDARY_TRIM": "1",
         "STORE_PATH": tmp_path / "store",
-        "TEMPLATE_DIR": test_data_dir / "templates",
-        "MET_DIR": test_data_dir / "mcip",
-        "CTM_DIR": test_data_dir / "cmaq",
+        "TEMPLATE_DIR": daily_run_data / "templates",
+        "MET_DIR": daily_run_data / "mcip",
+        "CTM_DIR": daily_run_data / "cmaq",
         "WRF_DIR": test_data_dir / "wrf" / "au-test",
         "GEO_DIR": domain_dir,
         "DOMAIN_FILE": domain_dir / "domain.au-test.nc",
-        "CAMS_PRODUCT": "eac4",
-        "CAMS_FILE": cams_file,
-        "PRIOR_FILE": test_data_dir / "prior" / "prior-emissions.nc",
-        "ICON_FILE": test_data_dir / "cmaq" / "template_icon_profile_CH4only_d01.nc",
-        "BCON_FILE": test_data_dir / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
+        "CAMS_PRODUCT": "inversion",
+        "CAMS_INVERSION_VERSION": "v25r1",
+        "CAMS_FILE": daily_run_data / "cams" / "cams_inversion_v25r1_2022-12-07.nc",
+        "PRIOR_FILE": daily_run_data / "prior" / "prior-emissions.nc",
+        "ICON_FILE": daily_run_data / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+        "BCON_FILE": daily_run_data / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
         "CMAQ_BIN": "/opt/cmaq/bin",
         "ADJOINT_FWD": "/opt/cmaq/bin/ADJOINT_FWD",
         "ADJOINT_BWD": "/opt/cmaq/bin/ADJOINT_BWD",
@@ -332,16 +344,15 @@ def target_environment(monkeypatch):
     """
     initial_env = dict(os.environ)
 
-    default_variables = {
-        # Docker target requires some additional env variables
-        "docker": {
-            "STORE_PATH": "/app/data",
-            "START_DATE": "2022-12-07",
-            "END_DATE": "2022-12-07",
-            "DOMAIN_NAME": "au-test",
-            "DOMAIN_VERSION": "v1",
-        }
+    # The Docker targets need variables a run supplies, not the .env file
+    run_variables = {
+        "STORE_PATH": "/app/data",
+        "START_DATE": "2022-12-07",
+        "END_DATE": "2022-12-07",
+        "DOMAIN_NAME": "au-test",
+        "DOMAIN_VERSION": "v1",
     }
+    default_variables = {"docker": run_variables, "docker-monthly": run_variables}
 
     def run(
         target: str,

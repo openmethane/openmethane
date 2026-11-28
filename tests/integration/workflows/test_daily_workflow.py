@@ -2,9 +2,9 @@
 
 The steps after WRF and the prior in scripts/docker-e2e-daily.sh, configured as
 there: CMAQ preprocessing, TropOMI preprocessing and the daily forward run. The
-TropOMI and CAMS downloads are left out; their inputs come from
-`tests/test-data` and `data/`. Every output is written under the test's
-temporary folder.
+TropOMI and CAMS downloads are left out; their inputs come from the
+`daily_run` test data. Every output is written under the test's temporary
+folder.
 
 Needs the MCIP, ICON, BCON and adjoint programs, so it only runs in the
 openmethane image. Each step runs as its own process, as in production,
@@ -25,7 +25,7 @@ from openmethane.fourdvar.util.file_handle import load_list
 pytestmark = [pytest.mark.cmaq, pytest.mark.adjoint, pytest.mark.slow]
 
 
-def test_simulates_the_days_observations(au_test_config, tmp_path, root_dir, test_data_dir):
+def test_simulates_the_days_observations(au_test_config, tmp_path, root_dir, daily_run_data):
     store = tmp_path / "store"
     ctm_day = store / "cmaq" / "<YYYY-MM-DD>" / "d01"
     # The paths .env.docker sets, under this test's STORE_PATH
@@ -39,7 +39,7 @@ def test_simulates_the_days_observations(au_test_config, tmp_path, root_dir, tes
         NUM_PROC_COLS="1",
         NUM_PROC_ROWS="1",
     )
-    tropomi = test_data_dir / "tropomi" / "2022-12-07*" / "*.nc4"
+    tropomi = daily_run_data / "tropomi" / "2022-12-07*" / "*.nc4"
     scripts = root_dir / "scripts"
     # Run outside the checkout, so nothing can be written to it
     work_dir = tmp_path / "work"

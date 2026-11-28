@@ -30,14 +30,14 @@ def clean(value):
     return value
 
 
-def test_preprocess(tmp_path, root_dir, test_data_dir, au_test_config, data_regression):
+def test_preprocess(tmp_path, root_dir, daily_run_data, au_test_config, data_regression):
     output_file = tmp_path / "out.pkl.gz"
     runner = CliRunner()
     result = runner.invoke(
         tropomi_methane_preprocess.run_tropomi_preprocess,
         [
             "--source",
-            str(test_data_dir / "tropomi" / "2022-12-07*" / "*.nc4"),
+            str(daily_run_data / "tropomi" / "2022-12-07*" / "*.nc4"),
             "--output-file",
             str(output_file),
         ],
@@ -66,7 +66,7 @@ def test_preprocess(tmp_path, root_dir, test_data_dir, au_test_config, data_regr
     assert obs["ch4_column_precision"] != obs["uncertainty"]
 
 
-def test_preprocess_no_input_files(tmp_path, root_dir, test_data_dir, au_test_config):
+def test_preprocess_no_input_files(tmp_path, root_dir, daily_run_data, au_test_config):
     """A day with no TROPOMI granules must still produce a domain-metadata file.
 
     Downstream steps (ObservationData.from_file, the obs operator) read this

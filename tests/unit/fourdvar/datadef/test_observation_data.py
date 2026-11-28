@@ -22,9 +22,9 @@ from openmethane.obs_preprocess.obsESA_defn import (
     "fname",
     ["test_obs_2022-12-08.pic.gz", "test_obs_2022-*-08.*", "test_obs_2022-*"],
 )
-def test_load_observations_from_file(test_data_dir, fname):
+def test_load_observations_from_file(daily_run_data, fname):
     obs = load_observations_from_file(
-        test_data_dir / "obs" / fname,
+        daily_run_data / "obs" / fname,
         start_date=datetime.date(2022, 12, 8),
         end_date=datetime.date(2022, 12, 8),
     )
@@ -63,9 +63,9 @@ def test_load_observations_from_file(test_data_dir, fname):
     assert sorted(obs_0.keys()) == expected_keys
 
 
-def test_load_observations_from_multiple_files(test_data_dir):
+def test_load_observations_from_multiple_files(daily_run_data):
     obs = load_observations_from_file(
-        test_data_dir / "obs" / "test_obs_2022-12-*.pic.gz",
+        daily_run_data / "obs" / "test_obs_2022-12-*.pic.gz",
         start_date=datetime.date(2022, 12, 7),
         end_date=datetime.date(2022, 12, 8),
     )
@@ -77,8 +77,8 @@ def test_load_observations_from_multiple_files(test_data_dir):
     assert len(obs.observations) == 238
 
 
-def test_observation_data(test_data_dir, au_test_config):
-    obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
+def test_observation_data(daily_run_data, au_test_config):
+    obs = ObservationData.from_file(daily_run_data / "obs" / "test_obs_2022-12-07.pic.gz")
     obs.assert_params()
 
     assert obs.length == 165
@@ -86,10 +86,10 @@ def test_observation_data(test_data_dir, au_test_config):
     assert len(obs.weight_grid) == obs.length
 
 
-def test_observation_data_column_operator(test_data_dir, au_test_config):
+def test_observation_data_column_operator(daily_run_data, au_test_config):
     """The stored weights and offset must describe the full column operator."""
 
-    obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
+    obs = ObservationData.from_file(daily_run_data / "obs" / "test_obs_2022-12-07.pic.gz")
 
     for i in range(obs.length):
         meta = obs.misc_meta[i]
@@ -120,10 +120,10 @@ def test_observation_data_column_operator(test_data_dir, au_test_config):
         assert np.all(coverage[1:] == pytest.approx(1.0))
 
 
-def test_observation_data_retains_retrieval_precision(test_data_dir, au_test_config):
+def test_observation_data_retains_retrieval_precision(daily_run_data, au_test_config):
     """The retrieval precision must survive into the loaded observations."""
 
-    obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz")
+    obs = ObservationData.from_file(daily_run_data / "obs" / "test_obs_2022-12-07.pic.gz")
 
     precision = [meta["ch4_column_precision"] for meta in obs.misc_meta]
     assert len(precision) == obs.length
@@ -137,11 +137,11 @@ def test_observation_data_retains_retrieval_precision(test_data_dir, au_test_con
         assert unc > value
 
 
-def test_observation_data_legacy_file_warns(test_data_dir, au_test_config, caplog):
+def test_observation_data_legacy_file_warns(daily_run_data, au_test_config, caplog):
     """A file written before the kernel was applied must be flagged loudly."""
 
     with caplog.at_level(logging.WARNING):
-        obs = ObservationData.from_file(test_data_dir / "obs" / "test_obs_2022-12-08.pic.gz")
+        obs = ObservationData.from_file(daily_run_data / "obs" / "test_obs_2022-12-08.pic.gz")
 
     assert f"this is version {OBS_OPERATOR_VERSION}" in caplog.text
     assert "column averaging kernel" in caplog.text
@@ -151,7 +151,7 @@ def test_observation_data_legacy_file_warns(test_data_dir, au_test_config, caplo
     assert all(offset == 0.0 for offset in obs.offset_term)
 
     legacy = load_observations_from_file(
-        test_data_dir / "obs" / "test_obs_2022-12-08.pic.gz",
+        daily_run_data / "obs" / "test_obs_2022-12-08.pic.gz",
         start_date=datetime.date(2022, 12, 8),
         end_date=datetime.date(2022, 12, 8),
     )
@@ -159,7 +159,7 @@ def test_observation_data_legacy_file_warns(test_data_dir, au_test_config, caplo
 
 
 def test_observation_data_handles_a_day_with_no_observations(
-    tmp_path, test_data_dir, au_test_config
+    tmp_path, daily_run_data, au_test_config
 ):
     """A monthly run glob must tolerate a day with a metadata-only obs file.
 
@@ -171,7 +171,7 @@ def test_observation_data_handles_a_day_with_no_observations(
     them is empty.
     """
 
-    real_file = test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz"
+    real_file = daily_run_data / "obs" / "test_obs_2022-12-07.pic.gz"
     domain, *_real_observations = load_list(real_file)
 
     # Both files need to live under one glob, as they would under a monthly
@@ -190,8 +190,8 @@ def test_observation_data_handles_a_day_with_no_observations(
     assert obs.length == 165
 
 
-def test_observation_data_missing(test_data_dir, au_test_config):
-    inp_file = test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz.missing"
+def test_observation_data_missing(daily_run_data, au_test_config):
+    inp_file = daily_run_data / "obs" / "test_obs_2022-12-07.pic.gz.missing"
     with pytest.raises(
         FileNotFoundError, match=f"No valid observations files found matching {inp_file}"
     ):

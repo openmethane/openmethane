@@ -27,11 +27,11 @@ from openmethane.postproc.posterior_emissions_postprocess import (
 )
 
 
-def test_posterior_emissions_postprocess(au_test_config, test_data_dir):
+def test_posterior_emissions_postprocess(au_test_config, daily_run_data):
     posterior_multipliers = d.PhysicalData.from_file(
-        pathlib.Path(test_data_dir, "fourdvar", "posterior-multipliers.nc")
+        pathlib.Path(daily_run_data, "fourdvar", "posterior-multipliers.nc")
     )
-    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "prior-emissions.nc"))
+    prior_emissions = xr.open_dataset(pathlib.Path(daily_run_data, "prior", "prior-emissions.nc"))
 
     # validate that test input hasn't changed before we attempt to transform it
     assert posterior_multipliers.emis_units == "mol/(s*m^2)", "incorrect unit emissions"
@@ -45,7 +45,7 @@ def test_posterior_emissions_postprocess(au_test_config, test_data_dir):
     )
 
     prior_emis = xr.open_dataset(
-        pathlib.Path(test_data_dir, "templates", "record", "emis_record_2022-12-07.nc")
+        pathlib.Path(daily_run_data, "templates", "record", "emis_record_2022-12-07.nc")
     )
     prior_emis_mean_3d = prior_emis["CH4"].to_numpy().mean(axis=0)
     prior_emis_mean_surf = prior_emis_mean_3d[0, ...]
@@ -60,18 +60,18 @@ def test_posterior_emissions_postprocess(au_test_config, test_data_dir):
     )
 
     # calculate the estimated emissions, multiplying the posterior multipliers from
-    # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
-    # emissions values (test-data/templates/record/emis_record_2022-12-07.nc)
+    # the minimiser (fourdvar/posterior-multipliers.nc) by the expected
+    # emissions values (templates/record/emis_record_2022-12-07.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis["CH4"],
         prior_emissions_ds=prior_emissions,
-        template_dir=pathlib.Path(test_data_dir, "templates"),
+        template_dir=pathlib.Path(daily_run_data, "templates"),
         emis_template="emis_record_2022-12-07.nc",
     )
 
     # check the transformations on the data, multiplying the posterior multipliers from
-    # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
-    # emissions values (test-data/templates/record/emis_record_2022-12-07.nc)
+    # the minimiser (fourdvar/posterior-multipliers.nc) by the expected
+    # emissions values (templates/record/emis_record_2022-12-07.nc)
     assert posterior_emissions.attrs["XCELL"] == 10000, "post-processed cell size has changed"
     assert posterior_emissions.attrs["YCELL"] == 10000, "post-processed cell size has changed"
     assert posterior_emissions["ch4"].sum() == pytest.approx(6.25249e-08), (
@@ -146,22 +146,22 @@ def test_posterior_emissions_postprocess(au_test_config, test_data_dir):
         )
 
 
-def test_posterior_emissions_postprocess_multi_day(au_test_config, test_data_dir):
+def test_posterior_emissions_postprocess_multi_day(au_test_config, daily_run_data):
     posterior_multipliers = d.PhysicalData.from_file(
-        pathlib.Path(test_data_dir, "fourdvar", "posterior-multipliers.nc")
+        pathlib.Path(daily_run_data, "fourdvar", "posterior-multipliers.nc")
     )
-    prior_emissions = xr.open_dataset(pathlib.Path(test_data_dir, "prior", "prior-emissions.nc"))
+    prior_emissions = xr.open_dataset(pathlib.Path(daily_run_data, "prior", "prior-emissions.nc"))
 
-    prior_emis = glob.glob(str(pathlib.Path(test_data_dir, "templates", "record", "emis_*.nc")))
+    prior_emis = glob.glob(str(pathlib.Path(daily_run_data, "templates", "record", "emis_*.nc")))
     assert len(prior_emis) == 2, "did not find exactly 2 days of test data"
 
     # calculate the estimated emissions, multiplying the posterior multipliers from
-    # the minimiser (test-data/fourdvar/posterior-multipliers.nc) by the expected
-    # emissions values (test-data/templates/record/emis_record_2022-12-07.nc)
+    # the minimiser (fourdvar/posterior-multipliers.nc) by the expected
+    # emissions values (templates/record/emis_record_2022-12-07.nc)
     posterior_emissions = posterior_emissions_postprocess(
         posterior_multipliers=posterior_multipliers.emis["CH4"],
         prior_emissions_ds=prior_emissions,
-        template_dir=pathlib.Path(test_data_dir, "templates"),
+        template_dir=pathlib.Path(daily_run_data, "templates"),
         emis_template="emis_*.nc",
     )
 

@@ -17,12 +17,12 @@ from openmethane.cmaq_preprocess.cams_readers import CamsProfile, open_cams
 from openmethane.cmaq_preprocess.read_config_cmaq import Domain
 from openmethane.cmaq_preprocess.utils import get_distance_from_lat_lon_in_km
 
-TEST_DATA = pathlib.Path(__file__).parents[2] / "test-data"
-INVERSION_FILE = TEST_DATA / "cams" / "cams_inversion_v25r1_2022-12-07.nc"
-EAC4_FILE = TEST_DATA / "cams" / "cams_eac4_methane_2022-12-07.nc"
+# CAMS files in the daily_run test data (`daily_run_data`)
+INVERSION_FILE = pathlib.Path("cams", "cams_inversion_v25r1_2022-12-07.nc")
+EAC4_FILE = pathlib.Path("cams", "cams_eac4_methane_2022-12-07.nc")
 # The forecasts start in 2024, so this is 2024-12-07 relabelled to the date of the test
 # MCIP, and thinned to every fifth point of the 0.1° grid to keep it small
-FORECASTS_FILE = TEST_DATA / "cams" / "cams_forecasts_2024-12-07_as_2022-12-07.nc"
+FORECASTS_FILE = pathlib.Path("cams", "cams_forecasts_2024-12-07_as_2022-12-07.nc")
 DOMAIN = Domain(1, "au-test", "v1", "LamCon_34S_150E", "au-test_v1")
 
 # One CAMS column of three levels, ordered from the surface up, in ppmV and Pa
@@ -138,8 +138,8 @@ def test_nearest_points_beyond_a_cell_diagonal_of_the_grid_are_an_error():
         nearest_points(grid_lat, grid_lon, np.array([-29.5, -29.5]), np.array([140.5, 145.0]))
 
 
-def test_inversion_reader_returns_ppmv_and_pressure_for_each_level():
-    with open_cams(INVERSION_FILE, "inversion") as cams:
+def test_inversion_reader_returns_ppmv_and_pressure_for_each_level(daily_run_data):
+    with open_cams(daily_run_data / INVERSION_FILE, "inversion") as cams:
         profile = cams.profile(0)
         grid_shape = (len(cams.lat), len(cams.lon))
 
@@ -150,8 +150,8 @@ def test_inversion_reader_returns_ppmv_and_pressure_for_each_level():
     assert np.all(np.diff(profile.pressure_pa[:, 0, 0]) < 0)
 
 
-def test_eac4_reader_returns_ppmv_and_pressure_for_each_level():
-    with open_cams(EAC4_FILE, "eac4") as cams:
+def test_eac4_reader_returns_ppmv_and_pressure_for_each_level(daily_run_data):
+    with open_cams(daily_run_data / EAC4_FILE, "eac4") as cams:
         profile = cams.profile(0)
         grid_shape = (len(cams.lat), len(cams.lon))
 
@@ -163,8 +163,8 @@ def test_eac4_reader_returns_ppmv_and_pressure_for_each_level():
     assert np.all(np.diff(profile.pressure_pa[:, 0, 0]) < 0)
 
 
-def test_forecasts_reader_returns_ppmv_and_pressure_for_each_level():
-    with open_cams(FORECASTS_FILE, "forecasts") as cams:
+def test_forecasts_reader_returns_ppmv_and_pressure_for_each_level(daily_run_data):
+    with open_cams(daily_run_data / FORECASTS_FILE, "forecasts") as cams:
         profile = cams.profile(0)
         grid_shape = (len(cams.lat), len(cams.lon))
 
@@ -176,51 +176,51 @@ def test_forecasts_reader_returns_ppmv_and_pressure_for_each_level():
     assert profile.pressure_pa[-1, 0, 0] == 5000.0
 
 
-def test_forecasts_reader_has_no_release():
-    with open_cams(FORECASTS_FILE, "forecasts") as cams:
+def test_forecasts_reader_has_no_release(daily_run_data):
+    with open_cams(daily_run_data / FORECASTS_FILE, "forecasts") as cams:
         assert cams.release is None
 
 
-def test_an_eac4_file_is_rejected_as_forecasts():
+def test_an_eac4_file_is_rejected_as_forecasts(daily_run_data):
     with pytest.raises(ValueError, match="not a CAMS forecasts file.*ch4"):
-        open_cams(EAC4_FILE, "forecasts")
+        open_cams(daily_run_data / EAC4_FILE, "forecasts")
 
 
-def test_inversion_reader_reports_the_release():
-    with open_cams(INVERSION_FILE, "inversion") as cams:
+def test_inversion_reader_reports_the_release(daily_run_data):
+    with open_cams(daily_run_data / INVERSION_FILE, "inversion") as cams:
         assert cams.release == "v25r1"
 
 
-def test_eac4_reader_has_no_release():
-    with open_cams(EAC4_FILE, "eac4") as cams:
+def test_eac4_reader_has_no_release(daily_run_data):
+    with open_cams(daily_run_data / EAC4_FILE, "eac4") as cams:
         assert cams.release is None
 
 
-def test_an_inversion_file_is_rejected_as_eac4():
+def test_an_inversion_file_is_rejected_as_eac4(daily_run_data):
     with pytest.raises(ValueError, match="not a CAMS eac4 file.*ch4_c"):
-        open_cams(INVERSION_FILE, "eac4")
+        open_cams(daily_run_data / INVERSION_FILE, "eac4")
 
 
-def test_an_eac4_file_is_rejected_as_inversion():
+def test_an_eac4_file_is_rejected_as_inversion(daily_run_data):
     with pytest.raises(ValueError, match="not a CAMS inversion file.*CH4"):
-        open_cams(EAC4_FILE, "inversion")
+        open_cams(daily_run_data / EAC4_FILE, "inversion")
 
 
-def test_coverage_error_names_the_dates_and_the_fallback():
-    with open_cams(INVERSION_FILE, "inversion") as cams:
+def test_coverage_error_names_the_dates_and_the_fallback(daily_run_data):
+    with open_cams(daily_run_data / INVERSION_FILE, "inversion") as cams:
         with pytest.raises(ValueError, match="2026-03-01.*CAMS_PRODUCT=forecasts"):
             cams.require_dates([datetime.date(2026, 3, 1)])
 
 
-def test_dates_inside_the_file_are_accepted():
-    with open_cams(INVERSION_FILE, "inversion") as cams:
+def test_dates_inside_the_file_are_accepted(daily_run_data):
+    with open_cams(daily_run_data / INVERSION_FILE, "inversion") as cams:
         cams.require_dates([datetime.date(2022, 12, 7)])
 
 
 @pytest.fixture
-def mcip_columns():
+def mcip_columns(daily_run_data):
     """Sigma levels, model top and surface pressure of the tracked test MCIP columns"""
-    mcip_dir = TEST_DATA / "mcip" / "2022-12-07" / "d01"
+    mcip_dir = daily_run_data / "mcip" / "2022-12-07" / "d01"
     with (
         netCDF4.Dataset(mcip_dir / "METCRO3D_au-test_v1") as met,
         netCDF4.Dataset(mcip_dir / "METCRO2D_au-test_v1") as surface,
@@ -235,9 +235,11 @@ def mcip_columns():
     "product, path",
     [("inversion", INVERSION_FILE), ("eac4", EAC4_FILE), ("forecasts", FORECASTS_FILE)],
 )
-def test_interpolation_preserves_the_pressure_weighted_column_mean(product, path, mcip_columns):
+def test_interpolation_preserves_the_pressure_weighted_column_mean(
+    product, path, mcip_columns, daily_run_data
+):
     sigma, model_top, surface_pressure = mcip_columns
-    with open_cams(path, product) as cams:
+    with open_cams(daily_run_data / path, product) as cams:
         profile = cams.profile(0)
         grid_shape = (len(cams.lat), len(cams.lon))
     # a distinct CAMS cell for each CMAQ column, so every CAMS column is exercised
@@ -281,16 +283,16 @@ def test_interpolation_preserves_the_pressure_weighted_column_mean(product, path
     ],
 )
 def test_icon_and_bcon_are_filled_in_ppmv_and_record_the_product(
-    tmp_path, product, path, release, surface_ppmv
+    tmp_path, product, path, release, surface_ppmv, daily_run_data
 ):
     interpolate_from_cams_to_cmaq_grid(
         dates=[datetime.date(2022, 12, 7)],
         domain=DOMAIN,
         mech="CH4only",
-        input_cams_file=path,
-        template_icon_file=TEST_DATA / "cmaq" / "template_icon_profile_CH4only_d01.nc",
-        template_bcon_file=TEST_DATA / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
-        met_dir=TEST_DATA / "mcip",
+        input_cams_file=daily_run_data / path,
+        template_icon_file=daily_run_data / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+        template_bcon_file=daily_run_data / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
+        met_dir=daily_run_data / "mcip",
         ctm_dir=tmp_path,
         force_update=True,
         cams_product=product,
@@ -306,16 +308,16 @@ def test_icon_and_bcon_are_filled_in_ppmv_and_record_the_product(
             assert getattr(out, "CAMS_RELEASE", None) == release
 
 
-def test_dates_outside_the_file_fail_before_anything_is_written(tmp_path):
+def test_dates_outside_the_file_fail_before_anything_is_written(tmp_path, daily_run_data):
     with pytest.raises(ValueError, match="CAMS_PRODUCT=forecasts"):
         interpolate_from_cams_to_cmaq_grid(
             dates=[datetime.date(2030, 1, 1)],
             domain=DOMAIN,
             mech="CH4only",
-            input_cams_file=INVERSION_FILE,
-            template_icon_file=TEST_DATA / "cmaq" / "template_icon_profile_CH4only_d01.nc",
-            template_bcon_file=TEST_DATA / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
-            met_dir=TEST_DATA / "mcip",
+            input_cams_file=daily_run_data / INVERSION_FILE,
+            template_icon_file=daily_run_data / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+            template_bcon_file=daily_run_data / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
+            met_dir=daily_run_data / "mcip",
             ctm_dir=tmp_path,
             force_update=True,
             cams_product="inversion",

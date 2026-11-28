@@ -28,7 +28,7 @@ The suite has four kinds of test:
 | Kind | What runs | What it checks | Where |
 | --- | --- | --- | --- |
 | Unit tests | Our Python, with stub programs where a program would run | Our code's output, and the arguments and environment it gives each program | `tests/unit/` |
-| Stage tests | One stage of a workflow on test data in `tests/test-data/`, with its programs for real where it runs any | The stage's output, against regression fixtures where it has them | `tests/integration/` folders named for the stage |
+| Stage tests | One stage of a workflow on the `daily_run` test data bundle (WRF output from `tests/test-data/wrf`), with its programs for real where it runs any | The stage's output, against regression fixtures where it has them | `tests/integration/` folders named for the stage |
 | Contract runs | One program, for real, on the inputs our glue makes | The program accepts our inputs and writes what our glue reads; its values against recorded output, so any change in them is seen | `tests/integration/wrf/` |
 | Workflow tests | The daily and monthly workflows' steps in order, with the real programs | Each step runs and finds what the step before it wrote | `tests/integration/workflows/` |
 
@@ -136,16 +136,40 @@ without it.
 Test data too large or binary for git is in bundles in the Open Methane public
 data store, listed with their hashes in `tests/test-data/bundles.yaml`. A test
 that needs one downloads it the first time, through a fixture in
-`tests/conftest.py` named after it (`wrf_data` for `wrf`), and unpacks it into `data/test-cache/`, where later runs
-reuse it. `--test-cache` sets another folder. A bundle the cache doesn't hold
-yet needs a connection, but our own bundles aren't marked `network`: unlike a
-third-party service, a bundle in the data store never changes.
+`tests/conftest.py` named after it, and unpacks it into `data/test-cache/`,
+where later runs reuse it. `--test-cache` sets another folder. A bundle the
+cache doesn't hold yet needs a connection, but our own bundles aren't marked
+`network`: unlike a third-party service, a bundle in the data store never
+changes.
+
+| Bundle | Fixture | Contents |
+| --- | --- | --- |
+| `wrf` | `wrf_data` | The WRF step's published output for au-test on 2022-12-07; see [WRF test data](#wrf-test-data) |
+| `daily_run` | `daily_run_data` | Inputs and outputs of the other steps of the daily and monthly workflows for the same day, a folder for each kind (`mcip/`, `obs/`, `templates/` and so on), and the au-test domain files. `README.md` inside lists them |
+
+`au_test_config` points the configuration at `daily_run`, except for WRF
+output, which is still read from `tests/test-data/wrf`.
+
+A bundle is date-stamped, so changing it doesn't change what older commits
+fetch. To change `daily_run`, unpack the current bundle into a folder outside
+the repository, make the change, update its README, and pack it again:
+
+```shell
+tar -C daily-test-data --sort=name --owner=0 --group=0 --numeric-owner \
+  -czf daily-test-data.$(date +%Y%m%d).tar.gz .
+sha256sum daily-test-data.$(date +%Y%m%d).tar.gz
+```
+
+Upload it to `https://openmethane.s3.amazonaws.com/tests/daily/` beside the
+old one, and in the same change update its `url`, `sha256` and `made_by` in
+`tests/test-data/bundles.yaml`.
 
 ## Regression fixtures
 
 Data-producing code is covered by
 [pytest-regressions](https://pytest-regressions.readthedocs.io/), comparing
-output against fixtures in `tests/test-data/`. When you change what a step
+output against fixtures in a folder beside each test module, named after it.
+When you change what a step
 produces, regenerate the fixtures and read the diff carefully — an unexpected
 change in a fixture is usually the bug, not the fixture being stale:
 

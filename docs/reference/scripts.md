@@ -147,7 +147,6 @@ than the rest of the codebase.
 | `test-regen` | Regenerate regression fixtures. |
 | `prepare-templates` | Run the three template generation scripts. |
 | `fetch-domains` | Download the WRF geometry and Open Methane domain files for `aust10km` and `au-test` from the public data store into `data/`. |
-| `fetch-test-data` | Download the `au-test` geometry and domain files, plus the CAMS file the tests need. Run by `docker-test`. |
 | `changelog-draft` | Preview the next release's changelog. |
 | `format` | Format with ruff. |
 | `clean` | Delete generated files under `data/`, preserving `data/tropomi`. |

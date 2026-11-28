@@ -37,10 +37,7 @@ Tracked targets:
 | Target | Purpose |
 | --- | --- |
 | `docker` | Running in the container. Paths under `STORE_PATH`, which is supplied per run. |
-| `docker-test` | Development. Points at test data tracked in the repository under `tests/test-data/`, so it needs no previous run. Also pins `START_DATE`, `END_DATE` and `DOMAIN_NAME`. The pytest suite doesn't use it: tests set their own configuration. |
 | `docker-monthly` | The monthly workflow, where meteorology and observations come from previous daily runs rather than being generated. |
-
-For local development, set `TARGET=docker-test`.
 
 Unsupported example targets for NCI/Gadi are in
 [`examples/nci`](../../examples/nci/README.md). They must be copied to the
@@ -152,7 +149,8 @@ finishes.
 To see what a target actually resolves to:
 
 ```shell
-TARGET=docker-test uv run python -c "
+TARGET=docker STORE_PATH=/tmp/om-store START_DATE=2022-12-07 END_DATE=2022-12-07 \
+  DOMAIN_NAME=au-test DOMAIN_VERSION=v1 uv run python -c "
 from openmethane.fourdvar.params import cmaq_config, date_defn, root_path_defn
 print('store  ', root_path_defn.store_path)
 print('dates  ', date_defn.start_date, '->', date_defn.end_date)
