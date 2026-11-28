@@ -30,11 +30,11 @@ fetch-domains: data/domains/aust10km/v1/geo_em.d01.nc data/domains/aust10km/v1/d
 
 .PHONY: test
 test:  ## Run the tests. The WRF test downloads 3.4 GB of FNL analyses into data/fnl the first time
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS)
+	$(RUN_CMD) pytest -r a -v $(TEST_DIRS)
 
 .PHONY: test-regen
 test-regen:  ## Regenerate the expected test data
-	$(PYTHON_CMD) -m pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/obs_preprocess --ignore=tests/integration/workflows -m "not wrf" --force-regen
+	$(RUN_CMD) pytest -r a -v $(TEST_DIRS) --ignore=tests/integration/obs_preprocess --ignore=tests/integration/workflows -m "not wrf" --force-regen
 
 # Processing steps
 .PHONY: prepare-templates

@@ -62,8 +62,8 @@ addopts = [
     "--ignore=tests/integration/fourdvar",
 ]
 testpaths = ["tests"]
-# Tests import from scripts/, so the repository root must be importable when
-# pytest is run as `pytest`, not only as `python -m pytest`.
+# Tests import from scripts/, which is outside the installed package, so the
+# repository root must be on the import path.
 pythonpath = ["."]
 # A marker says what a test needs or costs, so it can be deselected. Markers
 # that follow from a fixture are added in tests/conftest.py. Quick local run:

@@ -119,7 +119,7 @@ jobs:
       - name: Run pytest unit tests
         run: |
           docker run --rm ${{ needs.build.outputs.registry-image-id }} \
-            /bin/bash -c $'python -m pytest -r a -v tests/unit'
+            /bin/bash -c $'pytest -r a -v tests/unit'
 
   test-integration:
     timeout-minutes: 10
@@ -152,7 +152,7 @@ jobs:
               cd /app
               make fetch-test-data
               env
-              python -m pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
+              pytest -r a -v tests/integration/cmaq_preprocess tests/integration/obs_preprocess
             '
 
   test-e2e:
@@ -177,7 +177,7 @@ jobs:
             /bin/bash -c $'
               cd /app
               make fetch-test-data
-              python -m pytest -r a -v tests/integration/workflows --basetemp=/app/data/pytest
+              pytest -r a -v tests/integration/workflows --basetemp=/app/data/pytest
             '
 
       - name: Run fourdvar integration tests
@@ -192,7 +192,7 @@ jobs:
               cd /app
               # This test requires the results from the preprocessing step
               # Verbosity is set to A to show all test results
-              python -m pytest -r A -v tests/integration/fourdvar
+              pytest -r A -v tests/integration/fourdvar
             '
 
       # pytest makes its folders readable only by the container's user
@@ -292,7 +292,7 @@ jobs:
           docker run --rm -v ${{ steps.data-path.outputs.DATA_PATH }}:/app/data \
             -e WRF_TEST_FNL_CACHE_PATH=/app/data/fnl \
             ${{ needs.build.outputs.registry-image-id }} \
-            python -m pytest -r a -v tests/integration/wrf -m wrf --basetemp=/app/data/pytest
+            pytest -r a -v tests/integration/wrf -m wrf --basetemp=/app/data/pytest
       # Saved even if a later step fails, so the 3 GB isn't downloaded again
       - name: Save FNL analyses to the cache
         if: ${{ always() && steps.fnl-cache.outputs.cache-hit != 'true' }}

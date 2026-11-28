@@ -109,7 +109,6 @@ The details you need for any editor:
 | Interpreter | `/app/.venv/bin/python` (Python 3.12)        |
 | Working directory | `/app`                               |
 | Repository mount | your checkout → `/app`               |
-| `PYTHONPATH` | `/app/src`, already set in the image |
 
 Mounting your checkout over `/app` is what makes edits take effect
 without rebuilding — the image ships a copy of the code, and the mount shadows
