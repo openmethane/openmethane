@@ -155,12 +155,12 @@ fetch. To change `daily_run`, unpack the current bundle into a folder outside
 the repository, make the change, update its README, and pack it again:
 
 ```shell
-tar -C daily-run-test-data --sort=name --owner=0 --group=0 --numeric-owner \
-  -czf daily-run-test-data.$(date +%Y%m%d).tar.gz .
-sha256sum daily-run-test-data.$(date +%Y%m%d).tar.gz
+tar -C daily-test-data --sort=name --owner=0 --group=0 --numeric-owner \
+  -czf daily-test-data.$(date +%Y%m%d).tar.gz .
+sha256sum daily-test-data.$(date +%Y%m%d).tar.gz
 ```
 
-Upload it to `https://openmethane.s3.amazonaws.com/tests/daily-run/` beside the
+Upload it to `https://openmethane.s3.amazonaws.com/tests/daily/` beside the
 old one, and in the same change update its `url`, `sha256` and `made_by` in
 `tests/test-data/bundles.yaml`.
 

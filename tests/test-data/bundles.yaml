@@ -23,7 +23,7 @@ wrf:
       which changed no other output
 
 daily_run:
-  url: https://openmethane.s3.amazonaws.com/tests/daily-run/daily-run-test-data.20261128.tar.gz
+  url: https://openmethane.s3.amazonaws.com/tests/daily/daily-test-data.20261128.tar.gz
   sha256: 4ef1349de447137dac90197897db19680372d68f38734ae088a2a62d80855040
   # What made it. README.md inside the bundle has the details.
   made_by:
