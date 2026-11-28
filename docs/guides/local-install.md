@@ -140,16 +140,8 @@ Then, from the repository root:
 uv sync
 ```
 
-This creates a `.venv` with the locked dependency versions. Prefix commands with
-`uv run`, or activate the environment.
-
-The repository uses a `src/` layout, so scripts under `scripts/` need the
-package on the import path. `uv run` handles this because the project is
-installed into the environment; if you invoke Python another way, set:
-
-```shell
-export PYTHONPATH="$(pwd)/src"
-```
+This creates a `.venv` with the locked dependency versions, with the project
+installed into it. Prefix commands with `uv run`, or activate the environment.
 
 ## 3. Configuration
 
@@ -227,7 +219,7 @@ the adjoint:
 ```shell
 make fetch-test-data # fetch domains and data required for the test suite
 
-uv run python -m pytest -r a -v -m "not wrf and not cmaq and not adjoint"
+uv run pytest -r a -v -m "not wrf and not cmaq and not adjoint"
 ```
 
 The tests set their own configuration and read test data tracked in the

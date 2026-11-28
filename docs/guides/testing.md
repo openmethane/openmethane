@@ -56,11 +56,12 @@ in the container, so the canonical way to run it builds the image and runs
 make docker-test
 ```
 
-Inside the container (or on a machine with everything installed), run it
-directly:
+Inside the container, run it directly. On a
+[local install](local-install.md), put `uv run` before these `pytest`
+commands:
 
 ```shell
-uv run python -m pytest -r a -v
+pytest -r a -v
 ```
 
 This runs everything, including the WRF integration test, which takes about 5
@@ -73,16 +74,16 @@ which take about 1 and 5 minutes. It leaves out
 A single test:
 
 ```shell
-uv run python -m pytest -v \
-  tests/unit/cmaq_preprocess/test_wrf.py::test_name
+pytest -v \
+  tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
 ```
 
 Or from the host, without an interactive shell:
 
 ```shell
 docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
-  uv run python -m pytest -v \
-  tests/unit/cmaq_preprocess/test_wrf.py::test_name
+  pytest -v \
+  tests/unit/wrf/test_config.py::test_reads_the_production_job_environment
 ```
 
 Two categories of test will not pass outside the container:
@@ -99,7 +100,7 @@ Deselect them to run offline, or to keep somebody else's outage from failing the
 suite:
 
 ```shell
-uv run python -m pytest -r a -v -m "not network"
+pytest -r a -v -m "not network"
 ```
 
 Markers say what a test needs or costs, so you can leave those tests out:
@@ -115,7 +116,7 @@ Markers say what a test needs or costs, so you can leave those tests out:
 For a quick run:
 
 ```shell
-uv run python -m pytest -r a -v -m "not slow and not network"
+pytest -r a -v -m "not slow and not network"
 ```
 
 Markers are registered in `pyproject.toml`, and a misspelt one on a test fails
@@ -162,7 +163,7 @@ about 5 minutes and needs the image. To run only it, after `make build`:
 
 ```shell
 docker run --rm -v "$PWD":/app -v /app/.venv openmethane \
-  python -m pytest -r a -v tests/integration/wrf
+  pytest -r a -v tests/integration/wrf
 ```
 
 The first run downloads the day's FNL analyses, about 3.4 GB, into `data/fnl`,

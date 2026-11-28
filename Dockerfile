@@ -177,8 +177,6 @@ EOT
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-# Place the package root in the python import path so files in scripts/ can resolve
-ENV PYTHONPATH="/app/src"
 
 # Use the non-root user to run our application
 USER app
