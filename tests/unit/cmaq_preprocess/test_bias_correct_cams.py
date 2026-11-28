@@ -26,21 +26,21 @@ ICON_FILE_NAME = "template_icon_profile_CH4only_d01.nc"
 BCON_FILE_NAMES = ["template_bcon_profile_CH4only_d01.nc"]
 
 
-def copy_cmaq_files(test_data_dir, tmp_path):
+def copy_cmaq_files(daily_run_data, tmp_path):
     """Copy the icon/bcon templates somewhere they can be corrected in place."""
     icon_file = tmp_path / ICON_FILE_NAME
-    shutil.copy(test_data_dir / "cmaq" / ICON_FILE_NAME, icon_file)
+    shutil.copy(daily_run_data / "cmaq" / ICON_FILE_NAME, icon_file)
     bcon_files = []
     for name in BCON_FILE_NAMES:
         bcon_file = tmp_path / name
-        shutil.copy(test_data_dir / "cmaq" / name, bcon_file)
+        shutil.copy(daily_run_data / "cmaq" / name, bcon_file)
         bcon_files.append(bcon_file)
     return icon_file, bcon_files
 
 
-def test_bias_zero_after_correct(test_data_dir, tmp_path, au_test_config):
-    icon_file, bcon_files = copy_cmaq_files(test_data_dir, tmp_path)
-    obs_file = test_data_dir / "obs" / OBS_FILE_NAME
+def test_bias_zero_after_correct(daily_run_data, tmp_path, au_test_config):
+    icon_file, bcon_files = copy_cmaq_files(daily_run_data, tmp_path)
+    obs_file = daily_run_data / "obs" / OBS_FILE_NAME
 
     # calculate bias
     bias = calculate_icon_bias(
@@ -73,7 +73,7 @@ def test_bias_zero_after_correct(test_data_dir, tmp_path, au_test_config):
 
 
 def test_simulate_static_columns_matches_observation_operator(
-    test_data_dir, tmp_path, au_test_config
+    daily_run_data, tmp_path, au_test_config
 ):
     """The background columns must be built the way the inversion builds its own.
 
@@ -84,8 +84,8 @@ def test_simulate_static_columns_matches_observation_operator(
     TROPOMI CH4).
     """
 
-    icon_file, _ = copy_cmaq_files(test_data_dir, tmp_path)
-    obs = d.ObservationData.from_file(test_data_dir / "obs" / OBS_FILE_NAME)
+    icon_file, _ = copy_cmaq_files(daily_run_data, tmp_path)
+    obs = d.ObservationData.from_file(daily_run_data / "obs" / OBS_FILE_NAME)
     indices = obs.ind_by_date["20221207"]
     assert len(indices) > 0
 
@@ -107,15 +107,15 @@ def test_simulate_static_columns_matches_observation_operator(
     assert abs(offsets.mean()) > 1.0
 
 
-def test_correction_closes_the_gap_in_observation_space(test_data_dir, tmp_path, au_test_config):
+def test_correction_closes_the_gap_in_observation_space(daily_run_data, tmp_path, au_test_config):
     """Applying the bias must make the simulated columns match the satellite mean.
 
     This is the quantity `fourdvar` reports as `bias`, so it is the one that has
     to go to zero.
     """
 
-    icon_file, bcon_files = copy_cmaq_files(test_data_dir, tmp_path)
-    obs_file = test_data_dir / "obs" / OBS_FILE_NAME
+    icon_file, bcon_files = copy_cmaq_files(daily_run_data, tmp_path)
+    obs_file = daily_run_data / "obs" / OBS_FILE_NAME
 
     bias = calculate_icon_bias(
         icon_files=[icon_file],
@@ -139,8 +139,8 @@ def test_correction_closes_the_gap_in_observation_space(test_data_dir, tmp_path,
     assert abs((observed - simulated).mean()) < 1e-3
 
 
-def test_mean_weight_sum(test_data_dir, au_test_config):
-    obs = d.ObservationData.from_file(test_data_dir / "obs" / OBS_FILE_NAME)
+def test_mean_weight_sum(daily_run_data, au_test_config):
+    obs = d.ObservationData.from_file(daily_run_data / "obs" / OBS_FILE_NAME)
 
     # the operator carries the kernel over the part of the column the model
     # spans, and fills the rest from the retrieval prior, so the total weight
@@ -156,7 +156,9 @@ def test_mean_weight_sum(test_data_dir, au_test_config):
     assert mean_weight_sum(obs) < 1.0
 
 
-def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypatch, au_test_config):
+def test_forward_bias_is_the_observation_space_residual(
+    daily_run_data, monkeypatch, au_test_config
+):
     """The correction has to be `(O - F) / (ppm2ppb * W)` exactly.
 
     `O - F` is the residual the driver reports as its first-guess `bias`, so a
@@ -166,7 +168,7 @@ def test_forward_bias_is_the_observation_space_residual(test_data_dir, monkeypat
     soundings, so it does not pin the per-sounding weighting.
     """
 
-    obs_file = test_data_dir / "obs" / OBS_FILE_NAME
+    obs_file = daily_run_data / "obs" / OBS_FILE_NAME
     obs = d.ObservationData.from_file(obs_file)
     residual = 12.5  # ppb, an arbitrary shortfall of the model against the satellite
     mean_simulated = float(np.mean(obs.get_vector())) - residual

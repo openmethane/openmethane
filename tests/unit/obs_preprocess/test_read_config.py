@@ -35,7 +35,7 @@ def temp_config_file(tmp_path, request):
     return str(temp_file)
 
 
-@pytest.mark.parametrize("target", ["docker", "docker-test"])
+@pytest.mark.parametrize("target", ["docker", "docker-monthly"])
 def test_013_valid_config_file(target, data_regression, target_environment):
     # No .env file sets ROOT_DIR, and its default depends on where the
     # checkout is, so it's set to where the container has it.

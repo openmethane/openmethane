@@ -25,31 +25,31 @@ pytestmark = [pytest.mark.adjoint, pytest.mark.slow]
 
 
 @pytest.fixture
-def daily_output(tmp_path, test_data_dir) -> None:
+def daily_output(tmp_path, daily_run_data) -> None:
     """
     Lay out a daily run's output for 2022-12-07 where the monthly workflow
     reads it, under `STORE_PATH` (`tmp_path / "store"`).
 
-    MCIP and the observations are the tracked test data. ICON and BCON are the
-    profile templates, since `tests/test-data` holds no ICON or BCON made from
+    MCIP and the observations come from the `daily_run` test data. ICON and
+    BCON are the profile templates, since that holds no ICON or BCON made from
     CAMS.
     """
     day = tmp_path / "store" / "au-test" / "daily" / "2022" / "12" / "07"
-    shutil.copytree(test_data_dir / "mcip" / "2022-12-07", day / "mcip" / "2022-12-07")
+    shutil.copytree(daily_run_data / "mcip" / "2022-12-07", day / "mcip" / "2022-12-07")
     ctm_day = day / "cmaq" / "2022-12-07" / "d01"
     ctm_day.mkdir(parents=True)
     # Copied, because the bias correction edits them in place
     shutil.copy(
-        test_data_dir / "cmaq" / "template_icon_profile_CH4only_d01.nc",
+        daily_run_data / "cmaq" / "template_icon_profile_CH4only_d01.nc",
         ctm_day / "ICON.d01.au-test_v1.CH4only.nc",
     )
     shutil.copy(
-        test_data_dir / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
+        daily_run_data / "cmaq" / "template_bcon_profile_CH4only_d01.nc",
         ctm_day / "BCON.d01.au-test_v1.CH4only.nc",
     )
     (day / "input").mkdir()
     shutil.copy(
-        test_data_dir / "obs" / "test_obs_2022-12-07.pic.gz", day / "input" / "test_obs.pic.gz"
+        daily_run_data / "obs" / "test_obs_2022-12-07.pic.gz", day / "input" / "test_obs.pic.gz"
     )
 
 

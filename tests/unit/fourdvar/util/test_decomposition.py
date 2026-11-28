@@ -117,8 +117,8 @@ def test_ranks_is_the_product_of_the_decomposition():
     assert str(Decomposition(1, 1)) == "1x1"
 
 
-def test_reads_the_grid_size_from_the_mcip_output(test_data_dir):
-    grid_cro_2d = test_data_dir / "mcip" / "2022-12-07" / "d01" / "GRIDCRO2D_au-test_v1"
+def test_reads_the_grid_size_from_the_mcip_output(daily_run_data):
+    grid_cro_2d = daily_run_data / "mcip" / "2022-12-07" / "d01" / "GRIDCRO2D_au-test_v1"
 
     assert read_grid_size(str(grid_cro_2d)) == AU_TEST
 
@@ -141,9 +141,9 @@ def test_half_a_configured_decomposition_means_one_rank_across(uncached_decompos
 
 
 def test_rank_target_is_split_across_the_grid_cmaq_is_given(
-    uncached_decomposition, monkeypatch, test_data_dir, au_test_config
+    uncached_decomposition, monkeypatch, daily_run_data, au_test_config
 ):
-    grid_cro_2d = test_data_dir / "mcip" / "<YYYY-MM-DD>" / "d01" / "GRIDCRO2D_au-test_v1"
+    grid_cro_2d = daily_run_data / "mcip" / "<YYYY-MM-DD>" / "d01" / "GRIDCRO2D_au-test_v1"
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.npcol", 0)
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.nprow", 0)
     monkeypatch.setattr("openmethane.fourdvar.params.cmaq_config.num_proc_total", 24)

@@ -90,11 +90,11 @@ Calculates posterior averages, generates alerts, and manages result archives.
 
 Configuration is environment-based, loaded at import time by `fourdvar.params`. The `TARGET` environment variable (default: `docker`) controls which `.env.${TARGET}` file is loaded from the repository root.
 
-Available targets: `docker`, `docker-test`, `docker-monthly`
+Available targets: `docker`, `docker-monthly`
 
 NCI/Gadi is no longer supported. Its job scripts and example `.env.nci*` files live in `examples/nci/` and are provided as-is; they are not covered by tests.
 
-For local development, set `TARGET=docker-test`. This target uses locally tracked test data under `tests/test-data/` and `data/`. Tests don't use it: `tests/conftest.py` clears configuration variables at startup and points `TARGET` at a name with no file, and tests that need configuration take the `au_test_config` fixture, which sets every variable. New tests must do the same rather than read a `.env` file.
+Tests don't use targets: `tests/conftest.py` clears configuration variables at startup and points `TARGET` at a name with no file, and tests that need configuration take the `au_test_config` fixture, which sets every variable. New tests must do the same rather than read a `.env` file.
 
 Key env vars: `START_DATE`, `END_DATE`, `DOMAIN_NAME`, `DOMAIN_VERSION`, `STORE_PATH`, `CMAQ_BIN`, `ADJOINT_FWD`, `ADJOINT_BWD`. See `docs/reference/parameters.md` for the full list.
 
@@ -105,7 +105,7 @@ Sensitive credentials (EarthData, CAMS/ECMWF) go in `.env` (based on `.env.examp
 Running the tests, markers, test data bundles and regression fixtures are in
 `docs/guides/testing.md`; read it before changing tests or test data.
 
-Tests use `pytest-regressions` for data regression testing — output files are compared against fixtures in `tests/test-data/`. When changing data-producing code, run `make test-regen` to update fixtures, then review the diffs carefully.
+Tests use `pytest-regressions` for data regression testing — output files are compared against fixtures in a folder beside each test module, named after it. Test data is in bundles downloaded by fixtures (`wrf_data`, `daily_run_data`); see `docs/guides/testing.md`. When changing data-producing code, run `make test-regen` to update fixtures, then review the diffs carefully.
 
 Many unit and integration tests require specific binaries to be present (i.e. the CMAQ adjoint binary, or tools like `ncatted`) and will fail if run locally. Excluding tests in `tests/integration/fourdvar/`, all tests should pass inside Docker, which can be run with `make docker-test`.
 

@@ -1,4 +1,3 @@
-import datetime
 import os
 import os.path
 
@@ -103,21 +102,19 @@ def test_data_access(data_regression, target_environment, target):
 
 
 def test_overrides(target_environment):
-    target = "docker-test"
+    target = "docker"
 
     target_environment(target)
 
-    assert date_defn.end_date == datetime.date(2022, 12, 7)
+    assert cmaq_config.mcip_output_path == "/app/data/mcip"
 
     os.environ.clear()
-    os.environ["END_DATE"] = (
-        "2024-01-01"  # This value will take precedence over the value in .env.docker-test
-    )
+    os.environ["MET_DIR"] = "/elsewhere/mcip"  # takes precedence over .env.docker
 
     # Reload the params, but don't clear the environment first which would negate the line above
     target_environment(target, clear=False)
 
-    assert date_defn.end_date == datetime.date(2024, 1, 1)
+    assert cmaq_config.mcip_output_path == "/elsewhere/mcip"
 
 
 @pytest.mark.parametrize(

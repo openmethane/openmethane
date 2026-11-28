@@ -217,13 +217,12 @@ Then run the test suite, which exercises most of the Python code without needing
 the adjoint:
 
 ```shell
-make fetch-test-data # fetch domains and data required for the test suite
-
 uv run pytest -r a -v -m "not wrf and not cmaq and not adjoint"
 ```
 
-The tests set their own configuration and read test data tracked in the
-repository, whatever your target. The `-m`
+The tests set their own configuration, whatever your target, and download
+their test data the first time they run (see
+[Test data bundles](testing.md#test-data-bundles)). The `-m`
 expression leaves out the tests that run WRF and the CMAQ programs. Some other
 tests need tools like `ncatted`, and will fail if those are not on your `PATH`
 — see

@@ -27,7 +27,7 @@
                "<tmpdir>/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2200Z.nc",
                "<tmpdir>/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-07T2300Z.nc",
                "<tmpdir>/mcip/2022-12-07/d01/WRFOUT_d01_2022-12-08T0000Z.nc",
-  file_ter   = "<root_dir>/data/domains/au-test/v1/geo_em.d01.nc"
+  file_ter   = "<daily_run_data>/domains/au-test/v1/geo_em.d01.nc"
   makegrid   = .T.
  &END
 

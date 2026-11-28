@@ -48,17 +48,13 @@ changelog-draft:  ## compile a draft of the next changelog
 	uv run towncrier build --draft
 
 .PHONY: docker-test
-docker-test: build fetch-test-data ## Run the tests
+docker-test: build ## Run the tests
 	docker run --rm -it \
 		-v $(PWD):/app \
 		-v /app/.venv \
 		-v ~/.cdsapirc:/home/app/.cdsapirc \
 		openmethane \
 		make test
-
-## Fetch the domain files and CAMS data required for tests
-.PHONY: fetch-test-data
-fetch-test-data: data/domains/au-test/v1/geo_em.d01.nc data/domains/au-test/v1/domain.au-test.nc data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc
 
 data/domains/aust10km/v1/geo_em.d01.nc:
 	mkdir -p data/domains/aust10km/v1
@@ -83,9 +79,3 @@ data/domains/au-test/v1/domain.au-test.nc:
 	curl -fL https://openmethane.s3.amazonaws.com/domains/au-test/v1/domain.au-test.nc \
 		-o data/domains/au-test/v1/domain.au-test.nc.part
 	mv data/domains/au-test/v1/domain.au-test.nc.part data/domains/au-test/v1/domain.au-test.nc
-
-data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc:
-	mkdir -p data/cams
-	curl -fL https://openmethane.s3.amazonaws.com/tests/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc \
-		-o data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc.part
-	mv data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc.part data/cams/cams_eac4_methane_2022-12-07-2022-12-07.nc

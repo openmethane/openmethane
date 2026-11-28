@@ -2,7 +2,7 @@ from scripts.cmaq_preprocess.make_prior import make_prior
 from xarray import open_datatree
 
 
-def test_make_prior(test_data_dir, tmpdir, compare_dataset, emission_template):
+def test_make_prior(daily_run_data, tmpdir, compare_dataset, emission_template):
     expected_file = tmpdir / "prior.nc"
     make_prior(save_path=str(expected_file), emis_template=emission_template)
 
