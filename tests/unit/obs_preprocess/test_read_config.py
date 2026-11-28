@@ -36,16 +36,20 @@ def temp_config_file(tmp_path, request):
 
 
 @pytest.mark.parametrize("target", ["docker", "docker-test"])
-def test_013_valid_config_file(target, data_regression, target_environment, pytestconfig):
-    target_environment(target)
+def test_013_valid_config_file(target, data_regression, target_environment):
+    # No .env file sets ROOT_DIR, and its default depends on where the
+    # checkout is, so it's set to where the container has it.
+    target_environment(target, overrides={"ROOT_DIR": "/app"})
 
     cmaq_config = load_config_from_env()
 
-    data = asdict(cmaq_config)
-    # The scripts folder defaults to one in the checkout, wherever that is, so
-    # it's recorded relative to the repository root.
-    data["cmaq_scripts_dir"] = cmaq_config.cmaq_scripts_dir.relative_to(pytestconfig.rootpath)
-    data_regression.check(data, basename=f"config_{target}")
+    data_regression.check(asdict(cmaq_config), basename=f"config_{target}")
+
+
+def test_default_cmaq_scripts_dir_is_in_checkout(au_test_config):
+    cmaq_config = load_config_from_env()
+
+    assert (cmaq_config.cmaq_scripts_dir / "run.mcip").is_file()
 
 
 @pytest.fixture
