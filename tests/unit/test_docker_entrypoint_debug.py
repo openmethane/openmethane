@@ -47,6 +47,22 @@ def test_runs_the_command():
     assert "hello" in result.stdout
 
 
+def test_passes_its_input_to_the_command():
+    # An interactive shell reads its commands from here.
+    result = subprocess.run(
+        ["/bin/bash", str(ENTRYPOINT), "bash"],  # noqa: S603
+        input="echo from stdin\n",
+        capture_output=True,
+        text=True,
+        env={"PATH": "/usr/bin:/bin", "OM_METRICS_INTERVAL": "1"},
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "from stdin" in result.stdout
+
+
 def test_reports_a_failing_command():
     result = run_entrypoint("bash", "-c", "exit 7")
 

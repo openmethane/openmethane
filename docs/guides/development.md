@@ -82,11 +82,8 @@ hours on consumer hardware.
 For a shell in the container to run steps by hand, with your checkout mounted:
 
 ```shell
-docker run --rm -it --entrypoint bash -v "$PWD":/app -v /app/.venv openmethane
+docker run --rm -it -v "$PWD":/app -v /app/.venv openmethane
 ```
-
-`--entrypoint bash` skips the image's entrypoint, which runs its command in the
-background, where an interactive shell exits at once.
 
 Individual steps can also be run through `make`:
 

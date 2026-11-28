@@ -172,7 +172,9 @@ trap on_exit EXIT
 
 log_start
 
-"$ENTRYPOINT" "$@" &
+# A background command reads from /dev/null unless told otherwise, so it is
+# given this script's input, without which `docker run -it` exits at once.
+"$ENTRYPOINT" "$@" <&0 &
 CHILD_PID=$!
 wait "$CHILD_PID"
 
