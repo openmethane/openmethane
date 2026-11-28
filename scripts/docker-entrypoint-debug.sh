@@ -172,7 +172,10 @@ trap on_exit EXIT
 
 log_start
 
-"$ENTRYPOINT" "$@" &
+# A background command starts with its input from /dev/null and with SIGINT
+# and SIGQUIT ignored. Both are undone, so that `docker run -it` gives a shell
+# in which Ctrl-C interrupts what it runs.
+env --default-signal=SIGINT,SIGQUIT "$ENTRYPOINT" "$@" <&0 &
 CHILD_PID=$!
 wait "$CHILD_PID"
 
